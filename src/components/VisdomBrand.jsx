@@ -4,31 +4,32 @@ export function VisdomBrand({ onClick, className = "" }) {
   return (
     <div 
       onClick={onClick}
-      className={`relative flex items-center gap-1.5 sm:gap-2.5 cursor-pointer group shrink-0 select-none bg-white text-slate-950 rounded-full px-2 py-0.5 sm:px-3.5 sm:py-1.5 border border-sky-200/80 dark:border-sky-700/60 shadow-xs animate-brand-border hover:scale-[1.015] active:scale-[0.985] transition-transform duration-200 overflow-hidden ${className}`}
+      className={`relative flex items-center gap-1.5 sm:gap-2.5 cursor-pointer group shrink-0 select-none bg-white text-slate-950 rounded-full px-2.5 py-1 sm:px-3.5 sm:py-1.5 border border-slate-200/90 hover:border-blue-400 shadow-2xs hover:shadow-xs transition-all duration-200 overflow-hidden antialiased ${className}`}
     >
-      {/* Subtle Light Blue Inner Ambient Glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-sky-500/5 via-blue-400/5 to-cyan-500/5 pointer-events-none rounded-full"></div>
+      {/* Subtle Inner Ambient Glow */}
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 via-sky-500/5 to-cyan-500/5 pointer-events-none rounded-full"></div>
 
-      {/* Left: Brand Icon / Mascot Logo with Very Light Yellow Circle Background */}
-      <div className="relative shrink-0 flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-full bg-[#FFFDE7] dark:bg-yellow-950/30 p-0.5 sm:p-1 ring-1 ring-yellow-200/60 dark:ring-yellow-700/40">
+      {/* Left: Brand Mascot Logo (Crisp HD White Circle) */}
+      <div className="relative shrink-0 flex items-center justify-center w-7 h-7 xs:w-8 xs:h-8 sm:w-9 sm:h-9 md:w-10 md:h-10 rounded-full bg-white p-0.5 sm:p-1 ring-1 ring-slate-200 shadow-2xs">
         <img 
           src="/logomymarks.png" 
           alt="MyMarks Logo" 
-          className="h-full w-full object-contain shrink-0 animate-mascot-breathe transform-gpu"
+          className="h-full w-full object-contain shrink-0 transform-gpu group-hover:scale-105 transition-transform duration-200"
         />
       </div>
 
-      {/* Right: Code-rendered Typography, Tagline, and Powered-by */}
+      {/* Right: Razor-Sharp, Deep Dark, High-Clarity Typography (Refined Less Font Weight) */}
       <div className="flex flex-col items-center justify-center pr-0.5 sm:pr-1 relative z-10">
+        
         {/* Main Brand Title: MY MARKS */}
-        <div className="flex items-center justify-center leading-none font-bold text-[13px] xs:text-[15px] sm:text-lg md:text-[1.3rem] tracking-tight font-sans">
-          {/* MY (Deep Dark Royal Blue) */}
-          <span className="text-[#002255] font-bold mr-1 tracking-tight">
+        <div className="flex items-center justify-center leading-none font-semibold text-[13px] xs:text-[14.5px] sm:text-[16px] md:text-[18px] tracking-tight font-sans">
+          {/* MY (Deep Solid Navy - Not Dull, Less Weight) */}
+          <span className="text-[#00183b] font-semibold mr-1 tracking-tight">
             MY
           </span>
 
-          {/* MARKS (Electric Bright Azure Blue with Stylized Arrow in A) */}
-          <span className="flex items-center text-[#0066ee] font-bold tracking-tight">
+          {/* MARKS (Vivid Sapphire Blue - Not Dull, Less Weight) */}
+          <span className="flex items-center text-[#0055d4] font-semibold tracking-tight">
             <span>M</span>
             {/* Custom stylized 'A' with inner white rocket/arrow */}
             <span className="inline-flex items-center justify-center mx-[0.5px]">
@@ -39,8 +40,8 @@ export function VisdomBrand({ onClick, className = "" }) {
               >
                 <defs>
                   <linearGradient id="marksGradA" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#0077ff" />
-                    <stop offset="100%" stopColor="#0055cc" />
+                    <stop offset="0%" stopColor="#0066ee" />
+                    <stop offset="100%" stopColor="#0044bb" />
                   </linearGradient>
                 </defs>
                 {/* Body of A */}
@@ -64,8 +65,8 @@ export function VisdomBrand({ onClick, className = "" }) {
           {/* Left Gradient Bar */}
           <span className="h-[1.5px] w-2 sm:w-3.5 rounded-full bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-400 shrink-0"></span>
 
-          {/* Slogan Text - Crisp & Readable */}
-          <span className="text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] md:text-[10px] font-semibold text-[#0a2540] tracking-tight whitespace-nowrap leading-none font-sans">
+          {/* Slogan Text: Deep Solid Dark, Non-Dull, Less Font Weight */}
+          <span className="text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] md:text-[10px] font-medium text-[#00183b] tracking-tight whitespace-nowrap leading-none font-sans antialiased">
             Learning Without Language Barriers
           </span>
 
@@ -73,27 +74,28 @@ export function VisdomBrand({ onClick, className = "" }) {
           <span className="h-[1.5px] w-2 sm:w-3.5 rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 shrink-0"></span>
         </div>
 
-        {/* Powered by Visdom Waves */}
+        {/* Powered by Visdom Waves (Deep Dark, Vector SVG, Non-Dull) */}
         <div className="flex items-center justify-center gap-1 mt-0.5 w-full">
-          <span className="text-[6.5px] xs:text-[7.5px] sm:text-[8px] font-normal text-slate-600 tracking-normal">
+          <span className="text-[6.5px] xs:text-[7.5px] sm:text-[8px] font-medium text-[#1e293b] tracking-tight">
             powered by
           </span>
+          
+          {/* Previous Normal Visdom Waves Logo from Hero Section */}
           <img 
             src="/Visdomlogo.png" 
             alt="Visdom Waves" 
             className="h-1.5 xs:h-2 sm:h-2.5 w-auto object-contain shrink-0 group-hover:rotate-12 transition-transform duration-300"
           />
-          <span className="text-[7px] xs:text-[8px] sm:text-[8.5px] font-semibold text-slate-950 tracking-tight leading-none">
+          
+          <span className="text-[7px] xs:text-[8px] sm:text-[8.5px] font-semibold text-[#00183b] tracking-tight leading-none">
             Visdom Waves
           </span>
-          <span className="hidden xs:inline text-[6.5px] sm:text-[7.5px] font-normal text-slate-700 tracking-tight leading-none">
+          <span className="hidden xs:inline text-[6.5px] sm:text-[7.5px] font-medium text-[#1e293b] tracking-tight leading-none">
             Innovations Private Limited
           </span>
         </div>
+
       </div>
     </div>
   );
 }
-
-
-

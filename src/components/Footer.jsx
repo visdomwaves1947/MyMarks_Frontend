@@ -3,17 +3,11 @@ import {
   MapPin, 
   Mail, 
   Phone, 
-  Send, 
-  CheckCircle2, 
-  ArrowUp,
-  ExternalLink,
-  ShieldCheck,
-  BookOpen,
-  Sparkles
+  ArrowUp
 } from 'lucide-react';
 import { VisdomBrand } from './VisdomBrand';
 
-// Social Icon SVGs matching reference site styling
+// Social Icon SVGs
 function FacebookIcon({ className = "h-4 w-4" }) {
   return (
     <svg className={className} fill="currentColor" viewBox="0 0 320 512">
@@ -72,7 +66,9 @@ export default function Footer({ onOpenBooking }) {
   const strokeDashoffset = circumference - (scrollProgress / 100) * circumference;
 
   return (
-    <footer className="relative overflow-hidden transition-all duration-300 border-t border-black/20 dark:border-cyan-900/30 bg-[#bae6fd] dark:bg-[#023e50] text-slate-900 dark:text-cyan-50 font-medium">
+    <footer 
+      className="relative overflow-hidden transition-all duration-300 border-t border-amber-300 bg-[#FEF9C3] dark:bg-[#FEF08A] text-slate-900 font-medium"
+    >
       <div className="w-full px-4 sm:px-6 lg:px-8 py-12 relative z-10">
         
         {/* Main 4 Column Grid */}
@@ -82,79 +78,79 @@ export default function Footer({ onOpenBooking }) {
           <div className="space-y-4">
             <VisdomBrand onClick={scrollToTop} />
             
-            <p className="text-sm text-slate-900 dark:text-cyan-100 font-normal leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-800 font-normal leading-relaxed">
               Empowering Intermediate & Competitive Mathematics students with state-of-the-art interactive modules, lessons, visual simulations, live problem solving, and timed online mock tests.
             </p>
 
             {/* Social Circle Badges */}
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex items-center gap-2.5 pt-1">
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Facebook"
-                className="h-9 w-9 rounded-full bg-white dark:bg-slate-950 border-2 border-black dark:border-cyan-800 hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:text-white flex items-center justify-center text-slate-950 dark:text-white transition-all duration-200 shadow-xs"
+                className="h-8 w-8 rounded-full bg-white border border-amber-300 text-slate-900 hover:bg-yellow-200/80 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-105 active:scale-95"
               >
-                <FacebookIcon className="h-4 w-4" />
+                <FacebookIcon className="h-3.5 w-3.5" />
               </a>
               <a
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Twitter X"
-                className="h-9 w-9 rounded-full bg-white dark:bg-slate-950 border-2 border-black dark:border-cyan-800 hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:text-white flex items-center justify-center text-slate-950 dark:text-white transition-all duration-200 shadow-xs"
+                className="h-8 w-8 rounded-full bg-white border border-amber-300 text-slate-900 hover:bg-yellow-200/80 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-105 active:scale-95"
               >
-                <TwitterXIcon className="h-4 w-4" />
+                <TwitterXIcon className="h-3.5 w-3.5" />
               </a>
               <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
-                className="h-9 w-9 rounded-full bg-white dark:bg-slate-950 border-2 border-black dark:border-cyan-800 hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:text-white flex items-center justify-center text-slate-950 dark:text-white transition-all duration-200 shadow-xs"
+                className="h-8 w-8 rounded-full bg-white border border-amber-300 text-slate-900 hover:bg-yellow-200/80 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-105 active:scale-95"
               >
-                <InstagramIcon className="h-4 w-4" />
+                <InstagramIcon className="h-3.5 w-3.5" />
               </a>
               <a
                 href="https://youtube.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="YouTube"
-                className="h-9 w-9 rounded-full bg-white dark:bg-slate-950 border-2 border-black dark:border-cyan-800 hover:bg-cyan-500 dark:hover:bg-cyan-600 hover:text-white flex items-center justify-center text-slate-950 dark:text-white transition-all duration-200 shadow-xs"
+                className="h-8 w-8 rounded-full bg-white border border-amber-300 text-slate-900 hover:bg-yellow-200/80 flex items-center justify-center transition-all duration-200 shadow-2xs hover:scale-105 active:scale-95"
               >
-                <YouTubeIcon className="h-4 w-4" />
+                <YouTubeIcon className="h-3.5 w-3.5" />
               </a>
             </div>
           </div>
 
           {/* Column 2: Courses & Academics */}
           <div>
-            <h3 className="text-slate-950 dark:text-white font-semibold text-sm uppercase tracking-wider mb-4 border-l-4 border-cyan-500 pl-3">
+            <h3 className="text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider mb-4 border-l-3 border-amber-500 pl-3">
               Courses & Academics
             </h3>
-            <ul className="space-y-2.5 text-sm text-slate-900 dark:text-cyan-100 font-medium">
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-800 font-medium">
               <li>
-                <a href="#courses" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#courses" className="hover:text-blue-800 transition-colors">
                   1st Year Intermediate Mathematics (1A & 1B)
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#courses" className="hover:text-blue-800 transition-colors">
                   2nd Year Intermediate Mathematics (2A & 2B)
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#courses" className="hover:text-blue-800 transition-colors">
                   AP Calculus AB / BC Advanced Placement
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#courses" className="hover:text-blue-800 transition-colors">
                   IIT-JEE Main & Advanced Mathematics
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#courses" className="hover:text-blue-800 transition-colors">
                   Revision Notes, Formula Sheets & Summaries
                 </a>
               </li>
@@ -163,32 +159,32 @@ export default function Footer({ onOpenBooking }) {
 
           {/* Column 3: Tools & Assessment */}
           <div>
-            <h3 className="text-slate-950 dark:text-white font-semibold text-sm uppercase tracking-wider mb-4 border-l-4 border-cyan-500 pl-3">
+            <h3 className="text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider mb-4 border-l-3 border-amber-500 pl-3">
               Tools & Assessment
             </h3>
-            <ul className="space-y-2.5 text-sm text-slate-900 dark:text-cyan-100 font-medium">
+            <ul className="space-y-2 text-xs sm:text-sm text-slate-800 font-medium">
               <li>
-                <a href="#interactive-lab" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#interactive-lab" className="hover:text-blue-800 transition-colors">
                   Interactive Graph & Curve Visualizer Lab
                 </a>
               </li>
               <li>
-                <a href="#speed-quiz" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#speed-quiz" className="hover:text-blue-800 transition-colors">
                   Speed Mental Math Arena & Practice Quiz
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#courses" className="hover:text-blue-800 transition-colors">
                   Online Timed Mock Exams & Test Series
                 </a>
               </li>
               <li>
-                <a href="#faq" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#faq" className="hover:text-blue-800 transition-colors">
                   Previous Board & Olympiad Question Papers
                 </a>
               </li>
               <li>
-                <a href="#methodology" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+                <a href="#methodology" className="hover:text-blue-800 transition-colors">
                   Step-by-Step Proofs & Problem Visualizers
                 </a>
               </li>
@@ -197,30 +193,30 @@ export default function Footer({ onOpenBooking }) {
 
           {/* Column 4: Contact Us */}
           <div>
-            <h3 className="text-slate-950 dark:text-white font-semibold text-sm uppercase tracking-wider mb-4 border-l-4 border-cyan-500 pl-3">
+            <h3 className="text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider mb-4 border-l-3 border-amber-500 pl-3">
               Contact Us
             </h3>
-            <ul className="space-y-3 text-sm text-slate-900 dark:text-cyan-100 font-medium">
-              <li className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-cyan-700 dark:text-cyan-400 flex-shrink-0 mt-0.5" />
+            <ul className="space-y-2.5 text-xs sm:text-sm text-slate-800 font-medium">
+              <li className="flex items-start gap-2.5">
+                <MapPin className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" />
                 <span>Hyderabad, Telangana, India</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-cyan-700 dark:text-cyan-400 flex-shrink-0" />
-                <a href="mailto:info@visdomwaves.com" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors break-all">
+              <li className="flex items-center gap-2.5">
+                <Mail className="h-4 w-4 text-amber-700 flex-shrink-0" />
+                <a href="mailto:info@visdomwaves.com" className="hover:text-blue-800 transition-colors break-all">
                   info@visdomwaves.com
                 </a>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-cyan-700 dark:text-cyan-400 flex-shrink-0" />
-                <a href="tel:+917997755155" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+              <li className="flex items-center gap-2.5">
+                <Phone className="h-4 w-4 text-amber-700 flex-shrink-0" />
+                <a href="tel:+917997755155" className="hover:text-blue-800 transition-colors">
                   +91 79977 55155
                 </a>
               </li>
               <li className="pt-2">
                 <button
                   onClick={onOpenBooking}
-                  className="px-4 py-2 rounded-xl bg-slate-900 dark:bg-cyan-600 hover:bg-cyan-700 dark:hover:bg-cyan-500 text-white font-bold text-xs transition-all cursor-pointer shadow-sm active:scale-95"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs tracking-tight shadow-sm shadow-blue-500/20 hover:shadow-md transition-all cursor-pointer active:scale-95"
                 >
                   Book 1-on-1 Free Class
                 </button>
@@ -231,48 +227,48 @@ export default function Footer({ onOpenBooking }) {
         </div>
 
         {/* Bottom Decorative Divider & Copyright */}
-        <div className="border-t border-black/20 dark:border-cyan-800/40 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="border-t border-amber-300/80 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           
           {/* Copyright line */}
-          <p className="text-xs text-slate-900 dark:text-cyan-100 text-center md:text-left md:flex-1 font-medium">
-            © {new Date().getFullYear()} Maths Learning Academy. All rights reserved.
+          <p className="text-xs text-slate-800 text-center md:text-left md:flex-1 font-medium">
+            © {new Date().getFullYear()} Maths Learning Academy • Visdom Waves. All rights reserved.
           </p>
 
           {/* Mathematics Slogan Centerpiece */}
           <div className="flex items-center gap-2 select-none md:flex-1 justify-center">
             {/* Left Decorative Line */}
             <div className="flex items-center">
-              <span className="text-cyan-700 dark:text-cyan-400 font-mono font-bold text-sm sm:text-base mr-1.5">∑</span>
-              <div className="h-[1.5px] w-8 sm:w-16 bg-cyan-700 dark:bg-cyan-400" />
+              <span className="text-amber-800 font-mono font-bold text-xs sm:text-sm mr-1.5">∑</span>
+              <div className="h-[1.5px] w-6 sm:w-12 bg-amber-500" />
             </div>
 
             {/* Maths Slogan */}
-            <span className="text-xs sm:text-sm md:text-base font-extrabold text-cyan-800 dark:text-cyan-300 tracking-wider whitespace-nowrap px-1 font-sans">
+            <span className="text-xs sm:text-sm font-semibold text-slate-900 tracking-wider whitespace-nowrap px-1 font-sans">
               Pure Understanding • Proven Mastery
             </span>
 
             {/* Right Decorative Line */}
             <div className="flex items-center">
-              <div className="h-[1.5px] w-8 sm:w-16 bg-cyan-700 dark:bg-cyan-400" />
-              <span className="text-cyan-700 dark:text-cyan-400 font-mono font-bold text-sm sm:text-base ml-1.5">∞</span>
+              <div className="h-[1.5px] w-6 sm:w-12 bg-amber-500" />
+              <span className="text-amber-800 font-mono font-bold text-xs sm:text-sm ml-1.5">∞</span>
             </div>
           </div>
 
           {/* Quick Legal Links */}
-          <div className="flex gap-3 text-xs text-slate-900 dark:text-cyan-100 md:flex-1 justify-center md:justify-end font-semibold">
-            <a href="/aboutus" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+          <div className="flex gap-2.5 text-xs text-slate-800 md:flex-1 justify-center md:justify-end font-semibold">
+            <a href="/aboutus" className="hover:text-blue-800 transition-colors">
               About Us
             </a>
             <span>•</span>
-            <a href="mailto:info@visdomwaves.com" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+            <a href="mailto:info@visdomwaves.com" className="hover:text-blue-800 transition-colors">
               Contact Us
             </a>
             <span>•</span>
-            <a href="#privacy" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+            <a href="#privacy" className="hover:text-blue-800 transition-colors">
               Privacy Policy
             </a>
             <span>•</span>
-            <a href="#terms" className="hover:text-cyan-700 dark:hover:text-cyan-300 transition-colors">
+            <a href="#terms" className="hover:text-blue-800 transition-colors">
               Terms
             </a>
           </div>
@@ -286,7 +282,7 @@ export default function Footer({ onOpenBooking }) {
         <button
           onClick={scrollToTop}
           aria-label="Back to top"
-          className="fixed bottom-6 right-6 z-50 p-2 rounded-full bg-white dark:bg-slate-800 shadow-xl border border-slate-200 dark:border-slate-700 text-cyan-600 dark:text-cyan-400 hover:text-white hover:bg-cyan-600 transition-all duration-200 flex items-center justify-center focus:outline-none cursor-pointer group"
+          className="fixed bottom-6 right-6 z-50 p-2 rounded-full bg-white shadow-xl border border-amber-300 text-amber-700 hover:text-white hover:bg-amber-600 transition-all duration-200 flex items-center justify-center focus:outline-none cursor-pointer group"
         >
           <svg className="absolute w-12 h-12 transform -rotate-90 pointer-events-none">
             <circle
@@ -298,7 +294,7 @@ export default function Footer({ onOpenBooking }) {
               fill="transparent"
               strokeDasharray={circumference}
               strokeDashoffset={strokeDashoffset}
-              className="text-cyan-500 transition-all duration-75"
+              className="text-amber-500 transition-all duration-75"
             />
           </svg>
           <div className="h-8 w-8 flex items-center justify-center z-10">
@@ -310,7 +306,3 @@ export default function Footer({ onOpenBooking }) {
     </footer>
   );
 }
-
-
-
-
