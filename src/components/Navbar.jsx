@@ -123,7 +123,22 @@ export default function Navbar({
       href: "/aboutus",
     },
     {
+      name: "Intermediate",
+      href: "/demo#courses",
+      dropdownHeader: "Intermediate Subjects",
+      dropdown: [
+        { name: "Mathematics", desc: "MPC Stream • Algebra & Calculus", href: "/maths" },
+        { name: "Physics", desc: "MPC / BiPC • Mechanics & Modern Physics", href: "/physics" },
+        { name: "Chemistry", desc: "MPC / BiPC • Organic & Inorganic", href: "/chemistry" },
+        { name: "Botany", desc: "BiPC Stream • Plant Diversity & Genetics", href: "/botany" },
+        { name: "Zoology", desc: "BiPC Stream • Animal Physiology", href: "/zoology" },
+        { name: "English", desc: "Common Core • Grammar & Comprehension", href: "/english" },
+        { name: "All Intermediate Subjects", desc: "Explore Complete AP & TS Syllabus", href: "/demo#courses" },
+      ],
+    },
+    {
       name: "Languages",
+      dropdownHeader: "Select Language",
       dropdown: [
         { name: "English", desc: "Master Intermediate in English Medium", href: "/demo?lang=en" },
         { name: "Telugu (తెలుగు)", desc: "తెలుగు మాధ్యమంలో సులభమైన వివరణలు", href: "/demo?lang=te" },
@@ -153,9 +168,9 @@ export default function Navbar({
 
   return (
     <>
-      {/* Main Sticky Navbar - 100% Solid Opaque Background with Thin Black Line */}
+      {/* Main Sticky Navbar - Light Yellow Background with Light Yellow Bottom Line */}
       <header
-        className="sticky top-0 z-50 border-b border-black dark:border-black bg-white dark:bg-[#030712] shadow-xs transform-gpu will-change-transform"
+        className="sticky top-0 z-50 border-b-2 border-amber-300 dark:border-amber-300 bg-[#FEF9C3] dark:bg-[#FEF08A] text-slate-900 shadow-xs transform-gpu will-change-transform"
       >
         <div className="w-full px-2.5 sm:px-6 lg:px-8 relative z-10 flex items-center justify-between gap-2 sm:gap-4 h-[72px] sm:h-[82px] md:h-[86px]">
           {/* Left: Visdom Waves Brand Logo */}
@@ -181,7 +196,7 @@ export default function Navbar({
                 >
                   {link.dropdown ? (
                     <button
-                      className="flex items-center gap-1 px-3.5 py-2 text-[14px] font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors tracking-tight rounded-lg hover:bg-slate-100/80 dark:hover:bg-slate-800/60 cursor-pointer"
+                      className="flex items-center gap-1 px-3.5 py-2 text-[14px] font-semibold text-slate-800 hover:text-blue-700 transition-colors tracking-tight rounded-lg hover:bg-yellow-200/80 cursor-pointer"
                       onClick={() =>
                         setActiveDropdown(activeDropdown === idx ? null : idx)
                       }
@@ -189,7 +204,7 @@ export default function Navbar({
                       <span>{link.name}</span>
                       <ChevronDown
                         size={15}
-                        className={`transition-transform duration-200 text-slate-500 dark:text-slate-400 ${activeDropdown === idx ? "rotate-180 text-blue-600 dark:text-cyan-400" : ""}`}
+                        className={`transition-transform duration-200 text-slate-700 ${activeDropdown === idx ? "rotate-180 text-blue-700" : ""}`}
                       />
                     </button>
                   ) : (
@@ -198,8 +213,8 @@ export default function Navbar({
                       onClick={(e) => handleLinkNavigation(e, link.href)}
                       className={`block px-3.5 py-2 text-[14px] transition-colors tracking-tight rounded-lg cursor-pointer ${
                         isLinkActive(link.href)
-                          ? "text-blue-600 dark:text-cyan-300 font-semibold bg-blue-50 dark:bg-slate-800/80 shadow-2xs"
-                          : "text-slate-700 dark:text-slate-200 font-medium hover:text-blue-600 dark:hover:text-cyan-400 hover:bg-slate-100/80 dark:hover:bg-slate-800/60"
+                          ? "text-blue-800 font-bold bg-yellow-200 shadow-2xs"
+                          : "text-slate-800 font-semibold hover:text-blue-700 hover:bg-yellow-200/80"
                       }`}
                     >
                       {link.name}
@@ -209,12 +224,12 @@ export default function Navbar({
                   {/* Desktop Dropdown Popover */}
                   {link.dropdown && activeDropdown === idx && (
                     <div
-                      className="absolute top-full left-0 mt-1.5 w-72 rounded-2xl bg-white dark:bg-[#090d16] border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-96 overflow-y-auto"
+                      className="absolute top-full left-0 mt-1.5 w-72 rounded-2xl bg-[#FEFCE8] border border-amber-300 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-96 overflow-y-auto"
                       onMouseEnter={() => handleDropdownEnter(idx)}
                       onMouseLeave={handleDropdownLeave}
                     >
-                      <div className="px-3.5 py-1.5 border-b border-slate-100 dark:border-slate-800 text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sticky top-0 bg-white/95 dark:bg-[#090d16]/95 backdrop-blur-xs">
-                        Select Language
+                      <div className="px-3.5 py-1.5 border-b border-amber-200 text-[10px] font-bold text-amber-900 uppercase tracking-wider sticky top-0 bg-[#FEFCE8]/95 backdrop-blur-xs">
+                        {link.dropdownHeader || "Select Option"}
                       </div>
                       {link.dropdown.map((sub, sIdx) => (
                         <a
@@ -252,12 +267,12 @@ export default function Navbar({
                 placeholder="Search calculus, algebra..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs bg-white dark:bg-slate-950 border border-slate-400 dark:border-cyan-700 rounded-full py-2 pl-3.5 pr-8 text-slate-950 dark:text-white placeholder-slate-600 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-600 shadow-xs transition-all font-semibold"
+                className="w-full text-xs bg-white border border-amber-300/90 rounded-full py-2 pl-3.5 pr-8 text-slate-950 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xs transition-all font-semibold"
               />
               <button
                 type="submit"
                 aria-label="Search"
-                className="absolute right-2.5 text-slate-800 hover:text-cyan-900 dark:text-slate-300 dark:hover:text-cyan-400 cursor-pointer"
+                className="absolute right-2.5 text-slate-700 hover:text-slate-950 cursor-pointer"
               >
                 <Search size={14} />
               </button>
@@ -374,7 +389,7 @@ export default function Navbar({
 
       {/* Mobile Slide-Down Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[auto] z-40 bg-white dark:bg-[#030712] border-b border-slate-200 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100vh-100px)] py-4 px-4 animate-in slide-in-from-top duration-200">
+        <div className="lg:hidden fixed inset-x-0 top-[auto] z-40 bg-[#FEF9C3] dark:bg-[#FEF08A] text-slate-900 border-b-2 border-amber-300 dark:border-amber-300 shadow-2xl overflow-y-auto max-h-[calc(100vh-100px)] py-4 px-4 animate-in slide-in-from-top duration-200">
           {/* Mobile Search */}
           <form
             onSubmit={handleSearchSubmit}
@@ -385,7 +400,7 @@ export default function Navbar({
               placeholder="Search curriculum, labs, lessons..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 pl-3.5 pr-9 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+              className="w-full text-xs bg-white border border-amber-300 rounded-xl py-2.5 pl-3.5 pr-9 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
             />
             <button
               type="submit"

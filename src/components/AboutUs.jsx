@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
-  Sparkles, 
   ChevronLeft, 
   ChevronRight, 
   ExternalLink, 
@@ -10,28 +9,28 @@ import {
   GraduationCap, 
   Compass, 
   CheckCircle2, 
-  ArrowRight, 
   UserCheck, 
-  Search, 
   Layers, 
-  Eye, 
-  Briefcase,
-  X
+  Briefcase 
 } from 'lucide-react';
+
+import SupportersSlider from './SupportersSlider';
+
+const HERO_BG_IMAGE = '/about-hero-bg.png';
+const CARD_BG_IMAGE = '/Sunlit Sea Turtle Among Coral.png';
 
 const LEADERS = [
   {
     id: 'dr-srinivas-sivarathri',
     role: 'Founder & Managing Director',
     name: 'Dr. Srinivas Sivarathri',
+    image: '/leaders/srinivas.png',
     tagline: 'Seasoned technology leader and academician with 27+ years of experience in AI, digital transformation, and scalable enterprise solutions.',
     bio: 'Dr. Srinivas Sivarathri is a seasoned technology leader, academician, and strategist with over 27 years of combined experience in IT development, higher education, and global project leadership. His visionary guidance bridges state-of-the-art technological advancement with pedagogical excellence, spearheading MyMarks and Visdom Waves toward redefining modern education.',
     link: 'https://www.visdomwaves.com/leadership-team/dr-srinivas-sivarathri',
     initials: 'SS',
     category: 'Leadership',
     icon: Cpu,
-    accentGradient: 'from-blue-600 via-indigo-600 to-cyan-500',
-    glowColor: 'rgba(59, 130, 246, 0.25)',
     tags: [
       '27+ Years Experience',
       'Artificial Intelligence',
@@ -49,14 +48,13 @@ const LEADERS = [
     id: 'gopi-chand-vempati',
     role: 'Head of Technology & Strategy',
     name: 'Gopi Chand Vempati',
+    image: '/leaders/gopi.webp',
     tagline: 'Seasoned technology leader and entrepreneur with 16+ years of experience in building scalable, mission-critical digital platforms and driving innovation-led growth.',
     bio: 'Gopi Chand Vempati is a seasoned technology leader and entrepreneur with over 16 years of hands-on experience in building scalable, mission-critical digital products and leading technology strategy for high-impact organizations. He architects high-throughput infrastructure and oversees robust technological execution across all learning platforms.',
     link: 'https://www.visdomwaves.com/leadership-team/gopi-chand-vempati',
     initials: 'GV',
     category: 'Technology',
     icon: Compass,
-    accentGradient: 'from-cyan-500 via-teal-600 to-emerald-500',
-    glowColor: 'rgba(20, 184, 166, 0.25)',
     tags: [
       '16+ Years Experience',
       'Platform Architecture',
@@ -74,14 +72,13 @@ const LEADERS = [
     id: 'vishwanath-chinthakindi',
     role: 'Head of Cyber Security & Quality Assurance',
     name: 'Vishwanath Chinthakindi',
+    image: '/leaders/vishwanath.webp',
     tagline: 'Cybersecurity leader and quality evangelist with deep expertise in secure architecture, risk management, and compliance.',
     bio: 'Vishwanath Chinthakindi is a seasoned cybersecurity leader and the Founder & CEO of Nivi Cyber Solutions, with a strong blend of industry, consulting, and training experience. He spent five years with IBM as a Service Delivery Specialist, where he built a solid foundation in enterprise security operations, service excellence, and risk management.',
     link: 'https://www.visdomwaves.com/leadership-team/vishwanath-chinthakindi',
     initials: 'VC',
     category: 'Cyber Security',
     icon: ShieldCheck,
-    accentGradient: 'from-indigo-600 via-blue-600 to-sky-500',
-    glowColor: 'rgba(99, 102, 241, 0.25)',
     tags: [
       'Founder & CEO, Nivi Cyber',
       'Ex-IBM Service Delivery',
@@ -99,14 +96,13 @@ const LEADERS = [
     id: 'prof-s-ramachandram',
     role: 'Head of Advisory Board',
     name: 'Prof. S. Ramachandram',
+    image: '/leaders/ramachandram.webp',
     tagline: 'Eminent academic leader and computer science expert with decades of experience in higher education.',
     bio: 'Professor S. Ramachandram is a highly respected academic leader with over three decades of experience in teaching, research, and university administration. As a senior faculty member and former Vice-Chancellor of Osmania University, he has played a pivotal role in shaping academic programs, mentoring students, and advancing research in emerging technology domains.',
     link: 'https://www.visdomwaves.com/leadership-team/prof-s-ramachandram',
     initials: 'SR',
     category: 'Advisory Board',
     icon: GraduationCap,
-    accentGradient: 'from-amber-500 via-orange-600 to-rose-600',
-    glowColor: 'rgba(245, 158, 11, 0.25)',
     tags: [
       '30+ Years Academic Leadership',
       'Former Vice-Chancellor, OU',
@@ -124,14 +120,13 @@ const LEADERS = [
     id: 'mr-gedela-srinivasa-rao',
     role: 'Advisor – Academic Excellence',
     name: 'Mr. Gedela Srinivasa Rao',
+    image: '/leaders/gedela.png',
     tagline: 'Popularly known in the student and parent community as MSR Sir (Mathematics Srinivasa Rao), a highly respected academic leader, mathematics mentor, and strategic education expert with nearly two decades of distinguished experience in competitive examination training.',
     bio: 'Gedela Srinivasa Rao, popularly known in the student and parent community as MSR Sir (Mathematics Srinivasa Rao), is a highly respected academic leader, mathematics mentor, and strategic education expert with nearly two decades of distinguished experience in competitive examination training, particularly for JEE Main and JEE Advanced. His mastery in breaking down complex concepts has guided thousands of students to top ranks.',
     link: 'https://www.visdomwaves.com/leadership-team/mr-gedela-srinivasa-rao',
     initials: 'GR',
     category: 'Academic Excellence',
     icon: Award,
-    accentGradient: 'from-emerald-600 via-teal-600 to-cyan-600',
-    glowColor: 'rgba(16, 185, 129, 0.25)',
     tags: [
       'MSR Sir (Maths Mentor)',
       '20+ Years Experience',
@@ -149,9 +144,7 @@ const LEADERS = [
 
 export default function AboutUs() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [viewMode, setViewMode] = useState('one-by-one'); // 'one-by-one' or 'all'
-  const [isNavModalOpen, setIsNavModalOpen] = useState(false);
-  const [navSearch, setNavSearch] = useState('');
+  const [viewMode, setViewMode] = useState('all'); // Default to View All
   const sectionRef = useRef(null);
 
   const currentLeader = LEADERS[activeIndex];
@@ -164,463 +157,385 @@ export default function AboutUs() {
     setActiveIndex((prev) => (prev - 1 + LEADERS.length) % LEADERS.length);
   };
 
-  const handleSelectLeader = (index) => {
-    setActiveIndex(index);
-    if (viewMode === 'all') {
-      const el = document.getElementById(`leader-card-${index}`);
-      if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }
-  };
-
-  // Filtered leaders for navigator modal
-  const filteredLeaders = LEADERS.filter(
-    (l) =>
-      l.name.toLowerCase().includes(navSearch.toLowerCase()) ||
-      l.role.toLowerCase().includes(navSearch.toLowerCase()) ||
-      l.category.toLowerCase().includes(navSearch.toLowerCase()) ||
-      l.tags.some((t) => t.toLowerCase().includes(navSearch.toLowerCase()))
-  );
-
   return (
     <section 
       id="about" 
       ref={sectionRef} 
-      className="relative py-20 sm:py-28 bg-[#F4F7FC] dark:bg-[#070B14] text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300 border-t border-slate-200 dark:border-slate-800/80"
+      className="relative min-h-screen bg-[#EBF0F7] dark:bg-[#070B14] text-slate-900 dark:text-slate-100 overflow-hidden transition-colors duration-300"
     >
-      {/* Decorative Atmosphere Glows */}
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-r from-blue-400/15 via-cyan-400/20 to-indigo-400/15 dark:from-blue-600/10 dark:via-cyan-600/10 dark:to-indigo-600/10 blur-3xl pointer-events-none -z-10 rounded-full" />
-      <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-300/15 dark:bg-cyan-500/10 blur-3xl pointer-events-none -z-10 rounded-full" />
-      <div className="absolute top-1/3 left-10 w-96 h-96 bg-indigo-300/15 dark:bg-indigo-600/10 blur-3xl pointer-events-none -z-10 rounded-full" />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+      
+      {/* ============================================================ */}
+      {/* HERO SECTION IN ABOUT US WITH LIGHT BLUE BACKGROUND IMAGE    */}
+      {/* ============================================================ */}
+      <div className="relative w-full overflow-hidden min-h-[340px] sm:min-h-[400px] flex items-center justify-center py-12 sm:py-16 lg:py-20 border-b border-sky-300/60 dark:border-slate-800 shadow-sm">
         
-        {/* Header Area */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+        {/* Light Blue Hero Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={HERO_BG_IMAGE} 
+            alt="About Us Leadership Hero" 
+            className="w-full h-full object-cover object-center"
+          />
+          {/* Subtle light blue gradient wash for seamless tone */}
+          <div className="absolute inset-0 bg-sky-900/10 dark:bg-slate-950/40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-sky-100/30 via-transparent to-[#EBF0F7] dark:from-transparent dark:to-[#070B14]" />
+        </div>
+
+        {/* Hero Content - Transparent Glassmorphic Container, perfectly fitted */}
+        <div className="relative z-10 w-full max-w-2xl mx-auto px-4 text-center flex flex-col items-center">
           
-          {/* Top Pill */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm mb-4">
-            <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
-            <span className="text-xs sm:text-sm font-semibold tracking-wide uppercase bg-gradient-to-r from-cyan-600 to-blue-600 dark:from-cyan-400 dark:to-blue-400 bg-clip-text text-transparent">
-              About Us • Leadership & Advisory
-            </span>
-          </div>
+          <div className="w-full bg-white/40 dark:bg-slate-900/40 backdrop-blur-md px-4 py-5 sm:px-7 sm:py-6 rounded-2xl border border-white/60 dark:border-sky-800/40 shadow-lg flex flex-col items-center">
+            
+            {/* Top Pill - Crisp, compact, balanced */}
+            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/90 border border-sky-300/80 dark:border-sky-800/80 shadow-2xs mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
+              <span className="text-[11px] sm:text-xs font-semibold tracking-wide uppercase text-sky-900 dark:text-cyan-300">
+                About Us • Leadership & Advisory
+              </span>
+            </div>
 
-          {/* Main Title */}
-          <h2 className="text-3xl sm:text-5xl font-black text-slate-950 dark:text-white tracking-tight leading-tight mb-4">
-            Guided by Visionaries, Educators & Industry Leaders
-          </h2>
+            {/* Heading - Reduced Size & Compact Length, Fits Perfectly */}
+            <h1 className="text-base sm:text-lg md:text-xl font-bold text-slate-950 dark:text-white tracking-tight leading-snug mb-2 text-center max-w-xl">
+              Guided by Visionaries, Educators & Industry Leaders
+            </h1>
 
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed font-normal">
-            Meet the distinguished pioneers powering <span className="font-semibold text-slate-900 dark:text-white">Visdom Waves</span> and <span className="font-semibold text-slate-900 dark:text-white">MyMarks</span>, bringing together 70+ cumulative years of enterprise innovation, deep academic excellence, and student mentorship.
-          </p>
+            {/* Subtitle - Reduced Length and Clean Weight */}
+            <p className="text-[11px] sm:text-xs text-slate-800 dark:text-slate-200 font-normal leading-relaxed max-w-lg mx-auto mb-4 text-center">
+              Meet the distinguished pioneers powering Visdom Waves and MyMarks, uniting 70+ years of enterprise innovation, academic excellence, and student mentorship.
+            </p>
 
-          {/* Prompt Highlight: "Need help navigating? Click me! ✨" */}
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={() => setIsNavModalOpen(true)}
-              className="group relative inline-flex items-center gap-2.5 px-6 py-3 rounded-2xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-semibold text-sm sm:text-base shadow-lg shadow-cyan-500/25 dark:shadow-cyan-950/50 hover:shadow-cyan-500/40 hover:scale-[1.03] active:scale-95 transition-all duration-200 cursor-pointer border border-white/20"
-              title="Click to open interactive leadership navigator"
-            >
-              <Sparkles className="w-5 h-5 text-amber-300 animate-spin-slow group-hover:scale-125 transition-transform" />
-              <span>Need help navigating? Click me! ✨</span>
-            </button>
-
-            {/* View Mode Toggle Button */}
-            <div className="inline-flex items-center p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+            {/* View Mode Toggle: One-by-One / View All */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
               <button
                 onClick={() => setViewMode('one-by-one')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'one-by-one'
                     ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white'
                 }`}
               >
-                <UserCheck size={14} />
-                <span>One-by-One Spotlight</span>
+                <UserCheck size={13} />
+                <span>One-by-One</span>
               </button>
               <button
                 onClick={() => setViewMode('all')}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'all'
                     ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white'
                 }`}
               >
-                <Layers size={14} />
-                <span>View All (Sequential)</span>
+                <Layers size={13} />
+                <span>View All</span>
               </button>
             </div>
+
           </div>
+
         </div>
 
-        {/* Quick Person Tabs / Pagination Indicator */}
-        <div className="mb-10 max-w-4xl mx-auto">
-          <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-2.5">
-            {LEADERS.map((leader, idx) => {
-              const isSelected = activeIndex === idx;
-              const Icon = leader.icon;
-              return (
-                <button
-                  key={leader.id}
-                  onClick={() => handleSelectLeader(idx)}
-                  className={`group flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 cursor-pointer border ${
-                    isSelected
-                      ? 'bg-white dark:bg-slate-800 border-blue-500/80 dark:border-cyan-400/80 text-blue-700 dark:text-cyan-300 shadow-md shadow-blue-500/10 scale-[1.02]'
-                      : 'bg-white/70 dark:bg-slate-900/70 border-slate-200/80 dark:border-slate-800/80 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-bold ${
-                    isSelected 
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-500 text-white' 
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 group-hover:bg-blue-100 dark:group-hover:bg-slate-700'
-                  }`}>
-                    {idx + 1}
-                  </span>
-                  <span className="truncate max-w-[140px] sm:max-w-none">{leader.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      </div>
 
-        {/* VIEW MODE 1: ONE-BY-ONE SPOTLIGHT */}
-        {viewMode === 'one-by-one' && (
-          <div className="max-w-4xl mx-auto">
-            <div className="relative rounded-3xl bg-white dark:bg-[#0c1222] border border-slate-200/90 dark:border-slate-800/90 shadow-2xl overflow-hidden transition-all duration-300">
-              
-              {/* Top Accent Gradient Bar */}
-              <div className={`h-2.5 w-full bg-gradient-to-r ${currentLeader.accentGradient}`} />
+      {/* ============================================================ */}
+      {/* LEADERSHIP CARDS (COMPACT SIZE, CRISP TEXT, REAL PHOTOS)      */}
+      {/* ============================================================ */}
+      <div className="py-10 sm:py-14 lg:py-16 px-3 sm:px-6 relative">
+        <div className="max-w-4xl mx-auto">
+          
+          {/* DEFAULT: VIEW ALL CARDS */}
+          {viewMode === 'all' && (
+            <div className="space-y-6">
+              {LEADERS.map((leader, idx) => {
+                const Icon = leader.icon;
+                return (
+                  <React.Fragment key={leader.id}>
+                    <div
+                      id={`leader-card-${idx}`}
+                      className="relative rounded-2xl border border-white/60 dark:border-cyan-400/40 shadow-xl overflow-hidden transition-all duration-300 hover:border-cyan-300 group"
+                    >
+                      {/* Background Image: Crisp, Full-Color Sea Turtle & Coral */}
+                      <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl z-0">
+                        <img 
+                          src={CARD_BG_IMAGE} 
+                          alt="Sunlit Sea Turtle Among Coral" 
+                          className="w-full h-full object-cover object-center filter brightness-100 contrast-[1.05] saturate-[1.1] transition-transform duration-700 group-hover:scale-102"
+                        />
+                      </div>
 
-              <div className="p-6 sm:p-10 lg:p-12">
+                      {/* Card Content Layer - Sleek, compact, transparent glass */}
+                      <div className="relative z-10 p-4 sm:p-6 lg:p-7">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
+                          
+                          {/* Executive Portrait Photo from visdomwaves.com */}
+                          <div className="shrink-0">
+                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-xl bg-slate-900 flex items-center justify-center">
+                              <img 
+                                src={leader.image} 
+                                alt={leader.name} 
+                                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Leader Info */}
+                          <div className="grow w-full">
+                            
+                            {/* Role Chip */}
+                            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 bg-slate-950/80 text-cyan-200 border border-cyan-400/50 shadow-sm">
+                              <Icon size={13} className="shrink-0 text-cyan-300" />
+                              <span>{leader.role}</span>
+                            </div>
+
+                            {/* Full Name - Sharp, Crisp, Non-blurry */}
+                            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1.5">
+                              {leader.name}
+                            </h2>
+
+                            {/* Tagline - High Contrast, 100% Clear & Legible Container */}
+                            <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-amber-300/40 shadow-xs mb-3 text-left">
+                              <p className="text-xs sm:text-[13px] font-medium text-amber-300 leading-snug">
+                                {leader.tagline}
+                              </p>
+                            </div>
+
+                            {/* Biography Box - Transparent Glass */}
+                            <div className="p-3.5 sm:p-4 rounded-xl bg-black/35 border border-white/20 shadow-md mb-3 text-left">
+                              <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                                <Briefcase size={12} />
+                                <span>Leadership Profile & Background</span>
+                              </h3>
+                              <p className="text-xs sm:text-[13px] text-slate-100 font-normal leading-relaxed">
+                                {leader.bio}
+                              </p>
+                            </div>
+
+                            {/* Strategic Impact Box - Transparent Glass */}
+                            <div className="mb-3 text-left">
+                              <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                                <Award size={12} />
+                                <span>Strategic Impact</span>
+                              </h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                {leader.highlights.map((item, hIdx) => (
+                                  <div
+                                    key={hIdx}
+                                    className="p-2.5 rounded-lg bg-black/35 border border-white/20 flex items-start gap-1.5 shadow-xs text-white"
+                                  >
+                                    <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                                    <span className="text-[11px] sm:text-xs font-medium leading-snug text-slate-100">
+                                      {item}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Tags - Compact chips */}
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mb-4">
+                              {leader.tags.map((tag, tIdx) => (
+                                <span
+                                  key={tIdx}
+                                  className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-black/35 text-cyan-200 border border-cyan-400/30 shadow-2xs"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* Read More Link */}
+                            <div className="pt-1 flex justify-center sm:justify-start">
+                              <a
+                                href={leader.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-bold text-xs shadow-md transition-all hover:scale-105 active:scale-95"
+                              >
+                                <span>Read more about {leader.name}</span>
+                                <ExternalLink size={13} />
+                              </a>
+                            </div>
+
+                          </div>
+
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* High-Visibility, Premium Artistic Divider Line under each card */}
+                    {idx < LEADERS.length - 1 && (
+                      <div className="py-9 flex items-center justify-center">
+                        <div className="w-full max-w-3xl flex items-center justify-center gap-4 px-4">
+                          {/* Left Glowing Beam */}
+                          <div className="h-[3px] grow rounded-full bg-gradient-to-r from-transparent via-blue-600 to-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+                          
+                          {/* Center Elegant Emblem Jewel */}
+                          <div className="flex items-center gap-2 shrink-0 px-4 py-1.5 rounded-full bg-white dark:bg-slate-900 border-2 border-cyan-400 dark:border-cyan-400 shadow-xl shadow-cyan-500/25">
+                            <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-cyan-400 shadow-sm" />
+                            <span className="w-3.5 h-3.5 rotate-45 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-xs shadow-md" />
+                            <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-cyan-400 shadow-sm" />
+                          </div>
+                          
+                          {/* Right Glowing Beam */}
+                          <div className="h-[3px] grow rounded-full bg-gradient-to-l from-transparent via-blue-600 to-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+                        </div>
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          )}
+
+          {/* ONE-BY-ONE SPOTLIGHT MODE */}
+          {viewMode === 'one-by-one' && (
+            <div className="max-w-3xl mx-auto">
+              <div className="relative rounded-2xl border border-white/60 dark:border-cyan-400/40 shadow-xl overflow-hidden transition-all duration-300">
                 
-                {/* Person Header with Monogram / Avatar and Info */}
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-6 sm:gap-8 mb-8 text-center md:text-left">
+                {/* Background Image: Crisp, Full-Color Sea Turtle & Coral */}
+                <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl z-0">
+                  <img 
+                    src={CARD_BG_IMAGE} 
+                    alt="Sunlit Sea Turtle Among Coral" 
+                    className="w-full h-full object-cover object-center filter brightness-100 contrast-[1.05] saturate-[1.1]"
+                  />
+                </div>
+
+                {/* Card Content Layer - Sleek, compact */}
+                <div className="relative z-10 p-5 sm:p-7">
                   
-                  {/* Large Stylized Monogram Badge */}
-                  <div className="relative shrink-0">
-                    <div className={`w-28 h-28 sm:w-36 sm:h-36 rounded-3xl bg-gradient-to-br ${currentLeader.accentGradient} p-1 shadow-xl flex items-center justify-center text-white relative group`}>
-                      <div className="w-full h-full rounded-[22px] bg-slate-950/85 backdrop-blur-xs flex flex-col items-center justify-center p-3 text-center transition-transform duration-300 group-hover:scale-105">
-                        <span className="text-3xl sm:text-4xl font-black tracking-tight text-white font-sans">
-                          {currentLeader.initials}
-                        </span>
-                        <span className="text-[10px] sm:text-xs font-semibold text-cyan-300 uppercase tracking-widest mt-1">
-                          {currentLeader.category}
-                        </span>
+                  {/* Person Header */}
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-5 text-center sm:text-left">
+                    
+                    {/* Executive Portrait Photo */}
+                    <div className="shrink-0">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-xl bg-slate-900 flex items-center justify-center">
+                        <img 
+                          src={currentLeader.image} 
+                          alt={currentLeader.name} 
+                          className="w-full h-full object-cover object-top"
+                        />
                       </div>
                     </div>
-                    {/* Floating verified badge */}
-                    <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-slate-950">
-                      <CheckCircle2 size={18} />
+
+                    {/* Details */}
+                    <div className="grow w-full">
+                      {/* Role Chip */}
+                      <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 bg-slate-950/80 text-cyan-200 border border-cyan-400/50 shadow-sm">
+                        <currentLeader.icon size={13} className="shrink-0 text-cyan-300" />
+                        <span>{currentLeader.role}</span>
+                      </div>
+
+                      {/* Name */}
+                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight mb-1.5">
+                        {currentLeader.name}
+                      </h2>
+
+                      {/* Tagline - High Contrast, 100% Clear & Legible Container */}
+                      <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-amber-300/40 shadow-xs mb-3 text-left">
+                        <p className="text-xs sm:text-[13px] font-medium text-amber-300 leading-snug">
+                          {currentLeader.tagline}
+                        </p>
+                      </div>
+
+                      {/* Tags */}
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                        {currentLeader.tags.map((tag, tIdx) => (
+                          <span
+                            key={tIdx}
+                            className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-black/35 text-cyan-200 border border-cyan-400/30 shadow-2xs"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Main Details */}
-                  <div className="grow">
-                    {/* Role Chip */}
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 text-blue-700 dark:text-cyan-300 text-xs font-bold uppercase tracking-wider mb-2">
-                      <currentLeader.icon size={14} className="shrink-0" />
-                      <span>{currentLeader.role}</span>
-                    </div>
-
-                    {/* Name */}
-                    <h3 className="text-2xl sm:text-4xl font-extrabold text-slate-950 dark:text-white tracking-tight mb-2">
-                      {currentLeader.name}
+                  {/* Biography Box */}
+                  <div className="p-3.5 sm:p-4 rounded-xl bg-black/35 border border-white/20 shadow-md mb-3.5 text-left">
+                    <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                      <Briefcase size={12} />
+                      <span>Leadership Profile & Background</span>
                     </h3>
-
-                    {/* Tagline / Experience Summary */}
-                    <p className="text-sm sm:text-base font-semibold text-cyan-700 dark:text-cyan-400 leading-snug mb-4 max-w-2xl">
-                      {currentLeader.tagline}
+                    <p className="text-xs sm:text-[13px] text-slate-100 font-normal leading-relaxed">
+                      {currentLeader.bio}
                     </p>
+                  </div>
 
-                    {/* Tags */}
-                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 sm:gap-2">
-                      {currentLeader.tags.map((tag, tIdx) => (
-                        <span
-                          key={tIdx}
-                          className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 text-xs font-medium border border-slate-200/60 dark:border-slate-700/60"
+                  {/* Strategic Impact */}
+                  <div className="mb-4 text-left">
+                    <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <Award size={12} />
+                      <span>Strategic Impact</span>
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {currentLeader.highlights.map((item, hIdx) => (
+                        <div
+                          key={hIdx}
+                          className="p-2.5 rounded-lg bg-black/35 border border-white/20 flex items-start gap-1.5 shadow-xs text-white"
                         >
-                          {tag}
-                        </span>
+                          <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="text-[11px] sm:text-xs font-medium leading-snug text-slate-100">
+                            {item}
+                          </span>
+                        </div>
                       ))}
                     </div>
                   </div>
-                </div>
 
-                {/* Detailed Biography Box */}
-                <div className="p-5 sm:p-7 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 mb-8">
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <Briefcase size={14} />
-                    <span>Leadership Profile & Background</span>
-                  </h4>
-                  <p className="text-sm sm:text-base text-slate-700 dark:text-slate-200 leading-relaxed font-normal">
-                    {currentLeader.bio}
-                  </p>
-                </div>
-
-                {/* Key Highlights Bullet points */}
-                <div className="mb-8">
-                  <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-3.5 flex items-center gap-2">
-                    <Award size={14} />
-                    <span>Strategic Impact</span>
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {currentLeader.highlights.map((item, hIdx) => (
-                      <div
-                        key={hIdx}
-                        className="p-3.5 rounded-xl bg-white dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-800 flex items-start gap-2.5"
-                      >
-                        <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
-                        <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-snug">
-                          {item}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bottom Bar: Read More Link & Previous/Next Controls */}
-                <div className="pt-6 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  {/* Read More Link */}
-                  <a
-                    href={currentLeader.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-950 font-semibold text-xs sm:text-sm transition-all hover:scale-[1.02] active:scale-95 shadow-md"
-                  >
-                    <span>Read more about {currentLeader.name}</span>
-                    <ExternalLink size={15} />
-                  </a>
-
-                  {/* Navigation Steps (Previous / Next) */}
-                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                      Person {activeIndex + 1} of {LEADERS.length}
-                    </span>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={handlePrev}
-                        className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white transition-all cursor-pointer hover:scale-105 active:scale-95"
-                        title="Previous Leader"
-                        aria-label="Previous Leader"
-                      >
-                        <ChevronLeft size={20} />
-                      </button>
-                      <button
-                        onClick={handleNext}
-                        className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-md shadow-blue-500/20"
-                        title="Next Leader"
-                        aria-label="Next Leader"
-                      >
-                        <ChevronRight size={20} />
-                      </button>
-                    </div>
-                  </div>
-
-                </div>
-
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* VIEW MODE 2: ALL PROFILES ONE-BY-ONE VERTICAL STACK */}
-        {viewMode === 'all' && (
-          <div className="space-y-8 max-w-4xl mx-auto">
-            {LEADERS.map((leader, idx) => {
-              const Icon = leader.icon;
-              return (
-                <div
-                  key={leader.id}
-                  id={`leader-card-${idx}`}
-                  className="rounded-3xl bg-white dark:bg-[#0c1222] border border-slate-200/90 dark:border-slate-800/90 shadow-xl overflow-hidden hover:border-blue-400 dark:hover:border-cyan-500/60 transition-all duration-300"
-                >
-                  <div className={`h-2 w-full bg-gradient-to-r ${leader.accentGradient}`} />
-
-                  <div className="p-6 sm:p-9">
-                    <div className="flex flex-col sm:flex-row items-start gap-6">
-                      
-                      {/* Monogram Badge */}
-                      <div className="shrink-0">
-                        <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br ${leader.accentGradient} p-1 shadow-md flex items-center justify-center text-white`}>
-                          <div className="w-full h-full rounded-[14px] bg-slate-950/85 flex flex-col items-center justify-center p-2 text-center">
-                            <span className="text-xl sm:text-2xl font-black text-white font-sans">
-                              {leader.initials}
-                            </span>
-                            <span className="text-[9px] font-semibold text-cyan-300 uppercase tracking-widest mt-0.5">
-                              #{idx + 1}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="grow">
-                        {/* Role Chip */}
-                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800/60 text-blue-700 dark:text-cyan-300 text-xs font-bold uppercase tracking-wider mb-2">
-                          <Icon size={14} className="shrink-0" />
-                          <span>{leader.role}</span>
-                        </div>
-
-                        {/* Name */}
-                        <h3 className="text-xl sm:text-3xl font-extrabold text-slate-950 dark:text-white tracking-tight mb-2">
-                          {leader.name}
-                        </h3>
-
-                        {/* Tagline */}
-                        <p className="text-sm font-semibold text-cyan-700 dark:text-cyan-400 leading-snug mb-3">
-                          {leader.tagline}
-                        </p>
-
-                        {/* Bio */}
-                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
-                          {leader.bio}
-                        </p>
-
-                        {/* Tags */}
-                        <div className="flex flex-wrap items-center gap-1.5 mb-5">
-                          {leader.tags.map((tag, tIdx) => (
-                            <span
-                              key={tIdx}
-                              className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-medium"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-
-                        {/* Read More Link */}
-                        <a
-                          href={leader.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-blue-600 dark:text-cyan-400 hover:text-blue-700 dark:hover:text-cyan-300 transition-colors group"
-                        >
-                          <span>Read more about {leader.name}</span>
-                          <ExternalLink size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                        </a>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* INTERACTIVE NAVIGATION MODAL ("Need help navigating? Click me! ✨") */}
-        {isNavModalOpen && (
-          <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
-            onClick={() => setIsNavModalOpen(false)}
-          >
-            <div 
-              className="relative w-full max-w-2xl rounded-3xl bg-white dark:bg-[#0c1222] border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 overflow-hidden animate-in zoom-in-95 duration-200"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Close Button */}
-              <button
-                onClick={() => setIsNavModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors cursor-pointer"
-                aria-label="Close Navigator"
-              >
-                <X size={18} />
-              </button>
-
-              {/* Header */}
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md">
-                  <Sparkles size={20} className="animate-spin-slow" />
-                </div>
-                <div>
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                    Leadership Navigation Assistant
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Jump directly to any leader, advisor, or topic in one click
-                  </p>
-                </div>
-              </div>
-
-              {/* Search Bar */}
-              <div className="relative mb-5">
-                <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  placeholder="Search by name, role, or specialty (e.g., AI, JEE, IBM, Osmania)..."
-                  value={navSearch}
-                  onChange={(e) => setNavSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
-                  autoFocus
-                />
-              </div>
-
-              {/* List of Leaders */}
-              <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
-                {filteredLeaders.map((leader) => {
-                  const index = LEADERS.findIndex((l) => l.id === leader.id);
-                  const Icon = leader.icon;
-                  return (
-                    <button
-                      key={leader.id}
-                      onClick={() => {
-                        handleSelectLeader(index);
-                        setIsNavModalOpen(false);
-                      }}
-                      className="w-full text-left p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/80 hover:bg-blue-50/70 dark:hover:bg-slate-800 border border-slate-200/70 dark:border-slate-800 hover:border-blue-300 dark:hover:border-cyan-500/50 transition-all flex items-center justify-between gap-3 group cursor-pointer"
+                  {/* Bottom Controls Bar */}
+                  <div className="pt-3 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    {/* Read More Link */}
+                    <a
+                      href={currentLeader.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-bold text-xs shadow-md transition-all hover:scale-105 active:scale-95"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${leader.accentGradient} flex items-center justify-center text-white font-bold text-xs shrink-0 shadow-xs`}>
-                          {leader.initials}
-                        </div>
-                        <div>
-                          <div className="text-xs font-semibold text-blue-600 dark:text-cyan-400 flex items-center gap-1.5">
-                            <Icon size={12} />
-                            <span>{leader.role}</span>
-                          </div>
-                          <div className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-cyan-300 transition-colors">
-                            {leader.name}
-                          </div>
-                          <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-sm">
-                            {leader.tagline}
-                          </div>
-                        </div>
+                      <span>Read more about {currentLeader.name}</span>
+                      <ExternalLink size={13} />
+                    </a>
+
+                    {/* Step Controls */}
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                      <span className="text-xs font-bold text-white">
+                        Person {activeIndex + 1} of {LEADERS.length}
+                      </span>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={handlePrev}
+                          className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white border border-white/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                          title="Previous Leader"
+                          aria-label="Previous Leader"
+                        >
+                          <ChevronLeft size={16} />
+                        </button>
+                        <button
+                          onClick={handleNext}
+                          className="p-2 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                          title="Next Leader"
+                          aria-label="Next Leader"
+                        >
+                          <ChevronRight size={16} />
+                        </button>
                       </div>
+                    </div>
 
-                      <ArrowRight size={16} className="text-slate-400 group-hover:text-blue-600 dark:group-hover:text-cyan-400 group-hover:translate-x-1 transition-all shrink-0" />
-                    </button>
-                  );
-                })}
-
-                {filteredLeaders.length === 0 && (
-                  <div className="text-center py-8 text-sm text-slate-500 dark:text-slate-400">
-                    No matching leaders found for "{navSearch}".
                   </div>
-                )}
-              </div>
 
-              {/* Modal Footer */}
-              <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                <span>Select a person to view their profile one by one</span>
-                <button
-                  onClick={() => {
-                    setViewMode('all');
-                    setIsNavModalOpen(false);
-                  }}
-                  className="text-blue-600 dark:text-cyan-400 hover:underline font-semibold cursor-pointer"
-                >
-                  Switch to View All
-                </button>
+                </div>
               </div>
-
             </div>
-          </div>
-        )}
+          )}
 
+          {/* Guiding Visionaries & Supporters Slider */}
+          <SupportersSlider />
+
+        </div>
       </div>
+
     </section>
   );
 }

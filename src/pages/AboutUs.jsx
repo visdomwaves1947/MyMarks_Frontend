@@ -7,8 +7,8 @@ export default function AboutUsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F4F7FC] dark:bg-[#070B14]">
-      {/* Standalone About Us section with one-by-one presentation and interactive navigation */}
+    <div className="min-h-screen">
+      {/* Standalone About Us section with unified full-page background */}
       <AboutUs />
     </div>
   );
