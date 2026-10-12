@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import confetti from "canvas-confetti";
+import LegalTermsModal from "../components/LegalTermsModal";
 
 const STEP_TITLES = [
   "Personal Details",
@@ -63,6 +64,10 @@ export default function AuthModal({
   const [rememberMe, setRememberMe] = useState(true);
   const [signInErrors, setSignInErrors] = useState({});
 
+  // Legal Terms & Privacy Modal State
+  const [legalModalOpen, setLegalModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState("terms"); // 'terms' | 'privacy'
+
   // Sign Up Form State
   const [formData, setFormData] = useState({
     // Step 1: Personal & Guardian Details
@@ -88,7 +93,7 @@ export default function AuthModal({
     studyMonthYear: "June, 2025",
 
     // Terms
-    termsAccepted: true,
+    termsAccepted: false,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -147,13 +152,14 @@ export default function AuthModal({
   // Generic field update handler
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    if (formErrors[field]) {
-      setFormErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[field];
-        return updated;
-      });
-    }
+    setFormErrors((prev) => {
+      const updated = { ...prev };
+      delete updated[field];
+      if (field === "termsAccepted") {
+        delete updated.terms;
+      }
+      return updated;
+    });
   };
 
   // Validation for Sign In (Login)
@@ -378,7 +384,7 @@ export default function AuthModal({
   const handleSignUpSubmit = async () => {
     if (!formData.termsAccepted) {
       setFormErrors({
-        terms: "Please agree to the terms to complete registration",
+        terms: "Please agree to the Terms of Service and Privacy Policy to complete registration.",
       });
       triggerShake();
       return;
@@ -1179,6 +1185,31 @@ export default function AuthModal({
                           Sign In
                         </button>
                       </div>
+
+                      <div className="text-center text-[10.5px] text-slate-400 pt-0.5">
+                        By continuing, you agree to our{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLegalModalTab("terms");
+                            setLegalModalOpen(true);
+                          }}
+                          className="text-[#6366f1] hover:text-[#818cf8] font-bold underline-offset-2 hover:underline cursor-pointer"
+                        >
+                          Terms of Service
+                        </button>
+                        {" "}and{" "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setLegalModalTab("privacy");
+                            setLegalModalOpen(true);
+                          }}
+                          className="text-[#6366f1] hover:text-[#818cf8] font-bold underline-offset-2 hover:underline cursor-pointer"
+                        >
+                          Privacy Policy
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1589,24 +1620,61 @@ export default function AuthModal({
                       </div>
                     </div>
 
-                    <label className="flex items-start gap-1.5 text-[11px] text-slate-300 cursor-pointer mb-3">
-                      <input
-                        type="checkbox"
-                        checked={formData.termsAccepted}
-                        onChange={(e) =>
-                          handleInputChange("termsAccepted", e.target.checked)
-                        }
-                        className="rounded accent-sky-500 w-3.5 h-3.5 mt-0.5 shrink-0"
-                      />
-                      <span>
-                        I agree to the Academy Honor Code & Academic Policies.
-                      </span>
-                    </label>
-                    {formErrors.terms && (
-                      <p className="text-rose-400 text-[10px] font-bold mb-2">
-                        {formErrors.terms}
-                      </p>
-                    )}
+                    {/* Terms of Service & Privacy Policy Agreement Checkbox */}
+                    <div className="pt-2.5 pb-1 border-t border-white/10 my-2.5">
+                      <label 
+                        htmlFor="terms-checkbox-signup"
+                        className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer select-none group"
+                      >
+                        <input
+                          id="terms-checkbox-signup"
+                          type="checkbox"
+                          checked={formData.termsAccepted}
+                          onChange={(e) =>
+                            handleInputChange("termsAccepted", e.target.checked)
+                          }
+                          className={`w-4 h-4 rounded border ${
+                            formErrors.terms
+                              ? "border-rose-400 ring-2 ring-rose-400/50"
+                              : "border-slate-400/70"
+                          } bg-white dark:bg-slate-900 text-indigo-600 focus:ring-2 focus:ring-indigo-400 cursor-pointer accent-indigo-600 transition-all shrink-0`}
+                        />
+                        <span className="font-semibold text-slate-200 text-xs sm:text-[13px] leading-snug">
+                          I agree to the{" "}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setLegalModalTab("terms");
+                              setLegalModalOpen(true);
+                            }}
+                            className="font-bold text-[#6366f1] hover:text-[#818cf8] underline-offset-2 hover:underline transition-colors cursor-pointer"
+                          >
+                            Terms of Service
+                          </button>
+                          {" "}and{" "}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setLegalModalTab("privacy");
+                              setLegalModalOpen(true);
+                            }}
+                            className="font-bold text-[#6366f1] hover:text-[#818cf8] underline-offset-2 hover:underline transition-colors cursor-pointer"
+                          >
+                            Privacy Policy
+                          </button>
+                        </span>
+                      </label>
+                      {formErrors.terms && (
+                        <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-bold mt-2 animate-fadeIn">
+                          <AlertCircle size={14} className="shrink-0" />
+                          <span>{formErrors.terms}</span>
+                        </div>
+                      )}
+                    </div>
 
                     <div className="flex items-center gap-2.5">
                       <button
@@ -1672,6 +1740,16 @@ export default function AuthModal({
       <footer className="relative z-20 w-full text-center py-3 text-xs text-slate-400 font-medium">
         © 2026 Maths Learning Academy • Empowering Future Scholars
       </footer>
+
+      {/* Interactive Legal Terms of Service & Privacy Policy Modal */}
+      <LegalTermsModal
+        isOpen={legalModalOpen}
+        onClose={() => setLegalModalOpen(false)}
+        initialTab={legalModalTab}
+        onAccept={() => {
+          handleInputChange("termsAccepted", true);
+        }}
+      />
     </div>
   );
 }

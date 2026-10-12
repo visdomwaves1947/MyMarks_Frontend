@@ -6,6 +6,7 @@ import {
   ArrowUp
 } from 'lucide-react';
 import { VisdomBrand } from './VisdomBrand';
+import LegalTermsModal from './LegalTermsModal';
 
 // Social Icon SVGs
 function FacebookIcon({ className = "h-4 w-4" }) {
@@ -43,6 +44,8 @@ function YouTubeIcon({ className = "h-4 w-4" }) {
 export default function Footer({ onOpenBooking }) {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [legalModalOpen, setLegalModalOpen] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState('terms');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -264,13 +267,27 @@ export default function Footer({ onOpenBooking }) {
               Contact Us
             </a>
             <span>•</span>
-            <a href="#privacy" className="hover:text-blue-800 transition-colors">
+            <button 
+              type="button"
+              onClick={() => {
+                setLegalModalTab('privacy');
+                setLegalModalOpen(true);
+              }}
+              className="hover:text-blue-800 transition-colors cursor-pointer"
+            >
               Privacy Policy
-            </a>
+            </button>
             <span>•</span>
-            <a href="#terms" className="hover:text-blue-800 transition-colors">
+            <button 
+              type="button"
+              onClick={() => {
+                setLegalModalTab('terms');
+                setLegalModalOpen(true);
+              }}
+              className="hover:text-blue-800 transition-colors cursor-pointer"
+            >
               Terms
-            </a>
+            </button>
           </div>
 
         </div>
@@ -303,6 +320,12 @@ export default function Footer({ onOpenBooking }) {
         </button>
       )}
 
+      {/* Interactive Legal Terms of Service & Privacy Policy Modal */}
+      <LegalTermsModal
+        isOpen={legalModalOpen}
+        onClose={() => setLegalModalOpen(false)}
+        initialTab={legalModalTab}
+      />
     </footer>
   );
 }
