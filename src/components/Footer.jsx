@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   MapPin, 
   Mail, 
   Phone, 
-  ArrowUp
+  ArrowUp,
+  Globe,
+  Sparkles,
+  BookOpen,
+  GraduationCap
 } from 'lucide-react';
 import { VisdomBrand } from './VisdomBrand';
 
@@ -40,9 +45,27 @@ function YouTubeIcon({ className = "h-4 w-4" }) {
   );
 }
 
+const SUPPORTED_LANGUAGES = [
+  { name: 'English', code: 'en' },
+  { name: 'తెలుగు (Telugu)', code: 'te' },
+  { name: 'हिन्दी (Hindi)', code: 'hi' },
+  { name: 'தமிழ் (Tamil)', code: 'ta' },
+  { name: 'ಕನ್ನಡ (Kannada)', code: 'kn' },
+  { name: 'മലയാളം (Malayalam)', code: 'ml' },
+  { name: 'मराठी (Marathi)', code: 'mr' },
+  { name: 'বাংলা (Bengali)', code: 'bn' },
+  { name: 'ગુજરાતી (Gujarati)', code: 'gu' },
+  { name: 'संस्कृतम् (Sanskrit)', code: 'sa' },
+  { name: 'اردو (Urdu)', code: 'ur' },
+  { name: 'Français (French)', code: 'fr' }
+];
+
 export default function Footer({ onOpenBooking }) {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -60,6 +83,31 @@ export default function Footer({ onOpenBooking }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleNavigation = (e, href) => {
+    e.preventDefault();
+    if (!href || href === '#') {
+      scrollToTop();
+      return;
+    }
+    if (href.startsWith('mailto:') || href.startsWith('tel:') || href.startsWith('http')) {
+      window.location.href = href;
+      return;
+    }
+    if (href.startsWith('#')) {
+      if (location.pathname.toLowerCase().includes('demo')) {
+        const id = href.replace('#', '');
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        navigate(`/demo${href}`);
+      }
+    } else {
+      navigate(href);
+    }
+  };
+
   // SVG circular calculation for back to top button
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
@@ -74,13 +122,20 @@ export default function Footer({ onOpenBooking }) {
         {/* Main 4 Column Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           
-          {/* Column 1: Visdom Waves Brand Info */}
+          {/* Column 1: Visdom Waves Brand Info & Multilingual Mission */}
           <div className="space-y-4">
             <VisdomBrand onClick={scrollToTop} />
             
             <p className="text-xs sm:text-sm text-slate-800 font-normal leading-relaxed">
-              Empowering Intermediate & Competitive Mathematics students with state-of-the-art interactive modules, lessons, visual simulations, live problem solving, and timed online mock tests.
+              Empowering Intermediate students across all <strong className="font-semibold text-slate-900">MPC, BiPC, CEC & MEC</strong> streams with interactive modules, visual labs, timed mock tests, and multilingual learning support in your preferred language.
             </p>
+
+            {/* Friendly Multilingual Support Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 border border-amber-300 shadow-2xs text-[11.5px] text-slate-800">
+              <Globe className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+              <span className="font-semibold text-slate-900">Learn in Any Language</span>
+              <span className="text-[10px] text-amber-800 font-bold bg-amber-100 px-1.5 py-0.5 rounded-full">12+ Languages</span>
+            </div>
 
             {/* Social Circle Badges */}
             <div className="flex items-center gap-2.5 pt-1">
@@ -123,78 +178,148 @@ export default function Footer({ onOpenBooking }) {
             </div>
           </div>
 
-          {/* Column 2: Courses & Academics */}
+          {/* Column 2: All Intermediate Subjects */}
           <div>
             <h3 className="text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider mb-4 border-l-3 border-amber-500 pl-3">
-              Courses & Academics
+              Intermediate Subjects
             </h3>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-800 font-medium">
               <li>
-                <a href="#courses" className="hover:text-blue-800 transition-colors">
-                  1st Year Intermediate Mathematics (1A & 1B)
+                <a 
+                  href="/maths" 
+                  onClick={(e) => handleNavigation(e, '/maths')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Mathematics (1A, 1B, 2A & 2B)
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-blue-800 transition-colors">
-                  2nd Year Intermediate Mathematics (2A & 2B)
+                <a 
+                  href="/physics" 
+                  onClick={(e) => handleNavigation(e, '/physics')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Physics (Mechanics & Modern Physics)
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-blue-800 transition-colors">
-                  AP Calculus AB / BC Advanced Placement
+                <a 
+                  href="/chemistry" 
+                  onClick={(e) => handleNavigation(e, '/chemistry')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Chemistry (Organic, Inorganic & Physical)
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-blue-800 transition-colors">
-                  IIT-JEE Main & Advanced Mathematics
+                <a 
+                  href="/botany" 
+                  onClick={(e) => handleNavigation(e, '/botany')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Botany & Zoology (BiPC Biology)
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-blue-800 transition-colors">
-                  Revision Notes, Formula Sheets & Summaries
+                <a 
+                  href="/english" 
+                  onClick={(e) => handleNavigation(e, '/english')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  English & Language Arts (Grammar & Prose)
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/demo#courses" 
+                  onClick={(e) => handleNavigation(e, '/demo#courses')}
+                  className="hover:text-blue-800 font-semibold transition-colors flex items-center gap-1.5 text-blue-900"
+                >
+                  <span className="text-blue-700 text-[10px]">★</span>
+                  Explore All Intermediate Streams & Syllabi
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Tools & Assessment */}
+          {/* Column 3: Multilingual Support & Learning Tools */}
           <div>
             <h3 className="text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider mb-4 border-l-3 border-amber-500 pl-3">
-              Tools & Assessment
+              Tools & Languages
             </h3>
             <ul className="space-y-2 text-xs sm:text-sm text-slate-800 font-medium">
               <li>
-                <a href="#interactive-lab" className="hover:text-blue-800 transition-colors">
-                  Interactive Graph & Curve Visualizer Lab
+                <a 
+                  href="/demo" 
+                  onClick={(e) => handleNavigation(e, '/demo')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Learn in Any Language (12+ Regional Options)
                 </a>
               </li>
               <li>
-                <a href="#speed-quiz" className="hover:text-blue-800 transition-colors">
-                  Speed Mental Math Arena & Practice Quiz
+                <a 
+                  href="/demo#interactive-lab" 
+                  onClick={(e) => handleNavigation(e, '/demo#interactive-lab')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Interactive Virtual Labs & Simulations
                 </a>
               </li>
               <li>
-                <a href="#courses" className="hover:text-blue-800 transition-colors">
+                <a 
+                  href="/demo#speed-quiz" 
+                  onClick={(e) => handleNavigation(e, '/demo#speed-quiz')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Speed Quizzes & Subject Practice Arenas
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/demo#courses" 
+                  onClick={(e) => handleNavigation(e, '/demo#courses')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
                   Online Timed Mock Exams & Test Series
                 </a>
               </li>
               <li>
-                <a href="#faq" className="hover:text-blue-800 transition-colors">
-                  Previous Board & Olympiad Question Papers
+                <a 
+                  href="/demo#faq" 
+                  onClick={(e) => handleNavigation(e, '/demo#faq')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Previous Board (TS/AP BIE) Question Papers
                 </a>
               </li>
               <li>
-                <a href="#methodology" className="hover:text-blue-800 transition-colors">
-                  Step-by-Step Proofs & Problem Visualizers
+                <a 
+                  href="/demo#methodology" 
+                  onClick={(e) => handleNavigation(e, '/demo#methodology')}
+                  className="hover:text-blue-800 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="text-amber-700 text-[10px]">▶</span>
+                  Step-by-Step Concepts, Proofs & Notes
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Contact Us */}
+          {/* Column 4: Contact Us & Free Trial */}
           <div>
             <h3 className="text-slate-950 font-bold text-xs sm:text-sm uppercase tracking-wider mb-4 border-l-3 border-amber-500 pl-3">
-              Contact Us
+              Contact & Support
             </h3>
             <ul className="space-y-2.5 text-xs sm:text-sm text-slate-800 font-medium">
               <li className="flex items-start gap-2.5">
@@ -216,25 +341,57 @@ export default function Footer({ onOpenBooking }) {
               <li className="pt-2">
                 <button
                   onClick={onOpenBooking}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs tracking-tight shadow-sm shadow-blue-500/20 hover:shadow-md transition-all cursor-pointer active:scale-95"
+                  className="w-full sm:w-auto px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs tracking-tight shadow-sm shadow-blue-500/20 hover:shadow-md transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5"
                 >
-                  Book 1-on-1 Free Class
+                  <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
+                  <span>Book 1-on-1 Free Class</span>
                 </button>
+              </li>
+              <li className="pt-1">
+                <span className="text-[11px] text-slate-700 block">
+                  ✨ Multilingual tutors available for personalized guidance.
+                </span>
               </li>
             </ul>
           </div>
 
         </div>
 
+        {/* Multilingual Support Ribbon / Chips Bar */}
+        <div className="mt-10 pt-6 border-t border-amber-300/60">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-3">
+            <div className="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <Globe className="h-4 w-4 text-blue-600" />
+              <span>Learn In Your Native Language Without Barriers:</span>
+            </div>
+            <span className="text-[11px] text-slate-700 font-medium">
+              Click any language to explore interactive lessons & resources
+            </span>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
+            {SUPPORTED_LANGUAGES.map((lang) => (
+              <a
+                key={lang.code}
+                href={`/demo?lang=${lang.code}`}
+                onClick={(e) => handleNavigation(e, `/demo?lang=${lang.code}`)}
+                className="px-2.5 py-1 rounded-lg bg-white/80 hover:bg-white text-slate-800 hover:text-blue-700 border border-amber-300/80 text-[11px] font-medium transition-all shadow-2xs hover:shadow-xs hover:scale-105 active:scale-95"
+              >
+                {lang.name}
+              </a>
+            ))}
+          </div>
+        </div>
+
         {/* Bottom Decorative Divider & Copyright */}
-        <div className="border-t border-amber-300/80 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="border-t border-amber-300/80 mt-8 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
           
           {/* Copyright line */}
           <p className="text-xs text-slate-800 text-center md:text-left md:flex-1 font-medium">
-            © {new Date().getFullYear()} Maths Learning Academy • Visdom Waves. All rights reserved.
+            © {new Date().getFullYear()} MyMarks Academy • Visdom Waves Innovations. All rights reserved.
           </p>
 
-          {/* Mathematics Slogan Centerpiece */}
+          {/* Slogan Centerpiece */}
           <div className="flex items-center gap-2 select-none md:flex-1 justify-center">
             {/* Left Decorative Line */}
             <div className="flex items-center">
@@ -242,9 +399,9 @@ export default function Footer({ onOpenBooking }) {
               <div className="h-[1.5px] w-6 sm:w-12 bg-amber-500" />
             </div>
 
-            {/* Maths Slogan */}
+            {/* Slogan */}
             <span className="text-xs sm:text-sm font-semibold text-slate-900 tracking-wider whitespace-nowrap px-1 font-sans">
-              Pure Understanding • Proven Mastery
+              All Intermediate Subjects • Learn in Any Language
             </span>
 
             {/* Right Decorative Line */}
@@ -256,7 +413,11 @@ export default function Footer({ onOpenBooking }) {
 
           {/* Quick Legal Links */}
           <div className="flex gap-2.5 text-xs text-slate-800 md:flex-1 justify-center md:justify-end font-semibold">
-            <a href="/aboutus" className="hover:text-blue-800 transition-colors">
+            <a 
+              href="/aboutus" 
+              onClick={(e) => handleNavigation(e, '/aboutus')}
+              className="hover:text-blue-800 transition-colors"
+            >
               About Us
             </a>
             <span>•</span>
