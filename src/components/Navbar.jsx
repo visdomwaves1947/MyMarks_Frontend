@@ -18,6 +18,7 @@ import {
   Layers,
   Award,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 import { VisdomBrand } from "./VisdomBrand";
 
@@ -29,6 +30,7 @@ export default function Navbar({
   currentUser = null,
   theme = "light",
   toggleTheme,
+  onLockSite,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -293,6 +295,18 @@ export default function Navbar({
                 </div>
               </button>
 
+              {/* Privacy Lock Button */}
+              {onLockSite && (
+                <button
+                  onClick={onLockSite}
+                  className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 transition-colors cursor-pointer shrink-0"
+                  title="Lock Website (Privacy Gate)"
+                  aria-label="Lock Website"
+                >
+                  <Lock size={15} />
+                </button>
+              )}
+
               {/* User Account / Professional Profile Navigation Action */}
               {currentUser ? (
                 <button
@@ -482,6 +496,19 @@ export default function Navbar({
                   </div>
                 </div>
                 <ChevronRight size={15} className="text-slate-400" />
+              </button>
+            )}
+
+            {onLockSite && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onLockSite();
+                }}
+                className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+              >
+                <Lock size={13} />
+                <span>Lock Website (Privacy Gate)</span>
               </button>
             )}
           </div>

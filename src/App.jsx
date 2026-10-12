@@ -20,6 +20,7 @@ import Urdu from './pages/Urdu';
 import French from './pages/French';
 import ProfilePage from './pages/ProfilePage';
 import AboutUsPage from './pages/AboutUs';
+import SitePrivacyGate from './components/SitePrivacyGate';
 
 // Automatic scroll-to-top on route changes unless an anchor hash exists
 function ScrollToTop() {
@@ -140,6 +141,33 @@ export default function App() {
     setIsPlannerOpen(true);
   };
 
+  // Site-wide Privacy Protection Gate
+  const [isSiteAccessGranted, setIsSiteAccessGranted] = useState(() => {
+    try {
+      return (
+        localStorage.getItem('site_privacy_access') === 'granted' ||
+        sessionStorage.getItem('site_privacy_access') === 'granted'
+      );
+    } catch {
+      return false;
+    }
+  });
+
+  const handleLockSite = () => {
+    try {
+      localStorage.removeItem('site_privacy_access');
+      sessionStorage.removeItem('site_privacy_access');
+    } catch (e) {
+      console.warn(e);
+    }
+    setIsSiteAccessGranted(false);
+  };
+
+  // Block the entire website until authenticated with md@visdomwaves.com / md@1947
+  if (!isSiteAccessGranted) {
+    return <SitePrivacyGate onUnlock={() => setIsSiteAccessGranted(true)} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#EBF0F7] text-slate-900 flex flex-col font-sans selection:bg-indigo-600 selection:text-white">
       <ScrollToTop />
@@ -153,6 +181,7 @@ export default function App() {
         currentUser={currentUser}
         theme={theme}
         toggleTheme={toggleTheme}
+        onLockSite={handleLockSite}
       />
 
       {/* Routed Main Content */}
