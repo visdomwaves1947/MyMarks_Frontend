@@ -20,6 +20,7 @@ import Urdu from './pages/Urdu';
 import French from './pages/French';
 import ProfilePage from './pages/ProfilePage';
 import AboutUsPage from './pages/AboutUs';
+import ContactUsPage from './pages/ContactUs';
 import SitePrivacyGate from './components/SitePrivacyGate';
 
 // Automatic scroll-to-top on route changes unless an anchor hash exists
@@ -626,6 +627,13 @@ export default function App() {
           <Route path="/about" element={<AboutUsPage />} />
           <Route path="/About" element={<AboutUsPage />} />
           <Route path="/about-us" element={<AboutUsPage />} />
+
+          {/* Standalone Contact Us Page Routes */}
+          <Route path="/contactus" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
+          <Route path="/ContactUs" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
+          <Route path="/contact" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
+          <Route path="/Contact" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
+          <Route path="/contact-us" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
 
           {/* Root & Fallback: Show demo first instead of maths */}
           <Route path="/" element={<Navigate to="/demo" replace />} />
