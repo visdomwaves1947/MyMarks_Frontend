@@ -19,6 +19,7 @@ import {
   Award,
   ChevronRight,
   Lock,
+  Globe,
 } from "lucide-react";
 import { VisdomBrand } from "./VisdomBrand";
 
@@ -125,34 +126,34 @@ export default function Navbar({
     {
       name: "Intermediate",
       href: "/demo#courses",
-      dropdownHeader: "Intermediate Subjects",
-      dropdown: [
-        { name: "Mathematics", desc: "MPC Stream • Algebra & Calculus", href: "/maths" },
-        { name: "Physics", desc: "MPC / BiPC • Mechanics & Modern Physics", href: "/physics" },
-        { name: "Chemistry", desc: "MPC / BiPC • Organic & Inorganic", href: "/chemistry" },
-        { name: "Botany", desc: "BiPC Stream • Plant Diversity & Genetics", href: "/botany" },
-        { name: "Zoology", desc: "BiPC Stream • Animal Physiology", href: "/zoology" },
-        { name: "English", desc: "Common Core • Grammar & Comprehension", href: "/english" },
-        { name: "All Intermediate Subjects", desc: "Explore Complete AP & TS Syllabus", href: "/demo#courses" },
+      sections: [
+        {
+          title: "Group Subjects",
+          icon: Layers,
+          items: [
+            { name: "Mathematics", href: "/maths" },
+            { name: "Physics", href: "/physics" },
+            { name: "Chemistry", href: "/chemistry" },
+            { name: "Botany", href: "/botany" },
+            { name: "Zoology", href: "/zoology" },
+          ],
+        },
+        {
+          title: "Languages",
+          icon: Globe,
+          items: [
+            { name: "English", href: "/english" },
+            { name: "Sanskrit", href: "/sanskrit" },
+            { name: "Telugu", href: "/telugu" },
+            { name: "Hindi", href: "/hindi" },
+            { name: "Urdu", href: "/urdu" },
+          ],
+        },
       ],
     },
     {
-      name: "Languages",
-      dropdownHeader: "Select Language",
-      dropdown: [
-        { name: "English", desc: "Master Intermediate in English Medium", href: "/demo?lang=en" },
-        { name: "Telugu (తెలుగు)", desc: "తెలుగు మాధ్యమంలో సులభమైన వివరణలు", href: "/demo?lang=te" },
-        { name: "Hindi (हिन्दी)", desc: "हिन्दी में सम्पूर्ण पाठ और अभ्यास", href: "/demo?lang=hi" },
-        { name: "Tamil (தமிழ்)", desc: "தமிழில் முழுமையான விளக்கம்", href: "/demo?lang=ta" },
-        { name: "Kannada (ಕನ್ನಡ)", desc: "ಕನ್ನಡದಲ್ಲಿ ಪರಿಪೂರ್ಣ ಕಲಿಕೆ", href: "/demo?lang=kn" },
-        { name: "Malayalam (മലയാളം)", desc: "മലയാളത്തിൽ ലളിതമായ ക്ലാసുകൾ", href: "/demo?lang=ml" },
-        { name: "Marathi (मराठी)", desc: "मराठीमध्ये सोपे शिक्षण", href: "/demo?lang=mr" },
-        { name: "Bengali (বাংলা)", desc: "বাংলা ভাষায় সম্পূর্ণ প্রস্তুতি", href: "/demo?lang=bn" },
-        { name: "Gujarati (ગુજરાતી)", desc: "ગુજરાતીમાં ઉત્તમ માર્ગદર્શન", href: "/demo?lang=gu" },
-        { name: "Sanskrit (संस्कृतम्)", desc: "संस्कृत भाषा अभ्यासाः", href: "/demo?lang=sa" },
-        { name: "Odia (ଓଡ଼ିଆ)", desc: "ଓଡ଼ିଆ ଭାଷାରେ ସରଳ ଶିକ୍ଷା", href: "/demo?lang=or" },
-        { name: "Urdu (اردو)", desc: "اردو میں جامع رہنمائی", href: "/demo?lang=ur" },
-      ],
+      name: "Contact Us",
+      href: "/contactus",
     },
   ];
 
@@ -160,6 +161,7 @@ export default function Navbar({
     const p = location.pathname.toLowerCase();
     if (href === "/demo" || href === "/") return p === "/demo" || p === "/";
     if (href.includes("about")) return p === "/aboutus" || p === "/about" || p === "/about-us";
+    if (href.includes("contact")) return p === "/contactus" || p === "/contact" || p === "/contact-us";
     return false;
   };
 
@@ -187,74 +189,136 @@ export default function Navbar({
           <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 ml-auto">
             {/* Desktop Navigation Links */}
             <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5">
-              {navLinks.map((link, idx) => (
-                <div
-                  key={idx}
-                  className="relative"
-                  onMouseEnter={() => link.dropdown && handleDropdownEnter(idx)}
-                  onMouseLeave={() => link.dropdown && handleDropdownLeave()}
-                >
-                  {link.dropdown ? (
-                    <button
-                      className="flex items-center gap-1 px-3.5 py-2 text-[14px] font-semibold text-slate-800 hover:text-blue-700 transition-colors tracking-tight rounded-lg hover:bg-yellow-200/80 cursor-pointer"
-                      onClick={() =>
-                        setActiveDropdown(activeDropdown === idx ? null : idx)
-                      }
-                    >
-                      <span>{link.name}</span>
-                      <ChevronDown
-                        size={15}
-                        className={`transition-transform duration-200 text-slate-700 ${activeDropdown === idx ? "rotate-180 text-blue-700" : ""}`}
-                      />
-                    </button>
-                  ) : (
-                    <a
-                      href={link.href}
-                      onClick={(e) => handleLinkNavigation(e, link.href)}
-                      className={`block px-3.5 py-2 text-[14px] transition-colors tracking-tight rounded-lg cursor-pointer ${
-                        isLinkActive(link.href)
-                          ? "text-blue-800 font-bold bg-yellow-200 shadow-2xs"
-                          : "text-slate-800 font-semibold hover:text-blue-700 hover:bg-yellow-200/80"
-                      }`}
-                    >
-                      {link.name}
-                    </a>
-                  )}
+              {navLinks.map((link, idx) => {
+                const hasDropdown = Boolean(link.dropdown || link.sections);
+                return (
+                  <div
+                    key={idx}
+                    className="relative"
+                    onMouseEnter={() => hasDropdown && handleDropdownEnter(idx)}
+                    onMouseLeave={() => hasDropdown && handleDropdownLeave()}
+                  >
+                    {hasDropdown ? (
+                      <button
+                        className="flex items-center gap-1 px-3.5 py-2 text-[14px] font-semibold text-slate-800 hover:text-blue-700 transition-colors tracking-tight rounded-lg hover:bg-yellow-200/80 cursor-pointer"
+                        onClick={() =>
+                          setActiveDropdown(activeDropdown === idx ? null : idx)
+                        }
+                      >
+                        <span>{link.name}</span>
+                        <ChevronDown
+                          size={15}
+                          className={`transition-transform duration-200 text-slate-700 ${activeDropdown === idx ? "rotate-180 text-blue-700" : ""}`}
+                        />
+                      </button>
+                    ) : (
+                      <a
+                        href={link.href}
+                        onClick={(e) => handleLinkNavigation(e, link.href)}
+                        className={`block px-3.5 py-2 text-[14px] transition-colors tracking-tight rounded-lg cursor-pointer ${
+                          isLinkActive(link.href)
+                            ? "text-blue-800 font-bold bg-yellow-200 shadow-2xs"
+                            : "text-slate-800 font-semibold hover:text-blue-700 hover:bg-yellow-200/80"
+                        }`}
+                      >
+                        {link.name}
+                      </a>
+                    )}
 
-                  {/* Desktop Dropdown Popover */}
-                  {link.dropdown && activeDropdown === idx && (
-                    <div
-                      className="absolute top-full left-0 mt-1.5 w-72 rounded-2xl bg-[#FEFCE8] border border-amber-300 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 max-h-96 overflow-y-auto"
-                      onMouseEnter={() => handleDropdownEnter(idx)}
-                      onMouseLeave={handleDropdownLeave}
-                    >
-                      <div className="px-3.5 py-1.5 border-b border-amber-200 text-[10px] font-bold text-amber-900 uppercase tracking-wider sticky top-0 bg-[#FEFCE8]/95 backdrop-blur-xs">
-                        {link.dropdownHeader || "Select Option"}
-                      </div>
-                      {link.dropdown.map((sub, sIdx) => (
-                        <a
-                          key={sIdx}
-                          href={sub.href}
-                          onClick={(e) => {
-                            setActiveDropdown(null);
-                            handleLinkNavigation(e, sub.href);
-                          }}
-                          className="block px-4 py-2 hover:bg-blue-50/70 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 transition-colors group cursor-pointer border-b border-slate-50 dark:border-slate-900/60 last:border-b-0"
-                        >
-                          <div className="text-xs font-medium group-hover:text-blue-600 dark:group-hover:text-cyan-300">
-                            {sub.name}
-                          </div>
-                          {sub.desc && (
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                              {sub.desc}
+                    {/* Desktop Dropdown Popover */}
+                    {hasDropdown && activeDropdown === idx && (
+                      <div
+                        className={`absolute top-full ${link.sections ? "-left-12 sm:-left-20 w-[360px] sm:w-[380px]" : "left-0 w-72"} mt-1.5 rounded-2xl bg-[#FEFCE8] border border-amber-300 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden`}
+                        onMouseEnter={() => handleDropdownEnter(idx)}
+                        onMouseLeave={handleDropdownLeave}
+                      >
+                        {link.sections ? (
+                          <div>
+                            {/* Two-Column Grid: Group Subjects & Languages */}
+                            <div className="grid grid-cols-2 divide-x divide-amber-200/80 p-2 gap-1.5">
+                              {link.sections.map((section, secIdx) => {
+                                const SectionIcon = section.icon || BookOpen;
+                                return (
+                                  <div key={secIdx} className="px-1.5">
+                                    {/* Section Header */}
+                                    <div className="px-2.5 py-1.5 mb-1.5 rounded-lg bg-amber-100/80 border border-amber-200/70 flex items-center gap-1.5">
+                                      <SectionIcon size={13} className="text-amber-800" />
+                                      <span className="text-[11px] font-bold text-amber-950 uppercase tracking-wider">
+                                        {section.title}
+                                      </span>
+                                    </div>
+
+                                    {/* Items List */}
+                                    <div className="space-y-0.5">
+                                      {section.items.map((sub, sIdx) => (
+                                        <a
+                                          key={sIdx}
+                                          href={sub.href}
+                                          onClick={(e) => {
+                                            setActiveDropdown(null);
+                                            handleLinkNavigation(e, sub.href);
+                                          }}
+                                          className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-800 hover:text-blue-700 hover:bg-yellow-200/90 transition-colors cursor-pointer"
+                                        >
+                                          {sub.name}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
                             </div>
-                          )}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
+
+                            {/* Dropdown Bottom Footer */}
+                            <div className="mt-1 pt-2 pb-1.5 px-3.5 border-t border-amber-200/80 bg-amber-100/60 flex items-center justify-between text-xs">
+                              <span className="text-[10px] font-medium text-amber-900">
+                                AP & TS Intermediate
+                              </span>
+                              <a
+                                href="/demo#courses"
+                                onClick={(e) => {
+                                  setActiveDropdown(null);
+                                  handleLinkNavigation(e, "/demo#courses");
+                                }}
+                                className="text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 group cursor-pointer"
+                              >
+                                <span>Explore All</span>
+                                <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
+                              </a>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="px-3.5 py-1.5 border-b border-amber-200 text-[10px] font-bold text-amber-900 uppercase tracking-wider sticky top-0 bg-[#FEFCE8]/95 backdrop-blur-xs">
+                              {link.dropdownHeader || "Select Option"}
+                            </div>
+                            {link.dropdown?.map((sub, sIdx) => (
+                              <a
+                                key={sIdx}
+                                href={sub.href}
+                                onClick={(e) => {
+                                  setActiveDropdown(null);
+                                  handleLinkNavigation(e, sub.href);
+                                }}
+                                className="block px-4 py-2 hover:bg-blue-50/70 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 transition-colors group cursor-pointer border-b border-slate-50 dark:border-slate-900/60 last:border-b-0"
+                              >
+                                <div className="text-xs font-medium group-hover:text-blue-600 dark:group-hover:text-cyan-300">
+                                  {sub.name}
+                                </div>
+                                {sub.desc && (
+                                  <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                                    {sub.desc}
+                                  </div>
+                                )}
+                              </a>
+                            ))}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </nav>
 
             {/* Search Box (Desktop / Tablet) */}
@@ -413,59 +477,99 @@ export default function Navbar({
 
           {/* Mobile Navigation List */}
           <div className="space-y-1">
-            {navLinks.map((link, idx) => (
-              <div
-                key={idx}
-                className="border-b border-slate-100 dark:border-slate-800/80 last:border-b-0 pb-1"
-              >
-                {link.dropdown ? (
-                  <div>
-                    <button
-                      onClick={() => toggleMobileDropdown(idx)}
-                      className="w-full flex items-center justify-between py-2 px-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors"
+            {navLinks.map((link, idx) => {
+              const hasDropdown = Boolean(link.dropdown || link.sections);
+              return (
+                <div
+                  key={idx}
+                  className="border-b border-slate-100 dark:border-slate-800/80 last:border-b-0 pb-1"
+                >
+                  {hasDropdown ? (
+                    <div>
+                      <button
+                        onClick={() => toggleMobileDropdown(idx)}
+                        className="w-full flex items-center justify-between py-2 px-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors"
+                      >
+                        <span>{link.name}</span>
+                        <ChevronDown
+                          size={15}
+                          className={`transition-transform duration-200 text-slate-400 ${mobileDropdowns[idx] ? "rotate-180 text-blue-600" : ""}`}
+                        />
+                      </button>
+                      {mobileDropdowns[idx] && (
+                        <div className="pl-3 pr-2 pb-2 space-y-2.5 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-2.5 my-1">
+                          {link.sections ? (
+                            <>
+                              {link.sections.map((section, secIdx) => (
+                                <div key={secIdx} className="space-y-1">
+                                  <div className="text-[10px] font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider px-2 pt-1 border-b border-slate-200/60 dark:border-slate-800 pb-1">
+                                    {section.title}
+                                  </div>
+                                  {section.items.map((sub, sIdx) => (
+                                    <a
+                                      key={sIdx}
+                                      href={sub.href}
+                                      onClick={(e) => {
+                                        setMobileMenuOpen(false);
+                                        handleLinkNavigation(e, sub.href);
+                                      }}
+                                      className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-300 cursor-pointer"
+                                    >
+                                      • {sub.name}
+                                    </a>
+                                  ))}
+                                </div>
+                              ))}
+                              <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800">
+                                <a
+                                  href="/demo#courses"
+                                  onClick={(e) => {
+                                    setMobileMenuOpen(false);
+                                    handleLinkNavigation(e, "/demo#courses");
+                                  }}
+                                  className="block py-1 px-2 text-xs font-bold text-blue-600 dark:text-cyan-400"
+                                >
+                                  → Explore All Intermediate Courses
+                                </a>
+                              </div>
+                            </>
+                          ) : (
+                            link.dropdown?.map((sub, sIdx) => (
+                              <a
+                                key={sIdx}
+                                href={sub.href}
+                                onClick={(e) => {
+                                  setMobileMenuOpen(false);
+                                  handleLinkNavigation(e, sub.href);
+                                }}
+                                className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-300 cursor-pointer"
+                              >
+                                • {sub.name}
+                              </a>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <a
+                      href={link.href}
+                      onClick={(e) => {
+                        setMobileMenuOpen(false);
+                        handleLinkNavigation(e, link.href);
+                      }}
+                      className={`block py-2 px-2 text-sm font-medium transition-colors cursor-pointer ${
+                        isLinkActive(link.href)
+                          ? "text-blue-600 dark:text-cyan-300 font-semibold"
+                          : "text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-400"
+                      }`}
                     >
-                      <span>{link.name}</span>
-                      <ChevronDown
-                        size={15}
-                        className={`transition-transform duration-200 text-slate-400 ${mobileDropdowns[idx] ? "rotate-180 text-blue-600" : ""}`}
-                      />
-                    </button>
-                    {mobileDropdowns[idx] && (
-                      <div className="pl-4 pr-2 pb-2 space-y-1.5 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-2.5 my-1">
-                        {link.dropdown.map((sub, sIdx) => (
-                          <a
-                            key={sIdx}
-                            href={sub.href}
-                            onClick={(e) => {
-                              setMobileMenuOpen(false);
-                              handleLinkNavigation(e, sub.href);
-                            }}
-                            className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-300 cursor-pointer"
-                          >
-                            • {sub.name}
-                          </a>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <a
-                    href={link.href}
-                    onClick={(e) => {
-                      setMobileMenuOpen(false);
-                      handleLinkNavigation(e, link.href);
-                    }}
-                    className={`block py-2 px-2 text-sm font-medium transition-colors cursor-pointer ${
-                      isLinkActive(link.href)
-                        ? "text-blue-600 dark:text-cyan-300 font-semibold"
-                        : "text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-400"
-                    }`}
-                  >
-                    {link.name}
-                  </a>
-                )}
-              </div>
-            ))}
+                      {link.name}
+                    </a>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Mobile Action Buttons */}

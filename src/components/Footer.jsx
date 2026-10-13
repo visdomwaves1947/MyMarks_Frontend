@@ -424,7 +424,11 @@ export default function Footer({ onOpenBooking }) {
               About Us
             </a>
             <span>•</span>
-            <a href="mailto:info@visdomwaves.com" className="hover:text-blue-800 transition-colors">
+            <a 
+              href="/contactus" 
+              onClick={(e) => handleNavigation(e, '/contactus')}
+              className="hover:text-blue-800 transition-colors"
+            >
               Contact Us
             </a>
             <span>•</span>
