@@ -322,6 +322,7 @@ export default function Navbar({
                 </button>
               )}
 
+
               {/* User Account / Professional Profile Navigation Action */}
               {currentUser ? (
                 <button
