@@ -58,6 +58,14 @@ export default function DemoPage({
                   </span>
                   <span className="h-[2px] w-6 sm:w-10 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
                 </div>
+
+                {/* Caption: My Marks : Study less. Score more */}
+                <div className="mt-3 sm:mt-4 flex items-center justify-center sm:justify-start">
+                  <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-white tracking-wide font-sans drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                    <span className="text-amber-300 font-bold drop-shadow-[0_0_12px_rgba(252,211,77,0.5)]">My Marks</span>
+                    <span className="text-slate-100"> : Study less. Score more</span>
+                  </p>
+                </div>
               </div>
             </div>
 
