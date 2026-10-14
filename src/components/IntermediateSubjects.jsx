@@ -21,6 +21,7 @@ export default function IntermediateSubjects({
   const [activeEnroll, setActiveEnroll] = useState(null);
   const [activeExplore, setActiveExplore] = useState(null);
   const [lockedSubject, setLockedSubject] = useState(null);
+  const [selectedStream, setSelectedStream] = useState("all");
   const navigate = useNavigate();
 
   // Determine if the user is authenticated from props or saved local storage
@@ -36,15 +37,68 @@ export default function IntermediateSubjects({
     })(),
   );
 
+  const streamDefinitions = {
+    mpc: {
+      number: "1",
+      code: "MPC",
+      name: "Mathematics, Physics, Chemistry",
+      description: "Premier Engineering, Architecture, Pure Sciences & Technology track for JEE & EAMCET aspirants.",
+      careerBadge: "Engineering & Tech",
+      careerList: "JEE Mains & Advanced, B.Tech / BE, B.Arch, IISER, NDA, B.Sc Data Science & Mathematics.",
+      subjectIds: ["maths", "phy", "chem"],
+      badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    },
+    bipc: {
+      number: "2",
+      code: "BiPC",
+      name: "Biology (Botany & Zoology), Physics, Chemistry",
+      description: "Medical, Dental, Pharmacy, Agricultural, Biotechnology & Life Sciences track for NEET aspirants.",
+      careerBadge: "Medical & Life Sciences",
+      careerList: "NEET UG, MBBS, BDS, B.Pharm, Pharm.D, B.Sc Agriculture, Veterinary Science, Biotechnology.",
+      subjectIds: ["bot", "zoo", "phy", "chem"],
+      badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    },
+    cec: {
+      number: "3",
+      code: "CEC",
+      name: "Commerce, Economics, Civics (Political Science)",
+      description: "Commerce Group — Foundation for Chartered Accountancy, Corporate Law, Banking, and Business Management.",
+      careerBadge: "Commerce & Business",
+      careerList: "CA Foundation, CMA, CS, B.Com (Hons), BBA, Corporate Banking, Stock Markets, Law (CLAT / LLB).",
+      subjectIds: ["com", "eco", "civ"],
+      badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    },
+    mec: {
+      number: "4",
+      code: "MEC",
+      name: "Mathematics, Economics, Commerce / Accountancy",
+      description: "Mathematics & Commerce Track — Quantitative Finance, Actuarial Science, Analytics, and Corporate Strategy.",
+      careerBadge: "Quantitative Finance & Actuarial",
+      careerList: "Actuarial Science, Quantitative Finance, CA, CFA, B.Com Analytics, Economic Honors, Data Science.",
+      subjectIds: ["maths", "eco", "com"],
+      badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    },
+    hec: {
+      number: "5",
+      code: "HEC",
+      name: "History, Economics, Civics (Political Science)",
+      description: "Humanities Group — Premier pipeline for Civil Services (UPSC), Judiciary, Public Policy & International Relations.",
+      careerBadge: "Civil Services & Law",
+      careerList: "UPSC IAS / IPS / IFS, APPSC / TSPSC Group 1, Law (CLAT 5-Year LLB), Public Policy, Journalism.",
+      subjectIds: ["his", "eco", "civ"],
+      badgeColor: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+    },
+  };
+
   const subjects = [
     {
       id: "maths",
       name: "Mathematics",
-      category: "MPC",
+      category: "MPC / MEC",
       image:
         "https://i.pinimg.com/736x/7e/ff/20/7eff2083afbca2a2e99a1525fcc40ce6.jpg",
       color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
-      desc: "Master algebra, calculus, geometry, and trigonometry. Interactive simulations help visualize complex functions. Essential for JEE and EAMCET preparation.",
+      desc: "Master algebra, calculus, geometry, and trigonometry. Essential core for both MPC engineering and MEC actuarial tracks.",
     },
     {
       id: "phy",
@@ -84,6 +138,46 @@ export default function IntermediateSubjects({
         "https://images.unsplash.com/photo-1555169062-013468b47731?q=80&w=600&auto=format&fit=crop",
       color: "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
       desc: "Dive into animal sciences, human anatomy, genetics, and evolution. Expert guidance for medical entrance exams.",
+    },
+    {
+      id: "com",
+      name: "Commerce",
+      category: "CEC / MEC",
+      image:
+        "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop",
+      color:
+        "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
+      desc: "Master business organization, joint stock companies, double-entry bookkeeping, ledger balancing, BRS, and final accounts for 100/100 marks.",
+    },
+    {
+      id: "eco",
+      name: "Economics",
+      category: "CEC / MEC / HEC",
+      image:
+        "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=600&auto=format&fit=crop",
+      color:
+        "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+      desc: "Understand consumer behavior, Law of DMU, demand & supply elasticity, market structures, national income, and economic growth with curve blueprints.",
+    },
+    {
+      id: "civ",
+      name: "Civics",
+      category: "CEC / HEC",
+      image:
+        "https://images.unsplash.com/photo-1541872703-74c5e44368f9?q=80&w=600&auto=format&fit=crop",
+      color:
+        "bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400",
+      desc: "Explore Indian Constitution, Fundamental Rights, Union & State Legislature, Executive, Supreme Court, and Local Self-Governance (Panchayati Raj).",
+    },
+    {
+      id: "his",
+      name: "History",
+      category: "HEC",
+      image:
+        "https://images.unsplash.com/photo-1461360370896-922624d12aa1?q=80&w=600&auto=format&fit=crop",
+      color:
+        "bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
+      desc: "Journey through ancient Indus & Vedic civilizations, Delhi Sultanate, Vijayanagara Empire, Mughals, and the Indian Freedom Movement with timelines & maps.",
     },
     {
       id: "eng",
@@ -183,6 +277,18 @@ export default function IntermediateSubjects({
     } else if (subject.id === "fre") {
       navigate("/french");
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "com") {
+      navigate("/commerce");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "eco") {
+      navigate("/economics");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "civ") {
+      navigate("/civics");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "his") {
+      navigate("/history");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       setActiveExplore(activeExplore === subject.id ? null : subject.id);
     }
@@ -227,6 +333,18 @@ export default function IntermediateSubjects({
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else if (subject.id === "fre") {
       navigate("/french");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "com") {
+      navigate("/commerce");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "eco") {
+      navigate("/economics");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "civ") {
+      navigate("/civics");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (subject.id === "his") {
+      navigate("/history");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       setActiveExplore(subject.id);
@@ -493,40 +611,196 @@ export default function IntermediateSubjects({
           </div>
         )}
 
-        {/* Core Sciences Section */}
-        <div className="mb-16">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="h-10 w-2.5 bg-gradient-to-b from-cyan-400 to-blue-600 rounded-full shadow-sm"></div>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              Core Groups{" "}
-              <span className="text-slate-400 dark:text-slate-500 font-bold text-lg sm:text-xl ml-2">
-                (MPC & BiPC)
-              </span>
-            </h3>
-            <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-800 ml-4"></div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-            {subjects
-              .filter((s) => s.category !== "Languages")
-              .map(renderSubjectCard)}
+        {/* Interactive Stream Filter Tabs */}
+        <div className="mb-12">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 p-2 bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm max-w-5xl mx-auto">
+            <button
+              onClick={() => setSelectedStream("all")}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                selectedStream === "all"
+                  ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
+              }`}
+            >
+              All Groups (15)
+            </button>
+            <button
+              onClick={() => setSelectedStream("mpc")}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                selectedStream === "mpc"
+                  ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+              }`}
+            >
+              1. MPC
+            </button>
+            <button
+              onClick={() => setSelectedStream("bipc")}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                selectedStream === "bipc"
+                  ? "bg-green-600 text-white shadow-md shadow-green-600/25 scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/40"
+              }`}
+            >
+              2. BiPC
+            </button>
+            <button
+              onClick={() => setSelectedStream("cec")}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                selectedStream === "cec"
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+              }`}
+            >
+              3. CEC (Commerce)
+            </button>
+            <button
+              onClick={() => setSelectedStream("mec")}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                selectedStream === "mec"
+                  ? "bg-amber-600 text-white shadow-md shadow-amber-600/25 scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+              }`}
+            >
+              4. MEC (Maths & Econ)
+            </button>
+            <button
+              onClick={() => setSelectedStream("hec")}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                selectedStream === "hec"
+                  ? "bg-rose-600 text-white shadow-md shadow-rose-600/25 scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+              }`}
+            >
+              5. HEC (Humanities)
+            </button>
+            <button
+              onClick={() => setSelectedStream("languages")}
+              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                selectedStream === "languages"
+                  ? "bg-orange-600 text-white shadow-md shadow-orange-600/25 scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40"
+              }`}
+            >
+              Languages (6)
+            </button>
           </div>
         </div>
 
-        {/* Languages Section */}
-        <div className="mb-10">
-          <div className="flex items-center gap-4 mb-8">
-            <div className="h-10 w-2.5 bg-gradient-to-b from-orange-400 to-rose-600 rounded-full shadow-sm"></div>
-            <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
-              Languages
-            </h3>
-            <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-800 ml-4"></div>
+        {/* Selected Stream Spotlight Banner */}
+        {selectedStream !== "all" && selectedStream !== "languages" && streamDefinitions[selectedStream] && (
+          <div className="mb-12 p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${streamDefinitions[selectedStream].badgeColor}`}>
+                    Group {streamDefinitions[selectedStream].number} • {streamDefinitions[selectedStream].code}
+                  </span>
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                    {streamDefinitions[selectedStream].careerBadge}
+                  </span>
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+                  {streamDefinitions[selectedStream].name}
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
+                  {streamDefinitions[selectedStream].description}
+                </p>
+              </div>
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800 shrink-0 w-full lg:w-auto">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
+                  Career Opportunities & Entrances:
+                </span>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 max-w-sm">
+                  {streamDefinitions[selectedStream].careerList}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-            {subjects
-              .filter((s) => s.category === "Languages")
-              .map(renderSubjectCard)}
+        )}
+
+        {/* Single Filtered Stream View */}
+        {selectedStream !== "all" && (
+          <div className="mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+              {selectedStream === "languages"
+                ? subjects
+                    .filter((s) => s.category === "Languages")
+                    .map(renderSubjectCard)
+                : subjects
+                    .filter((s) => streamDefinitions[selectedStream]?.subjectIds.includes(s.id))
+                    .map(renderSubjectCard)}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Full "All Groups" View Organized into Clear Streams */}
+        {selectedStream === "all" && (
+          <>
+            {/* Stream 1 & 2: Science & Engineering Section (MPC & BiPC) - FIRST */}
+            <div className="mb-16">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-10 w-2.5 bg-gradient-to-b from-cyan-400 to-blue-600 rounded-full shadow-sm"></div>
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                    Science & Engineering Groups
+                  </h3>
+                  <p className="text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400 mt-0.5">
+                    1. MPC (Maths, Physics, Chem) • 2. BiPC (Botany, Zoology, Physics, Chem)
+                  </p>
+                </div>
+                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-800 ml-4"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                {subjects
+                  .filter((s) => ["maths", "phy", "chem", "bot", "zoo"].includes(s.id))
+                  .map(renderSubjectCard)}
+              </div>
+            </div>
+
+            {/* Stream 3, 4 & 5: Commerce, Mathematical & Humanities Section (CEC, MEC & HEC) - NEXT */}
+            <div className="mb-16">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-10 w-2.5 bg-gradient-to-b from-emerald-400 to-teal-600 rounded-full shadow-sm"></div>
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                    Commerce, Mathematics & Humanities Groups
+                  </h3>
+                  <p className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    3. CEC (Commerce, Econ, Civics) • 4. MEC (Maths, Econ, Commerce) • 5. HEC (History, Econ, Civics)
+                  </p>
+                </div>
+                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-800 ml-4"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                {subjects
+                  .filter((s) => ["com", "eco", "civ", "his"].includes(s.id))
+                  .map(renderSubjectCard)}
+              </div>
+            </div>
+
+            {/* Languages Section */}
+            <div className="mb-10">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-10 w-2.5 bg-gradient-to-b from-orange-400 to-rose-600 rounded-full shadow-sm"></div>
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                    Compulsory & Second Languages
+                  </h3>
+                  <p className="text-xs sm:text-sm font-semibold text-orange-600 dark:text-orange-400 mt-0.5">
+                    Part I: English • Part II: Sanskrit, Telugu, Hindi, Urdu, French
+                  </p>
+                </div>
+                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-slate-200 to-transparent dark:from-slate-800 ml-4"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                {subjects
+                  .filter((s) => s.category === "Languages")
+                  .map(renderSubjectCard)}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Ultra-Premium Animated Lock Modal */}

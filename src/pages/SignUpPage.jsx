@@ -1254,7 +1254,7 @@ export default function AuthModal({
                             Andhra Pradesh Intermediate
                           </span>
                           <span className="text-[10px] text-sky-300 font-medium">
-                            BIEAP Syllabus • MPC & BiPC
+                            BIEAP Syllabus • MPC, BiPC, CEC, MEC & HEC
                           </span>
                         </div>
                         <div
@@ -1286,7 +1286,7 @@ export default function AuthModal({
                             Telangana Intermediate
                           </span>
                           <span className="text-[10px] text-sky-300 font-medium">
-                            TSBIE Syllabus • MPC & BiPC
+                            TSBIE Syllabus • MPC, BiPC, CEC, MEC & HEC
                           </span>
                         </div>
                         <div

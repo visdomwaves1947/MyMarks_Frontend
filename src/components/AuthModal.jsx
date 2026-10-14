@@ -1079,7 +1079,7 @@ export default function AuthModal({
                       >
                         <div>
                           <span className="font-extrabold text-xs sm:text-sm block">Andhra Pradesh Intermediate</span>
-                          <span className="text-[10px] text-sky-300 font-medium">BIEAP Syllabus • MPC & BiPC</span>
+                          <span className="text-[10px] text-sky-300 font-medium">BIEAP Syllabus • MPC, BiPC, CEC, MEC & HEC</span>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           formData.board === 'Andhra Pradesh Intermediate' ? 'border-sky-400 bg-sky-400' : 'border-slate-500'
@@ -1099,7 +1099,7 @@ export default function AuthModal({
                       >
                         <div>
                           <span className="font-extrabold text-xs sm:text-sm block">Telangana Intermediate</span>
-                          <span className="text-[10px] text-sky-300 font-medium">TSBIE Syllabus • MPC & BiPC</span>
+                          <span className="text-[10px] text-sky-300 font-medium">TSBIE Syllabus • MPC, BiPC, CEC, MEC & HEC</span>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           formData.board === 'Telangana Intermediate' ? 'border-sky-400 bg-sky-400' : 'border-slate-500'
