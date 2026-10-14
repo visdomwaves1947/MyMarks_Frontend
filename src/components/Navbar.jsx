@@ -170,12 +170,12 @@ export default function Navbar({
 
   return (
     <>
-      {/* Main Sticky Navbar - Light Yellow Background with Light Yellow Bottom Line */}
+      {/* Main Sticky Navbar - Full HD Radiant Light Yellow Header with Bottom Red Flowing Wave */}
       <header
-        className="sticky top-0 z-50 border-b-2 border-amber-300 dark:border-amber-300 bg-[#FEF9C3] dark:bg-[#FEF08A] text-slate-900 shadow-xs transform-gpu will-change-transform"
+        className="sticky top-0 z-50 bg-gradient-to-r from-[#fef08a] via-[#fef9c3] to-[#fef08a] text-slate-950 shadow-md shadow-amber-950/10 border-b border-amber-300/80 transform-gpu will-change-transform relative select-none"
       >
         <div className="w-full px-2.5 sm:px-6 lg:px-8 relative z-10 flex items-center justify-between gap-2 sm:gap-4 h-[72px] sm:h-[82px] md:h-[86px]">
-          {/* Left: Visdom Waves Brand Logo */}
+          {/* Left: Visdom Waves Brand Logo Badge (Exact Reference Graphic Style) */}
           <div className="flex items-center shrink-0">
             <VisdomBrand
               onClick={() => {
@@ -200,7 +200,7 @@ export default function Navbar({
                   >
                     {hasDropdown ? (
                       <button
-                        className="flex items-center gap-1 px-3.5 py-2 text-[14px] font-semibold text-slate-800 hover:text-blue-700 transition-colors tracking-tight rounded-lg hover:bg-yellow-200/80 cursor-pointer"
+                        className="flex items-center gap-1 px-3 py-2 text-[14px] font-bold text-slate-950 hover:text-red-700 transition-colors tracking-tight rounded-lg hover:bg-black/5 cursor-pointer"
                         onClick={() =>
                           setActiveDropdown(activeDropdown === idx ? null : idx)
                         }
@@ -208,17 +208,17 @@ export default function Navbar({
                         <span>{link.name}</span>
                         <ChevronDown
                           size={15}
-                          className={`transition-transform duration-200 text-slate-700 ${activeDropdown === idx ? "rotate-180 text-blue-700" : ""}`}
+                          className={`transition-transform duration-200 text-slate-900 ${activeDropdown === idx ? "rotate-180 text-red-600" : ""}`}
                         />
                       </button>
                     ) : (
                       <a
                         href={link.href}
                         onClick={(e) => handleLinkNavigation(e, link.href)}
-                        className={`block px-3.5 py-2 text-[14px] transition-colors tracking-tight rounded-lg cursor-pointer ${
+                        className={`block px-3 py-2 text-[14px] transition-colors tracking-tight rounded-lg cursor-pointer ${
                           isLinkActive(link.href)
-                            ? "text-blue-800 font-bold bg-yellow-200 shadow-2xs"
-                            : "text-slate-800 font-semibold hover:text-blue-700 hover:bg-yellow-200/80"
+                            ? "text-red-700 font-extrabold bg-white/95 shadow-xs border-b-2 border-red-600"
+                            : "text-slate-950 font-bold hover:text-red-700 hover:bg-black/5"
                         }`}
                       >
                         {link.name}
@@ -228,22 +228,22 @@ export default function Navbar({
                     {/* Desktop Dropdown Popover */}
                     {hasDropdown && activeDropdown === idx && (
                       <div
-                        className={`absolute top-full ${link.sections ? "-left-12 sm:-left-20 w-[360px] sm:w-[380px]" : "left-0 w-72"} mt-1.5 rounded-2xl bg-[#FEFCE8] border border-amber-300 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden`}
+                        className={`absolute top-full ${link.sections ? "-left-12 sm:-left-20 w-[360px] sm:w-[380px]" : "left-0 w-72"} mt-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-red-200/90 dark:border-red-950/80 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden ring-1 ring-black/5`}
                         onMouseEnter={() => handleDropdownEnter(idx)}
                         onMouseLeave={handleDropdownLeave}
                       >
                         {link.sections ? (
                           <div>
                             {/* Two-Column Grid: Group Subjects & Languages */}
-                            <div className="grid grid-cols-2 divide-x divide-amber-200/80 p-2 gap-1.5">
+                            <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 p-2 gap-1.5">
                               {link.sections.map((section, secIdx) => {
                                 const SectionIcon = section.icon || BookOpen;
                                 return (
                                   <div key={secIdx} className="px-1.5">
                                     {/* Section Header */}
-                                    <div className="px-2.5 py-1.5 mb-1.5 rounded-lg bg-amber-100/80 border border-amber-200/70 flex items-center gap-1.5">
-                                      <SectionIcon size={13} className="text-amber-800" />
-                                      <span className="text-[11px] font-bold text-amber-950 uppercase tracking-wider">
+                                    <div className="px-2.5 py-1.5 mb-1.5 rounded-lg bg-red-50/90 dark:bg-red-950/50 border border-red-200/70 dark:border-red-900/40 flex items-center gap-1.5">
+                                      <SectionIcon size={13} className="text-red-600 dark:text-red-400" />
+                                      <span className="text-[11px] font-bold text-red-950 dark:text-red-200 uppercase tracking-wider">
                                         {section.title}
                                       </span>
                                     </div>
@@ -258,7 +258,7 @@ export default function Navbar({
                                             setActiveDropdown(null);
                                             handleLinkNavigation(e, sub.href);
                                           }}
-                                          className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-800 hover:text-blue-700 hover:bg-yellow-200/90 transition-colors cursor-pointer"
+                                          className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/90 dark:hover:bg-red-950/50 transition-colors cursor-pointer"
                                         >
                                           {sub.name}
                                         </a>
@@ -270,8 +270,8 @@ export default function Navbar({
                             </div>
 
                             {/* Dropdown Bottom Footer */}
-                            <div className="mt-1 pt-2 pb-1.5 px-3.5 border-t border-amber-200/80 bg-amber-100/60 flex items-center justify-between text-xs">
-                              <span className="text-[10px] font-medium text-amber-900">
+                            <div className="mt-1 pt-2 pb-1.5 px-3.5 border-t border-slate-100 dark:border-slate-800 bg-red-50/50 dark:bg-red-950/30 flex items-center justify-between text-xs">
+                              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
                                 AP & TS Intermediate
                               </span>
                               <a
@@ -280,7 +280,7 @@ export default function Navbar({
                                   setActiveDropdown(null);
                                   handleLinkNavigation(e, "/demo#courses");
                                 }}
-                                className="text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 group cursor-pointer"
+                                className="text-[11px] font-bold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 flex items-center gap-1 group cursor-pointer"
                               >
                                 <span>Explore All</span>
                                 <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
@@ -289,7 +289,7 @@ export default function Navbar({
                           </div>
                         ) : (
                           <>
-                            <div className="px-3.5 py-1.5 border-b border-amber-200 text-[10px] font-bold text-amber-900 uppercase tracking-wider sticky top-0 bg-[#FEFCE8]/95 backdrop-blur-xs">
+                            <div className="px-3.5 py-1.5 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-red-900 dark:text-red-300 uppercase tracking-wider sticky top-0 bg-red-50/90 dark:bg-red-950/70 backdrop-blur-xs">
                               {link.dropdownHeader || "Select Option"}
                             </div>
                             {link.dropdown?.map((sub, sIdx) => (
@@ -300,9 +300,9 @@ export default function Navbar({
                                   setActiveDropdown(null);
                                   handleLinkNavigation(e, sub.href);
                                 }}
-                                className="block px-4 py-2 hover:bg-blue-50/70 dark:hover:bg-slate-800/70 text-slate-800 dark:text-slate-200 transition-colors group cursor-pointer border-b border-slate-50 dark:border-slate-900/60 last:border-b-0"
+                                className="block px-4 py-2 hover:bg-red-50/80 dark:hover:bg-red-950/50 text-slate-700 dark:text-slate-200 transition-colors group cursor-pointer border-b border-slate-50 dark:border-slate-800/50 last:border-b-0"
                               >
-                                <div className="text-xs font-medium group-hover:text-blue-600 dark:group-hover:text-cyan-300">
+                                <div className="text-xs font-medium group-hover:text-red-600 dark:group-hover:text-red-400">
                                   {sub.name}
                                 </div>
                                 {sub.desc && (
@@ -331,24 +331,24 @@ export default function Navbar({
                 placeholder="Search calculus, algebra..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs bg-white border border-amber-300/90 rounded-full py-2 pl-3.5 pr-8 text-slate-950 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-xs transition-all font-semibold"
+                className="w-full text-xs bg-white/95 hover:bg-white focus:bg-white border border-amber-400/80 rounded-full py-2 pl-3.5 pr-8 text-slate-950 placeholder-slate-600 focus:outline-none focus:border-red-600 focus:ring-2 focus:ring-red-600/25 shadow-xs transition-all font-semibold"
               />
               <button
                 type="submit"
                 aria-label="Search"
-                className="absolute right-2.5 text-slate-700 hover:text-slate-950 cursor-pointer"
+                className="absolute right-2.5 text-slate-800 hover:text-red-600 transition-colors cursor-pointer"
               >
                 <Search size={14} />
               </button>
             </form>
 
             {/* Right Controls & Actions */}
-            <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
-              {/* Dark / Light Mode Toggle Pill Switch */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+              {/* Dark / Light Mode Toggle Pill Switch (hidden on mobile, available in mobile drawer) */}
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="relative flex items-center w-[52px] xs:w-[58px] h-[28px] xs:h-[30px] rounded-full bg-slate-900 dark:bg-slate-700 transition-colors duration-300 focus:outline-none shadow-inner ring-1 ring-slate-900/15 dark:ring-white/20 cursor-pointer shrink-0"
+                className="hidden sm:flex relative items-center w-[52px] xs:w-[58px] h-[28px] xs:h-[30px] rounded-full bg-slate-900 dark:bg-slate-700 transition-colors duration-300 focus:outline-none shadow-inner ring-1 ring-slate-900/15 dark:ring-white/20 cursor-pointer shrink-0"
                 aria-label="Toggle dark mode"
                 title={
                   theme === "dark"
@@ -374,11 +374,11 @@ export default function Navbar({
                 </div>
               </button>
 
-              {/* Privacy Lock Button */}
+              {/* Privacy Lock Button (hidden on mobile, available in mobile drawer) */}
               {onLockSite && (
                 <button
                   onClick={onLockSite}
-                  className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800 transition-colors cursor-pointer shrink-0"
+                  className="hidden sm:flex p-1.5 sm:p-2 rounded-xl text-slate-900 hover:text-slate-950 hover:bg-white/80 border border-amber-400/80 transition-colors cursor-pointer shrink-0 shadow-2xs"
                   title="Lock Website (Privacy Gate)"
                   aria-label="Lock Website"
                 >
@@ -391,7 +391,7 @@ export default function Navbar({
               {currentUser ? (
                 <button
                   onClick={() => navigate("/profile")}
-                  className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800/90 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer group shrink-0"
+                  className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-amber-300/80 shadow-xs hover:shadow transition-all duration-200 cursor-pointer group shrink-0"
                   title="View Student Profile"
                   aria-label="View Student Profile"
                 >
@@ -411,10 +411,10 @@ export default function Navbar({
 
                   {/* Clean Professional Typography */}
                   <div className="flex flex-col text-left leading-tight hidden sm:flex max-w-[150px] md:max-w-[190px]">
-                    <span className="text-[12.5px] font-semibold text-slate-900 dark:text-slate-100 truncate tracking-tight group-hover:text-blue-600 dark:group-hover:text-cyan-400 transition-colors">
+                    <span className="text-[12.5px] font-bold text-slate-950 truncate tracking-tight group-hover:text-red-600 transition-colors">
                       {currentUser.name || "Student"}
                     </span>
-                    <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                    <span className="text-[10px] font-semibold text-slate-600 truncate">
                       {currentUser.role || "Student Scholar"}
                     </span>
                   </div>
@@ -422,16 +422,16 @@ export default function Navbar({
                   {/* Subtle navigation arrow */}
                   <ChevronRight
                     size={13}
-                    className="text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300 group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0"
+                    className="text-slate-500 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0"
                   />
                 </button>
               ) : (
-                /* Clean Simple Sign In / Sign Up Button (Icon-only on mobile) */
+                /* Clean Simple Sign In / Sign Up Button (Gradient Red Matching Footer) */
                 <button
                   onClick={handleSignInClick}
                   aria-label="Sign In / Sign Up"
                   title="Sign In / Sign Up"
-                  className="p-2 sm:px-4 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium text-xs tracking-tight shadow-xs hover:shadow transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shrink-0"
+                  className="p-2 sm:px-4 sm:py-2 rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-bold text-xs tracking-tight shadow-md shadow-red-950/20 hover:shadow-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shrink-0"
                 >
                   <User size={15} className="text-white" />
                   <span className="hidden sm:inline">Sign In / Sign Up</span>
@@ -442,7 +442,7 @@ export default function Navbar({
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-1.5 rounded-lg text-slate-950 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                className="lg:hidden p-1.5 rounded-lg text-slate-950 hover:bg-black/10 transition-colors cursor-pointer"
                 aria-label={mobileMenuOpen ? "Close Menu" : "Open Menu"}
               >
                 {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -450,11 +450,49 @@ export default function Navbar({
             </div>
           </div>
         </div>
+
+        {/* Bottom Red Flowing Wave Accent Bar (Directly Mirrors Footer Red Wave) */}
+        <div className="absolute bottom-0 inset-x-0 overflow-hidden leading-none z-20 pointer-events-none">
+          <svg 
+            viewBox="0 0 1440 18" 
+            className="w-full h-2 sm:h-2.5 md:h-3 object-fill block"
+            preserveAspectRatio="none"
+            shapeRendering="geometricPrecision"
+          >
+            <defs>
+              <linearGradient id="navRedBack" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#7f1d1d" />
+                <stop offset="30%" stopColor="#991b1b" />
+                <stop offset="70%" stopColor="#b91c1c" />
+                <stop offset="100%" stopColor="#881337" />
+              </linearGradient>
+              <linearGradient id="navRedFront" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#991b1b" />
+                <stop offset="25%" stopColor="#dc2626" />
+                <stop offset="65%" stopColor="#ef4444" />
+                <stop offset="85%" stopColor="#dc2626" />
+                <stop offset="100%" stopColor="#b91c1c" />
+              </linearGradient>
+            </defs>
+
+            {/* Layer 1: Dark crimson back wave */}
+            <path 
+              d="M 0 18 L 1440 18 L 1440 6 Q 1120 0 760 8 T 0 3 Z" 
+              fill="url(#navRedBack)" 
+            />
+
+            {/* Layer 2: Main bright red curved wave */}
+            <path 
+              d="M 0 18 L 1440 18 L 1440 9 Q 1060 2 680 10 T 0 6 Z" 
+              fill="url(#navRedFront)" 
+            />
+          </svg>
+        </div>
       </header>
 
       {/* Mobile Slide-Down Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[auto] z-40 bg-[#FEF9C3] dark:bg-[#FEF08A] text-slate-900 border-b-2 border-amber-300 dark:border-amber-300 shadow-2xl overflow-y-auto max-h-[calc(100vh-100px)] py-4 px-4 animate-in slide-in-from-top duration-200">
+        <div className="lg:hidden fixed inset-x-0 top-[72px] sm:top-[82px] z-40 bg-white/98 dark:bg-[#070a12]/98 text-slate-900 dark:text-slate-100 border-b-2 border-red-600 shadow-2xl overflow-y-auto max-h-[calc(100vh-100px)] py-4 px-4 animate-in slide-in-from-top duration-200 backdrop-blur-md">
           {/* Mobile Search */}
           <form
             onSubmit={handleSearchSubmit}
@@ -465,11 +503,11 @@ export default function Navbar({
               placeholder="Search curriculum, labs, lessons..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs bg-white border border-amber-300 rounded-xl py-2.5 pl-3.5 pr-9 text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+              className="w-full text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-3.5 pr-9 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20 font-medium"
             />
             <button
               type="submit"
-              className="absolute right-3 text-slate-500 dark:text-slate-400 hover:text-blue-600"
+              className="absolute right-3 text-slate-400 hover:text-red-600"
             >
               <Search size={16} />
             </button>
@@ -488,21 +526,21 @@ export default function Navbar({
                     <div>
                       <button
                         onClick={() => toggleMobileDropdown(idx)}
-                        className="w-full flex items-center justify-between py-2 px-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors"
+                        className="w-full flex items-center justify-between py-2 px-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       >
                         <span>{link.name}</span>
                         <ChevronDown
                           size={15}
-                          className={`transition-transform duration-200 text-slate-400 ${mobileDropdowns[idx] ? "rotate-180 text-blue-600" : ""}`}
+                          className={`transition-transform duration-200 text-slate-400 ${mobileDropdowns[idx] ? "rotate-180 text-red-600" : ""}`}
                         />
                       </button>
                       {mobileDropdowns[idx] && (
-                        <div className="pl-3 pr-2 pb-2 space-y-2.5 bg-slate-50/80 dark:bg-slate-900/60 rounded-xl p-2.5 my-1">
+                        <div className="pl-3 pr-2 pb-2 space-y-2.5 bg-red-50/50 dark:bg-red-950/30 rounded-xl p-2.5 my-1 border border-red-100 dark:border-red-950/50">
                           {link.sections ? (
                             <>
                               {link.sections.map((section, secIdx) => (
                                 <div key={secIdx} className="space-y-1">
-                                  <div className="text-[10px] font-bold text-amber-900 dark:text-amber-300 uppercase tracking-wider px-2 pt-1 border-b border-slate-200/60 dark:border-slate-800 pb-1">
+                                  <div className="text-[10px] font-bold text-red-900 dark:text-red-300 uppercase tracking-wider px-2 pt-1 border-b border-red-200/50 dark:border-red-900/40 pb-1">
                                     {section.title}
                                   </div>
                                   {section.items.map((sub, sIdx) => (
@@ -513,7 +551,7 @@ export default function Navbar({
                                         setMobileMenuOpen(false);
                                         handleLinkNavigation(e, sub.href);
                                       }}
-                                      className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-300 cursor-pointer"
+                                      className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                                     >
                                       • {sub.name}
                                     </a>
@@ -527,7 +565,7 @@ export default function Navbar({
                                     setMobileMenuOpen(false);
                                     handleLinkNavigation(e, "/demo#courses");
                                   }}
-                                  className="block py-1 px-2 text-xs font-bold text-blue-600 dark:text-cyan-400"
+                                  className="block py-1 px-2 text-xs font-bold text-red-600 dark:text-red-400"
                                 >
                                   → Explore All Intermediate Courses
                                 </a>
@@ -542,7 +580,7 @@ export default function Navbar({
                                   setMobileMenuOpen(false);
                                   handleLinkNavigation(e, sub.href);
                                 }}
-                                className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-300 cursor-pointer"
+                                className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                               >
                                 • {sub.name}
                               </a>
@@ -560,8 +598,8 @@ export default function Navbar({
                       }}
                       className={`block py-2 px-2 text-sm font-medium transition-colors cursor-pointer ${
                         isLinkActive(link.href)
-                          ? "text-blue-600 dark:text-cyan-300 font-semibold"
-                          : "text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-cyan-400"
+                          ? "text-red-600 dark:text-red-400 font-semibold bg-red-50 dark:bg-red-950/40 rounded-lg"
+                          : "text-slate-700 dark:text-slate-200 hover:text-red-600 dark:hover:text-red-400"
                       }`}
                     >
                       {link.name}
@@ -580,7 +618,7 @@ export default function Navbar({
                   setMobileMenuOpen(false);
                   handleSignInClick();
                 }}
-                className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-xs transition-colors"
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-600 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-xs transition-colors"
               >
                 <User size={14} className="text-white" />
                 <span>Sign In / Sign Up</span>
