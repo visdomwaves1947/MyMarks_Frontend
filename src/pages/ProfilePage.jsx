@@ -268,7 +268,7 @@ export default function ProfilePage({
               <div className="h-full bg-cyan-300 rounded-full w-full"></div>
             </div>
             <p className="text-[10px] text-blue-100 mt-1 font-semibold relative z-10 drop-shadow-xs">
-              100% Target Mastery (MPC)
+              {currentUser?.stream ? `100% Target Mastery (${currentUser.stream})` : "100% Target Mastery (MPC / BiPC / CEC / MEC / HEC)"}
             </p>
           </div>
 

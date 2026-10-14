@@ -418,6 +418,7 @@ export default function ContactUs({ onOpenBooking }) {
                         <option value="BiPC">BiPC (Botany, Zoology, Chem, Phy)</option>
                         <option value="CEC">CEC (Commerce, Econ, Civics)</option>
                         <option value="MEC">MEC (Maths, Econ, Commerce)</option>
+                        <option value="HEC">HEC (History, Economics, Civics)</option>
                         <option value="Other">Other / 10th Standard</option>
                       </select>
                     </div>

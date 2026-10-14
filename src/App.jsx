@@ -18,6 +18,10 @@ import Telugu from './pages/Telugu';
 import Hindi from './pages/Hindi';
 import Urdu from './pages/Urdu';
 import French from './pages/French';
+import Commerce from './pages/Commerce';
+import Economics from './pages/Economics';
+import Civics from './pages/Civics';
+import History from './pages/History';
 import ProfilePage from './pages/ProfilePage';
 import AboutUsPage from './pages/AboutUs';
 import ContactUsPage from './pages/ContactUs';
@@ -554,6 +558,67 @@ export default function App() {
             } 
           />
 
+          {/* Commerce / Accountancy Page (CEC & MEC) */}
+          <Route 
+            path="/commerce" 
+            element={
+              <Commerce 
+                onOpenBooking={handleOpenBooking}
+                onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                onSelectRoadmap={handleSelectRoadmap}
+              />
+            } 
+          />
+          <Route path="/Commerce" element={<Navigate to="/commerce" replace />} />
+          <Route path="/com" element={<Navigate to="/commerce" replace />} />
+          <Route path="/accountancy" element={<Navigate to="/commerce" replace />} />
+          <Route path="/cec" element={<Navigate to="/commerce" replace />} />
+
+          {/* Economics Page (CEC, MEC & HEC) */}
+          <Route 
+            path="/economics" 
+            element={
+              <Economics 
+                onOpenBooking={handleOpenBooking}
+                onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                onSelectRoadmap={handleSelectRoadmap}
+              />
+            } 
+          />
+          <Route path="/Economics" element={<Navigate to="/economics" replace />} />
+          <Route path="/eco" element={<Navigate to="/economics" replace />} />
+
+          {/* Civics / Political Science Page (CEC & HEC) */}
+          <Route 
+            path="/civics" 
+            element={
+              <Civics 
+                onOpenBooking={handleOpenBooking}
+                onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                onSelectRoadmap={handleSelectRoadmap}
+              />
+            } 
+          />
+          <Route path="/Civics" element={<Navigate to="/civics" replace />} />
+          <Route path="/civ" element={<Navigate to="/civics" replace />} />
+          <Route path="/political-science" element={<Navigate to="/civics" replace />} />
+
+          {/* History Page (HEC) */}
+          <Route 
+            path="/history" 
+            element={
+              <History 
+                onOpenBooking={handleOpenBooking}
+                onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                onSelectRoadmap={handleSelectRoadmap}
+              />
+            } 
+          />
+          <Route path="/History" element={<Navigate to="/history" replace />} />
+          <Route path="/his" element={<Navigate to="/history" replace />} />
+          <Route path="/hec" element={<Navigate to="/history" replace />} />
+          <Route path="/mec" element={<Navigate to="/commerce" replace />} />
+
           {/* Auth Routes: Render DemoPage in the background so the modal overlays it nicely */}
           <Route 
             path="/signin" 
@@ -619,6 +684,14 @@ export default function App() {
           <Route path="/mymarks/sanskrit" element={<Navigate to="/sanskrit" replace />} />
           <Route path="/mymarks/Sanskrit" element={<Navigate to="/sanskrit" replace />} />
           <Route path="/mymarks/san" element={<Navigate to="/sanskrit" replace />} />
+          <Route path="/mymarks/commerce" element={<Navigate to="/commerce" replace />} />
+          <Route path="/mymarks/Commerce" element={<Navigate to="/commerce" replace />} />
+          <Route path="/mymarks/economics" element={<Navigate to="/economics" replace />} />
+          <Route path="/mymarks/Economics" element={<Navigate to="/economics" replace />} />
+          <Route path="/mymarks/civics" element={<Navigate to="/civics" replace />} />
+          <Route path="/mymarks/Civics" element={<Navigate to="/civics" replace />} />
+          <Route path="/mymarks/history" element={<Navigate to="/history" replace />} />
+          <Route path="/mymarks/History" element={<Navigate to="/history" replace />} />
           <Route path="/mymarks/*" element={<Navigate to="/demo" replace />} />
 
           {/* Standalone About Us Page Routes */}
