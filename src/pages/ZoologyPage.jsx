@@ -7,6 +7,7 @@ import ZoologyTestimonials from '../components/zoology/ZoologyTestimonials';
 import ZoologyStatsBar from '../components/zoology/ZoologyStatsBar';
 import ZoologyPricingSection from '../components/zoology/ZoologyPricingSection';
 import ZoologyFaqSection from '../components/zoology/ZoologyFaqSection';
+import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
 export default function ZoologyPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
   // Handle hash scrolling if navigating with hash
@@ -27,6 +28,12 @@ export default function ZoologyPage({ onOpenBooking, onOpenVideoDemo, onSelectRo
       <ZoologyHero 
         onOpenBooking={onOpenBooking} 
         onOpenVideoDemo={onOpenVideoDemo}
+      />
+
+      <SubjectLabPracticalBanner 
+        subjectId="zoo"
+        subjectName="Zoology"
+        practicalMarks="30 Marks"
       />
 
       {/* Why Choose Us Grid for Zoology */}

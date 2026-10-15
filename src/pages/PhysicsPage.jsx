@@ -7,6 +7,7 @@ import PhysicsTestimonials from '../components/physics/PhysicsTestimonials';
 import PhysicsStatsBar from '../components/physics/PhysicsStatsBar';
 import PhysicsPricingSection from '../components/physics/PhysicsPricingSection';
 import PhysicsFaqSection from '../components/physics/PhysicsFaqSection';
+import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
 export default function PhysicsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
   useEffect(() => {
@@ -25,6 +26,12 @@ export default function PhysicsPage({ onOpenBooking, onOpenVideoDemo, onSelectRo
       <PhysicsHero 
         onOpenBooking={onOpenBooking} 
         onOpenVideoDemo={onOpenVideoDemo}
+      />
+
+      <SubjectLabPracticalBanner 
+        subjectId="phy"
+        subjectName="Physics"
+        practicalMarks="30 Marks"
       />
 
       <PhysicsWhyChooseUs 

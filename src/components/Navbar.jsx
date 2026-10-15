@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Lock,
   Globe,
+  FlaskConical,
 } from "lucide-react";
 import { VisdomBrand } from "./VisdomBrand";
 
@@ -45,23 +46,38 @@ export default function Navbar({
   const handleLinkNavigation = (e, href) => {
     e.preventDefault();
     if (!href || href === "#") {
-      if (location.pathname.toLowerCase().includes("demo")) {
-        navigate("/maths");
-      } else {
+      if (location.pathname.toLowerCase().includes("demo") || location.pathname === "/") {
         window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        navigate("/demo");
       }
       return;
     }
 
+    // Handle group navigation e.g. /demo?group=mpc#courses
+    const groupMatch = href.match(/[?&]group=([a-z0-9]+)/i);
+    if (groupMatch) {
+      const group = groupMatch[1].toLowerCase();
+      window.dispatchEvent(new CustomEvent("selectIntermediateGroup", { detail: group }));
+      if (location.pathname.toLowerCase().includes("demo") || location.pathname === "/") {
+        const el = document.getElementById("courses");
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        navigate(href, { replace: true });
+        return;
+      }
+    }
+
     if (href.startsWith("#")) {
-      if (location.pathname.toLowerCase().includes("demo")) {
-        navigate(`/maths${href}`);
-      } else {
+      if (location.pathname.toLowerCase().includes("demo") || location.pathname === "/") {
         const id = href.replace("#", "");
         const el = document.getElementById(id);
         if (el) {
           el.scrollIntoView({ behavior: "smooth" });
         }
+      } else {
+        navigate(`/demo${href}`);
       }
     } else {
       navigate(href);
@@ -104,7 +120,7 @@ export default function Navbar({
   const handleDropdownLeave = () => {
     dropdownTimeoutRef.current = setTimeout(() => {
       setActiveDropdown(null);
-    }, 150);
+    }, 220);
   };
 
   const toggleMobileDropdown = (index) => {
@@ -128,14 +144,14 @@ export default function Navbar({
       href: "/demo#courses",
       sections: [
         {
-          title: "Group Subjects",
+          title: "Academic Groups",
           icon: Layers,
           items: [
-            { name: "Mathematics", href: "/maths" },
-            { name: "Physics", href: "/physics" },
-            { name: "Chemistry", href: "/chemistry" },
-            { name: "Botany", href: "/botany" },
-            { name: "Zoology", href: "/zoology" },
+            { name: "MPC", desc: "Maths, Physics, Chem", href: "/demo?group=mpc#courses" },
+            { name: "BiPC", desc: "Botany, Zoology, Phy, Chem", href: "/demo?group=bipc#courses" },
+            { name: "CEC", desc: "Commerce, Econ, Civics", href: "/demo?group=cec#courses" },
+            { name: "MEC", desc: "Maths, Econ, Commerce", href: "/demo?group=mec#courses" },
+            { name: "HEC", desc: "History, Econ, Civics", href: "/demo?group=hec#courses" },
           ],
         },
         {
@@ -147,6 +163,19 @@ export default function Navbar({
             { name: "Telugu", href: "/telugu" },
             { name: "Hindi", href: "/hindi" },
             { name: "Urdu", href: "/urdu" },
+          ],
+        },
+        {
+          title: "Lab / Practicals",
+          icon: FlaskConical,
+          items: [
+            { name: "Physics Lab (30M)", href: "/practicals?subject=phy" },
+            { name: "Chemistry Lab (30M)", href: "/practicals?subject=chem" },
+            { name: "Biology Labs (30M)", href: "/practicals?subject=bot" },
+            { name: "Computer Science (30M)", href: "/practicals?subject=cs" },
+            { name: "Electronics Lab (30M)", href: "/practicals?subject=elec" },
+            { name: "Geography Lab (30M)", href: "/practicals?subject=geo" },
+            { name: "View All Practical Handbooks", href: "/practicals" },
           ],
         },
       ],
@@ -225,17 +254,17 @@ export default function Navbar({
                       </a>
                     )}
 
-                    {/* Desktop Dropdown Popover */}
+                    {/* Desktop Dropdown Popover (Positioned cleanly below header red wave bar) */}
                     {hasDropdown && activeDropdown === idx && (
                       <div
-                        className={`absolute top-full ${link.sections ? "-left-12 sm:-left-20 w-[360px] sm:w-[380px]" : "left-0 w-72"} mt-1.5 rounded-2xl bg-white dark:bg-slate-900 border border-red-200/90 dark:border-red-950/80 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-hidden ring-1 ring-black/5`}
+                        className={`absolute top-[calc(100%+20px)] sm:top-[calc(100%+24px)] md:top-[calc(100%+28px)] ${link.sections ? "-left-40 sm:-left-60 md:-left-64 w-[560px] sm:w-[620px] md:w-[650px]" : "left-0 w-72"} rounded-2xl bg-white dark:bg-slate-900 border border-red-200/90 dark:border-red-950/80 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-visible ring-1 ring-black/5 before:content-[''] before:absolute before:-top-8 before:inset-x-0 before:h-8`}
                         onMouseEnter={() => handleDropdownEnter(idx)}
                         onMouseLeave={handleDropdownLeave}
                       >
                         {link.sections ? (
                           <div>
-                            {/* Two-Column Grid: Group Subjects & Languages */}
-                            <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-slate-800 p-2 gap-1.5">
+                            {/* 3-Column Grid: Academic Groups, Languages & Lab Practicals */}
+                            <div className={`grid ${link.sections.length === 3 ? "grid-cols-3" : "grid-cols-2"} divide-x divide-slate-100 dark:divide-slate-800 p-2 gap-1.5`}>
                               {link.sections.map((section, secIdx) => {
                                 const SectionIcon = section.icon || BookOpen;
                                 return (
@@ -258,9 +287,16 @@ export default function Navbar({
                                             setActiveDropdown(null);
                                             handleLinkNavigation(e, sub.href);
                                           }}
-                                          className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/90 dark:hover:bg-red-950/50 transition-colors cursor-pointer"
+                                          className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50/90 dark:hover:bg-red-950/50 transition-colors cursor-pointer group"
                                         >
-                                          {sub.name}
+                                          <span className="block font-bold text-slate-900 dark:text-white group-hover:text-red-600 dark:group-hover:text-red-400">
+                                            {sub.name}
+                                          </span>
+                                          {sub.desc && (
+                                            <span className="block text-[10px] text-slate-400 dark:text-slate-500 font-normal">
+                                              {sub.desc}
+                                            </span>
+                                          )}
                                         </a>
                                       ))}
                                     </div>
@@ -553,7 +589,12 @@ export default function Navbar({
                                       }}
                                       className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 cursor-pointer"
                                     >
-                                      • {sub.name}
+                                      <div className="font-semibold">• {sub.name}</div>
+                                      {sub.desc && (
+                                        <div className="text-[10px] text-slate-400 dark:text-slate-500 pl-3">
+                                          {sub.desc}
+                                        </div>
+                                      )}
                                     </a>
                                   ))}
                                 </div>

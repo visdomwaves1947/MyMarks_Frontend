@@ -7,6 +7,7 @@ import ChemistryTestimonials from '../components/chemistry/ChemistryTestimonials
 import ChemistryStatsBar from '../components/chemistry/ChemistryStatsBar';
 import ChemistryPricingSection from '../components/chemistry/ChemistryPricingSection';
 import ChemistryFaqSection from '../components/chemistry/ChemistryFaqSection';
+import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
 export default function ChemistryPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
   useEffect(() => {
@@ -25,6 +26,12 @@ export default function ChemistryPage({ onOpenBooking, onOpenVideoDemo, onSelect
       <ChemistryHero 
         onOpenBooking={onOpenBooking} 
         onOpenVideoDemo={onOpenVideoDemo}
+      />
+
+      <SubjectLabPracticalBanner 
+        subjectId="chem"
+        subjectName="Chemistry"
+        practicalMarks="30 Marks"
       />
 
       <ChemistryWhyChooseUs 

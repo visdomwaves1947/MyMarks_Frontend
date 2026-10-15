@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   BookOpen,
   ArrowRight,
@@ -9,8 +9,14 @@ import {
   X,
   Sparkles,
   CheckCircle2,
+  FlaskConical,
+  Atom,
+  Sliders,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import LabPracticalHub from "./lab/LabPracticalHub";
+import { LAB_SUBJECTS } from "../data/labPracticalsData";
+
 
 export default function IntermediateSubjects({
   onEnroll,
@@ -22,7 +28,44 @@ export default function IntermediateSubjects({
   const [activeExplore, setActiveExplore] = useState(null);
   const [lockedSubject, setLockedSubject] = useState(null);
   const [selectedStream, setSelectedStream] = useState("all");
+  const [activeLabModalSubject, setActiveLabModalSubject] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const handleGroupSelection = (grp) => {
+      if (!grp) return;
+      const lower = grp.toLowerCase();
+      if (["mpc", "bipc", "mec", "cec", "hec", "labs", "languages", "all"].includes(lower)) {
+        setSelectedStream(lower);
+        setTimeout(() => {
+          const coursesEl = document.getElementById("courses");
+          if (coursesEl) {
+            coursesEl.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
+      }
+    };
+
+    // 1. Check URL query params on load or location change
+    const groupParam = searchParams.get("group") || searchParams.get("stream");
+    if (groupParam) {
+      handleGroupSelection(groupParam);
+    }
+
+    // 2. Listen to custom event for instantaneous in-page navigation from Navbar/Footer
+    const onSelectGroupEvent = (e) => {
+      if (e.detail) {
+        handleGroupSelection(e.detail);
+      }
+    };
+    window.addEventListener("selectIntermediateGroup", onSelectGroupEvent);
+
+    return () => {
+      window.removeEventListener("selectIntermediateGroup", onSelectGroupEvent);
+    };
+  }, [searchParams, location]);
 
   // Determine if the user is authenticated from props or saved local storage
   const isAuthenticated = Boolean(
@@ -42,20 +85,22 @@ export default function IntermediateSubjects({
       number: "1",
       code: "MPC",
       name: "Mathematics, Physics, Chemistry",
-      description: "Premier Engineering, Architecture, Pure Sciences & Technology track for JEE & EAMCET aspirants.",
+      description: "Premier Engineering, Architecture, Pure Sciences & Technology track for JEE & EAMCET aspirants. Includes compulsory board practicals for Mathematics, Physics (30M), and Chemistry (30M).",
       careerBadge: "Engineering & Tech",
-      careerList: "JEE Mains & Advanced, B.Tech / BE, B.Arch, IISER, NDA, B.Sc Data Science & Mathematics.",
+      careerList: "JEE Mains & Advanced, B.Tech / BE, B.Arch, IISER, NDA • Practicals: Mathematics (30M), Physics (30M) & Chemistry (30M).",
       subjectIds: ["maths", "phy", "chem"],
+      practicalLabIds: ["maths", "phy", "chem"],
       badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
     },
     bipc: {
       number: "2",
       code: "BiPC",
       name: "Biology (Botany & Zoology), Physics, Chemistry",
-      description: "Medical, Dental, Pharmacy, Agricultural, Biotechnology & Life Sciences track for NEET aspirants.",
+      description: "Medical, Dental, Pharmacy, Agricultural, Biotechnology & Life Sciences track for NEET aspirants. Includes compulsory board practicals for Botany, Zoology, Physics, and Chemistry (30M each).",
       careerBadge: "Medical & Life Sciences",
-      careerList: "NEET UG, MBBS, BDS, B.Pharm, Pharm.D, B.Sc Agriculture, Veterinary Science, Biotechnology.",
+      careerList: "NEET UG, MBBS, BDS, B.Pharm, Pharm.D, B.Sc Agriculture • Compulsory Practicals: Botany (30M), Zoology (30M), Physics (30M), Chemistry (30M).",
       subjectIds: ["bot", "zoo", "phy", "chem"],
+      practicalLabIds: ["bot", "zoo", "phy", "chem"],
       badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     },
     cec: {
@@ -66,6 +111,7 @@ export default function IntermediateSubjects({
       careerBadge: "Commerce & Business",
       careerList: "CA Foundation, CMA, CS, B.Com (Hons), BBA, Corporate Banking, Stock Markets, Law (CLAT / LLB).",
       subjectIds: ["com", "eco", "civ"],
+      practicalLabIds: [],
       badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     },
     mec: {
@@ -76,6 +122,7 @@ export default function IntermediateSubjects({
       careerBadge: "Quantitative Finance & Actuarial",
       careerList: "Actuarial Science, Quantitative Finance, CA, CFA, B.Com Analytics, Economic Honors, Data Science.",
       subjectIds: ["maths", "eco", "com"],
+      practicalLabIds: [],
       badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     },
     hec: {
@@ -84,9 +131,32 @@ export default function IntermediateSubjects({
       name: "History, Economics, Civics (Political Science)",
       description: "Humanities Group — Premier pipeline for Civil Services (UPSC), Judiciary, Public Policy & International Relations.",
       careerBadge: "Civil Services & Law",
-      careerList: "UPSC IAS / IPS / IFS, APPSC / TSPSC Group 1, Law (CLAT 5-Year LLB), Public Policy, Journalism.",
+      careerList: "UPSC IAS / IPS / IFS, APPSC / TSPSC Group 1, Law (CLAT 5-Year LLB), Public Policy, Journalism • Practical: Geography (30M).",
       subjectIds: ["his", "eco", "civ"],
+      practicalLabIds: ["geo"],
       badgeColor: "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
+    },
+    labs: {
+      number: "6",
+      code: "LABS",
+      name: "Lab & Practical Work (Board 30 Marks)",
+      description: "Compulsory hands-on laboratory examinations, viva-voce handbooks, experiment procedure guides, observational record templates, and 30-mark board scoring blueprints across Science, Technical & Humanities disciplines.",
+      careerBadge: "Board Practical Examinations",
+      careerList: "Mathematics (30M), Physics (30M), Chemistry (30M), Botany (30M), Zoology (30M), Computer Science (30M), Electronics (30M), Geography (30M).",
+      subjectIds: ["maths", "phy", "chem", "bot", "zoo", "cs", "elec", "geo"],
+      practicalLabIds: ["maths", "phy", "chem", "bot", "zoo", "cs", "elec", "geo"],
+      badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    },
+    languages: {
+      number: "7",
+      code: "LANG",
+      name: "Part I & Part II Languages",
+      description: "Comprehensive board curriculum, question paper blueprints, grammar rules, poetry, prose, and comprehension for English and Second Languages (Telugu, Sanskrit, Hindi, Urdu, French).",
+      careerBadge: "Board Languages (100 Marks Each)",
+      careerList: "English (Part I • 100M) • Sanskrit, Telugu, Hindi, Urdu, French (Part II • 100M).",
+      subjectIds: ["eng", "san", "tel", "hin", "urd", "fre"],
+      practicalLabIds: [],
+      badgeColor: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
     },
   };
 
@@ -104,40 +174,83 @@ export default function IntermediateSubjects({
       id: "phy",
       name: "Physics",
       category: "MPC / BiPC",
+      hasPractical: true,
+      practicalMarks: "30 Marks",
       image:
         "https://i.pinimg.com/736x/59/63/26/596326ea62c6f1c23ff12882c8c00e7e.jpg",
       color:
         "bg-purple-50 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
-      desc: "Understand mechanics, thermodynamics, and electromagnetism with practical real-world applications and numerical problem-solving techniques.",
+      desc: "Understand mechanics, thermodynamics, and electromagnetism with practical real-world applications, numerical problem-solving, and laboratory experiments.",
     },
     {
       id: "chem",
       name: "Chemistry",
       category: "MPC / BiPC",
+      hasPractical: true,
+      practicalMarks: "30 Marks",
       image:
         "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=600&auto=format&fit=crop",
       color:
         "bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400",
-      desc: "Explore organic, inorganic, and physical chemistry. Memorize reactions easily with our curated cheat sheets and molecular models.",
+      desc: "Explore organic, inorganic, and physical chemistry. Systematic qualitative salt analysis, volumetric titrations, and molecular models.",
     },
     {
       id: "bot",
       name: "Botany",
       category: "BiPC",
+      hasPractical: true,
+      practicalMarks: "30 Marks",
       image:
         "https://i.pinimg.com/736x/73/a6/34/73a634a96be17ca114e7ac1375713492.jpg",
       color:
         "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400",
-      desc: "Study plant biology, anatomy, and physiology in detail. Our diagrams and notes are perfectly tailored for high NEET and Board scores.",
+      desc: "Study plant biology, anatomical section cutting, double staining, and plant physiology. Tailored for high NEET and Board scores.",
     },
     {
       id: "zoo",
       name: "Zoology",
       category: "BiPC",
+      hasPractical: true,
+      practicalMarks: "30 Marks",
       image:
         "https://images.unsplash.com/photo-1555169062-013468b47731?q=80&w=600&auto=format&fit=crop",
       color: "bg-teal-50 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400",
-      desc: "Dive into animal sciences, human anatomy, genetics, and evolution. Expert guidance for medical entrance exams.",
+      desc: "Dive into animal sciences, human anatomy, specimen spotting, physiological demonstrations, and expert medical guidance.",
+    },
+    {
+      id: "cs",
+      name: "Computer Science",
+      category: "MPC / MEC / Vocational",
+      hasPractical: true,
+      practicalMarks: "30 Marks",
+      image:
+        "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop",
+      color: "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400",
+      desc: "Master Python/C++ programming, data structures (stacks, queues), relational SQL databases, and practical lab executions for 30/30 board marks.",
+    },
+    {
+      id: "elec",
+      name: "Electronics",
+      category: "MPC / Vocational",
+      hasPractical: true,
+      practicalMarks: "30 Marks",
+      image:
+        "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop",
+      color:
+        "bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400",
+      desc: "Understand semiconductor diodes, transistors, power rectifiers, and digital logic gate truth tables with hands-on breadboard circuit wiring.",
+    },
+    {
+      id: "geo",
+      name: "Geography",
+      category: "HEC",
+      hasPractical: true,
+      practicalMarks: "30 Marks",
+      image:
+        "https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=600&auto=format&fit=crop",
+      color:
+        "bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+      desc: "Master Survey of India toposheet reading, relief contour profiles, map scales (R.F.), and meteorological weather instruments for board practicals.",
     },
     {
       id: "com",
@@ -289,6 +402,9 @@ export default function IntermediateSubjects({
     } else if (subject.id === "his") {
       navigate("/history");
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (["cs", "elec", "geo"].includes(subject.id)) {
+      navigate(`/practicals?subject=${subject.id}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       setActiveExplore(activeExplore === subject.id ? null : subject.id);
     }
@@ -346,6 +462,9 @@ export default function IntermediateSubjects({
     } else if (subject.id === "his") {
       navigate("/history");
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (["cs", "elec", "geo"].includes(subject.id)) {
+      navigate(`/practicals?subject=${subject.id}`);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } else {
       setActiveExplore(subject.id);
     }
@@ -389,7 +508,7 @@ export default function IntermediateSubjects({
           !isAuthenticated
             ? "border-slate-200/80 dark:border-slate-800 hover:border-amber-500/60 dark:hover:border-amber-500/60 hover:shadow-amber-500/10"
             : "border-slate-100 dark:border-slate-800 hover:border-cyan-500/60 dark:hover:border-cyan-500/60 hover:shadow-cyan-500/10"
-        } h-[390px] group hover:-translate-y-1.5 relative cursor-pointer`}
+        } h-[375px] group hover:-translate-y-1.5 relative cursor-pointer`}
         onClick={() => handleSubjectClick(subject)}
       >
         {/* Card Thumbnail */}
@@ -406,6 +525,7 @@ export default function IntermediateSubjects({
             <BookOpen size={20} />
           </div>
 
+
           {/* Lock State Indicator Badge */}
           {!isAuthenticated ? (
             <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-slate-950/85 backdrop-blur-md border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-xl z-10 group-hover:border-amber-400 group-hover:scale-105 transition-all">
@@ -421,28 +541,31 @@ export default function IntermediateSubjects({
         </div>
 
         <div className="p-5 flex flex-col flex-1 relative overflow-hidden">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-              {subject.category}
-            </span>
-            {!isAuthenticated && (
-              <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                <Lock size={11} /> Locked
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                {subject.category}
               </span>
-            )}
-          </div>
+              {!isAuthenticated && (
+                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <Lock size={11} /> Locked
+                </span>
+              )}
+            </div>
 
-          <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2.5 group-hover:text-indigo-600 dark:group-hover:text-cyan-400 transition-colors">
-            {subject.name}
-          </h4>
+            <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-cyan-400 transition-colors">
+              {subject.name}
+            </h4>
 
-          {/* Default Card View */}
-          <div
-            className={`flex flex-col mt-auto transition-opacity duration-300 ${isExploring || isEnrolling ? "opacity-0 pointer-events-none" : "opacity-100"}`}
-          >
-            <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
               {subject.desc}
             </p>
+          </div>
+
+          {/* Default Card Action Buttons */}
+          <div
+            className={`mt-auto pt-2 transition-opacity duration-300 ${isExploring || isEnrolling ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+          >
             <div className="flex gap-2.5">
               <button
                 type="button"
@@ -554,6 +677,167 @@ export default function IntermediateSubjects({
     );
   };
 
+  const renderPracticalCard = (lab) => {
+    return (
+      <div
+        key={`practical-${lab.id}`}
+        className={`flex flex-col bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border ${
+          !isAuthenticated
+            ? "border-slate-200/80 dark:border-slate-800 hover:border-amber-500/60 dark:hover:border-amber-500/60 hover:shadow-amber-500/10"
+            : "border-slate-100 dark:border-slate-800 hover:border-cyan-500/60 dark:hover:border-cyan-500/60 hover:shadow-cyan-500/10"
+        } h-[375px] group hover:-translate-y-1.5 relative cursor-pointer`}
+        onClick={() => {
+          if (!isAuthenticated) {
+            setLockedSubject({
+              id: lab.id,
+              name: lab.name,
+              desc: lab.overview,
+              image: lab.image,
+              hasPractical: true,
+              practicalMarks: "30 Marks",
+            });
+            return;
+          }
+          navigate(`/practicals?subject=${lab.id}`);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      >
+        {/* Card Thumbnail */}
+        <div className="h-44 w-full overflow-hidden relative shrink-0">
+          <img
+            src={lab.image}
+            alt={lab.name}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent pointer-events-none"></div>
+
+          {/* Practical Category Icon Badge */}
+          <div className="absolute bottom-3 left-3 w-10 h-10 rounded-xl flex items-center justify-center backdrop-blur-md bg-white/20 text-white shadow-md border border-white/20">
+            <FlaskConical size={20} />
+          </div>
+
+          {/* 30 Marks Practical Badge */}
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-purple-950/90 backdrop-blur-md border border-purple-400/40 text-purple-200 text-[10px] font-black flex items-center gap-1 shadow-lg z-10">
+            <FlaskConical size={11} className="text-purple-300" />
+            <span>{lab.boardMarks} Marks Practical</span>
+          </div>
+
+          {/* Lock State Indicator Badge */}
+          {!isAuthenticated ? (
+            <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-slate-950/85 backdrop-blur-md border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-xl z-10 group-hover:border-amber-400 group-hover:scale-105 transition-all">
+              <Lock size={12} className="text-amber-400" />
+              <span>Locked Demo</span>
+            </div>
+          ) : (
+            <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-emerald-950/85 backdrop-blur-md border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1.5 shadow-xl z-10">
+              <Sparkles size={12} className="text-emerald-400" />
+              <span>Unlocked</span>
+            </div>
+          )}
+        </div>
+
+        {/* Card Body */}
+        <div className="p-5 flex flex-col flex-1 relative overflow-hidden">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+                {lab.stream}
+              </span>
+              {!isAuthenticated && (
+                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <Lock size={11} /> Locked
+                </span>
+              )}
+            </div>
+
+            <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-cyan-400 transition-colors line-clamp-1">
+              {lab.name}
+            </h4>
+
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+              {lab.overview}
+            </p>
+          </div>
+
+          {/* Action Buttons identical to Science & Engineering Groups */}
+          <div className="mt-auto pt-2">
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isAuthenticated) {
+                    setLockedSubject({
+                      id: lab.id,
+                      name: lab.name,
+                      desc: lab.overview,
+                      image: lab.image,
+                      hasPractical: true,
+                      practicalMarks: "30 Marks",
+                    });
+                    return;
+                  }
+                  navigate(`/practicals?subject=${lab.id}`);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              >
+                {!isAuthenticated ? (
+                  <>
+                    <Lock size={13} className="text-amber-500" />
+                    <span>Explore</span>
+                  </>
+                ) : (
+                  <>
+                    <Info size={15} />
+                    <span>Explore</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!isAuthenticated) {
+                    setLockedSubject({
+                      id: lab.id,
+                      name: lab.name,
+                      desc: lab.overview,
+                      image: lab.image,
+                      hasPractical: true,
+                      practicalMarks: "30 Marks",
+                    });
+                    return;
+                  }
+                  setActiveLabModalSubject(lab.id);
+                }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer ${
+                  !isAuthenticated
+                    ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold shadow-amber-500/20"
+                    : "bg-slate-900 hover:bg-cyan-600 dark:bg-cyan-700 dark:hover:bg-cyan-500 text-white"
+                }`}
+              >
+                {!isAuthenticated ? (
+                  <>
+                    <Lock size={13} />
+                    <span>Demo Trial</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Enroll</span>
+                    <ArrowRight size={15} />
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+
   return (
     <section
       className="py-16 sm:py-24 bg-slate-50 dark:bg-[#0B0F19] border-t border-slate-200 dark:border-slate-800 relative"
@@ -613,20 +897,31 @@ export default function IntermediateSubjects({
 
         {/* Interactive Stream Filter Tabs */}
         <div className="mb-12">
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 p-2 bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm max-w-5xl mx-auto">
+          <div className="flex flex-nowrap items-center sm:justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm max-w-6xl mx-auto overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <button
               onClick={() => setSelectedStream("all")}
-              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "all"
                   ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md scale-[1.02]"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
               }`}
             >
-              All Groups (15)
+              All Subjects (18)
+            </button>
+            <button
+              onClick={() => setSelectedStream("labs")}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                selectedStream === "labs"
+                  ? "bg-purple-600 text-white shadow-md shadow-purple-600/25 scale-[1.02]"
+                  : "text-slate-600 dark:text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+              }`}
+            >
+              <FlaskConical size={14} className={selectedStream === "labs" ? "text-purple-200" : "text-slate-500 dark:text-slate-400"} />
+              <span>Lab / Practicals (8)</span>
             </button>
             <button
               onClick={() => setSelectedStream("mpc")}
-              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "mpc"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]"
                   : "text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
@@ -636,7 +931,7 @@ export default function IntermediateSubjects({
             </button>
             <button
               onClick={() => setSelectedStream("bipc")}
-              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "bipc"
                   ? "bg-green-600 text-white shadow-md shadow-green-600/25 scale-[1.02]"
                   : "text-slate-600 dark:text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/40"
@@ -646,37 +941,40 @@ export default function IntermediateSubjects({
             </button>
             <button
               onClick={() => setSelectedStream("cec")}
-              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              title="Commerce, Economics, Civics"
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "cec"
                   ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 scale-[1.02]"
                   : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
               }`}
             >
-              3. CEC (Commerce)
+              3. CEC
             </button>
             <button
               onClick={() => setSelectedStream("mec")}
-              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              title="Mathematics, Economics, Commerce"
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "mec"
                   ? "bg-amber-600 text-white shadow-md shadow-amber-600/25 scale-[1.02]"
                   : "text-slate-600 dark:text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
               }`}
             >
-              4. MEC (Maths & Econ)
+              4. MEC
             </button>
             <button
               onClick={() => setSelectedStream("hec")}
-              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              title="History, Economics, Civics"
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "hec"
                   ? "bg-rose-600 text-white shadow-md shadow-rose-600/25 scale-[1.02]"
                   : "text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
               }`}
             >
-              5. HEC (Humanities)
+              5. HEC
             </button>
             <button
               onClick={() => setSelectedStream("languages")}
-              className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "languages"
                   ? "bg-orange-600 text-white shadow-md shadow-orange-600/25 scale-[1.02]"
                   : "text-slate-600 dark:text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40"
@@ -688,13 +986,17 @@ export default function IntermediateSubjects({
         </div>
 
         {/* Selected Stream Spotlight Banner */}
-        {selectedStream !== "all" && selectedStream !== "languages" && streamDefinitions[selectedStream] && (
+        {selectedStream !== "all" && streamDefinitions[selectedStream] && (
           <div className="mb-12 p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${streamDefinitions[selectedStream].badgeColor}`}>
-                    Group {streamDefinitions[selectedStream].number} • {streamDefinitions[selectedStream].code}
+                    {streamDefinitions[selectedStream].code === "LABS"
+                      ? "Lab / Practicals"
+                      : streamDefinitions[selectedStream].code === "LANG"
+                      ? "Languages"
+                      : `Group ${streamDefinitions[selectedStream].number} • ${streamDefinitions[selectedStream].code}`}
                   </span>
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
                     {streamDefinitions[selectedStream].careerBadge}
@@ -709,7 +1011,7 @@ export default function IntermediateSubjects({
               </div>
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800 shrink-0 w-full lg:w-auto">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
-                  Career Opportunities & Entrances:
+                  Subjects & Board Practical Marks:
                 </span>
                 <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 max-w-sm">
                   {streamDefinitions[selectedStream].careerList}
@@ -722,15 +1024,80 @@ export default function IntermediateSubjects({
         {/* Single Filtered Stream View */}
         {selectedStream !== "all" && (
           <div className="mb-16">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
-              {selectedStream === "languages"
-                ? subjects
-                    .filter((s) => s.category === "Languages")
-                    .map(renderSubjectCard)
-                : subjects
-                    .filter((s) => streamDefinitions[selectedStream]?.subjectIds.includes(s.id))
-                    .map(renderSubjectCard)}
-            </div>
+            {/* Stream Theory Subjects (if not the labs tab) */}
+            {selectedStream !== "labs" && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="h-7 w-2 bg-gradient-to-b from-blue-500 to-indigo-600 rounded-full"></div>
+                  <h4 className="text-xl font-black text-slate-900 dark:text-white">
+                    {streamDefinitions[selectedStream]?.code} Theory Subjects
+                  </h4>
+                  <span className="px-2.5 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold">
+                    {selectedStream === "languages"
+                      ? "6 Languages"
+                      : `${streamDefinitions[selectedStream]?.subjectIds.length || 0} Subjects`}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                  {selectedStream === "languages"
+                    ? subjects
+                        .filter((s) => s.category === "Languages")
+                        .map(renderSubjectCard)
+                    : subjects
+                        .filter((s) => streamDefinitions[selectedStream]?.subjectIds.includes(s.id))
+                        .map(renderSubjectCard)}
+                </div>
+              </div>
+            )}
+
+            {/* Related Board Practical Labs Section for the selected stream */}
+            {streamDefinitions[selectedStream]?.practicalLabIds?.length > 0 && (
+              <div className={selectedStream !== "labs" ? "mt-14 pt-10 border-t border-slate-200/80 dark:border-slate-800" : ""}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-10 h-10 rounded-2xl bg-purple-500/15 border border-purple-500/30 text-purple-600 dark:text-purple-400 flex items-center justify-center shadow-sm">
+                      <FlaskConical size={20} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                          {selectedStream === "labs"
+                            ? "Board Practical Laboratories"
+                            : `${streamDefinitions[selectedStream]?.code} Related Board Practical Labs`}
+                        </h4>
+                        <span className="px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-700 dark:text-purple-300 text-[11px] font-black uppercase tracking-wider">
+                          Compulsory 30M Each
+                        </span>
+                      </div>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                        {selectedStream === "labs"
+                          ? "Comprehensive 30-mark board practical curriculum with simulators, viva handbooks & record templates"
+                          : `Compulsory board practical examinations, virtual simulators & viva bank for ${streamDefinitions[selectedStream]?.code}`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate("/practicals");
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 text-xs font-bold transition-all cursor-pointer group"
+                  >
+                    <span>View All Practicals Hub</span>
+                    <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                  {LAB_SUBJECTS
+                    .filter((lab) => streamDefinitions[selectedStream]?.practicalLabIds.includes(lab.id))
+                    .map(renderPracticalCard)}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -754,6 +1121,32 @@ export default function IntermediateSubjects({
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
                 {subjects
                   .filter((s) => ["maths", "phy", "chem", "bot", "zoo"].includes(s.id))
+                  .map(renderSubjectCard)}
+              </div>
+            </div>
+
+            {/* Stream: Compulsory Lab & Practical Work (Board 30 Marks) - DEDICATED SECTION */}
+            <div className="mb-16">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="h-10 w-2.5 bg-gradient-to-b from-purple-500 to-indigo-600 rounded-full shadow-sm"></div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                      Lab & Practical Work
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-700 dark:text-purple-300 text-xs font-black uppercase">
+                      Compulsory 30 Marks
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-semibold text-purple-600 dark:text-purple-400 mt-0.5">
+                    Mathematics • Physics • Chemistry • Botany • Zoology • Computer Science • Electronics • Geography
+                  </p>
+                </div>
+                <div className="hidden sm:block h-px flex-1 bg-gradient-to-r from-purple-200 to-transparent dark:from-purple-950 ml-4"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+                {subjects
+                  .filter((s) => ["maths", "phy", "chem", "bot", "zoo", "cs", "elec", "geo"].includes(s.id))
                   .map(renderSubjectCard)}
               </div>
             </div>
@@ -802,6 +1195,50 @@ export default function IntermediateSubjects({
           </>
         )}
       </div>
+
+      {/* Interactive Lab Practical Modal Hub */}
+      {activeLabModalSubject && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xl animate-fadeIn overflow-y-auto"
+          onClick={() => setActiveLabModalSubject(null)}
+        >
+          <div
+            className="relative w-full max-w-5xl bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-800 text-left my-auto max-h-[92vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md z-20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                  <FlaskConical size={20} />
+                </div>
+                <div>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                    Intermediate Lab & Practical Hub
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Interactive Simulators, Experiments & Board Viva Bank
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveLabModalSubject(null)}
+                className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-all cursor-pointer"
+                aria-label="Close lab modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <LabPracticalHub
+              initialSubjectId={activeLabModalSubject}
+              onOpenBooking={(topic) => {
+                setActiveLabModalSubject(null);
+                if (onEnroll) onEnroll(topic);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Ultra-Premium Animated Lock Modal */}
       {lockedSubject && (

@@ -72,8 +72,24 @@ export default function Footer({ onOpenBooking }) {
       window.location.href = href;
       return;
     }
+
+    // Handle group navigation e.g. /demo?group=mpc#courses
+    const groupMatch = href.match(/[?&]group=([a-z0-9]+)/i);
+    if (groupMatch) {
+      const group = groupMatch[1].toLowerCase();
+      window.dispatchEvent(new CustomEvent("selectIntermediateGroup", { detail: group }));
+      if (location.pathname.toLowerCase().includes('demo') || location.pathname === '/') {
+        const el = document.getElementById('courses');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        navigate(href, { replace: true });
+        return;
+      }
+    }
+
     if (href.startsWith('#')) {
-      if (location.pathname.toLowerCase().includes('demo')) {
+      if (location.pathname.toLowerCase().includes('demo') || location.pathname === '/') {
         const id = href.replace('#', '');
         const el = document.getElementById(id);
         if (el) {
@@ -84,6 +100,7 @@ export default function Footer({ onOpenBooking }) {
       }
     } else {
       navigate(href);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -242,61 +259,71 @@ export default function Footer({ onOpenBooking }) {
           {/* Right Columns: Useful & Interrelated Links (High Clarity, Less Font Weight) */}
           <div className="lg:col-span-9 xl:col-span-9 grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-6 pt-1">
             
-            {/* Column 1: Intermediate Subjects */}
+            {/* Column 1: Academic Groups */}
             <div>
               <h3 className="text-slate-950 font-semibold text-[11px] sm:text-xs uppercase tracking-wider mb-2 sm:mb-2.5 flex items-center gap-1.5 border-b border-amber-600/30 pb-1">
                 <span className="w-1 h-3 bg-red-600 rounded-full inline-block"></span>
-                <span>Subjects</span>
+                <span>Academic Groups</span>
               </h3>
               <ul className="space-y-1.5 text-xs font-medium text-slate-900">
                 <li>
                   <a 
-                    href="/maths" 
-                    onClick={(e) => handleNavigation(e, '/maths')}
+                    href="/demo?group=mpc#courses" 
+                    onClick={(e) => handleNavigation(e, '/demo?group=mpc#courses')}
                     className="group flex items-center gap-1 hover:text-red-600 transition-colors"
                   >
                     <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>Mathematics</span>
+                    <span>MPC (Maths, Physics, Chem)</span>
                   </a>
                 </li>
                 <li>
                   <a 
-                    href="/physics" 
-                    onClick={(e) => handleNavigation(e, '/physics')}
+                    href="/demo?group=bipc#courses" 
+                    onClick={(e) => handleNavigation(e, '/demo?group=bipc#courses')}
                     className="group flex items-center gap-1 hover:text-red-600 transition-colors"
                   >
                     <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>Physics</span>
+                    <span>BiPC (Biology, Physics, Chem)</span>
                   </a>
                 </li>
                 <li>
                   <a 
-                    href="/chemistry" 
-                    onClick={(e) => handleNavigation(e, '/chemistry')}
+                    href="/demo?group=cec#courses" 
+                    onClick={(e) => handleNavigation(e, '/demo?group=cec#courses')}
                     className="group flex items-center gap-1 hover:text-red-600 transition-colors"
                   >
                     <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>Chemistry</span>
+                    <span>CEC (Commerce, Econ, Civics)</span>
                   </a>
                 </li>
                 <li>
                   <a 
-                    href="/botany" 
-                    onClick={(e) => handleNavigation(e, '/botany')}
+                    href="/demo?group=mec#courses" 
+                    onClick={(e) => handleNavigation(e, '/demo?group=mec#courses')}
                     className="group flex items-center gap-1 hover:text-red-600 transition-colors"
                   >
                     <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>Botany & Zoology</span>
+                    <span>MEC (Maths, Econ, Commerce)</span>
                   </a>
                 </li>
                 <li>
                   <a 
-                    href="/english" 
-                    onClick={(e) => handleNavigation(e, '/english')}
+                    href="/demo?group=hec#courses" 
+                    onClick={(e) => handleNavigation(e, '/demo?group=hec#courses')}
                     className="group flex items-center gap-1 hover:text-red-600 transition-colors"
                   >
                     <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>Languages</span>
+                    <span>HEC (History, Econ, Civics)</span>
+                  </a>
+                </li>
+                <li>
+                  <a 
+                    href="/demo?group=languages#courses" 
+                    onClick={(e) => handleNavigation(e, '/demo?group=languages#courses')}
+                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                  >
+                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <span>Languages (English, Sanskrit, etc.)</span>
                   </a>
                 </li>
               </ul>
@@ -311,12 +338,12 @@ export default function Footer({ onOpenBooking }) {
               <ul className="space-y-1.5 text-xs font-medium text-slate-900">
                 <li>
                   <a 
-                    href="/demo#interactive-lab" 
-                    onClick={(e) => handleNavigation(e, '/demo#interactive-lab')}
+                    href="/practicals" 
+                    onClick={(e) => handleNavigation(e, '/practicals')}
                     className="group flex items-center gap-1 hover:text-red-600 transition-colors"
                   >
                     <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>Virtual Labs</span>
+                    <span>Lab & Practicals</span>
                   </a>
                 </li>
                 <li>
