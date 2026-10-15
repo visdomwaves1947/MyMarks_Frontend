@@ -25,6 +25,7 @@ import History from './pages/History';
 import ProfilePage from './pages/ProfilePage';
 import AboutUsPage from './pages/AboutUs';
 import ContactUsPage from './pages/ContactUs';
+import LabPracticalsPage from './pages/LabPracticalsPage';
 import SitePrivacyGate from './components/SitePrivacyGate';
 
 // Automatic scroll-to-top on route changes unless an anchor hash exists
@@ -572,7 +573,6 @@ export default function App() {
           <Route path="/Commerce" element={<Navigate to="/commerce" replace />} />
           <Route path="/com" element={<Navigate to="/commerce" replace />} />
           <Route path="/accountancy" element={<Navigate to="/commerce" replace />} />
-          <Route path="/cec" element={<Navigate to="/commerce" replace />} />
 
           {/* Economics Page (CEC, MEC & HEC) */}
           <Route 
@@ -616,8 +616,14 @@ export default function App() {
           />
           <Route path="/History" element={<Navigate to="/history" replace />} />
           <Route path="/his" element={<Navigate to="/history" replace />} />
-          <Route path="/hec" element={<Navigate to="/history" replace />} />
-          <Route path="/mec" element={<Navigate to="/commerce" replace />} />
+
+          {/* Intermediate Stream Direct Group Routes */}
+          <Route path="/mpc" element={<Navigate to="/demo?group=mpc#courses" replace />} />
+          <Route path="/bipc" element={<Navigate to="/demo?group=bipc#courses" replace />} />
+          <Route path="/cec" element={<Navigate to="/demo?group=cec#courses" replace />} />
+          <Route path="/mec" element={<Navigate to="/demo?group=mec#courses" replace />} />
+          <Route path="/hec" element={<Navigate to="/demo?group=hec#courses" replace />} />
+          <Route path="/languages" element={<Navigate to="/demo?group=languages#courses" replace />} />
 
           {/* Auth Routes: Render DemoPage in the background so the modal overlays it nicely */}
           <Route 
@@ -644,6 +650,25 @@ export default function App() {
               />
             } 
           />
+          {/* Lab & Practicals Routes (Physics, Chemistry, Botany, Zoology, CS, Electronics, Geography) */}
+          <Route 
+            path="/practicals" 
+            element={
+              <LabPracticalsPage 
+                onOpenBooking={handleOpenBooking}
+              />
+            } 
+          />
+          <Route path="/labs" element={<Navigate to="/practicals" replace />} />
+          <Route path="/lab-practical" element={<Navigate to="/practicals" replace />} />
+          <Route path="/lab-practicals" element={<Navigate to="/practicals" replace />} />
+          <Route path="/computer-science" element={<Navigate to="/practicals?subject=cs" replace />} />
+          <Route path="/cs" element={<Navigate to="/practicals?subject=cs" replace />} />
+          <Route path="/electronics" element={<Navigate to="/practicals?subject=elec" replace />} />
+          <Route path="/elec" element={<Navigate to="/practicals?subject=elec" replace />} />
+          <Route path="/geography" element={<Navigate to="/practicals?subject=geo" replace />} />
+          <Route path="/geo" element={<Navigate to="/practicals?subject=geo" replace />} />
+
           {/* Profile Route: Dedicated student profile page */}
           <Route 
             path="/profile" 

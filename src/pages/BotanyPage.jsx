@@ -7,6 +7,7 @@ import BotanyTestimonials from '../components/botany/BotanyTestimonials';
 import BotanyStatsBar from '../components/botany/BotanyStatsBar';
 import BotanyPricingSection from '../components/botany/BotanyPricingSection';
 import BotanyFaqSection from '../components/botany/BotanyFaqSection';
+import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
 export default function BotanyPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
   // Handle hash scrolling if navigating with hash
@@ -27,6 +28,12 @@ export default function BotanyPage({ onOpenBooking, onOpenVideoDemo, onSelectRoa
       <BotanyHero 
         onOpenBooking={onOpenBooking} 
         onOpenVideoDemo={onOpenVideoDemo}
+      />
+
+      <SubjectLabPracticalBanner 
+        subjectId="bot"
+        subjectName="Botany"
+        practicalMarks="30 Marks"
       />
 
       {/* Why Choose Us Grid for Botany */}
