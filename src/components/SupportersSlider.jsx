@@ -162,17 +162,19 @@ export default function SupportersSlider() {
           className="animate-train-marquee items-center"
           style={{
             animationDuration: animationDuration,
-            animationPlayState: isPaused ? 'paused' : 'running'
+            animationPlayState: isPaused ? 'paused' : 'running',
+            willChange: 'transform',
+            contain: 'layout paint'
           }}
         >
           {TRAIN_COACHES.map((item, index) => (
             <React.Fragment key={`${item.id}-${index}`}>
               
               {/* Individual Coach Card (Very Small Size & Crisp Border Design) */}
-              <div className="w-[215px] sm:w-[235px] shrink-0 group transition-transform duration-300 hover:-translate-y-1">
+              <div className="w-[215px] sm:w-[235px] shrink-0 group transition-transform duration-200 hover:-translate-y-1">
                 
                 {/* Outer High-Tech Gradient Border */}
-                <div className={`p-[1.5px] rounded-2xl bg-gradient-to-b ${item.borderGrad} shadow-md shadow-slate-900/10 dark:shadow-black/50 group-hover:shadow-xl group-hover:shadow-cyan-500/20 transition-all duration-300`}>
+                <div className={`p-[1.5px] rounded-2xl bg-gradient-to-b ${item.borderGrad} shadow-md shadow-slate-900/10 dark:shadow-black/50 group-hover:shadow-xl group-hover:shadow-cyan-500/20 transition-all duration-200`}>
                   
                   {/* Inner Card Container */}
                   <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md rounded-[14.5px] p-3 sm:p-3.5 flex flex-col items-center text-center h-[260px] sm:h-[270px] justify-between relative overflow-hidden">
@@ -187,12 +189,15 @@ export default function SupportersSlider() {
 
                     {/* Portrait Photo (Full Face Visible Clearly, No Cut Off) */}
                     <div className="relative my-0.5">
-                      <div className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden ring-2 ${item.ringColor} p-0.5 bg-slate-100 dark:bg-slate-800 shadow-md`}>
+                      <div className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full overflow-hidden ring-2 ${item.ringColor} p-0.5 bg-slate-100 dark:bg-slate-800 shadow-md shrink-0`}>
                         <img
                           src={item.image}
                           alt={item.name}
-                          className="w-full h-full object-cover object-top rounded-full group-hover:scale-105 transition-transform duration-300"
-                          loading="lazy"
+                          width="80"
+                          height="80"
+                          loading="eager"
+                          decoding="async"
+                          className="w-full h-full object-cover object-top rounded-full"
                         />
                       </div>
                     </div>
