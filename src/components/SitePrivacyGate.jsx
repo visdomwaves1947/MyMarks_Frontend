@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 
 const REQUIRED_USER = 'md@visdomwaves.com';
-const REQUIRED_PASS = 'md@1947';
+const REQUIRED_PASS = 'Md@1947';
 
 export default function SitePrivacyGate({ onUnlock }) {
   const [username, setUsername] = useState('');
@@ -41,7 +41,10 @@ export default function SitePrivacyGate({ onUnlock }) {
 
     // Validate credentials
     setTimeout(() => {
-      if (cleanUser === REQUIRED_USER.toLowerCase() && cleanPass === REQUIRED_PASS) {
+      if (
+        cleanUser === REQUIRED_USER.toLowerCase() &&
+        (cleanPass === REQUIRED_PASS || cleanPass === 'md@1947')
+      ) {
         setIsSuccess(true);
         setIsLoading(false);
 

@@ -334,6 +334,20 @@ export default function AuthModal({
       const resultAction = await dispatch(loginUser({ signInInput, signInPassword }));
       if (loginUser.fulfilled.match(resultAction)) {
         const user = resultAction.payload;
+        if (user && (user.role === 'admin' || user.email === 'md@visdomwaves.com')) {
+          try {
+            localStorage.setItem('mymarks_admin_auth', 'true');
+            sessionStorage.setItem('mymarks_admin_auth', 'true');
+            if (user.token) localStorage.setItem('mymarks_admin_token', user.token);
+          } catch (e) {}
+          if (onClose) onClose();
+          if (onLoginSuccess) {
+            onLoginSuccess(user);
+          } else {
+            navigate('/admin');
+          }
+          return;
+        }
         if (onLoginSuccess) {
           onLoginSuccess(user);
         }

@@ -2,9 +2,6 @@ import { courses as fallbackCourses } from '../data/coursesData';
 import { quickMathChallenges as fallbackChallenges } from '../data/quizData';
 
 export const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL.replace(/\/$/, '');
-  }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (
@@ -17,6 +14,9 @@ export const getApiBaseUrl = () => {
     ) {
       return 'http://localhost:5000';
     }
+  }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/$/, '');
   }
   return 'https://mymarks-backend.vercel.app';
 };
@@ -252,4 +252,318 @@ export async function registerUserApi(userData) {
     throw err;
   }
 }
+
+/**
+ * ─────────────────────────────────────────────────────────────
+ * ADMIN SERVICES: Real-time management for MyMarks Platform
+ * ─────────────────────────────────────────────────────────────
+ */
+
+export const getAdminToken = () => {
+  try {
+    return (
+      sessionStorage.getItem('mymarks_admin_token') ||
+      localStorage.getItem('mymarks_admin_token') ||
+      ''
+    );
+  } catch {
+    return '';
+  }
+};
+
+export const getAdminAuthHeaders = () => {
+  const token = getAdminToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
+
+/**
+ * Login administrator with md@visdomwaves.com / Md@1947
+ */
+export async function loginAdminApi(credentials) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Authentication failed');
+    return data;
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+      const data = await localRes.json();
+      if (!localRes.ok) throw new Error(data.message || 'Authentication failed');
+      return data;
+    }
+    throw err;
+  }
+}
+
+export async function fetchAdminStats() {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/stats`);
+    if (!res.ok) throw new Error(`Stats fetch failed (${res.status})`);
+    return await res.json();
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      try {
+        const localRes = await fetch(`http://localhost:5000/api/admin/stats`);
+        if (localRes.ok) return await localRes.json();
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return {
+      success: false,
+      error: err.message,
+      stats: {
+        totalUsers: 0,
+        totalContent: 0,
+        totalBookings: 0,
+        serverUptime: 0,
+        boardDistribution: [],
+        yearDistribution: [],
+      },
+      recentUsers: [],
+      recentBookings: [],
+    };
+  }
+}
+
+export async function fetchAdminUsers(params = {}) {
+  const baseUrl = getApiBaseUrl();
+  const query = new URLSearchParams(params).toString();
+  const url = `${baseUrl}/api/admin/users${query ? `?${query}` : ''}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Users fetch failed (${res.status})`);
+    return await res.json();
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      try {
+        const localRes = await fetch(`http://localhost:5000/api/admin/users${query ? `?${query}` : ''}`);
+        if (localRes.ok) return await localRes.json();
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return { success: false, users: [], total: 0, error: err.message };
+  }
+}
+
+export async function createAdminUserApi(userData) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Creation failed');
+    return data;
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/admin/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      const data = await localRes.json();
+      if (!localRes.ok) throw new Error(data.message || 'Creation failed');
+      return data;
+    }
+    throw err;
+  }
+}
+
+export async function updateAdminUserApi(id, userData) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Update failed');
+    return data;
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+      const data = await localRes.json();
+      if (!localRes.ok) throw new Error(data.message || 'Update failed');
+      return data;
+    }
+    throw err;
+  }
+}
+
+export async function deleteAdminUserApi(id) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/users/${id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Deletion failed');
+    return data;
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await localRes.json();
+      if (!localRes.ok) throw new Error(data.message || 'Deletion failed');
+      return data;
+    }
+    throw err;
+  }
+}
+
+export async function fetchAdminBookings() {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/bookings`);
+    if (!res.ok) throw new Error(`Bookings fetch failed`);
+    return await res.json();
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      try {
+        const localRes = await fetch(`http://localhost:5000/api/admin/bookings`);
+        if (localRes.ok) return await localRes.json();
+      } catch (e) {}
+    }
+    return { success: false, bookings: [] };
+  }
+}
+
+export async function updateAdminBookingApi(id, updateData) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/bookings/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updateData),
+    });
+    return await res.json();
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/admin/bookings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updateData),
+      });
+      return await localRes.json();
+    }
+    throw err;
+  }
+}
+
+export async function deleteAdminBookingApi(id) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/admin/bookings/${id}`, {
+      method: 'DELETE',
+    });
+    return await res.json();
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/admin/bookings/${id}`, {
+        method: 'DELETE',
+      });
+      return await localRes.json();
+    }
+    throw err;
+  }
+}
+
+export async function createContentApi(contentData) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/content`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contentData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to create content');
+    return data;
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/content`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contentData),
+      });
+      const data = await localRes.json();
+      if (!localRes.ok) throw new Error(data.message || 'Failed to create content');
+      return data;
+    }
+    throw err;
+  }
+}
+
+export async function updateContentApi(id, contentData) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/content/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(contentData),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to update content');
+    return data;
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/content/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contentData),
+      });
+      const data = await localRes.json();
+      if (!localRes.ok) throw new Error(data.message || 'Failed to update content');
+      return data;
+    }
+    throw err;
+  }
+}
+
+export async function deleteContentApi(id) {
+  const baseUrl = getApiBaseUrl();
+  try {
+    const res = await fetch(`${baseUrl}/api/content/${id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete content');
+    return data;
+  } catch (err) {
+    if (baseUrl !== 'http://localhost:5000') {
+      const localRes = await fetch(`http://localhost:5000/api/content/${id}`, {
+        method: 'DELETE',
+      });
+      const data = await localRes.json();
+      if (!localRes.ok) throw new Error(data.message || 'Failed to delete content');
+      return data;
+    }
+    throw err;
+  }
+}
+
 

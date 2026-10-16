@@ -27,6 +27,7 @@ import AboutUsPage from './pages/AboutUs';
 import ContactUsPage from './pages/ContactUs';
 import LabPracticalsPage from './pages/LabPracticalsPage';
 import SitePrivacyGate from './components/SitePrivacyGate';
+import AdminPage from './pages/AdminPage';
 
 // Automatic scroll-to-top on route changes unless an anchor hash exists
 function ScrollToTop() {
@@ -84,11 +85,26 @@ export default function App() {
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
+    const isAdmin = user && (user.role === 'admin' || user.email === 'md@visdomwaves.com');
     try {
       localStorage.setItem('mla_user', JSON.stringify(user));
+      if (isAdmin) {
+        localStorage.setItem('mymarks_admin_auth', 'true');
+        sessionStorage.setItem('mymarks_admin_auth', 'true');
+        if (user.token) {
+          localStorage.setItem('mymarks_admin_token', user.token);
+          sessionStorage.setItem('mymarks_admin_token', user.token);
+        }
+      }
     } catch (e) {
       console.warn(e);
     }
+
+    if (isAdmin) {
+      navigate('/admin');
+      return;
+    }
+
     const from = location.state?.from || '/demo';
     navigate(from);
   };
@@ -97,6 +113,10 @@ export default function App() {
     setCurrentUser(null);
     try {
       localStorage.removeItem('mla_user');
+      localStorage.removeItem('mymarks_admin_auth');
+      sessionStorage.removeItem('mymarks_admin_auth');
+      localStorage.removeItem('mymarks_admin_token');
+      sessionStorage.removeItem('mymarks_admin_token');
     } catch (e) {
       console.warn(e);
     }
@@ -105,6 +125,10 @@ export default function App() {
   };
 
   const handleOpenSignIn = () => {
+    if (currentUser && (currentUser.role === 'admin' || currentUser.email === 'md@visdomwaves.com')) {
+      navigate('/admin');
+      return;
+    }
     navigate(currentUser ? '/portal' : '/signin', { state: { from: location.pathname !== '/signin' && location.pathname !== '/signup' && location.pathname !== '/portal' ? location.pathname : (location.state?.from || '/demo') } });
   };
 
@@ -168,6 +192,25 @@ export default function App() {
     }
     setIsSiteAccessGranted(false);
   };
+
+  const isAdminRoute = path === '/admin' || path.startsWith('/admin/') || path === '/mymarks/admin' || path.startsWith('/mymarks/admin/');
+
+  // Dedicated Full-Screen Administrator Workspace
+  if (isAdminRoute) {
+    return (
+      <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${theme === 'dark' ? 'bg-[#070B14] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+        <ScrollToTop />
+        <Routes>
+          <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/admin/*" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/Admin" element={<Navigate to="/admin" replace />} />
+          <Route path="/mymarks/admin" element={<Navigate to="/admin" replace />} />
+          <Route path="/mymarks/admin/*" element={<Navigate to="/admin" replace />} />
+          <Route path="*" element={<Navigate to="/admin" replace />} />
+        </Routes>
+      </div>
+    );
+  }
 
   // Block the entire website until authenticated with md@visdomwaves.com / md@1947
   if (!isSiteAccessGranted) {
@@ -732,6 +775,12 @@ export default function App() {
           <Route path="/contact" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
           <Route path="/Contact" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
           <Route path="/contact-us" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/admin/*" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/Admin" element={<Navigate to="/admin" replace />} />
+          <Route path="/mymarks/admin" element={<Navigate to="/admin" replace />} />
 
           {/* Root & Fallback: Show demo first instead of maths */}
           <Route path="/" element={<Navigate to="/demo" replace />} />
