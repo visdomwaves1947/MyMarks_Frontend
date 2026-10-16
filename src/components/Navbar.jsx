@@ -197,6 +197,15 @@ export default function Navbar({
   const handleSignInClick = onOpenSignIn || onOpenPortal;
   const handleSignUpClick = onOpenSignUp || onOpenPortal;
 
+  const isAdminUser = Boolean(
+    currentUser &&
+      (currentUser.role === 'admin' ||
+        currentUser.email === 'md@visdomwaves.com' ||
+        currentUser.name === 'MyMarks Administrator' ||
+        (typeof currentUser.name === 'string' && currentUser.name.toLowerCase().includes('administrator')) ||
+        (typeof currentUser.role === 'string' && currentUser.role.toLowerCase() === 'admin'))
+  );
+
   return (
     <>
       {/* Main Sticky Navbar - Solid High Resolution Light Blue Header (100% Opaque, No Movement or Shrink) */}
@@ -426,10 +435,10 @@ export default function Navbar({
               {/* User Account / Professional Profile Navigation Action */}
               {currentUser ? (
                 <button
-                  onClick={() => navigate("/profile")}
+                  onClick={() => navigate(isAdminUser ? "/admin" : "/profile")}
                   className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs hover:shadow transition-all duration-200 cursor-pointer group shrink-0"
-                  title="View Student Profile"
-                  aria-label="View Student Profile"
+                  title={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
+                  aria-label={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
                 >
                   {/* Clean Monogram Avatar with Status Indicator */}
                   <div className="relative shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-2xs ring-1 ring-white dark:ring-slate-800">
@@ -447,18 +456,18 @@ export default function Navbar({
 
                   {/* Clean Professional Typography */}
                   <div className="flex flex-col text-left leading-tight hidden sm:flex max-w-[150px] md:max-w-[190px]">
-                    <span className="text-[12.5px] font-bold text-slate-950 truncate tracking-tight group-hover:text-blue-600 transition-colors">
+                    <span className="text-[12.5px] font-bold text-slate-950 dark:text-white truncate tracking-tight group-hover:text-blue-600 transition-colors">
                       {currentUser.name || "Student"}
                     </span>
-                    <span className="text-[10px] font-semibold text-slate-600 truncate">
-                      {currentUser.role || "Student Scholar"}
+                    <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400 truncate">
+                      {currentUser.role || (isAdminUser ? "admin" : "Student Scholar")}
                     </span>
                   </div>
 
                   {/* Subtle navigation arrow */}
                   <ChevronRight
                     size={13}
-                    className="text-slate-500 group-hover:text-slate-900 group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0"
+                    className="text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0"
                   />
                 </button>
               ) : (
@@ -630,8 +639,10 @@ export default function Navbar({
               <button
                 onClick={() => {
                   setMobileMenuOpen(false);
-                  navigate("/profile");
+                  navigate(isAdminUser ? "/admin" : "/profile");
                 }}
+                title={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
+                aria-label={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
                 className="w-full py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between transition-colors shadow-2xs"
               >
                 <div className="flex items-center gap-2.5">
@@ -652,7 +663,7 @@ export default function Navbar({
                       {currentUser.name}
                     </div>
                     <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {currentUser.role || "Student Scholar"} • View Profile
+                      {isAdminUser ? "Administrator • Open Admin Panel" : `${currentUser.role || "Student Scholar"} • View Profile`}
                     </div>
                   </div>
                 </div>
