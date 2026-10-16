@@ -504,10 +504,10 @@ export default function IntermediateSubjects({
     return (
       <div
         key={subject.id}
-        className={`flex flex-col bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border ${
+        className={`flex flex-col bg-[#cde4fd] dark:bg-[#0d2238] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border-2 ${
           !isAuthenticated
-            ? "border-slate-200/80 dark:border-slate-800 hover:border-amber-500/60 dark:hover:border-amber-500/60 hover:shadow-amber-500/10"
-            : "border-slate-100 dark:border-slate-800 hover:border-cyan-500/60 dark:hover:border-cyan-500/60 hover:shadow-cyan-500/10"
+            ? "border-sky-300 dark:border-sky-600 hover:border-amber-500/70 dark:hover:border-amber-500/70 hover:shadow-sky-400/20"
+            : "border-sky-300 dark:border-sky-600 hover:border-cyan-500/70 dark:hover:border-cyan-500/70 hover:shadow-sky-400/20"
         } h-[375px] group hover:-translate-y-1.5 relative cursor-pointer`}
         onClick={() => handleSubjectClick(subject)}
       >
@@ -543,21 +543,21 @@ export default function IntermediateSubjects({
         <div className="p-5 flex flex-col flex-1 relative overflow-hidden">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <span className="text-[10px] font-black text-blue-900 dark:text-sky-300 uppercase tracking-widest">
                 {subject.category}
               </span>
               {!isAuthenticated && (
-                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
                   <Lock size={11} /> Locked
                 </span>
               )}
             </div>
 
-            <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-cyan-400 transition-colors">
+            <h4 className="text-xl font-bold text-slate-950 dark:text-white mb-1.5 group-hover:text-blue-700 dark:group-hover:text-cyan-400 transition-colors">
               {subject.name}
             </h4>
 
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 line-clamp-2 leading-relaxed font-medium">
               {subject.desc}
             </p>
           </div>
@@ -570,7 +570,7 @@ export default function IntermediateSubjects({
               <button
                 type="button"
                 onClick={(e) => handleExploreClick(e, subject)}
-                className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-white/90 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-sky-200/80 dark:border-sky-800 shadow-xs"
               >
                 {!isAuthenticated ? (
                   <>
@@ -611,12 +611,12 @@ export default function IntermediateSubjects({
           {/* Explore View (when authenticated) */}
           {isAuthenticated && (
             <div
-              className={`absolute inset-0 bg-white dark:bg-slate-900 p-5 flex flex-col z-10 transition-transform duration-300 ${isExploring ? "translate-y-0" : "translate-y-full"}`}
+              className={`absolute inset-0 bg-[#cde4fd] dark:bg-[#0d2238] p-5 flex flex-col z-10 transition-transform duration-300 ${isExploring ? "translate-y-0" : "translate-y-full"}`}
             >
               <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
                 {subject.name} Overview
               </h4>
-              <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed overflow-y-auto pr-1 mb-4 flex-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
+              <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed overflow-y-auto pr-1 mb-4 flex-1 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
                 {subject.desc}
               </p>
               <button
@@ -681,10 +681,10 @@ export default function IntermediateSubjects({
     return (
       <div
         key={`practical-${lab.id}`}
-        className={`flex flex-col bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border ${
+        className={`flex flex-col bg-[#cde4fd] dark:bg-[#0d2238] rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border-2 ${
           !isAuthenticated
-            ? "border-slate-200/80 dark:border-slate-800 hover:border-amber-500/60 dark:hover:border-amber-500/60 hover:shadow-amber-500/10"
-            : "border-slate-100 dark:border-slate-800 hover:border-cyan-500/60 dark:hover:border-cyan-500/60 hover:shadow-cyan-500/10"
+            ? "border-sky-300 dark:border-sky-600 hover:border-amber-500/70 dark:hover:border-amber-500/70 hover:shadow-sky-400/20"
+            : "border-sky-300 dark:border-sky-600 hover:border-cyan-500/70 dark:hover:border-cyan-500/70 hover:shadow-sky-400/20"
         } h-[375px] group hover:-translate-y-1.5 relative cursor-pointer`}
         onClick={() => {
           if (!isAuthenticated) {
@@ -740,21 +740,21 @@ export default function IntermediateSubjects({
         <div className="p-5 flex flex-col flex-1 relative overflow-hidden">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
+              <span className="text-[10px] font-black text-blue-900 dark:text-sky-300 uppercase tracking-widest">
                 {lab.stream}
               </span>
               {!isAuthenticated && (
-                <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                <span className="text-[11px] font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
                   <Lock size={11} /> Locked
                 </span>
               )}
             </div>
 
-            <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-1.5 group-hover:text-indigo-600 dark:group-hover:text-cyan-400 transition-colors line-clamp-1">
+            <h4 className="text-xl font-bold text-slate-950 dark:text-white mb-1.5 group-hover:text-blue-700 dark:group-hover:text-cyan-400 transition-colors line-clamp-1">
               {lab.name}
             </h4>
 
-            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-200 line-clamp-2 leading-relaxed font-medium">
               {lab.overview}
             </p>
           </div>
@@ -780,7 +780,7 @@ export default function IntermediateSubjects({
                   navigate(`/practicals?subject=${lab.id}`);
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className="flex-1 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                className="flex-1 py-2.5 rounded-xl bg-white/90 dark:bg-slate-800 hover:bg-white dark:hover:bg-slate-700 text-slate-900 dark:text-slate-200 text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer border border-sky-200/80 dark:border-sky-800 shadow-xs"
               >
                 {!isAuthenticated ? (
                   <>
@@ -840,7 +840,7 @@ export default function IntermediateSubjects({
 
   return (
     <section
-      className="py-16 sm:py-24 bg-slate-50 dark:bg-[#0B0F19] border-t border-slate-200 dark:border-slate-800 relative"
+      className="py-16 sm:py-24 bg-[#fefce8] dark:bg-[#151403] border-t border-amber-200/80 dark:border-amber-900/40 relative"
       id="courses"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -861,7 +861,7 @@ export default function IntermediateSubjects({
           <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
             Intermediate Subjects
           </h2>
-          <p className="text-slate-500 dark:text-slate-400 text-base sm:text-xl font-medium">
+          <p className="text-slate-700 dark:text-slate-300 text-base sm:text-xl font-medium">
             Complete subject-wise mastery for Intermediate students. Explore our
             subjects and select your year to enroll and boost your board exam
             scores.
@@ -870,16 +870,16 @@ export default function IntermediateSubjects({
 
         {/* Lock Info Banner when user is not signed in */}
         {!isAuthenticated && (
-          <div className="max-w-2xl mx-auto mb-10 p-4 sm:p-5 rounded-3xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-500/25 text-amber-800 dark:text-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm backdrop-blur-sm">
+          <div className="max-w-2xl mx-auto mb-10 p-4 sm:p-5 rounded-3xl bg-amber-500/15 dark:bg-amber-950/30 border-2 border-amber-400/40 text-amber-900 dark:text-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md backdrop-blur-sm">
             <div className="flex items-center gap-3.5 text-left">
-              <div className="w-11 h-11 rounded-2xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400 shadow-inner">
+              <div className="w-11 h-11 rounded-2xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-700 dark:text-amber-400 shadow-inner">
                 <Lock size={20} />
               </div>
               <div>
                 <p className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
                   Intermediate Subject Trials are Locked
                 </p>
-                <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-0.5">
+                <p className="text-slate-700 dark:text-slate-300 text-xs sm:text-sm mt-0.5">
                   Sign in to unlock interactive demo trials and video lessons
                   for any subject.
                 </p>
@@ -897,13 +897,13 @@ export default function IntermediateSubjects({
 
         {/* Interactive Stream Filter Tabs */}
         <div className="mb-12">
-          <div className="flex flex-nowrap items-center sm:justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-white dark:bg-slate-900/90 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm max-w-6xl mx-auto overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex flex-nowrap items-center sm:justify-center gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-amber-100/80 dark:bg-slate-900/90 rounded-3xl border border-amber-300/80 dark:border-slate-800 shadow-sm max-w-6xl mx-auto overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <button
               onClick={() => setSelectedStream("all")}
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "all"
                   ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 shadow-md scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                  : "text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-amber-200/50 dark:hover:bg-slate-800/60"
               }`}
             >
               All Subjects (18)
@@ -913,7 +913,7 @@ export default function IntermediateSubjects({
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                 selectedStream === "labs"
                   ? "bg-purple-600 text-white shadow-md shadow-purple-600/25 scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40"
+                  : "text-slate-700 dark:text-slate-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/40"
               }`}
             >
               <FlaskConical size={14} className={selectedStream === "labs" ? "text-purple-200" : "text-slate-500 dark:text-slate-400"} />
@@ -924,7 +924,7 @@ export default function IntermediateSubjects({
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "mpc"
                   ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
+                  : "text-slate-700 dark:text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"
               }`}
             >
               1. MPC
@@ -934,7 +934,7 @@ export default function IntermediateSubjects({
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "bipc"
                   ? "bg-green-600 text-white shadow-md shadow-green-600/25 scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/40"
+                  : "text-slate-700 dark:text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/40"
               }`}
             >
               2. BiPC
@@ -945,7 +945,7 @@ export default function IntermediateSubjects({
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "cec"
                   ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25 scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                  : "text-slate-700 dark:text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
               }`}
             >
               3. CEC
@@ -956,7 +956,7 @@ export default function IntermediateSubjects({
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "mec"
                   ? "bg-amber-600 text-white shadow-md shadow-amber-600/25 scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                  : "text-slate-700 dark:text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"
               }`}
             >
               4. MEC
@@ -967,7 +967,7 @@ export default function IntermediateSubjects({
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "hec"
                   ? "bg-rose-600 text-white shadow-md shadow-rose-600/25 scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                  : "text-slate-700 dark:text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
               }`}
             >
               5. HEC
@@ -977,7 +977,7 @@ export default function IntermediateSubjects({
               className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
                 selectedStream === "languages"
                   ? "bg-orange-600 text-white shadow-md shadow-orange-600/25 scale-[1.02]"
-                  : "text-slate-600 dark:text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40"
+                  : "text-slate-700 dark:text-slate-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/40"
               }`}
             >
               Languages (6)
@@ -987,7 +987,7 @@ export default function IntermediateSubjects({
 
         {/* Selected Stream Spotlight Banner */}
         {selectedStream !== "all" && streamDefinitions[selectedStream] && (
-          <div className="mb-12 p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md">
+          <div className="mb-12 p-6 sm:p-8 rounded-3xl bg-[#cde4fd] dark:bg-[#0d2238] border-2 border-sky-300 dark:border-sky-600 shadow-md">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-2">
@@ -998,22 +998,22 @@ export default function IntermediateSubjects({
                       ? "Languages"
                       : `Group ${streamDefinitions[selectedStream].number} • ${streamDefinitions[selectedStream].code}`}
                   </span>
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
                     {streamDefinitions[selectedStream].careerBadge}
                   </span>
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
                   {streamDefinitions[selectedStream].name}
                 </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 max-w-3xl leading-relaxed">
+                <p className="text-sm text-slate-700 dark:text-slate-200 max-w-3xl leading-relaxed">
                   {streamDefinitions[selectedStream].description}
                 </p>
               </div>
-              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-100 dark:border-slate-800 shrink-0 w-full lg:w-auto">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1">
+              <div className="p-4 rounded-2xl bg-white/90 dark:bg-slate-800/80 border border-sky-200 dark:border-sky-700 shrink-0 w-full lg:w-auto">
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">
                   Subjects & Board Practical Marks:
                 </span>
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 max-w-sm">
+                <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 max-w-sm">
                   {streamDefinitions[selectedStream].careerList}
                 </p>
               </div>

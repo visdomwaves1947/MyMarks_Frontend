@@ -11,7 +11,7 @@ export default function DemoPage({
   onOpenSignUp,
 }) {
   return (
-    <div className="relative overflow-hidden bg-[#EBF0F7] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="relative overflow-hidden bg-[#fefce8] dark:bg-[#151403] text-slate-900 dark:text-slate-100 transition-colors duration-300">
       {/* Background Math Grid Pattern & Glows */}
       <div className="absolute inset-0 bg-math-grid opacity-70 dark:opacity-40 pointer-events-none -z-10"></div>
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-300/35 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse-subtle"></div>
@@ -57,14 +57,6 @@ export default function DemoPage({
                     Driven by vision
                   </span>
                   <span className="h-[2px] w-6 sm:w-10 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></span>
-                </div>
-
-                {/* Caption: My Marks : Study less. Score more */}
-                <div className="mt-3 sm:mt-4 flex items-center justify-center sm:justify-start">
-                  <p className="text-sm sm:text-base md:text-lg lg:text-xl font-medium text-white tracking-wide font-sans drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                    <span className="text-amber-300 font-bold drop-shadow-[0_0_12px_rgba(252,211,77,0.5)]">My Marks</span>
-                    <span className="text-slate-100"> : Study less. Score more</span>
-                  </p>
                 </div>
               </div>
             </div>

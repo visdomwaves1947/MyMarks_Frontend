@@ -175,43 +175,46 @@ export default function AboutUs() {
             src={HERO_BG_IMAGE} 
             alt="About Us Leadership Hero" 
             className="w-full h-full object-cover object-center"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
           />
           {/* Subtle light blue gradient wash for seamless tone */}
           <div className="absolute inset-0 bg-sky-900/10 dark:bg-slate-950/40" />
           <div className="absolute inset-0 bg-gradient-to-b from-sky-100/30 via-transparent to-[#EBF0F7] dark:from-transparent dark:to-[#070B14]" />
         </div>
 
-        {/* Hero Content - Transparent Glassmorphic Container, perfectly fitted */}
+        {/* Hero Content - Crisp High-Contrast Container */}
         <div className="relative z-10 w-full max-w-2xl mx-auto px-4 text-center flex flex-col items-center">
           
-          <div className="w-full bg-white/40 dark:bg-slate-900/40 backdrop-blur-md px-4 py-5 sm:px-7 sm:py-6 rounded-2xl border border-white/60 dark:border-sky-800/40 shadow-lg flex flex-col items-center">
+          <div className="w-full bg-[#cde4fd] dark:bg-[#0d2238] px-5 py-6 sm:px-8 sm:py-7 rounded-2xl border-2 border-sky-400 dark:border-sky-600 shadow-xl flex flex-col items-center">
             
             {/* Top Pill - Crisp, compact, balanced */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-sky-100/90 dark:bg-sky-950/90 border border-sky-300/80 dark:border-sky-800/80 shadow-2xs mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span>
-              <span className="text-[11px] sm:text-xs font-semibold tracking-wide uppercase text-sky-900 dark:text-cyan-300">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 dark:bg-sky-950 border border-sky-300 dark:border-sky-700 shadow-xs mb-2.5">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+              <span className="text-xs font-bold tracking-wide uppercase text-blue-950 dark:text-cyan-300">
                 About Us • Leadership & Advisory
               </span>
             </div>
 
             {/* Heading - Reduced Size & Compact Length, Fits Perfectly */}
-            <h1 className="text-base sm:text-lg md:text-xl font-bold text-slate-950 dark:text-white tracking-tight leading-snug mb-2 text-center max-w-xl">
+            <h1 className="text-base sm:text-lg md:text-xl font-extrabold text-slate-950 dark:text-white tracking-tight leading-snug mb-2 text-center max-w-xl">
               Guided by Visionaries, Educators & Industry Leaders
             </h1>
 
             {/* Subtitle - Reduced Length and Clean Weight */}
-            <p className="text-[11px] sm:text-xs text-slate-800 dark:text-slate-200 font-normal leading-relaxed max-w-lg mx-auto mb-4 text-center">
+            <p className="text-xs sm:text-[13px] text-slate-800 dark:text-slate-200 font-semibold leading-relaxed max-w-lg mx-auto mb-4 text-center">
               Meet the distinguished pioneers powering Visdom Waves and MyMarks, uniting 70+ years of enterprise innovation, academic excellence, and student mentorship.
             </p>
 
-            {/* View Mode Toggle: One-by-One / View All */}
-            <div className="inline-flex items-center p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs">
+            {/* View Mode Toggle: One-by-One / View All (Matching Light Blue Theme) */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-sky-200/90 dark:bg-slate-800 border border-sky-300 dark:border-slate-700 shadow-xs">
               <button
                 onClick={() => setViewMode('one-by-one')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'one-by-one'
                     ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white'
+                    : 'text-slate-800 dark:text-slate-300 hover:text-blue-700 dark:hover:text-white'
                 }`}
               >
                 <UserCheck size={13} />
@@ -219,10 +222,10 @@ export default function AboutUs() {
               </button>
               <button
                 onClick={() => setViewMode('all')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
                   viewMode === 'all'
                     ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white'
+                    : 'text-slate-800 dark:text-slate-300 hover:text-blue-700 dark:hover:text-white'
                 }`}
               >
                 <Layers size={13} />
@@ -244,35 +247,31 @@ export default function AboutUs() {
           
           {/* DEFAULT: VIEW ALL CARDS */}
           {viewMode === 'all' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {LEADERS.map((leader, idx) => {
                 const Icon = leader.icon;
                 return (
                   <React.Fragment key={leader.id}>
                     <div
                       id={`leader-card-${idx}`}
-                      className="relative rounded-2xl border border-white/60 dark:border-cyan-400/40 shadow-xl overflow-hidden transition-all duration-300 hover:border-cyan-300 group"
+                      className="relative rounded-2xl border-2 border-sky-300 dark:border-sky-600 bg-gradient-to-br from-[#dbeafe] via-[#eff6ff] to-[#e0f2fe] dark:from-[#0d2238] dark:via-[#102944] dark:to-[#0b1b2d] shadow-xl overflow-hidden hover:border-sky-400 group"
+                      style={{ contain: 'layout style paint' }}
                     >
-                      {/* Background Image: Crisp, Full-Color Sea Turtle & Coral */}
-                      <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl z-0">
-                        <img 
-                          src={CARD_BG_IMAGE} 
-                          alt="Sunlit Sea Turtle Among Coral" 
-                          className="w-full h-full object-cover object-center filter brightness-100 contrast-[1.05] saturate-[1.1] transition-transform duration-700 group-hover:scale-102"
-                        />
-                      </div>
-
-                      {/* Card Content Layer - Sleek, compact, transparent glass */}
-                      <div className="relative z-10 p-4 sm:p-6 lg:p-7">
-                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 text-center sm:text-left">
+                      {/* Card Content Layer - Crisp, High-Contrast */}
+                      <div className="relative z-10 p-5 sm:p-7 lg:p-8">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-7 text-center sm:text-left">
                           
                           {/* Executive Portrait Photo from visdomwaves.com */}
                           <div className="shrink-0">
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-xl bg-slate-900 flex items-center justify-center">
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-sky-400 shadow-md bg-white flex items-center justify-center">
                               <img 
                                 src={leader.image} 
                                 alt={leader.name} 
-                                className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                                width="112"
+                                height="112"
+                                loading="eager"
+                                decoding="async"
+                                className="w-full h-full object-cover object-top"
                               />
                             </div>
                           </div>
@@ -281,48 +280,48 @@ export default function AboutUs() {
                           <div className="grow w-full">
                             
                             {/* Role Chip */}
-                            <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 bg-slate-950/80 text-cyan-200 border border-cyan-400/50 shadow-sm">
-                              <Icon size={13} className="shrink-0 text-cyan-300" />
+                            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2.5 bg-sky-100 dark:bg-sky-950 text-sky-900 dark:text-cyan-300 border border-sky-300 dark:border-sky-700 shadow-xs">
+                              <Icon size={14} className="shrink-0 text-sky-700 dark:text-cyan-300" />
                               <span>{leader.role}</span>
                             </div>
 
                             {/* Full Name - Sharp, Crisp, Non-blurry */}
-                            <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mb-1.5">
+                            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white tracking-tight mb-2 drop-shadow-xs">
                               {leader.name}
                             </h2>
 
                             {/* Tagline - High Contrast, 100% Clear & Legible Container */}
-                            <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-amber-300/40 shadow-xs mb-3 text-left">
-                              <p className="text-xs sm:text-[13px] font-medium text-amber-300 leading-snug">
+                            <div className="p-3 sm:p-3.5 rounded-xl bg-amber-100/90 dark:bg-amber-950/60 border-2 border-amber-400 dark:border-amber-500/60 shadow-xs mb-3.5 text-left">
+                              <p className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-200 leading-snug">
                                 {leader.tagline}
                               </p>
                             </div>
 
-                            {/* Biography Box - Transparent Glass */}
-                            <div className="p-3.5 sm:p-4 rounded-xl bg-black/35 border border-white/20 shadow-md mb-3 text-left">
-                              <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                                <Briefcase size={12} />
+                            {/* Biography Box - Solid High Contrast Card */}
+                            <div className="p-4 sm:p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-sky-200 dark:border-slate-700 shadow-xs mb-3.5 text-left">
+                              <h3 className="text-xs sm:text-sm font-bold text-sky-800 dark:text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <Briefcase size={14} className="text-sky-700 dark:text-cyan-400" />
                                 <span>Leadership Profile & Background</span>
                               </h3>
-                              <p className="text-xs sm:text-[13px] text-slate-100 font-normal leading-relaxed">
+                              <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 font-medium leading-relaxed">
                                 {leader.bio}
                               </p>
                             </div>
 
-                            {/* Strategic Impact Box - Transparent Glass */}
-                            <div className="mb-3 text-left">
-                              <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                                <Award size={12} />
+                            {/* Strategic Impact Box - Solid High Contrast Grid */}
+                            <div className="mb-3.5 text-left">
+                              <h3 className="text-xs sm:text-sm font-bold text-sky-800 dark:text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                                <Award size={14} className="text-sky-700 dark:text-cyan-400" />
                                 <span>Strategic Impact</span>
                               </h3>
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                                 {leader.highlights.map((item, hIdx) => (
                                   <div
                                     key={hIdx}
-                                    className="p-2.5 rounded-lg bg-black/35 border border-white/20 flex items-start gap-1.5 shadow-xs text-white"
+                                    className="p-3 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-sky-200 dark:border-slate-700 flex items-start gap-2.5 shadow-xs text-slate-900 dark:text-white"
                                   >
-                                    <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                                    <span className="text-[11px] sm:text-xs font-medium leading-snug text-slate-100">
+                                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                    <span className="text-xs sm:text-[13px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
                                       {item}
                                     </span>
                                   </div>
@@ -330,12 +329,12 @@ export default function AboutUs() {
                               </div>
                             </div>
 
-                            {/* Tags - Compact chips */}
-                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 mb-4">
+                            {/* Tags - Solid high-contrast chips */}
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-4">
                               {leader.tags.map((tag, tIdx) => (
                                 <span
                                   key={tIdx}
-                                  className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-black/35 text-cyan-200 border border-cyan-400/30 shadow-2xs"
+                                  className="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-100 dark:bg-sky-950/80 text-sky-900 dark:text-cyan-200 border border-sky-300 dark:border-sky-700 shadow-2xs"
                                 >
                                   {tag}
                                 </span>
@@ -348,10 +347,10 @@ export default function AboutUs() {
                                 href={leader.link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-bold text-xs shadow-md transition-all hover:scale-105 active:scale-95"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-600 hover:from-blue-700 hover:to-sky-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all hover:scale-105 active:scale-95"
                               >
                                 <span>Read more about {leader.name}</span>
-                                <ExternalLink size={13} />
+                                <ExternalLink size={14} />
                               </a>
                             </div>
 
@@ -367,17 +366,17 @@ export default function AboutUs() {
                       <div className="py-9 flex items-center justify-center">
                         <div className="w-full max-w-3xl flex items-center justify-center gap-4 px-4">
                           {/* Left Glowing Beam */}
-                          <div className="h-[3px] grow rounded-full bg-gradient-to-r from-transparent via-blue-600 to-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+                          <div className="h-[3px] grow rounded-full bg-gradient-to-r from-transparent via-blue-500 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
                           
                           {/* Center Elegant Emblem Jewel */}
-                          <div className="flex items-center gap-2 shrink-0 px-4 py-1.5 rounded-full bg-white dark:bg-slate-900 border-2 border-cyan-400 dark:border-cyan-400 shadow-xl shadow-cyan-500/25">
+                          <div className="flex items-center gap-2 shrink-0 px-4 py-1.5 rounded-full bg-white dark:bg-slate-900 border-2 border-sky-400 dark:border-sky-500 shadow-md">
                             <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-cyan-400 shadow-sm" />
-                            <span className="w-3.5 h-3.5 rotate-45 bg-gradient-to-tr from-cyan-400 to-blue-600 rounded-xs shadow-md" />
+                            <span className="w-3.5 h-3.5 rotate-45 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-xs shadow-xs" />
                             <span className="w-2 h-2 rounded-full bg-blue-600 dark:bg-cyan-400 shadow-sm" />
                           </div>
                           
                           {/* Right Glowing Beam */}
-                          <div className="h-[3px] grow rounded-full bg-gradient-to-l from-transparent via-blue-600 to-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.8)]" />
+                          <div className="h-[3px] grow rounded-full bg-gradient-to-l from-transparent via-blue-500 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
                         </div>
                       </div>
                     )}
@@ -390,29 +389,26 @@ export default function AboutUs() {
           {/* ONE-BY-ONE SPOTLIGHT MODE */}
           {viewMode === 'one-by-one' && (
             <div className="max-w-3xl mx-auto">
-              <div className="relative rounded-2xl border border-white/60 dark:border-cyan-400/40 shadow-xl overflow-hidden transition-all duration-300">
-                
-                {/* Background Image: Crisp, Full-Color Sea Turtle & Coral */}
-                <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-2xl z-0">
-                  <img 
-                    src={CARD_BG_IMAGE} 
-                    alt="Sunlit Sea Turtle Among Coral" 
-                    className="w-full h-full object-cover object-center filter brightness-100 contrast-[1.05] saturate-[1.1]"
-                  />
-                </div>
-
-                {/* Card Content Layer - Sleek, compact */}
-                <div className="relative z-10 p-5 sm:p-7">
+              <div 
+                className="relative rounded-2xl border-2 border-sky-300 dark:border-sky-600 bg-gradient-to-br from-[#dbeafe] via-[#eff6ff] to-[#e0f2fe] dark:from-[#0d2238] dark:via-[#102944] dark:to-[#0b1b2d] shadow-xl overflow-hidden"
+                style={{ contain: 'layout style paint' }}
+              >
+                {/* Card Content Layer - Crisp, Solid */}
+                <div className="relative z-10 p-5 sm:p-7 lg:p-8">
                   
                   {/* Person Header */}
-                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-5 text-center sm:text-left">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 sm:gap-7 mb-5 text-center sm:text-left">
                     
                     {/* Executive Portrait Photo */}
                     <div className="shrink-0">
-                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-cyan-400 shadow-xl bg-slate-900 flex items-center justify-center">
+                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-sky-400 shadow-md bg-white flex items-center justify-center">
                         <img 
                           src={currentLeader.image} 
                           alt={currentLeader.name} 
+                          width="112"
+                          height="112"
+                          loading="eager"
+                          decoding="async"
                           className="w-full h-full object-cover object-top"
                         />
                       </div>
@@ -421,29 +417,29 @@ export default function AboutUs() {
                     {/* Details */}
                     <div className="grow w-full">
                       {/* Role Chip */}
-                      <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 bg-slate-950/80 text-cyan-200 border border-cyan-400/50 shadow-sm">
-                        <currentLeader.icon size={13} className="shrink-0 text-cyan-300" />
+                      <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2.5 bg-sky-100 dark:bg-sky-950 text-sky-900 dark:text-cyan-300 border border-sky-300 dark:border-sky-700 shadow-xs">
+                        <currentLeader.icon size={14} className="shrink-0 text-sky-700 dark:text-cyan-300" />
                         <span>{currentLeader.role}</span>
                       </div>
 
                       {/* Name */}
-                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight mb-1.5">
+                      <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-950 dark:text-white tracking-tight mb-2 drop-shadow-xs">
                         {currentLeader.name}
                       </h2>
 
                       {/* Tagline - High Contrast, 100% Clear & Legible Container */}
-                      <div className="p-2.5 sm:p-3 rounded-xl bg-slate-950/80 border border-amber-300/40 shadow-xs mb-3 text-left">
-                        <p className="text-xs sm:text-[13px] font-medium text-amber-300 leading-snug">
+                      <div className="p-3 sm:p-3.5 rounded-xl bg-amber-100/90 dark:bg-amber-950/60 border-2 border-amber-400 dark:border-amber-500/60 shadow-xs mb-3.5 text-left">
+                        <p className="text-xs sm:text-sm font-bold text-amber-950 dark:text-amber-200 leading-snug">
                           {currentLeader.tagline}
                         </p>
                       </div>
 
                       {/* Tags */}
-                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5">
+                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                         {currentLeader.tags.map((tag, tIdx) => (
                           <span
                             key={tIdx}
-                            className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-black/35 text-cyan-200 border border-cyan-400/30 shadow-2xs"
+                            className="px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-100 dark:bg-sky-950/80 text-sky-900 dark:text-cyan-200 border border-sky-300 dark:border-sky-700 shadow-2xs"
                           >
                             {tag}
                           </span>
@@ -453,30 +449,30 @@ export default function AboutUs() {
                   </div>
 
                   {/* Biography Box */}
-                  <div className="p-3.5 sm:p-4 rounded-xl bg-black/35 border border-white/20 shadow-md mb-3.5 text-left">
-                    <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                      <Briefcase size={12} />
+                  <div className="p-4 sm:p-5 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-sky-200 dark:border-slate-700 shadow-xs mb-3.5 text-left">
+                    <h3 className="text-xs sm:text-sm font-bold text-sky-800 dark:text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <Briefcase size={14} className="text-sky-700 dark:text-cyan-400" />
                       <span>Leadership Profile & Background</span>
                     </h3>
-                    <p className="text-xs sm:text-[13px] text-slate-100 font-normal leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 font-medium leading-relaxed">
                       {currentLeader.bio}
                     </p>
                   </div>
 
                   {/* Strategic Impact */}
                   <div className="mb-4 text-left">
-                    <h3 className="text-xs font-bold text-cyan-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                      <Award size={12} />
+                    <h3 className="text-xs sm:text-sm font-bold text-sky-800 dark:text-cyan-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                      <Award size={14} className="text-sky-700 dark:text-cyan-400" />
                       <span>Strategic Impact</span>
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       {currentLeader.highlights.map((item, hIdx) => (
                         <div
                           key={hIdx}
-                          className="p-2.5 rounded-lg bg-black/35 border border-white/20 flex items-start gap-1.5 shadow-xs text-white"
+                          className="p-3 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-sky-200 dark:border-slate-700 flex items-start gap-2.5 shadow-xs text-slate-900 dark:text-white"
                         >
-                          <CheckCircle2 size={14} className="text-emerald-400 shrink-0 mt-0.5" />
-                          <span className="text-[11px] sm:text-xs font-medium leading-snug text-slate-100">
+                          <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                          <span className="text-xs sm:text-[13px] font-semibold leading-snug text-slate-800 dark:text-slate-100">
                             {item}
                           </span>
                         </div>
@@ -485,28 +481,28 @@ export default function AboutUs() {
                   </div>
 
                   {/* Bottom Controls Bar */}
-                  <div className="pt-3 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="pt-3.5 border-t border-sky-300/80 dark:border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-3">
                     {/* Read More Link */}
                     <a
                       href={currentLeader.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 hover:from-cyan-300 hover:to-emerald-300 text-slate-950 font-bold text-xs shadow-md transition-all hover:scale-105 active:scale-95"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-600 hover:from-blue-700 hover:to-sky-700 text-white font-extrabold text-xs sm:text-sm shadow-md transition-all hover:scale-105 active:scale-95"
                     >
                       <span>Read more about {currentLeader.name}</span>
-                      <ExternalLink size={13} />
+                      <ExternalLink size={14} />
                     </a>
 
                     {/* Step Controls */}
                     <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                      <span className="text-xs font-bold text-white">
+                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
                         Person {activeIndex + 1} of {LEADERS.length}
                       </span>
 
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={handlePrev}
-                          className="p-2 rounded-lg bg-black/50 hover:bg-black/70 text-white border border-white/30 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                          className="p-2.5 rounded-lg bg-white hover:bg-sky-50 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-sky-300 dark:border-slate-600 transition-all cursor-pointer hover:scale-105 active:scale-95 shadow-xs"
                           title="Previous Leader"
                           aria-label="Previous Leader"
                         >
@@ -514,7 +510,7 @@ export default function AboutUs() {
                         </button>
                         <button
                           onClick={handleNext}
-                          className="p-2 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
+                          className="p-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
                           title="Next Leader"
                           aria-label="Next Leader"
                         >

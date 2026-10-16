@@ -105,26 +105,26 @@ export default function Footer({ onOpenBooking }) {
   };
 
   return (
-    <footer className="relative overflow-hidden bg-gradient-to-b from-[#fef08a] via-[#fde047] to-[#fef08a] text-slate-950 transition-colors select-none antialiased subpixel-antialiased">
+    <footer className="relative overflow-hidden bg-[#cde4fd] dark:bg-[#070b14] text-slate-900 dark:text-slate-100 border-t border-blue-300/80 dark:border-slate-800 transition-colors select-none antialiased subpixel-antialiased">
       {/* Custom Keyframe Animations */}
       <style>{`
         @keyframes ringFloat {
           0%, 100% { transform: translateY(0px) scale(1); }
           50% { transform: translateY(-3px) scale(1.015); }
         }
-        @keyframes redPulse {
-          0%, 100% { box-shadow: 0 4px 14px -2px rgba(220, 38, 38, 0.25); }
-          50% { box-shadow: 0 8px 20px -2px rgba(220, 38, 38, 0.4); }
+        @keyframes bluePulse {
+          0%, 100% { box-shadow: 0 4px 14px -2px rgba(37, 99, 235, 0.25); }
+          50% { box-shadow: 0 8px 20px -2px rgba(37, 99, 235, 0.45); }
         }
         .animate-ring-float {
           animation: ringFloat 5s ease-in-out infinite;
         }
-        .animate-red-pulse {
-          animation: redPulse 3.5s ease-in-out infinite;
+        .animate-blue-pulse {
+          animation: bluePulse 3.5s ease-in-out infinite;
         }
       `}</style>
 
-      {/* Top Red Flowing Wave Banner (Ultra Crisp HD Vector) */}
+      {/* Top Blue Flowing Wave Banner (Ultra Crisp HD Vector) */}
       <div className="relative w-full overflow-hidden leading-none z-10">
         <svg 
           viewBox="0 0 1440 70" 
@@ -133,34 +133,34 @@ export default function Footer({ onOpenBooking }) {
           shapeRendering="geometricPrecision"
         >
           <defs>
-            <linearGradient id="footerRedBack" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#7f1d1d" />
-              <stop offset="30%" stopColor="#991b1b" />
-              <stop offset="70%" stopColor="#b91c1c" />
-              <stop offset="100%" stopColor="#881337" />
+            <linearGradient id="footerBlueBack" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#172554" />
+              <stop offset="30%" stopColor="#1e3a8a" />
+              <stop offset="70%" stopColor="#1d4ed8" />
+              <stop offset="100%" stopColor="#1e40af" />
             </linearGradient>
-            <linearGradient id="footerRedFront" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#991b1b" />
-              <stop offset="20%" stopColor="#dc2626" />
-              <stop offset="60%" stopColor="#ef4444" />
-              <stop offset="85%" stopColor="#dc2626" />
-              <stop offset="100%" stopColor="#b91c1c" />
+            <linearGradient id="footerBlueFront" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#1d4ed8" />
+              <stop offset="20%" stopColor="#2563eb" />
+              <stop offset="60%" stopColor="#3b82f6" />
+              <stop offset="85%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#1d4ed8" />
             </linearGradient>
             <filter id="waveShadow" x="-5%" y="-5%" width="110%" height="130%">
-              <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#7f1d1d" floodOpacity="0.3" />
+              <feDropShadow dx="0" dy="3" stdDeviation="3" floodColor="#1e3a8a" floodOpacity="0.25" />
             </filter>
           </defs>
 
-          {/* Layer 1: Dark crimson back wave */}
+          {/* Layer 1: Dark navy back wave */}
           <path 
             d="M 0 0 L 1440 0 L 1440 32 Q 1120 65 760 32 T 0 55 Z" 
-            fill="url(#footerRedBack)" 
+            fill="url(#footerBlueBack)" 
           />
 
-          {/* Layer 2: Main bright red curved wave */}
+          {/* Layer 2: Main bright blue curved wave */}
           <path 
             d="M 0 0 L 1440 0 L 1440 20 Q 1060 52 680 25 T 0 40 Z" 
-            fill="url(#footerRedFront)"
+            fill="url(#footerBlueFront)"
             filter="url(#waveShadow)"
           />
         </svg>
@@ -170,18 +170,18 @@ export default function Footer({ onOpenBooking }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-1 pb-4 sm:pb-5 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 lg:gap-8 items-start">
           
-          {/* Left Column: Concentric Red Ring Badge with Slender Thickness */}
+          {/* Left Column: Concentric Blue Ring Badge with Slender Thickness */}
           <div className="lg:col-span-3 xl:col-span-3 flex flex-col items-center lg:items-start text-center lg:text-left">
             <div className="flex flex-row sm:flex-col items-center gap-3.5 sm:gap-2.5">
               
-              {/* Concentric Double Red Circle Ring (Slender Thickness & Weight) */}
+              {/* Concentric Double Blue Circle Ring (Slender Thickness & Weight) */}
               <div 
                 onClick={scrollToTop}
                 className="relative cursor-pointer group animate-ring-float shrink-0"
                 title="Back to top"
               >
                 {/* Outer Ring: Slender, Refined Thickness (p-[2.5px] instead of chunky padding) */}
-                <div className="w-18 h-18 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-full bg-gradient-to-tr from-red-600 via-rose-500 to-red-600 p-[2.5px] sm:p-[3px] shadow-md animate-red-pulse transition-transform duration-200 group-hover:scale-105 flex items-center justify-center ring-1 ring-red-400/30">
+                <div className="w-18 h-18 sm:w-20 sm:h-20 md:w-22 md:h-22 rounded-full bg-gradient-to-tr from-blue-600 via-sky-500 to-blue-600 p-[2.5px] sm:p-[3px] shadow-md animate-blue-pulse transition-transform duration-200 group-hover:scale-105 flex items-center justify-center ring-1 ring-blue-400/30">
                   
                   {/* Inner Crisp White Hub */}
                   <div className="w-full h-full rounded-full bg-white shadow-2xs flex flex-col items-center justify-center p-1.5 relative overflow-hidden group-hover:bg-slate-50 transition-colors">
@@ -194,32 +194,32 @@ export default function Footer({ onOpenBooking }) {
 
                     {/* Micro Brand Label (Clean, Less Weight) */}
                     <span className="text-[9px] sm:text-[9.5px] font-semibold text-slate-950 tracking-wider mt-0.5 font-sans leading-none">
-                      MY <span className="text-red-600 font-semibold">MARKS</span>
+                      MY <span className="text-blue-600 font-semibold">MARKS</span>
                     </span>
                   </div>
 
                 </div>
 
                 {/* Subtle Floating Ground Shadow */}
-                <div className="w-11 sm:w-13 h-1 bg-red-900/15 rounded-full blur-[2px] mx-auto mt-1" />
+                <div className="w-11 sm:w-13 h-1 bg-blue-900/15 rounded-full blur-[2px] mx-auto mt-1" />
               </div>
 
               {/* Brand Meta & Social Links (Clear High Definition) */}
               <div className="flex flex-col items-start sm:items-center lg:items-start">
-                <div className="flex items-center gap-1 text-[11px] font-normal text-slate-600">
+                <div className="flex items-center gap-1 text-[11px] font-normal text-slate-600 dark:text-slate-400">
                   <span>powered by</span>
                   <img src="/Visdomlogo.png" alt="Visdom Waves" className="h-2.5 w-auto object-contain [image-rendering:-webkit-optimize-contrast]" />
-                  <span className="font-medium text-slate-900">Visdom Waves</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">Visdom Waves</span>
                 </div>
                 
                 {/* Social Circle Badges */}
-                <div className="flex items-center gap-2 pt-1.5 sm:pt-2">
+                <div className="flex items-center gap-2 pt-2">
                   <a
                     href="https://facebook.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Facebook"
-                    className="h-7 w-7 rounded-full bg-white/90 text-red-700 border border-amber-600/40 hover:bg-red-600 hover:text-white hover:border-red-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
+                    className="h-7 w-7 rounded-full bg-slate-50 dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-slate-200 dark:border-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
                   >
                     <FacebookIcon />
                   </a>
@@ -228,7 +228,7 @@ export default function Footer({ onOpenBooking }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Twitter X"
-                    className="h-7 w-7 rounded-full bg-white/90 text-red-700 border border-amber-600/40 hover:bg-red-600 hover:text-white hover:border-red-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
+                    className="h-7 w-7 rounded-full bg-slate-50 dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-slate-200 dark:border-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
                   >
                     <TwitterXIcon />
                   </a>
@@ -237,7 +237,7 @@ export default function Footer({ onOpenBooking }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Instagram"
-                    className="h-7 w-7 rounded-full bg-white/90 text-red-700 border border-amber-600/40 hover:bg-red-600 hover:text-white hover:border-red-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
+                    className="h-7 w-7 rounded-full bg-slate-50 dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-slate-200 dark:border-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
                   >
                     <InstagramIcon />
                   </a>
@@ -246,7 +246,7 @@ export default function Footer({ onOpenBooking }) {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="YouTube"
-                    className="h-7 w-7 rounded-full bg-white/90 text-red-700 border border-amber-600/40 hover:bg-red-600 hover:text-white hover:border-red-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
+                    className="h-7 w-7 rounded-full bg-slate-50 dark:bg-slate-800 text-blue-700 dark:text-blue-400 border border-slate-200 dark:border-slate-700 hover:bg-blue-600 hover:text-white hover:border-blue-600 hover:scale-110 shadow-2xs transition-all duration-200 flex items-center justify-center cursor-pointer"
                   >
                     <YouTubeIcon />
                   </a>
@@ -261,18 +261,18 @@ export default function Footer({ onOpenBooking }) {
             
             {/* Column 1: Academic Groups */}
             <div>
-              <h3 className="text-slate-950 font-semibold text-[11px] sm:text-xs uppercase tracking-wider mb-2 sm:mb-2.5 flex items-center gap-1.5 border-b border-amber-600/30 pb-1">
-                <span className="w-1 h-3 bg-red-600 rounded-full inline-block"></span>
+              <h3 className="text-slate-950 dark:text-white font-semibold text-[11px] sm:text-xs uppercase tracking-wider mb-2 sm:mb-2.5 flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-1">
+                <span className="w-1 h-3 bg-blue-600 rounded-full inline-block"></span>
                 <span>Academic Groups</span>
               </h3>
-              <ul className="space-y-1.5 text-xs font-medium text-slate-900">
+              <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <li>
                   <a 
                     href="/demo?group=mpc#courses" 
                     onClick={(e) => handleNavigation(e, '/demo?group=mpc#courses')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>MPC (Maths, Physics, Chem)</span>
                   </a>
                 </li>
@@ -280,9 +280,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo?group=bipc#courses" 
                     onClick={(e) => handleNavigation(e, '/demo?group=bipc#courses')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>BiPC (Biology, Physics, Chem)</span>
                   </a>
                 </li>
@@ -290,9 +290,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo?group=cec#courses" 
                     onClick={(e) => handleNavigation(e, '/demo?group=cec#courses')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>CEC (Commerce, Econ, Civics)</span>
                   </a>
                 </li>
@@ -300,9 +300,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo?group=mec#courses" 
                     onClick={(e) => handleNavigation(e, '/demo?group=mec#courses')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>MEC (Maths, Econ, Commerce)</span>
                   </a>
                 </li>
@@ -310,9 +310,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo?group=hec#courses" 
                     onClick={(e) => handleNavigation(e, '/demo?group=hec#courses')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>HEC (History, Econ, Civics)</span>
                   </a>
                 </li>
@@ -320,9 +320,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo?group=languages#courses" 
                     onClick={(e) => handleNavigation(e, '/demo?group=languages#courses')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>Languages (English, Sanskrit, etc.)</span>
                   </a>
                 </li>
@@ -331,18 +331,18 @@ export default function Footer({ onOpenBooking }) {
 
             {/* Column 2: Tools & Practice */}
             <div>
-              <h3 className="text-slate-950 font-semibold text-[11px] sm:text-xs uppercase tracking-wider mb-2 sm:mb-2.5 flex items-center gap-1.5 border-b border-amber-600/30 pb-1">
-                <span className="w-1 h-3 bg-red-600 rounded-full inline-block"></span>
+              <h3 className="text-slate-950 dark:text-white font-semibold text-[11px] sm:text-xs uppercase tracking-wider mb-2 sm:mb-2.5 flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-1">
+                <span className="w-1 h-3 bg-blue-600 rounded-full inline-block"></span>
                 <span>Practice & Tools</span>
               </h3>
-              <ul className="space-y-1.5 text-xs font-medium text-slate-900">
+              <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <li>
                   <a 
                     href="/practicals" 
                     onClick={(e) => handleNavigation(e, '/practicals')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>Lab & Practicals</span>
                   </a>
                 </li>
@@ -350,9 +350,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo#speed-quiz" 
                     onClick={(e) => handleNavigation(e, '/demo#speed-quiz')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>Speed Quizzes</span>
                   </a>
                 </li>
@@ -360,9 +360,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo#courses" 
                     onClick={(e) => handleNavigation(e, '/demo#courses')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>Mock Exams</span>
                   </a>
                 </li>
@@ -370,9 +370,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo#faq" 
                     onClick={(e) => handleNavigation(e, '/demo#faq')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>Board Papers</span>
                   </a>
                 </li>
@@ -380,9 +380,9 @@ export default function Footer({ onOpenBooking }) {
                   <a 
                     href="/demo#methodology" 
                     onClick={(e) => handleNavigation(e, '/demo#methodology')}
-                    className="group flex items-center gap-1 hover:text-red-600 transition-colors"
+                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
                   >
-                    <ChevronRight size={12} className="text-red-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
                     <span>Concept Proofs</span>
                   </a>
                 </li>
@@ -391,30 +391,30 @@ export default function Footer({ onOpenBooking }) {
 
             {/* Column 3: Contact & Booking */}
             <div className="col-span-2 sm:col-span-1">
-              <h3 className="text-slate-950 font-semibold text-[11px] sm:text-xs uppercase tracking-wider mb-2 sm:mb-2.5 flex items-center gap-1.5 border-b border-amber-600/30 pb-1">
-                <span className="w-1 h-3 bg-red-600 rounded-full inline-block"></span>
+              <h3 className="text-slate-950 dark:text-white font-semibold text-[11px] sm:text-xs uppercase tracking-wider mb-2 sm:mb-2.5 flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-1">
+                <span className="w-1 h-3 bg-blue-600 rounded-full inline-block"></span>
                 <span>Contact & Support</span>
               </h3>
-              <ul className="space-y-1.5 text-xs font-medium text-slate-900">
+              <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
                 <li className="flex items-start gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-red-600 shrink-0 mt-0.5" />
+                  <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
                   <span>Hyderabad, Telangana</span>
                 </li>
                 <li>
                   <a 
                     href="mailto:info@visdomwaves.com" 
-                    className="flex items-center gap-1.5 hover:text-red-600 transition-colors break-all"
+                    className="flex items-center gap-1.5 hover:text-blue-600 transition-colors break-all"
                   >
-                    <Mail className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                    <Mail className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                     <span>info@visdomwaves.com</span>
                   </a>
                 </li>
                 <li>
                   <a 
                     href="tel:+917997755155" 
-                    className="flex items-center gap-1.5 hover:text-red-600 transition-colors"
+                    className="flex items-center gap-1.5 hover:text-blue-600 transition-colors"
                   >
-                    <Phone className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                    <Phone className="h-3.5 w-3.5 text-blue-600 shrink-0" />
                     <span>+91 79977 55155</span>
                   </a>
                 </li>
@@ -422,7 +422,7 @@ export default function Footer({ onOpenBooking }) {
                   <button
                     type="button"
                     onClick={onOpenBooking}
-                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-700 hover:to-rose-700 text-white font-medium text-xs tracking-tight shadow-xs hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-700 hover:to-sky-700 text-white font-medium text-xs tracking-tight shadow-xs hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <span>Book 1-on-1 Free Class</span>
                   </button>
@@ -435,19 +435,19 @@ export default function Footer({ onOpenBooking }) {
         </div>
       </div>
 
-      {/* Motivational Caption Banner: SPEND LESS TIME. GAIN MORE MARKS. */}
-      <div className="w-full border-t border-amber-500/40 bg-gradient-to-r from-amber-400/25 via-amber-400/55 to-amber-400/25 py-2 sm:py-2.5 px-3 sm:px-6 overflow-hidden">
+      {/* Motivational Caption Banner: SPEND TIME ON MYMARKS, GAIN MORE MARKS */}
+      <div className="w-full border-t border-blue-300/80 dark:border-slate-800 bg-[#b9d9fc]/70 dark:bg-slate-900/60 py-2.5 sm:py-3 px-3 sm:px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-4 select-none">
-          <div className="h-[1px] w-6 sm:w-16 md:w-24 bg-gradient-to-r from-transparent to-red-600/50 shrink" />
-          <p className="text-[10.5px] xs:text-[11.5px] sm:text-xs md:text-sm lg:text-[14.5px] font-bold text-red-800 uppercase tracking-[0.16em] sm:tracking-[0.24em] md:tracking-[0.28em] font-sans whitespace-nowrap text-center leading-none antialiased">
-            SPEND LESS TIME. GAIN MORE MARKS.
+          <div className="h-[1px] w-6 sm:w-16 md:w-24 bg-gradient-to-r from-transparent to-blue-600/50 shrink" />
+          <p className="text-[11px] xs:text-xs sm:text-sm md:text-[14.5px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-[0.16em] sm:tracking-[0.24em] md:tracking-[0.28em] font-sans whitespace-nowrap text-center leading-none antialiased">
+            SPEND TIME ON MYMARKS, GAIN MORE MARKS
           </p>
-          <div className="h-[1px] w-6 sm:w-16 md:w-24 bg-gradient-to-l from-transparent to-red-600/50 shrink" />
+          <div className="h-[1px] w-6 sm:w-16 md:w-24 bg-gradient-to-l from-transparent to-blue-600/50 shrink" />
         </div>
       </div>
 
-      {/* Solid Red Bottom Stripe (High-Contrast Crisp White Text, Refined Weight) */}
-      <div className="bg-gradient-to-r from-red-800 via-red-600 to-red-800 text-white shadow-inner antialiased">
+      {/* Solid Blue Bottom Stripe (High-Contrast Crisp White Text, Refined Weight) */}
+      <div className="bg-gradient-to-r from-blue-950 via-blue-800 to-blue-950 text-white shadow-inner antialiased">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5 flex flex-col sm:flex-row items-center justify-between gap-1.5 sm:gap-3 text-[11px] sm:text-xs text-white/95 font-normal">
           
           {/* Copyright */}
@@ -460,37 +460,37 @@ export default function Footer({ onOpenBooking }) {
             <a 
               href="/aboutus" 
               onClick={(e) => handleNavigation(e, '/aboutus')}
-              className="hover:text-amber-200 hover:underline transition-colors font-medium"
+              className="hover:text-sky-200 hover:underline transition-colors font-medium"
             >
               About Us
             </a>
-            <span className="text-red-300">•</span>
+            <span className="text-blue-300">•</span>
             <a 
               href="/contactus" 
               onClick={(e) => handleNavigation(e, '/contactus')}
-              className="hover:text-amber-200 hover:underline transition-colors font-medium"
+              className="hover:text-sky-200 hover:underline transition-colors font-medium"
             >
               Contact Us
             </a>
-            <span className="text-red-300">•</span>
+            <span className="text-blue-300">•</span>
             <button 
               type="button"
               onClick={() => {
                 setLegalModalTab('privacy');
                 setLegalModalOpen(true);
               }}
-              className="hover:text-amber-200 hover:underline transition-colors cursor-pointer font-medium"
+              className="hover:text-sky-200 hover:underline transition-colors cursor-pointer font-medium"
             >
               Privacy Policy
             </button>
-            <span className="text-red-300">•</span>
+            <span className="text-blue-300">•</span>
             <button 
               type="button"
               onClick={() => {
                 setLegalModalTab('terms');
                 setLegalModalOpen(true);
               }}
-              className="hover:text-amber-200 hover:underline transition-colors cursor-pointer font-medium"
+              className="hover:text-sky-200 hover:underline transition-colors cursor-pointer font-medium"
             >
               Terms
             </button>
@@ -504,7 +504,7 @@ export default function Footer({ onOpenBooking }) {
         <button
           onClick={scrollToTop}
           aria-label="Back to top"
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-md hover:shadow-lg border border-red-500/80 text-red-600 hover:text-white hover:bg-red-600 transition-all duration-200 flex items-center justify-center focus:outline-none cursor-pointer group hover:scale-105 active:scale-95"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-md hover:shadow-lg border border-blue-500/80 text-blue-600 hover:text-white hover:bg-blue-600 transition-all duration-200 flex items-center justify-center focus:outline-none cursor-pointer group hover:scale-105 active:scale-95"
         >
           <ArrowUp size={13} className="group-hover:-translate-y-0.5 transition-transform" />
         </button>

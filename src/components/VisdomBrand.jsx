@@ -5,7 +5,7 @@ export function VisdomBrand({ onClick, className = "" }) {
     <div 
       onClick={onClick}
       className={`relative inline-flex items-center cursor-pointer group shrink-0 select-none antialiased ${className}`}
-      title="MyMarks - Score High Marks in Less Time"
+      title="MyMarks - Spend time on MyMarks, gain more marks"
     >
       {/* 
         Ultra-Luxury Broadcast / E-Sports Banner (Yellow Theme Matching Navbar & Footer)
@@ -20,34 +20,30 @@ export function VisdomBrand({ onClick, className = "" }) {
       <div className="relative h-[54px] xs:h-[60px] sm:h-[68px] md:h-[76px] w-auto flex items-center">
         <svg 
           viewBox="8 40 660 162" 
-          className="h-full w-auto block select-none overflow-visible filter drop-shadow-[0_4px_14px_rgba(0,0,0,0.12)] group-hover:drop-shadow-[0_6px_20px_rgba(217,119,6,0.35)] transition-all duration-300 transform-gpu group-hover:scale-[1.015]"
+          className="h-full w-auto block select-none overflow-visible filter drop-shadow-[0_3px_10px_rgba(0,0,0,0.10)]"
           preserveAspectRatio="xMidYMid meet"
         >
           <defs>
-            {/* 1. Main Yellow Bar Gradient (Matches Navbar & Footer Yellow #fef08a -> #fde047 -> #fef08a) */}
-            <linearGradient id="mainYellowBarGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#fef08a" />
-              <stop offset="25%" stopColor="#fde047" />
-              <stop offset="55%" stopColor="#facc15" />
-              <stop offset="80%" stopColor="#fde047" />
-              <stop offset="100%" stopColor="#fef08a" />
-            </linearGradient>
-
-            {/* 2. Left Pill End Cap Gradient */}
-            <linearGradient id="leftPillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#fde047" />
-              <stop offset="50%" stopColor="#facc15" />
-              <stop offset="100%" stopColor="#fef08a" />
-            </linearGradient>
-
-            {/* 3. 3D Metallic Gold Ring Gradient (Rich Antique & Light Gold Highlights) */}
-            <linearGradient id="gold3DRimGrad" x1="12%" y1="12%" x2="88%" y2="88%">
+            {/* 1. Main Pure White Bar Gradient */}
+            <linearGradient id="mainWhiteBarGrad" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="14%" stopColor="#fff2a8" />
-              <stop offset="30%" stopColor="#f4c442" />
-              <stop offset="65%" stopColor="#d2961d" />
-              <stop offset="85%" stopColor="#8c580b" />
-              <stop offset="100%" stopColor="#663e04" />
+              <stop offset="50%" stopColor="#fafafa" />
+              <stop offset="100%" stopColor="#ffffff" />
+            </linearGradient>
+
+            {/* 2. Left Pill End Cap Pure White Gradient */}
+            <linearGradient id="leftPillGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="100%" stopColor="#fafafa" />
+            </linearGradient>
+
+            {/* 3. Luminous Light Gold & Silver Rim Gradient (Bright, Clean, HD) */}
+            <linearGradient id="gold3DRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="25%" stopColor="#fef9c3" />
+              <stop offset="50%" stopColor="#fde68a" />
+              <stop offset="75%" stopColor="#fef08a" />
+              <stop offset="100%" stopColor="#e0f2fe" />
             </linearGradient>
 
             {/* 4. Right Sweeping Aerodynamic Rim Gold Gradient */}
@@ -65,12 +61,11 @@ export function VisdomBrand({ onClick, className = "" }) {
               <stop offset="100%" stopColor="#b45309" />
             </linearGradient>
 
-            {/* 6. Lower Tray Yellow Gradient */}
-            <linearGradient id="trayYellowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#fef9c3" />
-              <stop offset="35%" stopColor="#fef08a" />
-              <stop offset="75%" stopColor="#fde047" />
-              <stop offset="100%" stopColor="#facc15" />
+            {/* 6. Lower Tray Pure White Gradient */}
+            <linearGradient id="trayWhiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="50%" stopColor="#fafafa" />
+              <stop offset="100%" stopColor="#f4f4f5" />
             </linearGradient>
 
             {/* 7. Top Horizontal Specular Highlight Glint */}
@@ -81,14 +76,6 @@ export function VisdomBrand({ onClick, className = "" }) {
               <stop offset="75%" stopColor="#ffffff" stopOpacity="0.5" />
               <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
             </linearGradient>
-
-            {/* 8. Glowing Golden Radial Flare for Tray Corners */}
-            <radialGradient id="goldCornerFlare" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="30%" stopColor="#fef08a" />
-              <stop offset="70%" stopColor="#f59e0b" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
-            </radialGradient>
 
             {/* 9. Vivid Sapphire Royal Blue Gradient for MARKS */}
             <linearGradient id="marksSapphireGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -106,11 +93,11 @@ export function VisdomBrand({ onClick, className = "" }) {
 
             {/* 11. Drop Shadows */}
             <filter id="medallionShadow" x="-25%" y="-25%" width="150%" height="150%">
-              <feDropShadow dx="-2" dy="4" stdDeviation="4.5" floodColor="#000000" floodOpacity="0.35" />
+              <feDropShadow dx="0" dy="2" stdDeviation="3.5" floodColor="#0284c7" floodOpacity="0.12" />
             </filter>
 
             <filter id="trayShadow" x="-10%" y="-10%" width="120%" height="130%">
-              <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#78350f" floodOpacity="0.3" />
+              <feDropShadow dx="0" dy="3" stdDeviation="3.5" floodColor="#000000" floodOpacity="0.15" />
             </filter>
 
             <filter id="visdomLogoGlowDark" x="-30%" y="-30%" width="160%" height="160%">
@@ -119,25 +106,23 @@ export function VisdomBrand({ onClick, className = "" }) {
           </defs>
 
           {/* ======================================================== */}
-          {/* LAYER 1: BASE YELLOW BARS & RIGHT GOLD SWEEPING RIM      */}
+          {/* LAYER 1: BASE PURE WHITE BARS & RIGHT GOLD SWEEPING RIM  */}
           {/* ======================================================== */}
           
           {/* Left Pill Behind Circle */}
           <path 
             d="M 144 60 L 66 60 A 56 56 0 0 0 66 172 L 144 172 Z" 
             fill="url(#leftPillGrad)" 
-            stroke="#f59e0b"
-            strokeWidth="0.8"
-            strokeOpacity="0.5"
+            stroke="#d4d4d8"
+            strokeWidth="1"
           />
 
-          {/* Main Upper Yellow Bar (Matching Footer/Navbar) */}
+          {/* Main Upper Pure White Bar */}
           <path 
             d="M 144 60 L 555 60 C 600 60 648 88 664 125 C 674 150 655 172 610 172 L 144 172 Z" 
-            fill="url(#mainYellowBarGrad)" 
-            stroke="#f59e0b"
+            fill="url(#mainWhiteBarGrad)" 
+            stroke="#d4d4d8"
             strokeWidth="1"
-            strokeOpacity="0.6"
           />
 
           {/* Right Sweeping Metallic Gold Outer Edge Rim */}
@@ -161,49 +146,29 @@ export function VisdomBrand({ onClick, className = "" }) {
           />
 
           {/* ======================================================== */}
-          {/* LAYER 2: LOWER FLOATING TRAY WITH GOLD BORDER & FLARES    */}
+          {/* LAYER 2: LOWER FLOATING TRAY WITH GOLD BORDER            */}
           {/* ======================================================== */}
           
           {/* Tray Body */}
           <g filter="url(#trayShadow)">
             <path 
               d="M 235 132 L 628 132 Q 634 148 620 168 Q 612 186 596 186 L 270 186 Q 252 186 242 168 Q 233 148 235 132 Z" 
-              fill="url(#trayYellowGrad)" 
+              fill="url(#trayWhiteGrad)" 
               stroke="url(#trayGoldBorderGrad)" 
               strokeWidth="2.8" 
               strokeLinejoin="round" 
             />
           </g>
 
-          {/* Left Top Flare Sparkle */}
-          <g>
-            <circle cx="235" cy="132" r="14" fill="url(#goldCornerFlare)" />
-            <path 
-              d="M 235 121 L 237 130.5 L 246 132 L 237 133.5 L 235 143 L 233 133.5 L 224 132 L 233 130.5 Z" 
-              fill="#ffffff" 
-            />
-            <circle cx="235" cy="132" r="2.2" fill="#ffffff" />
-          </g>
-
-          {/* Right Top Flare Sparkle */}
-          <g>
-            <circle cx="628" cy="132" r="14" fill="url(#goldCornerFlare)" />
-            <path 
-              d="M 628 121 L 630 130.5 L 639 132 L 630 133.5 L 628 143 L 626 133.5 L 617 132 L 626 130.5 Z" 
-              fill="#ffffff" 
-            />
-            <circle cx="628" cy="132" r="2.2" fill="#ffffff" />
-          </g>
-
           {/* ======================================================== */}
-          {/* LAYER 3: 3D METALLIC GOLD CIRCULAR MEDALLION             */}
+          {/* LAYER 3: 3D LUMINOUS LIGHT CIRCULAR MEDALLION            */}
           {/* ======================================================== */}
           <g filter="url(#medallionShadow)">
-            {/* Outer 3D Metallic Gold Ring */}
-            <circle cx="144" cy="122" r="76" fill="url(#gold3DRimGrad)" />
+            {/* Outer Luminous Light Ring */}
+            <circle cx="144" cy="122" r="76" fill="url(#gold3DRimGrad)" stroke="#e2e8f0" strokeWidth="1.2" />
 
-            {/* Inner Dark Bronze Bevel Edge */}
-            <circle cx="144" cy="122" r="64" fill="none" stroke="#663e04" strokeWidth="2.2" strokeOpacity="0.75" />
+            {/* Inner Light Bevel Edge */}
+            <circle cx="144" cy="122" r="64" fill="none" stroke="#fde047" strokeWidth="1.6" strokeOpacity="0.8" />
 
             {/* Pure HD White Center Hub */}
             <circle cx="144" cy="122" r="62" fill="#ffffff" />
@@ -216,7 +181,6 @@ export function VisdomBrand({ onClick, className = "" }) {
               width="114" 
               height="114" 
               preserveAspectRatio="xMidYMid meet" 
-              className="transform-gpu group-hover:scale-105 transition-transform duration-300"
               style={{ imageRendering: 'high-quality' }}
             />
           </g>
@@ -256,7 +220,7 @@ export function VisdomBrand({ onClick, className = "" }) {
               </text>
             </g>
 
-            {/* LINE 2: Score High Marks in Less Time (Deep Slate, Refined, 100% Clear) */}
+            {/* LINE 2: Spend time on MyMarks, gain more marks (Deep Slate, Refined, 100% Clear) */}
             <g transform="translate(254, 122)">
               <text 
                 x="0" 
@@ -264,10 +228,10 @@ export function VisdomBrand({ onClick, className = "" }) {
                 fill="#0f172a" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
                 fontWeight="600" 
-                fontSize="16.5" 
-                letterSpacing="0.4"
+                fontSize="14.8" 
+                letterSpacing="0.1"
               >
-                Score High Marks in Less Time
+                Spend time on MyMarks, gain more marks
               </text>
             </g>
           </g>
