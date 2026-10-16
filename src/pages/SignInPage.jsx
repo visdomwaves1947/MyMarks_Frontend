@@ -356,6 +356,17 @@ export default function AuthModal({
       const data = await response.json();
 
       if (response.ok && data.success) {
+        if (data.user && (data.user.role === 'admin' || data.user.email === 'md@visdomwaves.com')) {
+          try {
+            localStorage.setItem('mla_user', JSON.stringify(data.user));
+            localStorage.setItem('mymarks_admin_auth', 'true');
+            sessionStorage.setItem('mymarks_admin_auth', 'true');
+            if (data.token) localStorage.setItem('mymarks_admin_token', data.token);
+          } catch (e) {}
+          if (onLoginSuccess) onLoginSuccess(data.user);
+          navigate('/admin');
+          return;
+        }
         if (onLoginSuccess) {
           onLoginSuccess(data.user);
         }
