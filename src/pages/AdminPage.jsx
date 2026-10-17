@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Users,
@@ -41,7 +41,18 @@ import {
   SlidersHorizontal,
   FolderGit2,
   Sun,
-  Moon
+  Moon,
+  Video,
+  Play,
+  Film,
+  Link2,
+  FileText,
+  Copy,
+  Maximize2,
+  Minimize2,
+  UploadCloud,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 
 import {
@@ -59,7 +70,13 @@ import {
   updateContentApi,
   deleteContentApi,
   triggerSeed,
-  checkApiHealth
+  checkApiHealth,
+  fetchAdminVideos,
+  createAdminVideoApi,
+  updateAdminVideoApi,
+  deleteAdminVideoApi,
+  seedAdminVideosApi,
+  uploadMediaFileApi
 } from '../services/api';
 
 const MASTER_EMAIL = 'md@visdomwaves.com';
@@ -158,6 +175,7 @@ export default function AdminPage({
   const [users, setUsers] = useState([]);
   const [courses, setCourses] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [videos, setVideos] = useState([]);
 
   // Toast Notifications
   const [toast, setToast] = useState(null);
@@ -176,6 +194,11 @@ export default function AdminPage({
 
   const [bookingFilter, setBookingFilter] = useState('all');
 
+  const [videoSearch, setVideoSearch] = useState('');
+  const [videoTypeFilter, setVideoTypeFilter] = useState('all');
+  const [videoSubjectFilter, setVideoSubjectFilter] = useState('all');
+  const [videoClassFilter, setVideoClassFilter] = useState('all');
+
   // Modals
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [userModalMode, setUserModalMode] = useState('create'); // 'create' | 'edit'
@@ -186,7 +209,32 @@ export default function AdminPage({
   const [courseModalMode, setCourseModalMode] = useState('create');
   const [selectedCourse, setSelectedCourse] = useState(null);
 
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'user'|'course'|'booking', id, title }
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [videoModalMode, setVideoModalMode] = useState('create');
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [previewVideoModal, setPreviewVideoModal] = useState(null);
+  const [copiedVideoId, setCopiedVideoId] = useState(null);
+
+  // Video Upload & Full Screen Studio States
+  const [isVideoFullScreen, setIsVideoFullScreen] = useState(false);
+  const [videoSourceMode, setVideoSourceMode] = useState('upload'); // 'upload' | 'url'
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [videoUploadProgress, setVideoUploadProgress] = useState(0);
+  const [videoUploadInfo, setVideoUploadInfo] = useState(null);
+  const [isUploadingThumb, setIsUploadingThumb] = useState(false);
+  const [thumbUploadProgress, setThumbUploadProgress] = useState(0);
+  const [videoDragOver, setVideoDragOver] = useState(false);
+  const [thumbDragOver, setThumbDragOver] = useState(false);
+
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'user'|'course'|'booking'|'video', id, title }
+
+  // Helper to extract YouTube ID
+  const extractYouTubeId = useCallback((url) => {
+    if (!url) return '';
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return match && match[2].length === 11 ? match[2] : '';
+  }, []);
 
   // User Form Data
   const initialUserForm = {
@@ -228,6 +276,25 @@ export default function AdminPage({
   };
   const [courseForm, setCourseForm] = useState(initialCourseForm);
 
+  // Video & Resource Form Data
+  const initialVideoForm = {
+    title: '',
+    type: 'youtube', // 'youtube' | 'video' | 'link' | 'drive' | 'document'
+    url: '',
+    subject: 'Mathematics',
+    classLevel: 'Intermediate 1st Year',
+    chapter: '',
+    description: '',
+    duration: '35 mins',
+    instructor: 'Visdom Waves Faculty',
+    tags: '',
+    linkType: 'Lecture Video',
+    thumbnailUrl: '',
+    isFeatured: false,
+    status: 'published',
+  };
+  const [videoForm, setVideoForm] = useState(initialVideoForm);
+
   // Load all data
   const loadAdminData = useCallback(async () => {
     setIsRefreshing(true);
@@ -255,6 +322,12 @@ export default function AdminPage({
       const bookingsRes = await fetchAdminBookings();
       if (bookingsRes.success && Array.isArray(bookingsRes.bookings)) {
         setBookings(bookingsRes.bookings);
+      }
+
+      // 5. Videos & Links
+      const videosRes = await fetchAdminVideos({ limit: 100 });
+      if (videosRes.success && Array.isArray(videosRes.data)) {
+        setVideos(videosRes.data);
       }
 
       const elapsed = Math.round(performance.now() - start);
@@ -389,6 +462,31 @@ export default function AdminPage({
     });
   }, [courses, courseSearch, courseCategory]);
 
+  // Filtered Videos & Resources
+  const filteredVideos = useMemo(() => {
+    return videos.filter((v) => {
+      const q = videoSearch.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        (v.title || '').toLowerCase().includes(q) ||
+        (v.chapter || '').toLowerCase().includes(q) ||
+        (v.instructor || '').toLowerCase().includes(q) ||
+        (v.subject || '').toLowerCase().includes(q) ||
+        (v.description || '').toLowerCase().includes(q) ||
+        (Array.isArray(v.tags) && v.tags.some((t) => t.toLowerCase().includes(q)));
+
+      const matchType = videoTypeFilter === 'all' || v.type === videoTypeFilter;
+      const matchSubject =
+        videoSubjectFilter === 'all' ||
+        (v.subject || '').toLowerCase() === videoSubjectFilter.toLowerCase();
+      const matchClass =
+        videoClassFilter === 'all' ||
+        (v.classLevel || '').toLowerCase() === videoClassFilter.toLowerCase();
+
+      return matchSearch && matchType && matchSubject && matchClass;
+    });
+  }, [videos, videoSearch, videoTypeFilter, videoSubjectFilter, videoClassFilter]);
+
   // User Actions
   const handleOpenAddUser = () => {
     setUserModalMode('create');
@@ -517,6 +615,242 @@ export default function AdminPage({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Video & Resource Actions
+  const handleOpenAddVideo = () => {
+    setVideoModalMode('create');
+    setVideoForm(initialVideoForm);
+    setVideoSourceMode('upload');
+    setVideoUploadProgress(0);
+    setVideoUploadInfo(null);
+    setIsVideoModalOpen(true);
+  };
+
+  const handleOpenEditVideo = (video) => {
+    setVideoModalMode('edit');
+    setSelectedVideo(video);
+    setVideoSourceMode(video.url && video.url.includes('/uploads/videos/') ? 'upload' : 'url');
+    setVideoUploadProgress(0);
+    setVideoUploadInfo(video.url ? { originalName: video.title, url: video.url } : null);
+    setVideoForm({
+      title: video.title || '',
+      type: video.type || 'youtube',
+      url: video.url || '',
+      subject: video.subject || 'Mathematics',
+      classLevel: video.classLevel || 'Intermediate 1st Year',
+      chapter: video.chapter || '',
+      description: video.description || '',
+      duration: video.duration || '35 mins',
+      instructor: video.instructor || 'Visdom Waves Faculty',
+      tags: Array.isArray(video.tags) ? video.tags.join(', ') : video.tags || '',
+      linkType: video.linkType || 'Lecture Video',
+      thumbnailUrl: video.thumbnailUrl || '',
+      isFeatured: !!video.isFeatured,
+      status: video.status || 'published',
+    });
+    setIsVideoModalOpen(true);
+  };
+
+  // Video file upload handler
+  const handleVideoFileSelect = async (file) => {
+    if (!file) return;
+
+    // Validate video type
+    const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-matroska', 'video/ogg'];
+    const isVideo = validVideoTypes.includes(file.type) || /\.(mp4|webm|mov|mkv|avi|ogg|ogv)$/i.test(file.name);
+    if (!isVideo) {
+      showToast('Please select a valid video file (.mp4, .webm, .mov, .mkv)', 'error');
+      return;
+    }
+
+    // Auto extract duration and auto-populate title if empty
+    try {
+      const tempVideo = document.createElement('video');
+      tempVideo.preload = 'metadata';
+      tempVideo.src = URL.createObjectURL(file);
+      tempVideo.onloadedmetadata = () => {
+        const totalSec = Math.round(tempVideo.duration);
+        const mins = Math.floor(totalSec / 60);
+        const secs = totalSec % 60;
+        const durStr = mins > 0 ? `${mins} mins ${secs > 0 ? secs + 's' : ''}`.trim() : `${secs}s`;
+        setVideoForm(prev => ({
+          ...prev,
+          duration: prev.duration && prev.duration !== '35 mins' ? prev.duration : durStr
+        }));
+      };
+    } catch (e) {
+      console.warn('Could not extract duration metadata:', e);
+    }
+
+    // Auto-fill title if empty
+    if (!videoForm.title) {
+      const cleanName = file.name
+        .replace(/\.[^/.]+$/, '')
+        .replace(/[-_]/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+      setVideoForm(prev => ({ ...prev, title: cleanName }));
+    }
+
+    setIsUploadingVideo(true);
+    setVideoUploadProgress(1);
+
+    try {
+      const res = await uploadMediaFileApi(file, (percent) => {
+        setVideoUploadProgress(percent);
+      });
+
+      if (res.success && res.data?.url) {
+        setVideoForm(prev => ({
+          ...prev,
+          url: res.data.url,
+          type: 'video',
+        }));
+        setVideoUploadInfo({
+          originalName: file.name,
+          sizeMb: (file.size / (1024 * 1024)).toFixed(2),
+          url: res.data.url,
+        });
+        showToast('Video uploaded successfully to Visdom Waves storage!');
+      } else {
+        throw new Error(res.message || 'Upload failed');
+      }
+    } catch (err) {
+      console.error('Video upload failed:', err);
+      showToast(err.message || 'Video upload failed. Check server connection.', 'error');
+    } finally {
+      setIsUploadingVideo(false);
+    }
+  };
+
+  // Thumbnail image upload handler
+  const handleThumbFileSelect = async (file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (JPG, PNG, WebP)', 'error');
+      return;
+    }
+
+    setIsUploadingThumb(true);
+    setThumbUploadProgress(1);
+
+    try {
+      const res = await uploadMediaFileApi(file, (percent) => {
+        setThumbUploadProgress(percent);
+      });
+
+      if (res.success && res.data?.url) {
+        setVideoForm(prev => ({
+          ...prev,
+          thumbnailUrl: res.data.url,
+        }));
+        showToast('Thumbnail uploaded successfully!');
+      } else {
+        throw new Error(res.message || 'Thumbnail upload failed');
+      }
+    } catch (err) {
+      console.error('Thumbnail upload failed:', err);
+      showToast(err.message || 'Thumbnail upload failed', 'error');
+    } finally {
+      setIsUploadingThumb(false);
+    }
+  };
+
+  const handleSaveVideo = async (e) => {
+    e.preventDefault();
+    if (!videoForm.title.trim()) {
+      showToast('Please provide a video/link title', 'error');
+      return;
+    }
+    if (!videoForm.url.trim()) {
+      showToast('Please provide a URL or link', 'error');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const parsedTags = typeof videoForm.tags === 'string'
+        ? videoForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
+        : videoForm.tags || [];
+
+      const payload = {
+        ...videoForm,
+        tags: parsedTags,
+      };
+
+      // Auto detect YouTube video ID or direct video file upload
+      const ytId = extractYouTubeId(payload.url);
+      const isVideoFile = payload.url && (
+        payload.url.includes('/uploads/') ||
+        /\.(mp4|webm|mov|mkv|ogg|ogv|m4v|avi)(\?.*)?$/i.test(payload.url)
+      );
+
+      if (ytId) {
+        payload.youtubeId = ytId;
+        payload.type = 'youtube';
+        payload.embedUrl = `https://www.youtube.com/embed/${ytId}`;
+        if (!payload.thumbnailUrl) {
+          payload.thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        }
+      } else if (payload.type === 'video' || isVideoFile) {
+        payload.type = 'video';
+        if (!payload.embedUrl) {
+          payload.embedUrl = payload.url;
+        }
+      }
+
+      if (videoModalMode === 'create') {
+        await createAdminVideoApi(payload);
+        showToast('New video / link uploaded successfully!');
+      } else {
+        await updateAdminVideoApi(selectedVideo.id || selectedVideo._id, payload);
+        showToast('Video / link details updated successfully!');
+      }
+
+      setIsVideoModalOpen(false);
+      await loadAdminData();
+    } catch (err) {
+      showToast(err.message || 'Failed to save video', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteVideo = async (id) => {
+    setIsLoading(true);
+    try {
+      await deleteAdminVideoApi(id);
+      showToast('Video removed successfully');
+      setDeleteConfirm(null);
+      await loadAdminData();
+    } catch (err) {
+      showToast(err.message || 'Delete failed', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSeedVideos = async () => {
+    if (!window.confirm('Seed standard curriculum lecture videos and study materials?')) return;
+    setIsLoading(true);
+    try {
+      await seedAdminVideosApi();
+      showToast('Standard lecture videos & links seeded successfully!');
+      await loadAdminData();
+    } catch (err) {
+      showToast('Seed failed: ' + err.message, 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCopyVideoLink = (url, id) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    setCopiedVideoId(id);
+    showToast('Link copied to clipboard!');
+    setTimeout(() => setCopiedVideoId(null), 2500);
   };
 
   // Seed Initial Content
@@ -882,7 +1216,7 @@ export default function AdminPage({
             onClick={() => setActiveTab('dashboard')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'dashboard'
-                ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-600/25'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
@@ -894,7 +1228,7 @@ export default function AdminPage({
             onClick={() => setActiveTab('students')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'students'
-                ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-600/25'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
@@ -909,7 +1243,7 @@ export default function AdminPage({
             onClick={() => setActiveTab('courses')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'courses'
-                ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-600/25'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
@@ -921,10 +1255,25 @@ export default function AdminPage({
           </button>
 
           <button
+            onClick={() => setActiveTab('videos')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'videos'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
+            }`}
+          >
+            <Video size={16} />
+            <span>Videos, YouTube & Links</span>
+            <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[11px] font-black">
+              {videos.length}
+            </span>
+          </button>
+
+          <button
             onClick={() => setActiveTab('bookings')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'bookings'
-                ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-600/25'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
@@ -941,7 +1290,7 @@ export default function AdminPage({
             onClick={() => setActiveTab('settings')}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === 'settings'
-                ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg shadow-red-600/25'
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
             }`}
           >
@@ -956,14 +1305,15 @@ export default function AdminPage({
         {activeTab === 'dashboard' && (
           <div className="space-y-6">
             {/* Top KPI Metric Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {/* Card 1: Students */}
-              <div className="p-5 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none relative overflow-hidden group hover:border-red-500/40 transition-all">
+              {/* Card 1: Students */}
+              <div className="p-5 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none relative overflow-hidden group hover:border-blue-500/40 transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Total Registered Students
                   </span>
-                  <div className="p-2.5 rounded-xl bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20">
+                  <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 dark:text-blue-400 border border-blue-500/20">
                     <GraduationCap size={20} />
                   </div>
                 </div>
@@ -997,7 +1347,29 @@ export default function AdminPage({
                 </p>
               </div>
 
-              {/* Card 3: Bookings */}
+              {/* Card 3: Videos, YouTube & Links */}
+              <div
+                onClick={() => setActiveTab('videos')}
+                className="p-5 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none relative overflow-hidden group hover:border-indigo-500/40 transition-all cursor-pointer"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Videos & Links
+                  </span>
+                  <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border border-indigo-500/20 group-hover:scale-110 transition-transform">
+                    <Video size={20} />
+                  </div>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-black text-slate-900 dark:text-white">{videos.length}</span>
+                  <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">Media Vault</span>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
+                  YouTube lectures, direct videos & study links
+                </p>
+              </div>
+
+              {/* Card 4: Bookings */}
               <div className="p-5 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none relative overflow-hidden group hover:border-blue-500/40 transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -1016,7 +1388,7 @@ export default function AdminPage({
                 </p>
               </div>
 
-              {/* Card 4: Database Status */}
+              {/* Card 5: Database Status */}
               <div className="p-5 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none relative overflow-hidden group hover:border-emerald-500/40 transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -1046,7 +1418,7 @@ export default function AdminPage({
               <div className="flex flex-wrap items-center gap-2.5">
                 <button
                   onClick={handleOpenAddUser}
-                  className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-red-600/30 transition-all cursor-pointer"
+                  className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
                 >
                   <Plus size={15} />
                   <span>Register New Student</span>
@@ -1283,7 +1655,7 @@ export default function AdminPage({
 
                 <button
                   onClick={handleOpenAddUser}
-                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-red-600/30 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
                 >
                   <Plus size={15} />
                   <span>Add Student</span>
@@ -1480,7 +1852,7 @@ export default function AdminPage({
 
                 <button
                   onClick={handleOpenAddCourse}
-                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-red-600/30 transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
                 >
                   <Plus size={15} />
                   <span>Add Course</span>
@@ -1549,6 +1921,346 @@ export default function AdminPage({
               {filteredCourses.length === 0 && (
                 <div className="col-span-full py-16 text-center text-slate-400 dark:text-slate-500 text-sm">
                   No courses found in this category. Click &quot;Seed Standard Content&quot; or &quot;Add Course&quot; to populate.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ─────────────────────────────────────────────────────────────
+            TAB 4: VIDEOS, YOUTUBE & RESOURCE LINKS
+           ───────────────────────────────────────────────────────────── */}
+        {activeTab === 'videos' && (
+          <div className="space-y-4">
+            {/* Filter Bar - Single Line Layout */}
+            <div className="p-3 sm:p-3.5 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex items-center justify-between gap-3 transition-colors duration-200 overflow-x-auto no-scrollbar">
+              <div className="relative shrink min-w-[180px] max-w-xs xl:max-w-sm">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                <input
+                  type="text"
+                  placeholder="Search resources..."
+                  value={videoSearch}
+                  onChange={(e) => setVideoSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium focus:bg-white dark:focus:bg-slate-950"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0 flex-nowrap">
+                {/* Type Filter */}
+                <select
+                  value={videoTypeFilter}
+                  onChange={(e) => setVideoTypeFilter(e.target.value)}
+                  className="px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs dark:shadow-none shrink-0"
+                >
+                  <option value="all">All Media</option>
+                  <option value="youtube">YouTube</option>
+                  <option value="video">Direct Video</option>
+                  <option value="drive">Drive & PDFs</option>
+                  <option value="link">Study Links</option>
+                </select>
+
+                {/* Subject Filter */}
+                <select
+                  value={videoSubjectFilter}
+                  onChange={(e) => setVideoSubjectFilter(e.target.value)}
+                  className="px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs dark:shadow-none shrink-0"
+                >
+                  <option value="all">All Subjects</option>
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Physics">Physics</option>
+                  <option value="Chemistry">Chemistry</option>
+                  <option value="Botany">Botany</option>
+                  <option value="Zoology">Zoology</option>
+                  <option value="English">English</option>
+                  <option value="Commerce">Commerce</option>
+                  <option value="Economics">Economics</option>
+                  <option value="Civics">Civics</option>
+                  <option value="History">History</option>
+                  <option value="General">General</option>
+                </select>
+
+                {/* Class Year Filter */}
+                <select
+                  value={videoClassFilter}
+                  onChange={(e) => setVideoClassFilter(e.target.value)}
+                  className="px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs dark:shadow-none shrink-0"
+                >
+                  <option value="all">All Classes</option>
+                  <option value="Intermediate 1st Year">1st Year</option>
+                  <option value="Intermediate 2nd Year">2nd Year</option>
+                  <option value="Both Years">Both Years</option>
+                </select>
+
+                <button
+                  onClick={handleSeedVideos}
+                  className="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                  title="Seed sample YouTube lectures & study links"
+                >
+                  <Sparkles size={14} />
+                  <span>Seed Videos</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsVideoFullScreen(true);
+                    handleOpenAddVideo();
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                  title="Open video uploader in full-screen studio view"
+                >
+                  <Maximize2 size={14} />
+                  <span>Full Screen Studio</span>
+                </button>
+
+                <button
+                  onClick={handleOpenAddVideo}
+                  className="px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <Plus size={15} />
+                  <span>Upload Video / Link</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Metrics & Summary Bar */}
+            <div className="flex items-center justify-between text-xs font-semibold px-2 text-slate-500 dark:text-slate-400">
+              <div className="flex items-center gap-3">
+                <span>Showing <strong className="text-slate-900 dark:text-white font-bold">{filteredVideos.length}</strong> resources</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="hidden sm:inline">{videos.filter(v => v.type === 'youtube').length} YouTube Lectures</span>
+                <span className="hidden sm:inline">•</span>
+                <span className="hidden sm:inline">{videos.filter(v => v.type === 'drive' || v.type === 'link').length} Reference Links & Drive Notes</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
+                  {videos.filter(v => v.status === 'published').length} Published
+                </span>
+                {videos.filter(v => v.isFeatured).length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[11px] font-bold">
+                    ★ {videos.filter(v => v.isFeatured).length} Featured
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Videos Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {filteredVideos.map((v) => {
+                const isYouTube = v.type === 'youtube' || !!v.youtubeId || Boolean(extractYouTubeId(v.url));
+                const isDrive = v.type === 'drive' || Boolean(v.url && v.url.includes('drive.google.com'));
+                const isDirectVideo = v.type === 'video' || Boolean(
+                  v.url && (
+                    v.url.includes('/uploads/') ||
+                    /\.(mp4|webm|mov|mkv|ogg|ogv|m4v)(\?.*)?$/i.test(v.url)
+                  )
+                );
+
+                return (
+                  <div
+                    key={v.id || v._id}
+                    className="rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex flex-col justify-between hover:border-blue-400/50 dark:hover:border-blue-500/40 transition-all group overflow-hidden"
+                  >
+                    <div>
+                      {/* Thumbnail Container with Play Overlay */}
+                      <div className="relative aspect-video w-full bg-slate-950 overflow-hidden cursor-pointer" onClick={() => setPreviewVideoModal(v)}>
+                        {v.thumbnailUrl ? (
+                          <img
+                            src={v.thumbnailUrl}
+                            alt={v.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 text-slate-400">
+                            <Video size={36} className="text-blue-500 opacity-80 mb-1" />
+                            <span className="text-xs font-semibold">{v.subject || 'Curriculum Video'}</span>
+                          </div>
+                        )}
+
+                        {/* Hover Overlay with Round Play Icon */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-xs">
+                          <div className="w-13 h-13 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-950/60 transform group-hover:scale-110 transition-transform duration-300">
+                            <Play size={22} fill="currentColor" className="ml-1" />
+                          </div>
+                        </div>
+
+                        {/* Top Left: Type Badge */}
+                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                          {isYouTube ? (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                              </svg>
+                              <span>YouTube</span>
+                            </span>
+                          ) : isDrive ? (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                              <FileText size={12} />
+                              <span>Drive & Notes</span>
+                            </span>
+                          ) : isDirectVideo ? (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                              <Film size={12} />
+                              <span>MP4 Video</span>
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                              <Link2 size={12} />
+                              <span>Study Link</span>
+                            </span>
+                          )}
+
+                          {v.isFeatured && (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 shadow-md">
+                              ★ Featured
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Bottom Right: Duration Pill */}
+                        {v.duration && (
+                          <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/80 text-white font-mono text-[11px] font-bold shadow-md backdrop-blur-xs">
+                            {v.duration}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content Body */}
+                      <div className="p-4 sm:p-5">
+                        <div className="flex items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wider">
+                              {v.subject || 'Subject'}
+                            </span>
+                            {v.chapter && (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 truncate max-w-[140px]">
+                                {v.chapter}
+                              </span>
+                            )}
+                          </div>
+
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            v.status === 'published'
+                              ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
+                              : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20'
+                          }`}>
+                            {v.status || 'published'}
+                          </span>
+                        </div>
+
+                        <h4
+                          onClick={() => setPreviewVideoModal(v)}
+                          className="font-bold text-slate-900 dark:text-white text-sm sm:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 cursor-pointer leading-snug"
+                        >
+                          {v.title}
+                        </h4>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
+                          {v.description || 'Comprehensive video lecture with practical concept breakdowns and exam shortcuts.'}
+                        </p>
+
+                        {/* Instructor & Class info */}
+                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                          <span className="font-semibold truncate max-w-[160px] text-slate-700 dark:text-slate-300">
+                            {v.instructor || 'Visdom Waves Lead'}
+                          </span>
+                          <span className="text-[11px]">{v.classLevel || 'Intermediate'}</span>
+                        </div>
+
+                        {/* Tags */}
+                        {Array.isArray(v.tags) && v.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2.5">
+                            {v.tags.slice(0, 3).map((tag, idx) => (
+                              <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="p-4 pt-0 sm:p-5 sm:pt-0">
+                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => setPreviewVideoModal(v)}
+                          className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                        >
+                          <Play size={13} fill="currentColor" />
+                          <span>Watch / Preview</span>
+                        </button>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleCopyVideoLink(v.url, v.id || v._id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Copy Video / Link URL"
+                          >
+                            <Copy size={15} className={copiedVideoId === (v.id || v._id) ? 'text-emerald-500' : ''} />
+                          </button>
+
+                          <button
+                            onClick={() => setPreviewVideoModal(v)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Play / View in Same Window"
+                          >
+                            <ExternalLink size={15} />
+                          </button>
+
+                          <button
+                            onClick={() => handleOpenEditVideo(v)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Edit Video / Link"
+                          >
+                            <Edit size={15} />
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              setDeleteConfirm({
+                                type: 'video',
+                                id: v.id || v._id,
+                                title: v.title,
+                              })
+                            }
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            title="Delete Video / Link"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {filteredVideos.length === 0 && (
+                <div className="col-span-full py-16 text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-8">
+                  <Video size={42} className="mx-auto text-slate-400/60 mb-3" />
+                  <h4 className="text-base font-bold text-slate-700 dark:text-slate-300">No videos or links found</h4>
+                  <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                    Try adjusting your filters or search terms, or click &quot;Upload Video / Link&quot; to add new classroom YouTube lectures and resources.
+                  </p>
+                  <div className="flex items-center justify-center gap-3 mt-4">
+                    <button
+                      onClick={handleSeedVideos}
+                      className="px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Sparkles size={14} />
+                      <span>Seed Standard Videos</span>
+                    </button>
+                    <button
+                      onClick={handleOpenAddVideo}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+                    >
+                      <Plus size={15} />
+                      <span>Upload First Video</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1940,7 +2652,7 @@ export default function AdminPage({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 transition-all cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isLoading ? 'Saving...' : userModalMode === 'create' ? 'Register Student' : 'Save Changes'}
                 </button>
@@ -2073,7 +2785,7 @@ export default function AdminPage({
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="px-6 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 transition-all cursor-pointer disabled:opacity-50"
+                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isLoading ? 'Saving...' : courseModalMode === 'create' ? 'Publish Course' : 'Save Changes'}
                 </button>
@@ -2082,6 +2794,856 @@ export default function AdminPage({
           </div>
         </div>
       )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: UPLOAD / EDIT VIDEO, YOUTUBE & FULL-SCREEN STUDIO
+         ───────────────────────────────────────────────────────────── */}
+      {isVideoModalOpen && (
+        <div
+          className={
+            isVideoFullScreen
+              ? 'fixed inset-0 z-50 flex flex-col bg-slate-950 text-slate-100 overflow-hidden animate-in fade-in duration-200'
+              : 'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-md overflow-hidden animate-in fade-in duration-150'
+          }
+        >
+          <div
+            className={
+              isVideoFullScreen
+                ? 'w-full h-full flex flex-col bg-slate-950 text-slate-100 overflow-hidden'
+                : 'relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 transition-all duration-200'
+            }
+          >
+            {/* Hidden native file inputs for direct device uploading */}
+            <input
+              type="file"
+              id="admin-video-file-input"
+              accept="video/mp4,video/webm,video/quicktime,video/x-matroska,video/ogg,video/*"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) handleVideoFileSelect(e.target.files[0]);
+              }}
+            />
+            <input
+              type="file"
+              id="admin-thumb-file-input"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files?.[0]) handleThumbFileSelect(e.target.files[0]);
+              }}
+            />
+
+            {/* Studio Header (Sticky) */}
+            <div className="shrink-0 px-5 sm:px-8 py-4 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
+                  <Video size={20} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
+                      {videoModalMode === 'create' ? 'Media Studio • Upload Video / Lecture' : 'Edit Video / Link Details'}
+                    </h3>
+                    <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                      {isVideoFullScreen ? 'Full Screen Studio' : 'Modal View'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+                    Upload MP4 files directly from device, publish YouTube lectures, Drive notes or reference links
+                  </p>
+                </div>
+              </div>
+
+              {/* Controls: Full Screen Toggle + Close */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsVideoFullScreen((prev) => !prev)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-all cursor-pointer border border-slate-200 dark:border-slate-700 shadow-xs"
+                  title={isVideoFullScreen ? 'Exit Full Screen Studio' : 'Open in Full Screen Studio'}
+                >
+                  {isVideoFullScreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                  <span className="hidden sm:inline">{isVideoFullScreen ? 'Exit Full Screen' : 'Full Screen'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsVideoModalOpen(false)}
+                  className="p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                  title="Close modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Studio Form & Layout */}
+            <form onSubmit={handleSaveVideo} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+                <div className={`grid grid-cols-1 ${isVideoFullScreen ? 'lg:grid-cols-12 gap-8 max-w-7xl mx-auto w-full' : 'lg:grid-cols-12 gap-6'}`}>
+                  
+                  {/* ─────────────────────────────────────────────────────────
+                      LEFT COLUMN: MEDIA UPLOAD & LIVE PLAYER PREVIEW
+                     ───────────────────────────────────────────────────────── */}
+                  <div className={`${isVideoFullScreen ? 'lg:col-span-5' : 'lg:col-span-5'} space-y-5`}>
+                    
+                    {/* Live Preview Box */}
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <Play size={13} className="text-red-500" />
+                          <span>Live Player Preview</span>
+                        </span>
+                        {videoForm.url && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                            <CheckCircle2 size={11} />
+                            <span>Link Connected</span>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Video Player Display */}
+                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center relative group">
+                        {extractYouTubeId(videoForm.url) ? (
+                          <iframe
+                            src={`https://www.youtube.com/embed/${extractYouTubeId(videoForm.url)}?autoplay=0`}
+                            title="YouTube Preview"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="w-full h-full border-0"
+                          />
+                        ) : videoForm.url && (videoForm.type === 'video' || videoForm.url.match(/\.(mp4|webm|mov|ogg)$/i) || videoForm.url.includes('/uploads/')) ? (
+                          <video
+                            controls
+                            src={videoForm.url}
+                            className="w-full h-full object-contain bg-black"
+                            poster={videoForm.thumbnailUrl || undefined}
+                          >
+                            Your browser does not support HTML5 video preview.
+                          </video>
+                        ) : videoForm.thumbnailUrl ? (
+                          <div className="w-full h-full relative">
+                            <img
+                              src={videoForm.thumbnailUrl}
+                              alt="Thumbnail preview"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                              <span className="p-3 rounded-full bg-red-600/90 text-white shadow-lg">
+                                <Play size={20} fill="currentColor" />
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center p-6 text-slate-400">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-2 border border-slate-700">
+                              <Film size={22} />
+                            </div>
+                            <p className="text-xs font-bold text-slate-300">No Video Loaded Yet</p>
+                            <p className="text-[11px] text-slate-500 mt-0.5">
+                              Upload a video file or paste a link below to preview live
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Uploaded File Info Badge */}
+                      {videoUploadInfo && (
+                        <div className="mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                            <div className="min-w-0">
+                              <p className="font-bold text-emerald-700 dark:text-emerald-300 truncate">
+                                {videoUploadInfo.originalName}
+                              </p>
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                Size: {videoUploadInfo.sizeMb} MB • Ready on Visdom Waves Server
+                              </p>
+                            </div>
+                          </div>
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold shrink-0">
+                            Uploaded
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Direct Video File Upload Drag-and-Drop Zone */}
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <UploadCloud size={14} className="text-blue-500" />
+                          <span>Video File Upload</span>
+                        </label>
+                        <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-[11px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setVideoSourceMode('upload')}
+                            className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                              videoSourceMode === 'upload'
+                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                            }`}
+                          >
+                            Device Upload
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setVideoSourceMode('url')}
+                            className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                              videoSourceMode === 'url'
+                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                            }`}
+                          >
+                            URL Link
+                          </button>
+                        </div>
+                      </div>
+
+                      {videoSourceMode === 'upload' ? (
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setVideoDragOver(true);
+                          }}
+                          onDragLeave={() => setVideoDragOver(false)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setVideoDragOver(false);
+                            if (e.dataTransfer.files?.[0]) handleVideoFileSelect(e.dataTransfer.files[0]);
+                          }}
+                          onClick={() => {
+                            const input = document.getElementById('admin-video-file-input');
+                            if (input) input.click();
+                          }}
+                          className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
+                            videoDragOver
+                              ? 'border-blue-500 bg-blue-500/10 scale-[1.01]'
+                              : 'border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 bg-white dark:bg-slate-900/60'
+                          }`}
+                        >
+                          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 border border-blue-200 dark:border-blue-500/20">
+                            <Upload size={22} className={isUploadingVideo ? 'animate-bounce' : ''} />
+                          </div>
+
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
+                            {isUploadingVideo ? 'Uploading Video to Server...' : 'Click to Browse or Drag Video Here'}
+                          </h4>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+                            Supports MP4, WebM, MOV & MKV • Up to 500 MB
+                          </p>
+
+                          {/* Upload Progress Bar */}
+                          {isUploadingVideo && (
+                            <div className="mt-4 max-w-xs mx-auto">
+                              <div className="flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
+                                <span>Uploading...</span>
+                                <span>{videoUploadProgress}%</span>
+                              </div>
+                              <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-200"
+                                  style={{ width: `${videoUploadProgress}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {!isUploadingVideo && (
+                            <button
+                              type="button"
+                              className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/25 transition-all inline-flex items-center gap-1.5"
+                            >
+                              <Upload size={13} />
+                              <span>Select Video File</span>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div>
+                          <input
+                            type="url"
+                            value={videoForm.url}
+                            onChange={(e) => {
+                              const newUrl = e.target.value;
+                              const ytId = extractYouTubeId(newUrl);
+                              setVideoForm((prev) => ({
+                                ...prev,
+                                url: newUrl,
+                                type: ytId ? 'youtube' : prev.type,
+                              }));
+                            }}
+                            placeholder="https://example.com/lecture.mp4 or direct stream link"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                          />
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
+                            Paste downloadable MP4 URL or direct streaming video address.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Thumbnail Upload & Preview */}
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <ImageIcon size={14} className="text-purple-500" />
+                          <span>Custom Thumbnail Image</span>
+                        </label>
+                        {videoForm.thumbnailUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setVideoForm((prev) => ({ ...prev, thumbnailUrl: '' }))}
+                            className="text-[10px] text-red-500 hover:underline font-bold"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="w-20 h-14 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-900 overflow-hidden shrink-0 flex items-center justify-center">
+                          {videoForm.thumbnailUrl ? (
+                            <img
+                              src={videoForm.thumbnailUrl}
+                              alt="Thumb"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon size={18} className="text-slate-500" />
+                          )}
+                        </div>
+
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const input = document.getElementById('admin-thumb-file-input');
+                                if (input) input.click();
+                              }}
+                              disabled={isUploadingThumb}
+                              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                            >
+                              <Upload size={12} />
+                              <span>{isUploadingThumb ? `${thumbUploadProgress}%` : 'Upload Image'}</span>
+                            </button>
+                          </div>
+                          <input
+                            type="url"
+                            value={videoForm.thumbnailUrl}
+                            onChange={(e) => setVideoForm({ ...videoForm, thumbnailUrl: e.target.value })}
+                            placeholder="Or paste image URL (https://...)"
+                            className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ─────────────────────────────────────────────────────────
+                      RIGHT COLUMN: METADATA & ACADEMIC ATTRIBUTES
+                     ───────────────────────────────────────────────────────── */}
+                  <div className={`${isVideoFullScreen ? 'lg:col-span-7' : 'lg:col-span-7'} space-y-4`}>
+                    
+                    {/* Resource Type Selector Pills */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                        Select Resource Type
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'youtube' }))}
+                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            videoForm.type === 'youtube'
+                              ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-600/25'
+                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                          </svg>
+                          <span>YouTube</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'video' }))}
+                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            videoForm.type === 'video'
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25'
+                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Film size={14} />
+                          <span>Direct Video</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'drive' }))}
+                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            videoForm.type === 'drive'
+                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/25'
+                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <FileText size={14} />
+                          <span>Drive / PDF</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'link' }))}
+                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            videoForm.type === 'link'
+                              ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-600/25'
+                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Link2 size={14} />
+                          <span>Web Link</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* URL / Link Address Input (Always Editable) */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                        URL / Resource Address *
+                      </label>
+                      <input
+                        type="url"
+                        required
+                        value={videoForm.url}
+                        onChange={(e) => {
+                          const newUrl = e.target.value;
+                          const ytId = extractYouTubeId(newUrl);
+                          setVideoForm((prev) => ({
+                            ...prev,
+                            url: newUrl,
+                            type: ytId ? 'youtube' : prev.type,
+                            thumbnailUrl: ytId && (!prev.thumbnailUrl || prev.thumbnailUrl.includes('youtube.com'))
+                              ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+                              : prev.thumbnailUrl,
+                          }));
+                        }}
+                        placeholder={
+                          videoForm.type === 'youtube'
+                            ? 'https://www.youtube.com/watch?v=... or https://youtu.be/...'
+                            : videoForm.type === 'video'
+                            ? 'Upload file on the left or paste https://... video URL'
+                            : videoForm.type === 'drive'
+                            ? 'https://drive.google.com/drive/folders/...'
+                            : 'https://example.com/study-material'
+                        }
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                      />
+                    </div>
+
+                    {/* Title */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                        Video / Resource Title *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={videoForm.title}
+                        onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
+                        placeholder="e.g. Mathematics 2A: Calculus & Differential Equations Complete Lecture"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                      />
+                    </div>
+
+                    {/* Subject & Target Class */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Subject Stream
+                        </label>
+                        <select
+                          value={videoForm.subject}
+                          onChange={(e) => setVideoForm({ ...videoForm, subject: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
+                        >
+                          <option value="Mathematics">Mathematics</option>
+                          <option value="Physics">Physics</option>
+                          <option value="Chemistry">Chemistry</option>
+                          <option value="Botany">Botany</option>
+                          <option value="Zoology">Zoology</option>
+                          <option value="English">English</option>
+                          <option value="Commerce">Commerce</option>
+                          <option value="Economics">Economics</option>
+                          <option value="Civics">Civics</option>
+                          <option value="History">History</option>
+                          <option value="General">General / Platform Demo</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Target Intermediate Class
+                        </label>
+                        <select
+                          value={videoForm.classLevel}
+                          onChange={(e) => setVideoForm({ ...videoForm, classLevel: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
+                        >
+                          <option value="Intermediate 1st Year">Intermediate 1st Year (Junior)</option>
+                          <option value="Intermediate 2nd Year">Intermediate 2nd Year (Senior)</option>
+                          <option value="Both Years">Both Years (Comprehensive)</option>
+                          <option value="All Levels">All Levels</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Chapter & Educator */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Chapter / Unit Name
+                        </label>
+                        <input
+                          type="text"
+                          value={videoForm.chapter}
+                          onChange={(e) => setVideoForm({ ...videoForm, chapter: e.target.value })}
+                          placeholder="e.g. Calculus & Complex Numbers"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Educator / Channel Name
+                        </label>
+                        <input
+                          type="text"
+                          value={videoForm.instructor}
+                          onChange={(e) => setVideoForm({ ...videoForm, instructor: e.target.value })}
+                          placeholder="e.g. Dr. S. K. Sharma / Visdom Waves Faculty"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Category & Duration */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Resource Category
+                        </label>
+                        <select
+                          value={videoForm.linkType}
+                          onChange={(e) => setVideoForm({ ...videoForm, linkType: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
+                        >
+                          <option value="Lecture Video">Full Lecture Video</option>
+                          <option value="Revision Class">Speed Revision / Crash Course</option>
+                          <option value="Formula Sheet & PDF">Formula Sheet & Handwritten Notes</option>
+                          <option value="Lab Practical">Lab Practical & Simulator</option>
+                          <option value="PYQ Solution">Board PYQ Solved Analysis</option>
+                          <option value="Mock Exam">Online Practice Test</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Duration / Length
+                        </label>
+                        <input
+                          type="text"
+                          value={videoForm.duration}
+                          onChange={(e) => setVideoForm({ ...videoForm, duration: e.target.value })}
+                          placeholder="e.g. 45 mins / 1h 15m / PDF"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Summary */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                        Summary & Key Concepts
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={videoForm.description}
+                        onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
+                        placeholder="Outline of topics covered, 7-mark question proofs, board blueprints and key takeaways."
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                      />
+                    </div>
+
+                    {/* Search Tags */}
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                        Search Keywords / Tags (Comma Separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={videoForm.tags}
+                        onChange={(e) => setVideoForm({ ...videoForm, tags: e.target.value })}
+                        placeholder="IPE 2026, 7 Marks, Calculus, Derivations"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                      />
+                    </div>
+
+                    {/* Feature Toggle & Status */}
+                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                      <label className="flex items-center gap-2.5 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={videoForm.isFeatured}
+                          onChange={(e) => setVideoForm({ ...videoForm, isFeatured: e.target.checked })}
+                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-700 cursor-pointer"
+                        />
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                          Feature on Student Demo & Hero section
+                        </span>
+                      </label>
+
+                      <div className="flex items-center gap-3 text-xs font-bold">
+                        <span className="text-slate-500">Status:</span>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="videoStatus"
+                            value="published"
+                            checked={videoForm.status === 'published'}
+                            onChange={() => setVideoForm({ ...videoForm, status: 'published' })}
+                            className="text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-emerald-600 dark:text-emerald-400">Published</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="videoStatus"
+                            value="draft"
+                            checked={videoForm.status === 'draft'}
+                            onChange={() => setVideoForm({ ...videoForm, status: 'draft' })}
+                            className="text-blue-600 focus:ring-blue-500"
+                          />
+                          <span className="text-amber-600 dark:text-amber-400">Draft</span>
+                        </label>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Studio Action Footer (Always Sticky at Bottom) */}
+              <div className="shrink-0 px-5 sm:px-8 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
+                <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <span className="font-bold text-slate-700 dark:text-slate-300">
+                    {videoForm.type.toUpperCase()}
+                  </span>
+                  <span>•</span>
+                  <span>{videoForm.subject}</span>
+                  {videoForm.duration && (
+                    <>
+                      <span>•</span>
+                      <span>{videoForm.duration}</span>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsVideoFullScreen((prev) => !prev)}
+                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+                  >
+                    {isVideoFullScreen ? 'Exit Full Screen' : 'Full Screen View'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsVideoModalOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs border border-slate-300 dark:border-slate-700 transition-colors cursor-pointer shadow-xs dark:shadow-none"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading || isUploadingVideo}
+                    className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {isLoading ? (
+                      <span>Saving...</span>
+                    ) : isUploadingVideo ? (
+                      <span>Uploading Video...</span>
+                    ) : videoModalMode === 'create' ? (
+                      <span>Publish Video / Link</span>
+                    ) : (
+                      <span>Save Changes</span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: INTERACTIVE VIDEO & LINK PREVIEW PLAYER
+         ───────────────────────────────────────────────────────────── */}
+      {previewVideoModal && (() => {
+        const isYt = previewVideoModal.type === 'youtube' || Boolean(previewVideoModal.youtubeId) || Boolean(extractYouTubeId(previewVideoModal.url));
+        const ytId = previewVideoModal.youtubeId || extractYouTubeId(previewVideoModal.url);
+        const isVid = previewVideoModal.type === 'video' || Boolean(
+          previewVideoModal.url && (
+            previewVideoModal.url.includes('/uploads/videos/') ||
+            previewVideoModal.url.includes('/uploads/') ||
+            previewVideoModal.url.startsWith('blob:') ||
+            previewVideoModal.url.startsWith('data:video') ||
+            /\.(mp4|webm|mov|mkv|ogg|ogv|m4v|avi|flv)(\?.*)?$/i.test(previewVideoModal.url)
+          )
+        );
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+            <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-6 text-left">
+              {/* Top Close Bar */}
+              <div className="p-4 sm:px-6 flex items-center justify-between border-b border-slate-800 bg-slate-900/90">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider">
+                    {previewVideoModal.subject || 'Lecture'}
+                  </span>
+                  <span className="text-xs text-slate-400 font-medium hidden sm:inline">•</span>
+                  <span className="text-xs text-slate-300 font-semibold truncate max-w-sm">
+                    {previewVideoModal.chapter || previewVideoModal.linkType || (isVid ? 'MP4 Video' : isYt ? 'YouTube Lecture' : 'Curriculum Resource')}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleCopyVideoLink(previewVideoModal.url, 'modal-preview')}
+                    className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Copy Link URL"
+                  >
+                    <Copy size={13} className={copiedVideoId === 'modal-preview' ? 'text-emerald-400' : ''} />
+                    <span className="hidden sm:inline">Copy Link</span>
+                  </button>
+
+                  <button
+                    onClick={() => setPreviewVideoModal(null)}
+                    className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-colors"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Video Player Display Container */}
+              <div className="w-full bg-black">
+                {isYt && ytId ? (
+                  <div className="relative aspect-video w-full bg-black">
+                    <iframe
+                      src={`https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`}
+                      title={previewVideoModal.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                      className="w-full h-full border-0"
+                    />
+                  </div>
+                ) : isVid ? (
+                  <div className="relative aspect-video w-full bg-black flex items-center justify-center">
+                    <video
+                      src={previewVideoModal.url}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain"
+                    >
+                      Your browser does not support HTML5 video streaming.
+                    </video>
+                  </div>
+                ) : (
+                  <div className="p-8 sm:p-14 text-center bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col items-center justify-center min-h-[300px]">
+                    <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mb-4">
+                      {previewVideoModal.type === 'drive' ? <FileText size={32} /> : <Link2 size={32} />}
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 max-w-xl">{previewVideoModal.title}</h3>
+                    <p className="text-xs sm:text-sm text-slate-400 max-w-lg mb-6 leading-relaxed">
+                      {previewVideoModal.description || 'Verified curriculum study material, blueprint notes or virtual lab portal.'}
+                    </p>
+                    <button
+                      onClick={() => {
+                        window.location.href = previewVideoModal.url;
+                      }}
+                      className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm flex items-center gap-2 shadow-lg shadow-blue-600/30 transition-all cursor-pointer"
+                    >
+                      <span>Open Study Resource in This Window</span>
+                      <ExternalLink size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Video Details Bar */}
+              <div className="p-5 sm:p-6 bg-slate-900/60 border-t border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold text-white mb-1.5">
+                      {previewVideoModal.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-400 max-w-3xl leading-relaxed">
+                      {previewVideoModal.description || 'Comprehensive lecture with deep conceptual breakdown and board exam insights.'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => {
+                        const item = previewVideoModal;
+                        setPreviewVideoModal(null);
+                        handleOpenEditVideo(item);
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
+                    >
+                      <Edit size={14} />
+                      <span>Edit Video</span>
+                    </button>
+                    <button
+                      onClick={() => setPreviewVideoModal(null)}
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors cursor-pointer shadow-md shadow-blue-600/30"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+
+                {/* Metadata Badges */}
+                <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap items-center gap-2 text-xs">
+                  <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-semibold">
+                    Faculty: <strong className="text-white">{previewVideoModal.instructor || 'Visdom Waves Lead'}</strong>
+                  </span>
+                  <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-semibold">
+                    Class: <strong className="text-white">{previewVideoModal.classLevel || 'Intermediate'}</strong>
+                  </span>
+                  {previewVideoModal.duration && (
+                    <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-semibold">
+                      Length: <strong className="text-white">{previewVideoModal.duration}</strong>
+                    </span>
+                  )}
+                  {Array.isArray(previewVideoModal.tags) && previewVideoModal.tags.map((tag, idx) => (
+                    <span key={idx} className="px-2 py-0.5 rounded bg-slate-800/60 text-slate-400 text-[11px]">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ─────────────────────────────────────────────────────────────
           MODAL: VIEW FULL STUDENT PROFILE CARD
@@ -2215,6 +3777,8 @@ export default function AdminPage({
                     handleDeleteUser(deleteConfirm.id);
                   } else if (deleteConfirm.type === 'course') {
                     handleDeleteCourse(deleteConfirm.id);
+                  } else if (deleteConfirm.type === 'video') {
+                    handleDeleteVideo(deleteConfirm.id);
                   }
                 }}
                 disabled={isLoading}
