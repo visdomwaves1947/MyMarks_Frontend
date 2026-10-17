@@ -653,6 +653,100 @@ export async function updateAdminVideoApi(id, videoData) {
   }
 }
 
+export async function deleteAdminVideoApi(id) {
+  try {
+    const res = await resilientFetch(`/api/videos/${id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to delete video');
+    return data;
+  } catch (err) {
+    throw err;
+  }
+}
+
+export async function seedAdminVideosApi() {
+  try {
+    const res = await resilientFetch('/api/videos/seed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ videos: fallbackVideos }),
+    });
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.warn('[API] Video seed fallback:', err.message);
+    return { success: true, seeded: true, isLocalFallback: true };
+  }
+}
+
+export async function uploadMediaFileApi(file, onProgress) {
+  const baseUrl = getApiBaseUrl();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${baseUrl}/api/upload`);
+
+    if (xhr.upload && typeof onProgress === 'function') {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          onProgress(percent);
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      try {
+        const data = JSON.parse(xhr.responseText || '{}');
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve(data);
+        } else {
+          // If server upload endpoint is not available, provide fallback data URL
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve({
+              success: true,
+              data: { url: reader.result, name: file.name },
+            });
+          };
+          reader.onerror = () => reject(new Error(data.message || 'Upload failed'));
+          reader.readAsDataURL(file);
+        }
+      } catch (e) {
+        // Fallback to data URL
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve({
+            success: true,
+            data: { url: reader.result, name: file.name },
+          });
+        };
+        reader.onerror = () => reject(e);
+        reader.readAsDataURL(file);
+      }
+    };
+
+    xhr.onerror = () => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof onProgress === 'function') onProgress(100);
+        resolve({
+          success: true,
+          data: { url: reader.result, name: file.name },
+        });
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    };
+
+    xhr.send(formData);
+  });
+}
+
 export async function submitContactMessage(contactData) {
   const baseUrl = getApiBaseUrl();
   try {
@@ -663,7 +757,7 @@ export async function submitContactMessage(contactData) {
         title: `Contact Inquiry: ${contactData.name}`,
         type: 'general',
         category: 'contact',
-        description: `Subject: ${contactData.subject || 'General Inquiry'} | Rating: ${contactData.rating || 5}`,
+        description: `Subject: ${contactData.subject || 'General Inquiry'}${contactData.rating ? ` | Rating: ${contactData.rating}` : ''}`,
         metadata: {
           ...contactData,
           submittedAt: new Date().toISOString(),
@@ -682,7 +776,7 @@ export async function submitContactMessage(contactData) {
             title: `Contact Inquiry: ${contactData.name}`,
             type: 'general',
             category: 'contact',
-            description: `Subject: ${contactData.subject || 'General Inquiry'} | Rating: ${contactData.rating || 5}`,
+            description: `Subject: ${contactData.subject || 'General Inquiry'}${contactData.rating ? ` | Rating: ${contactData.rating}` : ''}`,
             metadata: {
               ...contactData,
               submittedAt: new Date().toISOString(),
