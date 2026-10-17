@@ -757,7 +757,7 @@ export async function submitContactMessage(contactData) {
         title: `Contact Inquiry: ${contactData.name}`,
         type: 'general',
         category: 'contact',
-        description: `Subject: ${contactData.subject || 'General Inquiry'} | Rating: ${contactData.rating || 5}`,
+        description: `Subject: ${contactData.subject || 'General Inquiry'}${contactData.rating ? ` | Rating: ${contactData.rating}` : ''}`,
         metadata: {
           ...contactData,
           submittedAt: new Date().toISOString(),
@@ -776,7 +776,7 @@ export async function submitContactMessage(contactData) {
             title: `Contact Inquiry: ${contactData.name}`,
             type: 'general',
             category: 'contact',
-            description: `Subject: ${contactData.subject || 'General Inquiry'} | Rating: ${contactData.rating || 5}`,
+            description: `Subject: ${contactData.subject || 'General Inquiry'}${contactData.rating ? ` | Rating: ${contactData.rating}` : ''}`,
             metadata: {
               ...contactData,
               submittedAt: new Date().toISOString(),

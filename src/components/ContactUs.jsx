@@ -32,7 +32,6 @@ export default function ContactUs() {
     phone: '',
     subject: 'General Inquiry',
     message: '',
-    rating: 5,
   });
 
   const [submitting, setSubmitting] = useState(false);
@@ -202,7 +201,6 @@ export default function ContactUs() {
         phone: '',
         subject: 'General Inquiry',
         message: '',
-        rating: 5,
       });
     } catch (err) {
       showToast(err.message || 'Failed to send message. Please try again.', 'error');
@@ -813,26 +811,6 @@ export default function ContactUs() {
                                 <option value="Technical Support">Technical Support</option>
                                 <option value="Feedback">Feedback</option>
                                 <option value="Other">Other</option>
-                              </select>
-                              <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-[18px] text-slate-700 pointer-events-none z-20" />
-                            </div>
-
-                            {/* Website Rating Dropdown */}
-                            <div className="relative group">
-                              <label className="absolute left-3 top-1.5 text-cyan-800 text-[8.5px] font-bold uppercase tracking-wider z-10 pointer-events-none">
-                                Website Rating (out of 5 Stars)
-                              </label>
-                              <select
-                                name="rating"
-                                value={formData.rating}
-                                onChange={handleChange}
-                                className="w-full text-xs bg-white/70 border border-slate-300 rounded-xl pt-5 pb-1.5 px-3 text-slate-900 font-extrabold focus:outline-none focus:ring-0 focus:border-cyan-600 transition-all duration-300 appearance-none cursor-pointer"
-                              >
-                                <option value={5}>⭐⭐⭐⭐⭐ 5 Stars - Excellent Experience</option>
-                                <option value={4}>⭐⭐⭐⭐ 4 Stars - Very Good Platform</option>
-                                <option value={3}>⭐⭐⭐ 3 Stars - Good & Helpful</option>
-                                <option value={2}>⭐⭐ 2 Stars - Fair / Needs Work</option>
-                                <option value={1}>⭐ 1 Star - Poor Experience</option>
                               </select>
                               <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-[18px] text-slate-700 pointer-events-none z-20" />
                             </div>
