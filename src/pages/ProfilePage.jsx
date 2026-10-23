@@ -31,6 +31,7 @@ import {
   FileCheck2,
   Target
 } from 'lucide-react';
+import StudentVideoDashboard from '../components/dashboard/StudentVideoDashboard';
 
 export default function ProfilePage({
   currentUser,
@@ -726,8 +727,16 @@ export default function ProfilePage({
             </div>
 
           </div>
-
         </div>
+
+        {/* ======================================================== */}
+        {/* STUDENT CURRICULUM VIDEO MASTERCLASSES & LECTURE VAULT   */}
+        {/* ======================================================== */}
+        <StudentVideoDashboard
+          studentBoard={studentData.board}
+          studentYear={studentData.year}
+          onOpenBooking={onOpenBooking}
+        />
 
       </div>
 

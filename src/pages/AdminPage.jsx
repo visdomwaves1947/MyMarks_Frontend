@@ -52,7 +52,17 @@ import {
   Minimize2,
   UploadCloud,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  LayoutGrid,
+  Table,
+  Award,
+  MessageSquare,
+  Bell,
+  Clock,
+  Globe,
+  FileDown,
+  ArrowLeft,
+  ArrowRight
 } from 'lucide-react';
 
 import {
@@ -74,6 +84,7 @@ import {
   fetchAdminVideos,
   createAdminVideoApi,
   updateAdminVideoApi,
+  toggleAdminVideoStatusApi,
   deleteAdminVideoApi,
   seedAdminVideosApi,
   uploadMediaFileApi
@@ -197,7 +208,10 @@ export default function AdminPage({
   const [videoSearch, setVideoSearch] = useState('');
   const [videoTypeFilter, setVideoTypeFilter] = useState('all');
   const [videoSubjectFilter, setVideoSubjectFilter] = useState('all');
-  const [videoClassFilter, setVideoClassFilter] = useState('all');
+  const [videoBoardFilter, setVideoBoardFilter] = useState('all');
+  const [videoYearFilter, setVideoYearFilter] = useState('all');
+  const [videoStatusFilter, setVideoStatusFilter] = useState('all');
+  const [videoViewMode, setVideoViewMode] = useState('grid'); // 'grid' | 'table'
 
   // Modals
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -216,7 +230,8 @@ export default function AdminPage({
   const [copiedVideoId, setCopiedVideoId] = useState(null);
 
   // Video Upload & Full Screen Studio States
-  const [isVideoFullScreen, setIsVideoFullScreen] = useState(false);
+  const [isVideoFullScreen, setIsVideoFullScreen] = useState(true); // Automatically open full screen studio
+  const [videoStudioStep, setVideoStudioStep] = useState(1); // 1: Media, 2: Thumbnail, 3: Curriculum, 4: Settings, 5: Preview
   const [videoSourceMode, setVideoSourceMode] = useState('upload'); // 'upload' | 'url'
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [videoUploadProgress, setVideoUploadProgress] = useState(0);
@@ -225,15 +240,18 @@ export default function AdminPage({
   const [thumbUploadProgress, setThumbUploadProgress] = useState(0);
   const [videoDragOver, setVideoDragOver] = useState(false);
   const [thumbDragOver, setThumbDragOver] = useState(false);
+  const [youtubeError, setYoutubeError] = useState('');
 
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'user'|'course'|'booking'|'video', id, title }
 
   // Helper to extract YouTube ID
   const extractYouTubeId = useCallback((url) => {
     if (!url) return '';
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : '';
+    const trimmed = url.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+    const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+    const match = trimmed.match(regExp);
+    return match && match[1] ? match[1] : '';
   }, []);
 
   // User Form Data
@@ -276,22 +294,62 @@ export default function AdminPage({
   };
   const [courseForm, setCourseForm] = useState(initialCourseForm);
 
-  // Video & Resource Form Data
+  // Video & Resource Form Data with Step 4 Lesson Settings
   const initialVideoForm = {
     title: '',
     type: 'youtube', // 'youtube' | 'video' | 'link' | 'drive' | 'document'
     url: '',
     subject: 'Mathematics',
+    board: 'Both Boards', // 'Andhra Pradesh Intermediate' | 'Telangana Intermediate' | 'Both Boards'
     classLevel: 'Intermediate 1st Year',
+    year: '1st Year', // '1st Year' | '2nd Year' | 'Both Years'
     chapter: '',
+    lesson: 'Lesson 1',
     description: '',
-    duration: '35 mins',
+    duration: '45 mins',
     instructor: 'Visdom Waves Faculty',
     tags: '',
     linkType: 'Lecture Video',
     thumbnailUrl: '',
     isFeatured: false,
-    status: 'published',
+    isPremium: false,
+    status: 'published', // 'published' | 'draft' | 'archived' | 'hidden'
+
+    // Step 4 – Lesson Settings
+    freePreview: true,
+    premiumContent: false,
+    allowPdfDownload: true,
+    allowVideoDownload: false,
+    allowAssignmentDownload: true,
+    estimatedDuration: '45 Minutes',
+    difficultyLevel: 'Intermediate', // 'Beginner' | 'Intermediate' | 'Advanced'
+    releaseDate: '',
+    expiryDate: '',
+    lessonOrder: 'Lesson 1',
+    completionRequirement: 'Video Only', // 'Video Only' | 'Video + PDF' | 'Video + Quiz' | 'Complete All'
+    certificateEligible: true,
+    progressTracking: true,
+    studentNotifications: true,
+    parentNotification: false,
+    attendanceRequired: 'Optional', // 'Optional' | 'Required'
+    commentsEnabled: true,
+    discussionForumEnabled: true,
+    liveClassPlatform: 'None', // 'None' | 'Google Meet' | 'Zoom' | 'Microsoft Teams'
+    liveClassLink: '',
+    seoSlug: '',
+    seoMetaTitle: '',
+    seoMetaDescription: '',
+
+    // Watermark & Anti-Piracy Protection (Optional)
+    watermarkEnabled: false,
+    watermarkText: '',
+    watermarkPosition: 'top-right', // 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left'
+
+    // Badges ("Barge") & Highlighting (Optional)
+    badgeText: '',
+    badgeColor: 'blue',
+    isVerifiedBadge: false,
+    qualityBadge: '1080p Full HD',
   };
   const [videoForm, setVideoForm] = useState(initialVideoForm);
 
@@ -470,8 +528,10 @@ export default function AdminPage({
         !q ||
         (v.title || '').toLowerCase().includes(q) ||
         (v.chapter || '').toLowerCase().includes(q) ||
+        (v.lesson || '').toLowerCase().includes(q) ||
         (v.instructor || '').toLowerCase().includes(q) ||
         (v.subject || '').toLowerCase().includes(q) ||
+        (v.board || '').toLowerCase().includes(q) ||
         (v.description || '').toLowerCase().includes(q) ||
         (Array.isArray(v.tags) && v.tags.some((t) => t.toLowerCase().includes(q)));
 
@@ -479,13 +539,29 @@ export default function AdminPage({
       const matchSubject =
         videoSubjectFilter === 'all' ||
         (v.subject || '').toLowerCase() === videoSubjectFilter.toLowerCase();
-      const matchClass =
-        videoClassFilter === 'all' ||
-        (v.classLevel || '').toLowerCase() === videoClassFilter.toLowerCase();
 
-      return matchSearch && matchType && matchSubject && matchClass;
+      const matchBoard =
+        videoBoardFilter === 'all' ||
+        (v.board || '').toLowerCase().includes(videoBoardFilter.toLowerCase()) ||
+        v.board === 'Both Boards' ||
+        v.board === 'All Boards';
+
+      const matchYear =
+        videoYearFilter === 'all' ||
+        (v.year || '').toLowerCase().includes(videoYearFilter.toLowerCase()) ||
+        (v.classLevel || '').toLowerCase().includes(videoYearFilter.toLowerCase()) ||
+        v.year === 'Both Years' ||
+        v.classLevel === 'Both Years' ||
+        v.classLevel === 'All Levels';
+
+      const matchStatus =
+        videoStatusFilter === 'all' ||
+        (v.status || 'published').toLowerCase() === videoStatusFilter.toLowerCase();
+
+      return matchSearch && matchType && matchSubject && matchBoard && matchYear && matchStatus;
     });
-  }, [videos, videoSearch, videoTypeFilter, videoSubjectFilter, videoClassFilter]);
+  }, [videos, videoSearch, videoTypeFilter, videoSubjectFilter, videoBoardFilter, videoYearFilter, videoStatusFilter]);
+
 
   // User Actions
   const handleOpenAddUser = () => {
@@ -618,38 +694,96 @@ export default function AdminPage({
   };
 
   // Video & Resource Actions
-  const handleOpenAddVideo = () => {
+  const handleOpenAddVideo = (mode = 'upload', step = 1) => {
     setVideoModalMode('create');
     setVideoForm(initialVideoForm);
-    setVideoSourceMode('upload');
+    setVideoSourceMode(mode);
+    setVideoStudioStep(step);
+    setIsVideoFullScreen(true); // Automatically open in full screen
     setVideoUploadProgress(0);
     setVideoUploadInfo(null);
+    setYoutubeError('');
     setIsVideoModalOpen(true);
   };
 
   const handleOpenEditVideo = (video) => {
     setVideoModalMode('edit');
     setSelectedVideo(video);
-    setVideoSourceMode(video.url && video.url.includes('/uploads/videos/') ? 'upload' : 'url');
+    setVideoStudioStep(1);
+    setIsVideoFullScreen(true); // Automatically open in full screen
+    const isYt = video.type === 'youtube' || Boolean(extractYouTubeId(video.url));
+    setVideoSourceMode(isYt ? 'url' : (video.url && video.url.includes('/uploads/videos/') ? 'upload' : 'url'));
     setVideoUploadProgress(0);
-    setVideoUploadInfo(video.url ? { originalName: video.title, url: video.url } : null);
+    setYoutubeError('');
+    setVideoUploadInfo(video.url && video.url.includes('/uploads/videos/') ? { originalName: video.title, url: video.url } : null);
     setVideoForm({
       title: video.title || '',
-      type: video.type || 'youtube',
+      type: video.type || (isYt ? 'youtube' : 'video'),
       url: video.url || '',
       subject: video.subject || 'Mathematics',
+      board: video.board || 'Both Boards',
       classLevel: video.classLevel || 'Intermediate 1st Year',
+      year: video.year || (video.classLevel && video.classLevel.includes('2nd') ? '2nd Year' : '1st Year'),
       chapter: video.chapter || '',
+      lesson: video.lesson || 'Lesson 1',
       description: video.description || '',
-      duration: video.duration || '35 mins',
+      duration: video.duration || video.estimatedDuration || '45 mins',
       instructor: video.instructor || 'Visdom Waves Faculty',
       tags: Array.isArray(video.tags) ? video.tags.join(', ') : video.tags || '',
       linkType: video.linkType || 'Lecture Video',
       thumbnailUrl: video.thumbnailUrl || '',
       isFeatured: !!video.isFeatured,
+      isPremium: video.isPremium !== undefined ? video.isPremium : (video.premiumContent || false),
       status: video.status || 'published',
+
+      // Step 4 Settings
+      freePreview: video.freePreview !== undefined ? video.freePreview : !video.isPremium,
+      premiumContent: video.premiumContent !== undefined ? video.premiumContent : !!video.isPremium,
+      allowPdfDownload: video.allowPdfDownload !== undefined ? video.allowPdfDownload : true,
+      allowVideoDownload: video.allowVideoDownload !== undefined ? video.allowVideoDownload : false,
+      allowAssignmentDownload: video.allowAssignmentDownload !== undefined ? video.allowAssignmentDownload : true,
+      estimatedDuration: video.estimatedDuration || video.duration || '45 Minutes',
+      difficultyLevel: video.difficultyLevel || 'Intermediate',
+      releaseDate: video.releaseDate || '',
+      expiryDate: video.expiryDate || '',
+      lessonOrder: video.lessonOrder || video.lesson || 'Lesson 1',
+      completionRequirement: video.completionRequirement || 'Video Only',
+      certificateEligible: video.certificateEligible !== undefined ? video.certificateEligible : true,
+      progressTracking: video.progressTracking !== undefined ? video.progressTracking : true,
+      studentNotifications: video.studentNotifications !== undefined ? video.studentNotifications : true,
+      parentNotification: video.parentNotification !== undefined ? video.parentNotification : false,
+      attendanceRequired: video.attendanceRequired || 'Optional',
+      commentsEnabled: video.commentsEnabled !== undefined ? video.commentsEnabled : true,
+      discussionForumEnabled: video.discussionForumEnabled !== undefined ? video.discussionForumEnabled : true,
+      liveClassPlatform: video.liveClassPlatform || 'None',
+      liveClassLink: video.liveClassLink || '',
+      seoSlug: video.seo?.slug || video.slug || '',
+      seoMetaTitle: video.seo?.metaTitle || '',
+      seoMetaDescription: video.seo?.metaDescription || '',
+
+      // Watermark & Badges ("Barge") - Optional
+      watermarkEnabled: video.watermarkEnabled !== undefined ? Boolean(video.watermarkEnabled) : false,
+      watermarkText: video.watermarkText || '',
+      watermarkPosition: video.watermarkPosition || 'top-right',
+      badgeText: video.badgeText || '',
+      badgeColor: video.badgeColor || 'blue',
+      isVerifiedBadge: video.isVerifiedBadge !== undefined ? Boolean(video.isVerifiedBadge) : false,
+      qualityBadge: video.qualityBadge || '1080p Full HD',
     });
     setIsVideoModalOpen(true);
+  };
+
+  const handleToggleVideoStatus = async (video) => {
+    const nextStatus = video.status === 'published' ? 'draft' : 'published';
+    try {
+      await toggleAdminVideoStatusApi(video.id || video._id, nextStatus);
+      showToast(nextStatus === 'published' ? 'Video published to Student Dashboard!' : 'Video moved to Drafts', 'info');
+      setVideos((prev) =>
+        prev.map((v) => (v.id === video.id || v._id === video._id ? { ...v, status: nextStatus } : v))
+      );
+    } catch (err) {
+      showToast(err.message || 'Failed to update status', 'error');
+    }
   };
 
   // Video file upload handler
@@ -676,7 +810,8 @@ export default function AdminPage({
         const durStr = mins > 0 ? `${mins} mins ${secs > 0 ? secs + 's' : ''}`.trim() : `${secs}s`;
         setVideoForm(prev => ({
           ...prev,
-          duration: prev.duration && prev.duration !== '35 mins' ? prev.duration : durStr
+          duration: prev.duration && prev.duration !== '45 mins' ? prev.duration : durStr,
+          estimatedDuration: prev.estimatedDuration && prev.estimatedDuration !== '45 Minutes' ? prev.estimatedDuration : `${mins} Minutes`,
         }));
       };
     } catch (e) {
@@ -759,13 +894,28 @@ export default function AdminPage({
 
   const handleSaveVideo = async (e) => {
     e.preventDefault();
+    setYoutubeError('');
+
     if (!videoForm.title.trim()) {
       showToast('Please provide a video/link title', 'error');
+      setVideoStudioStep(1);
       return;
     }
     if (!videoForm.url.trim()) {
       showToast('Please provide a URL or link', 'error');
+      setVideoStudioStep(2);
       return;
+    }
+
+    const ytId = extractYouTubeId(videoForm.url);
+    if (videoForm.type === 'youtube' || videoSourceMode === 'url') {
+      const isYtLink = videoForm.url.includes('youtube') || videoForm.url.includes('youtu.be');
+      if (isYtLink && !ytId) {
+        setYoutubeError('Invalid YouTube URL format. Please provide a valid YouTube link (e.g. https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)');
+        showToast('Invalid YouTube video link', 'error');
+        setVideoStudioStep(2);
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -777,14 +927,13 @@ export default function AdminPage({
       const payload = {
         ...videoForm,
         tags: parsedTags,
+        isPremium: videoForm.premiumContent || videoForm.isPremium,
+        seo: {
+          slug: videoForm.seoSlug || '',
+          metaTitle: videoForm.seoMetaTitle || '',
+          metaDescription: videoForm.seoMetaDescription || '',
+        },
       };
-
-      // Auto detect YouTube video ID or direct video file upload
-      const ytId = extractYouTubeId(payload.url);
-      const isVideoFile = payload.url && (
-        payload.url.includes('/uploads/') ||
-        /\.(mp4|webm|mov|mkv|ogg|ogv|m4v|avi)(\?.*)?$/i.test(payload.url)
-      );
 
       if (ytId) {
         payload.youtubeId = ytId;
@@ -793,7 +942,7 @@ export default function AdminPage({
         if (!payload.thumbnailUrl) {
           payload.thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
         }
-      } else if (payload.type === 'video' || isVideoFile) {
+      } else if (payload.type === 'video' || payload.url.includes('/uploads/')) {
         payload.type = 'video';
         if (!payload.embedUrl) {
           payload.embedUrl = payload.url;
@@ -802,7 +951,7 @@ export default function AdminPage({
 
       if (videoModalMode === 'create') {
         await createAdminVideoApi(payload);
-        showToast('New video / link uploaded successfully!');
+        showToast('New video / link published successfully!');
       } else {
         await updateAdminVideoApi(selectedVideo.id || selectedVideo._id, payload);
         showToast('Video / link details updated successfully!');
@@ -816,6 +965,7 @@ export default function AdminPage({
       setIsLoading(false);
     }
   };
+
 
   const handleDeleteVideo = async (id) => {
     setIsLoading(true);
@@ -1928,342 +2078,672 @@ export default function AdminPage({
         )}
 
         {/* ─────────────────────────────────────────────────────────────
-            TAB 4: VIDEOS, YOUTUBE & RESOURCE LINKS
+            TAB 4: VIDEOS, YOUTUBE & CURRICULUM MANAGEMENT
            ───────────────────────────────────────────────────────────── */}
         {activeTab === 'videos' && (
-          <div className="space-y-4">
-            {/* Filter Bar - Single Line Layout */}
-            <div className="p-3 sm:p-3.5 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex items-center justify-between gap-3 transition-colors duration-200 overflow-x-auto no-scrollbar">
-              <div className="relative shrink min-w-[180px] max-w-xs xl:max-w-sm">
-                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="Search resources..."
-                  value={videoSearch}
-                  onChange={(e) => setVideoSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium focus:bg-white dark:focus:bg-slate-950"
-                />
+          <div className="space-y-5">
+            {/* KPI Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Media</p>
+                  <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-0.5">{videos.length}</p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
+                  <Video size={18} />
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0 flex-nowrap">
-                {/* Type Filter */}
-                <select
-                  value={videoTypeFilter}
-                  onChange={(e) => setVideoTypeFilter(e.target.value)}
-                  className="px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs dark:shadow-none shrink-0"
-                >
-                  <option value="all">All Media</option>
-                  <option value="youtube">YouTube</option>
-                  <option value="video">Direct Video</option>
-                  <option value="drive">Drive & PDFs</option>
-                  <option value="link">Study Links</option>
-                </select>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Published</p>
+                  <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+                    {videos.filter((v) => v.status === 'published').length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                  <CheckCircle2 size={18} />
+                </div>
+              </div>
 
-                {/* Subject Filter */}
-                <select
-                  value={videoSubjectFilter}
-                  onChange={(e) => setVideoSubjectFilter(e.target.value)}
-                  className="px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs dark:shadow-none shrink-0"
-                >
-                  <option value="all">All Subjects</option>
-                  <option value="Mathematics">Mathematics</option>
-                  <option value="Physics">Physics</option>
-                  <option value="Chemistry">Chemistry</option>
-                  <option value="Botany">Botany</option>
-                  <option value="Zoology">Zoology</option>
-                  <option value="English">English</option>
-                  <option value="Commerce">Commerce</option>
-                  <option value="Economics">Economics</option>
-                  <option value="Civics">Civics</option>
-                  <option value="History">History</option>
-                  <option value="General">General</option>
-                </select>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Drafts</p>
+                  <p className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
+                    {videos.filter((v) => v.status === 'draft').length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
+                  <FileText size={18} />
+                </div>
+              </div>
 
-                {/* Class Year Filter */}
-                <select
-                  value={videoClassFilter}
-                  onChange={(e) => setVideoClassFilter(e.target.value)}
-                  className="px-2.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs dark:shadow-none shrink-0"
-                >
-                  <option value="all">All Classes</option>
-                  <option value="Intermediate 1st Year">1st Year</option>
-                  <option value="Intermediate 2nd Year">2nd Year</option>
-                  <option value="Both Years">Both Years</option>
-                </select>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">YouTube</p>
+                  <p className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">
+                    {videos.filter((v) => v.type === 'youtube' || Boolean(extractYouTubeId(v.url))).length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+              </div>
 
-                <button
-                  onClick={handleSeedVideos}
-                  className="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0"
-                  title="Seed sample YouTube lectures & study links"
-                >
-                  <Sparkles size={14} />
-                  <span>Seed Videos</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsVideoFullScreen(true);
-                    handleOpenAddVideo();
-                  }}
-                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0"
-                  title="Open video uploader in full-screen studio view"
-                >
-                  <Maximize2 size={14} />
-                  <span>Full Screen Studio</span>
-                </button>
-
-                <button
-                  onClick={handleOpenAddVideo}
-                  className="px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer whitespace-nowrap shrink-0"
-                >
-                  <Plus size={15} />
-                  <span>Upload Video / Link</span>
-                </button>
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between col-span-2 sm:col-span-1">
+                <div>
+                  <p className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">MP4 Uploads</p>
+                  <p className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
+                    {videos.filter((v) => v.type === 'video' || (v.url && v.url.includes('/uploads/'))).length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                  <Film size={18} />
+                </div>
               </div>
             </div>
 
-            {/* Quick Metrics & Summary Bar */}
-            <div className="flex items-center justify-between text-xs font-semibold px-2 text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-3">
-                <span>Showing <strong className="text-slate-900 dark:text-white font-bold">{filteredVideos.length}</strong> resources</span>
-                <span className="hidden sm:inline">•</span>
-                <span className="hidden sm:inline">{videos.filter(v => v.type === 'youtube').length} YouTube Lectures</span>
-                <span className="hidden sm:inline">•</span>
-                <span className="hidden sm:inline">{videos.filter(v => v.type === 'drive' || v.type === 'link').length} Reference Links & Drive Notes</span>
+            {/* Filter Bar & Action Controls */}
+            <div className="p-4 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none space-y-3 transition-colors duration-200">
+              <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+                {/* Search Bar */}
+                <div className="relative flex-1 min-w-[220px]">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search by title, subject, chapter, lesson, educator, or keywords..."
+                    value={videoSearch}
+                    onChange={(e) => setVideoSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium focus:bg-white dark:focus:bg-slate-950"
+                  />
+                  {videoSearch && (
+                    <button
+                      onClick={() => setVideoSearch('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 text-xs font-bold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* Primary Action Buttons */}
+                <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  <button
+                    onClick={() => handleOpenAddVideo('upload')}
+                    className="px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    <Upload size={14} />
+                    <span>Upload Video File</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenAddVideo('url')}
+                    className="px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-red-600/25 transition-all cursor-pointer whitespace-nowrap"
+                  >
+                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    <span>Add YouTube Video</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsVideoFullScreen(true);
+                      handleOpenAddVideo('upload');
+                    }}
+                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                    title="Open full-screen studio"
+                  >
+                    <Maximize2 size={13} />
+                    <span className="hidden sm:inline">Studio</span>
+                  </button>
+
+                  <button
+                    onClick={handleSeedVideos}
+                    className="px-3 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+                    title="Seed sample curriculum lectures"
+                  >
+                    <Sparkles size={13} />
+                    <span className="hidden sm:inline">Seed Videos</span>
+                  </button>
+                </div>
               </div>
+
+              {/* Filter Pills & View Mode Switcher */}
+              <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 flex-wrap">
+                  {/* Board Filter */}
+                  <select
+                    value={videoBoardFilter}
+                    onChange={(e) => setVideoBoardFilter(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                  >
+                    <option value="all">All Boards (AP & TS)</option>
+                    <option value="Andhra Pradesh">AP Intermediate</option>
+                    <option value="Telangana">TS Intermediate</option>
+                  </select>
+
+                  {/* Year Filter */}
+                  <select
+                    value={videoYearFilter}
+                    onChange={(e) => setVideoYearFilter(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                  >
+                    <option value="all">All Years</option>
+                    <option value="1st Year">1st Year</option>
+                    <option value="2nd Year">2nd Year</option>
+                  </select>
+
+                  {/* Subject Filter */}
+                  <select
+                    value={videoSubjectFilter}
+                    onChange={(e) => setVideoSubjectFilter(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                  >
+                    <option value="all">All Subjects</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Physics">Physics</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Botany">Botany</option>
+                    <option value="Zoology">Zoology</option>
+                    <option value="English">English</option>
+                    <option value="Commerce">Commerce</option>
+                    <option value="Economics">Economics</option>
+                    <option value="Civics">Civics</option>
+                    <option value="History">History</option>
+                    <option value="General">General</option>
+                  </select>
+
+                  {/* Status Filter */}
+                  <select
+                    value={videoStatusFilter}
+                    onChange={(e) => setVideoStatusFilter(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                  </select>
+
+                  {/* Type Filter */}
+                  <select
+                    value={videoTypeFilter}
+                    onChange={(e) => setVideoTypeFilter(e.target.value)}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                  >
+                    <option value="all">All Media Types</option>
+                    <option value="youtube">YouTube Videos</option>
+                    <option value="video">Direct MP4 Videos</option>
+                    <option value="drive">Drive & PDFs</option>
+                    <option value="link">Study Links</option>
+                  </select>
+                </div>
+
+                {/* View Mode Toggle: Grid vs Table */}
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
+                  <button
+                    onClick={() => setVideoViewMode('grid')}
+                    className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      videoViewMode === 'grid'
+                        ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                    }`}
+                    title="Grid Card View"
+                  >
+                    <LayoutGrid size={15} />
+                    <span className="hidden sm:inline">Grid</span>
+                  </button>
+                  <button
+                    onClick={() => setVideoViewMode('table')}
+                    className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                      videoViewMode === 'table'
+                        ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                    }`}
+                    title="Table View"
+                  >
+                    <Table size={15} />
+                    <span className="hidden sm:inline">Table</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick Metrics Bar */}
+            <div className="flex items-center justify-between text-xs font-semibold px-2 text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[11px] font-bold">
-                  {videos.filter(v => v.status === 'published').length} Published
+                <span>
+                  Showing <strong className="text-slate-900 dark:text-white font-bold">{filteredVideos.length}</strong> of{' '}
+                  {videos.length} videos
                 </span>
-                {videos.filter(v => v.isFeatured).length > 0 && (
-                  <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[11px] font-bold">
-                    ★ {videos.filter(v => v.isFeatured).length} Featured
-                  </span>
+                {(videoBoardFilter !== 'all' || videoYearFilter !== 'all' || videoSubjectFilter !== 'all' || videoStatusFilter !== 'all' || videoTypeFilter !== 'all' || videoSearch) && (
+                  <button
+                    onClick={() => {
+                      setVideoSearch('');
+                      setVideoBoardFilter('all');
+                      setVideoYearFilter('all');
+                      setVideoSubjectFilter('all');
+                      setVideoStatusFilter('all');
+                      setVideoTypeFilter('all');
+                    }}
+                    className="text-blue-600 dark:text-blue-400 underline font-bold ml-1 cursor-pointer"
+                  >
+                    Reset all filters
+                  </button>
                 )}
               </div>
             </div>
 
-            {/* Videos Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredVideos.map((v) => {
-                const isYouTube = v.type === 'youtube' || !!v.youtubeId || Boolean(extractYouTubeId(v.url));
-                const isDrive = v.type === 'drive' || Boolean(v.url && v.url.includes('drive.google.com'));
-                const isDirectVideo = v.type === 'video' || Boolean(
-                  v.url && (
-                    v.url.includes('/uploads/') ||
-                    /\.(mp4|webm|mov|mkv|ogg|ogv|m4v)(\?.*)?$/i.test(v.url)
-                  )
-                );
+            {/* ─── VIEW 1: RESPONSIVE CARDS GRID ─── */}
+            {videoViewMode === 'grid' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {filteredVideos.map((v) => {
+                  const ytId = extractYouTubeId(v.url) || v.youtubeId;
+                  const isYouTube = v.type === 'youtube' || Boolean(ytId);
+                  const isDrive = v.type === 'drive' || Boolean(v.url && v.url.includes('drive.google.com'));
+                  const isDirectVideo = v.type === 'video' || Boolean(
+                    v.url && (v.url.includes('/uploads/') || /\.(mp4|webm|mov|mkv|ogg|ogv|m4v)(\?.*)?$/i.test(v.url))
+                  );
+                  const thumb = v.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '');
 
-                return (
-                  <div
-                    key={v.id || v._id}
-                    className="rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex flex-col justify-between hover:border-blue-400/50 dark:hover:border-blue-500/40 transition-all group overflow-hidden"
-                  >
-                    <div>
-                      {/* Thumbnail Container with Play Overlay */}
-                      <div className="relative aspect-video w-full bg-slate-950 overflow-hidden cursor-pointer" onClick={() => setPreviewVideoModal(v)}>
-                        {v.thumbnailUrl ? (
-                          <img
-                            src={v.thumbnailUrl}
-                            alt={v.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 text-slate-400">
-                            <Video size={36} className="text-blue-500 opacity-80 mb-1" />
-                            <span className="text-xs font-semibold">{v.subject || 'Curriculum Video'}</span>
-                          </div>
-                        )}
-
-                        {/* Hover Overlay with Round Play Icon */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-xs">
-                          <div className="w-13 h-13 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-950/60 transform group-hover:scale-110 transition-transform duration-300">
-                            <Play size={22} fill="currentColor" className="ml-1" />
-                          </div>
-                        </div>
-
-                        {/* Top Left: Type Badge */}
-                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                          {isYouTube ? (
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
-                              <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                              </svg>
-                              <span>YouTube</span>
-                            </span>
-                          ) : isDrive ? (
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
-                              <FileText size={12} />
-                              <span>Drive & Notes</span>
-                            </span>
-                          ) : isDirectVideo ? (
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
-                              <Film size={12} />
-                              <span>MP4 Video</span>
-                            </span>
+                  return (
+                    <div
+                      key={v.id || v._id}
+                      className="rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex flex-col justify-between hover:border-blue-400/50 dark:hover:border-blue-500/40 transition-all group overflow-hidden"
+                    >
+                      <div>
+                        {/* Thumbnail Container */}
+                        <div
+                          className="relative aspect-video w-full bg-slate-950 overflow-hidden cursor-pointer"
+                          onClick={() => setPreviewVideoModal(v)}
+                        >
+                          {thumb ? (
+                            <img
+                              src={thumb}
+                              alt={v.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
                           ) : (
-                            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
-                              <Link2 size={12} />
-                              <span>Study Link</span>
-                            </span>
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 text-slate-400">
+                              <Video size={36} className="text-blue-500 opacity-80 mb-1" />
+                              <span className="text-xs font-semibold">{v.subject || 'Curriculum Video'}</span>
+                            </div>
                           )}
 
-                          {v.isFeatured && (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950 shadow-md">
-                              ★ Featured
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Bottom Right: Duration Pill */}
-                        {v.duration && (
-                          <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/80 text-white font-mono text-[11px] font-bold shadow-md backdrop-blur-xs">
-                            {v.duration}
+                          {/* Hover Play Overlay */}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-xs">
+                            <div className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center shadow-xl shadow-blue-950/60 transform group-hover:scale-110 transition-transform duration-300">
+                              <Play size={20} fill="currentColor" className="ml-1" />
+                            </div>
                           </div>
-                        )}
-                      </div>
 
-                      {/* Content Body */}
-                      <div className="p-4 sm:p-5">
-                        <div className="flex items-center justify-between gap-2 mb-2">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wider">
-                              {v.subject || 'Subject'}
-                            </span>
-                            {v.chapter && (
-                              <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 truncate max-w-[140px]">
-                                {v.chapter}
+                          {/* Top Left Badges: Media Type & Premium */}
+                          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
+                            {isYouTube ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                                <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                </svg>
+                                <span>YouTube</span>
+                              </span>
+                            ) : isDirectVideo ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                                <Film size={11} />
+                                <span>MP4 Video</span>
+                              </span>
+                            ) : isDrive ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                                <FileText size={11} />
+                                <span>Drive Notes</span>
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-600/90 text-white flex items-center gap-1 shadow-md backdrop-blur-xs">
+                                <Link2 size={11} />
+                                <span>Study Link</span>
+                              </span>
+                            )}
+
+                            {v.isPremium ? (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-400 text-slate-950 shadow-md">
+                                ★ Premium
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500 text-white shadow-md">
+                                Free Preview
                               </span>
                             )}
                           </div>
 
-                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            v.status === 'published'
-                              ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20'
-                              : 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20'
-                          }`}>
-                            {v.status || 'published'}
-                          </span>
-                        </div>
-
-                        <h4
-                          onClick={() => setPreviewVideoModal(v)}
-                          className="font-bold text-slate-900 dark:text-white text-sm sm:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 cursor-pointer leading-snug"
-                        >
-                          {v.title}
-                        </h4>
-
-                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
-                          {v.description || 'Comprehensive video lecture with practical concept breakdowns and exam shortcuts.'}
-                        </p>
-
-                        {/* Instructor & Class info */}
-                        <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                          <span className="font-semibold truncate max-w-[160px] text-slate-700 dark:text-slate-300">
-                            {v.instructor || 'Visdom Waves Lead'}
-                          </span>
-                          <span className="text-[11px]">{v.classLevel || 'Intermediate'}</span>
-                        </div>
-
-                        {/* Tags */}
-                        {Array.isArray(v.tags) && v.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-2.5">
-                            {v.tags.slice(0, 3).map((tag, idx) => (
-                              <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
-                                #{tag}
-                              </span>
-                            ))}
+                          {/* Top Right: Status Badge Button (Click to Toggle) */}
+                          <div className="absolute top-2.5 right-2.5">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleVideoStatus(v);
+                              }}
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-all shadow-md ${
+                                v.status === 'published'
+                                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                  : 'bg-amber-600 text-white hover:bg-amber-700'
+                              }`}
+                              title={v.status === 'published' ? 'Click to unpublish (move to draft)' : 'Click to publish to student dashboard'}
+                            >
+                              {v.status === 'published' ? '● Published' : '○ Draft'}
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    </div>
 
-                    {/* Action Bar */}
-                    <div className="p-4 pt-0 sm:p-5 sm:pt-0">
-                      <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
-                        <button
-                          onClick={() => setPreviewVideoModal(v)}
-                          className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                        >
-                          <Play size={13} fill="currentColor" />
-                          <span>Watch / Preview</span>
-                        </button>
+                          {/* Bottom Right: Duration */}
+                          {v.duration && (
+                            <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/80 text-white font-mono text-[11px] font-bold shadow-md backdrop-blur-xs">
+                              {v.duration}
+                            </div>
+                          )}
+                        </div>
 
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleCopyVideoLink(v.url, v.id || v._id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            title="Copy Video / Link URL"
+                        {/* Content Body */}
+                        <div className="p-4 sm:p-5">
+                          {/* Subject, Board & Class badges */}
+                          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wider">
+                              {v.subject || 'Subject'}
+                            </span>
+
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20">
+                              {v.board && v.board.includes('Andhra') ? 'AP Board' : v.board && v.board.includes('Telangana') ? 'TS Board' : 'AP & TS'}
+                            </span>
+
+                            <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                              {v.year || v.classLevel || 'Intermediate'}
+                            </span>
+                          </div>
+
+                          {/* Chapter & Lesson info */}
+                          {(v.chapter || v.lesson) && (
+                            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate mb-1">
+                              {v.chapter} {v.lesson ? `• ${v.lesson}` : ''}
+                            </div>
+                          )}
+
+                          {/* Video Title */}
+                          <h4
+                            onClick={() => setPreviewVideoModal(v)}
+                            className="font-bold text-slate-900 dark:text-white text-sm sm:text-base group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-2 cursor-pointer leading-snug"
                           >
-                            <Copy size={15} className={copiedVideoId === (v.id || v._id) ? 'text-emerald-500' : ''} />
-                          </button>
+                            {v.title}
+                          </h4>
 
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
+                            {v.description || 'Comprehensive curriculum video breakdown, solved board problems, and high-yield derivations.'}
+                          </p>
+
+                          {/* Educator info */}
+                          <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                            <span className="font-semibold truncate max-w-[170px] text-slate-700 dark:text-slate-300">
+                              {v.instructor || 'Visdom Waves Lead'}
+                            </span>
+                            {ytId && (
+                              <span className="text-[10px] font-mono text-slate-400 truncate">
+                                ID: {ytId}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Card Footer Actions */}
+                      <div className="p-4 pt-0 sm:p-5 sm:pt-0">
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2">
                           <button
                             onClick={() => setPreviewVideoModal(v)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            title="Play / View in Same Window"
+                            className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
                           >
-                            <ExternalLink size={15} />
+                            <Play size={13} fill="currentColor" />
+                            <span>Preview</span>
                           </button>
 
-                          <button
-                            onClick={() => handleOpenEditVideo(v)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            title="Edit Video / Link"
-                          >
-                            <Edit size={15} />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleToggleVideoStatus(v)}
+                              className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                                v.status === 'published'
+                                  ? 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                                  : 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+                              }`}
+                              title={v.status === 'published' ? 'Unpublish video' : 'Publish video'}
+                            >
+                              <CheckCircle2 size={15} />
+                            </button>
 
-                          <button
-                            onClick={() =>
-                              setDeleteConfirm({
-                                type: 'video',
-                                id: v.id || v._id,
-                                title: v.title,
-                              })
-                            }
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                            title="Delete Video / Link"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                            <button
+                              onClick={() => handleCopyVideoLink(v.url, v.id || v._id)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                              title="Copy Video / Link URL"
+                            >
+                              <Copy size={15} className={copiedVideoId === (v.id || v._id) ? 'text-emerald-500' : ''} />
+                            </button>
+
+                            <button
+                              onClick={() => handleOpenEditVideo(v)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                              title="Edit Video Details"
+                            >
+                              <Edit size={15} />
+                            </button>
+
+                            <button
+                              onClick={() =>
+                                setDeleteConfirm({
+                                  type: 'video',
+                                  id: v.id || v._id,
+                                  title: v.title,
+                                })
+                              }
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                              title="Delete Video"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
 
-              {filteredVideos.length === 0 && (
-                <div className="col-span-full py-16 text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-8">
-                  <Video size={42} className="mx-auto text-slate-400/60 mb-3" />
-                  <h4 className="text-base font-bold text-slate-700 dark:text-slate-300">No videos or links found</h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
-                    Try adjusting your filters or search terms, or click &quot;Upload Video / Link&quot; to add new classroom YouTube lectures and resources.
-                  </p>
-                  <div className="flex items-center justify-center gap-3 mt-4">
-                    <button
-                      onClick={handleSeedVideos}
-                      className="px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <Sparkles size={14} />
-                      <span>Seed Standard Videos</span>
-                    </button>
-                    <button
-                      onClick={handleOpenAddVideo}
-                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-                    >
-                      <Plus size={15} />
-                      <span>Upload First Video</span>
-                    </button>
-                  </div>
+            {/* ─── VIEW 2: COMPREHENSIVE TABLE VIEW ─── */}
+            {videoViewMode === 'table' && (
+              <div className="rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold text-[10px]">
+                        <th className="py-3 px-4">Video & Details</th>
+                        <th className="py-3 px-4">Subject</th>
+                        <th className="py-3 px-4">Board & Year</th>
+                        <th className="py-3 px-4">Source</th>
+                        <th className="py-3 px-4">Access</th>
+                        <th className="py-3 px-4">Status</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-300 font-medium">
+                      {filteredVideos.map((v) => {
+                        const ytId = extractYouTubeId(v.url) || v.youtubeId;
+                        const isYouTube = v.type === 'youtube' || Boolean(ytId);
+                        const thumb = v.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '');
+
+                        return (
+                          <tr key={v.id || v._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3 min-w-[240px]">
+                                <div
+                                  className="w-16 h-10 rounded-lg bg-slate-950 overflow-hidden shrink-0 cursor-pointer relative group"
+                                  onClick={() => setPreviewVideoModal(v)}
+                                >
+                                  {thumb ? (
+                                    <img src={thumb} alt={v.title} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
+                                      <Video size={16} />
+                                    </div>
+                                  )}
+                                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                    <Play size={12} fill="white" className="text-white" />
+                                  </div>
+                                </div>
+                                <div className="min-w-0">
+                                  <p
+                                    onClick={() => setPreviewVideoModal(v)}
+                                    className="font-bold text-slate-900 dark:text-white truncate hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
+                                  >
+                                    {v.title}
+                                  </p>
+                                  <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                                    {v.chapter} {v.lesson ? `• ${v.lesson}` : ''} {v.duration ? `(${v.duration})` : ''}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-4">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20">
+                                {v.subject}
+                              </span>
+                            </td>
+
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <div className="text-xs font-semibold text-slate-900 dark:text-white">
+                                {v.board && v.board.includes('Andhra') ? 'AP Board' : v.board && v.board.includes('Telangana') ? 'TS Board' : 'AP & TS'}
+                              </div>
+                              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                {v.year || v.classLevel || 'Intermediate'}
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              {isYouTube ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 flex items-center gap-1 w-max">
+                                  <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                  </svg>
+                                  <span>YouTube</span>
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 flex items-center gap-1 w-max">
+                                  <Film size={11} />
+                                  <span>MP4 Video</span>
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              {v.isPremium ? (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                                  Premium
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                  Free
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-4 whitespace-nowrap">
+                              <button
+                                onClick={() => handleToggleVideoStatus(v)}
+                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
+                                  v.status === 'published'
+                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                                }`}
+                                title="Click to toggle status"
+                              >
+                                {v.status === 'published' ? '● Published' : '○ Draft'}
+                              </button>
+                            </td>
+
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end gap-1">
+                                <button
+                                  onClick={() => setPreviewVideoModal(v)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                  title="Play Video"
+                                >
+                                  <Play size={14} />
+                                </button>
+                                <button
+                                  onClick={() => handleOpenEditVideo(v)}
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                  title="Edit Video"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setDeleteConfirm({
+                                      type: 'video',
+                                      id: v.id || v._id,
+                                      title: v.title,
+                                    })
+                                  }
+                                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                  title="Delete Video"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {filteredVideos.length === 0 && (
+              <div className="py-16 text-center text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-8">
+                <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 border border-blue-200 dark:border-blue-500/20">
+                  <Video size={32} />
+                </div>
+                <h4 className="text-base font-bold text-slate-800 dark:text-slate-200">No videos match your criteria</h4>
+                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+                  Adjust your search terms or board/subject filters, or click below to upload an educational video or add a YouTube lesson.
+                </p>
+                <div className="flex items-center justify-center gap-3 mt-5 flex-wrap">
+                  <button
+                    onClick={() => handleOpenAddVideo('upload')}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
+                  >
+                    <Upload size={14} />
+                    <span>Upload Video File</span>
+                  </button>
+                  <button
+                    onClick={() => handleOpenAddVideo('url')}
+                    className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-red-600/30 transition-all cursor-pointer"
+                  >
+                    <Plus size={14} />
+                    <span>Add YouTube Link</span>
+                  </button>
+                  <button
+                    onClick={handleSeedVideos}
+                    className="px-4 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+                  >
+                    <Sparkles size={14} />
+                    <span>Seed Curriculum Videos</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -2802,15 +3282,15 @@ export default function AdminPage({
         <div
           className={
             isVideoFullScreen
-              ? 'fixed inset-0 z-50 flex flex-col bg-slate-950 text-slate-100 overflow-hidden animate-in fade-in duration-200'
+              ? 'fixed inset-0 z-50 flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden animate-in fade-in duration-200'
               : 'fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-md overflow-hidden animate-in fade-in duration-150'
           }
         >
           <div
             className={
               isVideoFullScreen
-                ? 'w-full h-full flex flex-col bg-slate-950 text-slate-100 overflow-hidden'
-                : 'relative w-full max-w-4xl max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 transition-all duration-200'
+                ? 'w-full h-full flex flex-col bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden'
+                : 'relative w-full max-w-5xl max-h-[92vh] flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden text-slate-900 dark:text-slate-100 transition-all duration-200'
             }
           >
             {/* Hidden native file inputs for direct device uploading */}
@@ -2834,7 +3314,7 @@ export default function AdminPage({
             />
 
             {/* Studio Header (Sticky) */}
-            <div className="shrink-0 px-5 sm:px-8 py-4 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex items-center justify-between gap-4">
+            <div className="shrink-0 px-5 sm:px-8 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between gap-4">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
                   <Video size={20} />
@@ -2842,14 +3322,18 @@ export default function AdminPage({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
-                      {videoModalMode === 'create' ? 'Media Studio • Upload Video / Lecture' : 'Edit Video / Link Details'}
+                      {videoModalMode === 'create' ? 'Lesson Studio • Create & Publish Content' : 'Edit Lesson / Video Details'}
                     </h3>
                     <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                      {isVideoFullScreen ? 'Full Screen Studio' : 'Modal View'}
+                      Step {videoStudioStep} of 5
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    Upload MP4 files directly from device, publish YouTube lectures, Drive notes or reference links
+                    {videoStudioStep === 1 && 'Step 1: Define academic curriculum info, board, year, and chapter'}
+                    {videoStudioStep === 2 && 'Step 2: Choose media source (Upload MP4 or embed YouTube video)'}
+                    {videoStudioStep === 3 && 'Step 3: Upload custom thumbnail image or fetch YouTube artwork'}
+                    {videoStudioStep === 4 && 'Step 4: Configure lesson settings, visibility, downloads, and SEO'}
+                    {videoStudioStep === 5 && 'Step 5: Live student dashboard card preview before publishing'}
                   </p>
                 </div>
               </div>
@@ -2877,444 +3361,183 @@ export default function AdminPage({
               </div>
             </div>
 
-            {/* Studio Form & Layout */}
+            {/* Studio Stepper Bar (5 Steps) */}
+            <div className="shrink-0 px-4 sm:px-8 py-2.5 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+              {[
+                { step: 1, label: '1. Curriculum Info', icon: BookOpen },
+                { step: 2, label: '2. Media Source', icon: Film },
+                { step: 3, label: '3. Thumbnail', icon: ImageIcon },
+                { step: 4, label: '4. Lesson Settings', icon: Settings },
+                { step: 5, label: '5. Student Preview', icon: Eye },
+              ].map(({ step, label, icon: Icon }) => {
+                const isActive = videoStudioStep === step;
+                const isPassed = videoStudioStep > step;
+
+                return (
+                  <button
+                    key={step}
+                    type="button"
+                    onClick={() => setVideoStudioStep(step)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0 ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25'
+                        : isPassed
+                        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                    }`}
+                  >
+                    <Icon size={13} />
+                    <span>{label}</span>
+                    {isPassed && <Check size={12} className="text-emerald-500" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Studio Form & Content */}
             <form onSubmit={handleSaveVideo} className="flex-1 flex flex-col min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
-                <div className={`grid grid-cols-1 ${isVideoFullScreen ? 'lg:grid-cols-12 gap-8 max-w-7xl mx-auto w-full' : 'lg:grid-cols-12 gap-6'}`}>
-                  
-                  {/* ─────────────────────────────────────────────────────────
-                      LEFT COLUMN: MEDIA UPLOAD & LIVE PLAYER PREVIEW
-                     ───────────────────────────────────────────────────────── */}
-                  <div className={`${isVideoFullScreen ? 'lg:col-span-5' : 'lg:col-span-5'} space-y-5`}>
-                    
-                    {/* Live Preview Box */}
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
-                      <div className="flex items-center justify-between mb-2.5">
-                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                          <Play size={13} className="text-red-500" />
-                          <span>Live Player Preview</span>
-                        </span>
-                        {videoForm.url && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                            <CheckCircle2 size={11} />
-                            <span>Link Connected</span>
-                          </span>
-                        )}
-                      </div>
+                
+                {/* ─────────────────────────────────────────────────────────
+                    STEP 1: CURRICULUM INFORMATION
+                   ───────────────────────────────────────────────────────── */}
+                {videoStudioStep === 1 && (
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 shadow-sm space-y-5">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <BookOpen size={16} className="text-blue-500" />
+                        <span>Curriculum & Academic Metadata</span>
+                      </h4>
 
-                      {/* Video Player Display */}
-                      <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center relative group">
-                        {extractYouTubeId(videoForm.url) ? (
-                          <iframe
-                            src={`https://www.youtube.com/embed/${extractYouTubeId(videoForm.url)}?autoplay=0`}
-                            title="YouTube Preview"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="w-full h-full border-0"
-                          />
-                        ) : videoForm.url && (videoForm.type === 'video' || videoForm.url.match(/\.(mp4|webm|mov|ogg)$/i) || videoForm.url.includes('/uploads/')) ? (
-                          <video
-                            controls
-                            src={videoForm.url}
-                            className="w-full h-full object-contain bg-black"
-                            poster={videoForm.thumbnailUrl || undefined}
-                          >
-                            Your browser does not support HTML5 video preview.
-                          </video>
-                        ) : videoForm.thumbnailUrl ? (
-                          <div className="w-full h-full relative">
-                            <img
-                              src={videoForm.thumbnailUrl}
-                              alt="Thumbnail preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                              <span className="p-3 rounded-full bg-red-600/90 text-white shadow-lg">
-                                <Play size={20} fill="currentColor" />
-                              </span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center p-6 text-slate-400">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-800 text-slate-400 flex items-center justify-center mx-auto mb-2 border border-slate-700">
-                              <Film size={22} />
-                            </div>
-                            <p className="text-xs font-bold text-slate-300">No Video Loaded Yet</p>
-                            <p className="text-[11px] text-slate-500 mt-0.5">
-                              Upload a video file or paste a link below to preview live
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Uploaded File Info Badge */}
-                      {videoUploadInfo && (
-                        <div className="mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                            <div className="min-w-0">
-                              <p className="font-bold text-emerald-700 dark:text-emerald-300 truncate">
-                                {videoUploadInfo.originalName}
-                              </p>
-                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                                Size: {videoUploadInfo.sizeMb} MB • Ready on Visdom Waves Server
-                              </p>
-                            </div>
-                          </div>
-                          <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold shrink-0">
-                            Uploaded
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Direct Video File Upload Drag-and-Drop Zone */}
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                          <UploadCloud size={14} className="text-blue-500" />
-                          <span>Video File Upload</span>
-                        </label>
-                        <div className="flex items-center gap-1 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-[11px] font-bold">
-                          <button
-                            type="button"
-                            onClick={() => setVideoSourceMode('upload')}
-                            className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                              videoSourceMode === 'upload'
-                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                            }`}
-                          >
-                            Device Upload
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setVideoSourceMode('url')}
-                            className={`px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
-                              videoSourceMode === 'url'
-                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                                : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                            }`}
-                          >
-                            URL Link
-                          </button>
-                        </div>
-                      </div>
-
-                      {videoSourceMode === 'upload' ? (
-                        <div
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            setVideoDragOver(true);
-                          }}
-                          onDragLeave={() => setVideoDragOver(false)}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            setVideoDragOver(false);
-                            if (e.dataTransfer.files?.[0]) handleVideoFileSelect(e.dataTransfer.files[0]);
-                          }}
-                          onClick={() => {
-                            const input = document.getElementById('admin-video-file-input');
-                            if (input) input.click();
-                          }}
-                          className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all ${
-                            videoDragOver
-                              ? 'border-blue-500 bg-blue-500/10 scale-[1.01]'
-                              : 'border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 bg-white dark:bg-slate-900/60'
-                          }`}
-                        >
-                          <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 border border-blue-200 dark:border-blue-500/20">
-                            <Upload size={22} className={isUploadingVideo ? 'animate-bounce' : ''} />
-                          </div>
-
-                          <h4 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white">
-                            {isUploadingVideo ? 'Uploading Video to Server...' : 'Click to Browse or Drag Video Here'}
-                          </h4>
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                            Supports MP4, WebM, MOV & MKV • Up to 500 MB
-                          </p>
-
-                          {/* Upload Progress Bar */}
-                          {isUploadingVideo && (
-                            <div className="mt-4 max-w-xs mx-auto">
-                              <div className="flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                <span>Uploading...</span>
-                                <span>{videoUploadProgress}%</span>
-                              </div>
-                              <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                <div
-                                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-200"
-                                  style={{ width: `${videoUploadProgress}%` }}
-                                />
-                              </div>
-                            </div>
-                          )}
-
-                          {!isUploadingVideo && (
-                            <button
-                              type="button"
-                              className="mt-3 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/25 transition-all inline-flex items-center gap-1.5"
-                            >
-                              <Upload size={13} />
-                              <span>Select Video File</span>
-                            </button>
-                          )}
-                        </div>
-                      ) : (
-                        <div>
-                          <input
-                            type="url"
-                            value={videoForm.url}
-                            onChange={(e) => {
-                              const newUrl = e.target.value;
-                              const ytId = extractYouTubeId(newUrl);
-                              setVideoForm((prev) => ({
-                                ...prev,
-                                url: newUrl,
-                                type: ytId ? 'youtube' : prev.type,
-                              }));
-                            }}
-                            placeholder="https://example.com/lecture.mp4 or direct stream link"
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                          />
-                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5">
-                            Paste downloadable MP4 URL or direct streaming video address.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Thumbnail Upload & Preview */}
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
-                      <div className="flex items-center justify-between mb-2.5">
-                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                          <ImageIcon size={14} className="text-purple-500" />
-                          <span>Custom Thumbnail Image</span>
-                        </label>
-                        {videoForm.thumbnailUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setVideoForm((prev) => ({ ...prev, thumbnailUrl: '' }))}
-                            className="text-[10px] text-red-500 hover:underline font-bold"
-                          >
-                            Remove
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <div className="w-20 h-14 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-900 overflow-hidden shrink-0 flex items-center justify-center">
-                          {videoForm.thumbnailUrl ? (
-                            <img
-                              src={videoForm.thumbnailUrl}
-                              alt="Thumb"
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <ImageIcon size={18} className="text-slate-500" />
-                          )}
-                        </div>
-
-                        <div className="flex-1 space-y-1.5 min-w-0">
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const input = document.getElementById('admin-thumb-file-input');
-                                if (input) input.click();
-                              }}
-                              disabled={isUploadingThumb}
-                              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
-                            >
-                              <Upload size={12} />
-                              <span>{isUploadingThumb ? `${thumbUploadProgress}%` : 'Upload Image'}</span>
-                            </button>
-                          </div>
-                          <input
-                            type="url"
-                            value={videoForm.thumbnailUrl}
-                            onChange={(e) => setVideoForm({ ...videoForm, thumbnailUrl: e.target.value })}
-                            placeholder="Or paste image URL (https://...)"
-                            className="w-full px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-purple-500"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ─────────────────────────────────────────────────────────
-                      RIGHT COLUMN: METADATA & ACADEMIC ATTRIBUTES
-                     ───────────────────────────────────────────────────────── */}
-                  <div className={`${isVideoFullScreen ? 'lg:col-span-7' : 'lg:col-span-7'} space-y-4`}>
-                    
-                    {/* Resource Type Selector Pills */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
-                        Select Resource Type
-                      </label>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'youtube' }))}
-                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                            videoForm.type === 'youtube'
-                              ? 'bg-red-600 text-white border-red-600 shadow-md shadow-red-600/25'
-                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                          </svg>
-                          <span>YouTube</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'video' }))}
-                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                            videoForm.type === 'video'
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/25'
-                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <Film size={14} />
-                          <span>Direct Video</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'drive' }))}
-                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                            videoForm.type === 'drive'
-                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/25'
-                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <FileText size={14} />
-                          <span>Drive / PDF</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setVideoForm((prev) => ({ ...prev, type: 'link' }))}
-                          className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                            videoForm.type === 'link'
-                              ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-600/25'
-                              : 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                          }`}
-                        >
-                          <Link2 size={14} />
-                          <span>Web Link</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* URL / Link Address Input (Always Editable) */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                        URL / Resource Address *
-                      </label>
-                      <input
-                        type="url"
-                        required
-                        value={videoForm.url}
-                        onChange={(e) => {
-                          const newUrl = e.target.value;
-                          const ytId = extractYouTubeId(newUrl);
-                          setVideoForm((prev) => ({
-                            ...prev,
-                            url: newUrl,
-                            type: ytId ? 'youtube' : prev.type,
-                            thumbnailUrl: ytId && (!prev.thumbnailUrl || prev.thumbnailUrl.includes('youtube.com'))
-                              ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
-                              : prev.thumbnailUrl,
-                          }));
-                        }}
-                        placeholder={
-                          videoForm.type === 'youtube'
-                            ? 'https://www.youtube.com/watch?v=... or https://youtu.be/...'
-                            : videoForm.type === 'video'
-                            ? 'Upload file on the left or paste https://... video URL'
-                            : videoForm.type === 'drive'
-                            ? 'https://drive.google.com/drive/folders/...'
-                            : 'https://example.com/study-material'
-                        }
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                      />
-                    </div>
-
-                    {/* Title */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                        Video / Resource Title *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={videoForm.title}
-                        onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
-                        placeholder="e.g. Mathematics 2A: Calculus & Differential Equations Complete Lecture"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                      />
-                    </div>
-
-                    {/* Subject & Target Class */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Video Title */}
                       <div>
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Subject Stream
-                        </label>
-                        <select
-                          value={videoForm.subject}
-                          onChange={(e) => setVideoForm({ ...videoForm, subject: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
-                        >
-                          <option value="Mathematics">Mathematics</option>
-                          <option value="Physics">Physics</option>
-                          <option value="Chemistry">Chemistry</option>
-                          <option value="Botany">Botany</option>
-                          <option value="Zoology">Zoology</option>
-                          <option value="English">English</option>
-                          <option value="Commerce">Commerce</option>
-                          <option value="Economics">Economics</option>
-                          <option value="Civics">Civics</option>
-                          <option value="History">History</option>
-                          <option value="General">General / Platform Demo</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Target Intermediate Class
-                        </label>
-                        <select
-                          value={videoForm.classLevel}
-                          onChange={(e) => setVideoForm({ ...videoForm, classLevel: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
-                        >
-                          <option value="Intermediate 1st Year">Intermediate 1st Year (Junior)</option>
-                          <option value="Intermediate 2nd Year">Intermediate 2nd Year (Senior)</option>
-                          <option value="Both Years">Both Years (Comprehensive)</option>
-                          <option value="All Levels">All Levels</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Chapter & Educator */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Chapter / Unit Name
+                          Video / Lecture Title *
                         </label>
                         <input
                           type="text"
-                          value={videoForm.chapter}
-                          onChange={(e) => setVideoForm({ ...videoForm, chapter: e.target.value })}
-                          placeholder="e.g. Calculus & Complex Numbers"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                          required
+                          value={videoForm.title}
+                          onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
+                          placeholder="e.g. Mathematics 2A: Calculus & Differential Equations Complete Lecture"
+                          className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                         />
                       </div>
 
+                      {/* Board & Year */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Target Intermediate Board *
+                          </label>
+                          <select
+                            value={videoForm.board}
+                            onChange={(e) => setVideoForm({ ...videoForm, board: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                          >
+                            <option value="Both Boards">Both Boards (AP & TS Common Syllabus)</option>
+                            <option value="Andhra Pradesh Intermediate">Andhra Pradesh (BIEAP)</option>
+                            <option value="Telangana Intermediate">Telangana (TSBIE)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Intermediate Year *
+                          </label>
+                          <select
+                            value={videoForm.year}
+                            onChange={(e) => {
+                              const y = e.target.value;
+                              setVideoForm({
+                                ...videoForm,
+                                year: y,
+                                classLevel: y === '1st Year' ? 'Intermediate 1st Year' : y === '2nd Year' ? 'Intermediate 2nd Year' : 'Both Years',
+                              });
+                            }}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                          >
+                            <option value="1st Year">1st Year (Junior Inter)</option>
+                            <option value="2nd Year">2nd Year (Senior Inter)</option>
+                            <option value="Both Years">Both Years (Comprehensive)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Subject & Category */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Subject Stream *
+                          </label>
+                          <select
+                            value={videoForm.subject}
+                            onChange={(e) => setVideoForm({ ...videoForm, subject: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                          >
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Botany">Botany</option>
+                            <option value="Zoology">Zoology</option>
+                            <option value="English">English</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Civics">Civics</option>
+                            <option value="History">History</option>
+                            <option value="General">General / Platform Demo</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Content Category
+                          </label>
+                          <select
+                            value={videoForm.linkType}
+                            onChange={(e) => setVideoForm({ ...videoForm, linkType: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                          >
+                            <option value="Lecture Video">Full Concept Lecture</option>
+                            <option value="Revision Class">Speed Revision & Crash Course</option>
+                            <option value="PYQ Solution">Board PYQ Solved Analysis</option>
+                            <option value="Lab Practical">Lab Practical & Simulation</option>
+                            <option value="Formula Sheet & PDF">Formula Sheet & Handwritten Notes</option>
+                            <option value="Mock Exam">Online Practice Test</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Chapter & Lesson */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Chapter / Unit Name
+                          </label>
+                          <input
+                            type="text"
+                            value={videoForm.chapter}
+                            onChange={(e) => setVideoForm({ ...videoForm, chapter: e.target.value })}
+                            placeholder="e.g. Thermodynamics & Heat"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Lesson / Part Name
+                          </label>
+                          <input
+                            type="text"
+                            value={videoForm.lesson}
+                            onChange={(e) => setVideoForm({ ...videoForm, lesson: e.target.value })}
+                            placeholder="e.g. Lesson 3: Carnot Engine & Cycles"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Educator Name */}
                       <div>
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                           Educator / Channel Name
@@ -3324,142 +3547,1674 @@ export default function AdminPage({
                           value={videoForm.instructor}
                           onChange={(e) => setVideoForm({ ...videoForm, instructor: e.target.value })}
                           placeholder="e.g. Dr. S. K. Sharma / Visdom Waves Faculty"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                         />
                       </div>
-                    </div>
 
-                    {/* Category & Duration */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Description / Summary */}
                       <div>
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Resource Category
+                          Description & Summary
                         </label>
-                        <select
-                          value={videoForm.linkType}
-                          onChange={(e) => setVideoForm({ ...videoForm, linkType: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
-                        >
-                          <option value="Lecture Video">Full Lecture Video</option>
-                          <option value="Revision Class">Speed Revision / Crash Course</option>
-                          <option value="Formula Sheet & PDF">Formula Sheet & Handwritten Notes</option>
-                          <option value="Lab Practical">Lab Practical & Simulator</option>
-                          <option value="PYQ Solution">Board PYQ Solved Analysis</option>
-                          <option value="Mock Exam">Online Practice Test</option>
-                        </select>
+                        <textarea
+                          rows={3}
+                          value={videoForm.description}
+                          onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
+                          placeholder="Outline of topics covered, 7-mark question proofs, board blueprints and key takeaways."
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                        />
                       </div>
 
+                      {/* Search Keywords */}
                       <div>
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Duration / Length
+                          Search Keywords / Tags (Comma Separated)
                         </label>
                         <input
                           type="text"
-                          value={videoForm.duration}
-                          onChange={(e) => setVideoForm({ ...videoForm, duration: e.target.value })}
-                          placeholder="e.g. 45 mins / 1h 15m / PDF"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                          value={videoForm.tags}
+                          onChange={(e) => setVideoForm({ ...videoForm, tags: e.target.value })}
+                          placeholder="IPE 2026, 7 Marks, Calculus, Derivations, Formula"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                         />
                       </div>
                     </div>
 
-                    {/* Summary */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                        Summary & Key Concepts
-                      </label>
-                      <textarea
-                        rows={2}
-                        value={videoForm.description}
-                        onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
-                        placeholder="Outline of topics covered, 7-mark question proofs, board blueprints and key takeaways."
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                      />
+                    <div className="flex justify-end pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setVideoStudioStep(2)}
+                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
+                      >
+                        <span>Next: Step 2 (Media Source)</span>
+                        <ArrowRight size={14} />
+                      </button>
                     </div>
-
-                    {/* Search Tags */}
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                        Search Keywords / Tags (Comma Separated)
-                      </label>
-                      <input
-                        type="text"
-                        value={videoForm.tags}
-                        onChange={(e) => setVideoForm({ ...videoForm, tags: e.target.value })}
-                        placeholder="IPE 2026, 7 Marks, Calculus, Derivations"
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                      />
-                    </div>
-
-                    {/* Feature Toggle & Status */}
-                    <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
-                      <label className="flex items-center gap-2.5 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={videoForm.isFeatured}
-                          onChange={(e) => setVideoForm({ ...videoForm, isFeatured: e.target.checked })}
-                          className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 dark:border-slate-700 cursor-pointer"
-                        />
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                          Feature on Student Demo & Hero section
-                        </span>
-                      </label>
-
-                      <div className="flex items-center gap-3 text-xs font-bold">
-                        <span className="text-slate-500">Status:</span>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="videoStatus"
-                            value="published"
-                            checked={videoForm.status === 'published'}
-                            onChange={() => setVideoForm({ ...videoForm, status: 'published' })}
-                            className="text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-emerald-600 dark:text-emerald-400">Published</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="videoStatus"
-                            value="draft"
-                            checked={videoForm.status === 'draft'}
-                            onChange={() => setVideoForm({ ...videoForm, status: 'draft' })}
-                            className="text-blue-600 focus:ring-blue-500"
-                          />
-                          <span className="text-amber-600 dark:text-amber-400">Draft</span>
-                        </label>
-                      </div>
-                    </div>
-
                   </div>
-                </div>
+                )}
+
+                {/* ─────────────────────────────────────────────────────────
+                    STEP 2: MEDIA SOURCE (MP4 UPLOAD OR YOUTUBE)
+                   ───────────────────────────────────────────────────────── */}
+                {videoStudioStep === 2 && (
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    {/* Media Type Switcher */}
+                    <div className="flex items-center p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 max-w-md mx-auto">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideoSourceMode('upload');
+                          setVideoForm((prev) => ({ ...prev, type: 'video' }));
+                          setYoutubeError('');
+                        }}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          videoSourceMode === 'upload'
+                            ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
+                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        <UploadCloud size={15} />
+                        <span>Upload Video File (MP4/WebM)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setVideoSourceMode('url');
+                          setVideoForm((prev) => ({ ...prev, type: 'youtube' }));
+                          setYoutubeError('');
+                        }}
+                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          videoSourceMode === 'url'
+                            ? 'bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 shadow-xs'
+                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        <span>Add YouTube Video</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                      {/* Left: Input / Dropzone */}
+                      <div className="md:col-span-7 space-y-4">
+                        {videoSourceMode === 'upload' ? (
+                          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 shadow-sm">
+                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                              <UploadCloud size={15} className="text-blue-500" />
+                              <span>Upload Educational Video File</span>
+                            </label>
+
+                            <div
+                              onDragOver={(e) => {
+                                e.preventDefault();
+                                setVideoDragOver(true);
+                              }}
+                              onDragLeave={() => setVideoDragOver(false)}
+                              onDrop={(e) => {
+                                e.preventDefault();
+                                setVideoDragOver(false);
+                                if (e.dataTransfer.files?.[0]) handleVideoFileSelect(e.dataTransfer.files[0]);
+                              }}
+                              onClick={() => {
+                                const input = document.getElementById('admin-video-file-input');
+                                if (input) input.click();
+                              }}
+                              className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
+                                videoDragOver
+                                  ? 'border-blue-500 bg-blue-500/10 scale-[1.01]'
+                                  : 'border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 bg-white dark:bg-slate-900/60'
+                              }`}
+                            >
+                              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 border border-blue-200 dark:border-blue-500/20">
+                                <Upload size={26} className={isUploadingVideo ? 'animate-bounce' : ''} />
+                              </div>
+
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                                {isUploadingVideo ? 'Uploading Video to Visdom Waves Storage...' : 'Click to Browse or Drag Video Here'}
+                              </h4>
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Supported formats: MP4, WebM, QuickTime MOV & MKV • Max 500 MB
+                              </p>
+
+                              {isUploadingVideo && (
+                                <div className="mt-4 max-w-xs mx-auto">
+                                  <div className="flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
+                                    <span>Uploading Video...</span>
+                                    <span>{videoUploadProgress}%</span>
+                                  </div>
+                                  <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                                    <div
+                                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-200"
+                                      style={{ width: `${videoUploadProgress}%` }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {!isUploadingVideo && (
+                                <button
+                                  type="button"
+                                  className="mt-4 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/25 transition-all inline-flex items-center gap-1.5"
+                                >
+                                  <Upload size={14} />
+                                  <span>Select Video from Computer</span>
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Direct URL Fallback */}
+                            <div className="mt-4">
+                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
+                                Or paste direct video file URL:
+                              </label>
+                              <input
+                                type="url"
+                                value={videoForm.url}
+                                onChange={(e) => setVideoForm((prev) => ({ ...prev, url: e.target.value, type: 'video' }))}
+                                placeholder="https://domain.com/videos/lecture.mp4"
+                                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 shadow-sm space-y-4">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <svg className="w-4 h-4 fill-red-600" viewBox="0 0 24 24">
+                                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                </svg>
+                                <span>YouTube Video URL *</span>
+                              </label>
+
+                              {extractYouTubeId(videoForm.url) && (
+                                <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
+                                  YouTube ID: {extractYouTubeId(videoForm.url)}
+                                </span>
+                              )}
+                            </div>
+
+                            <div>
+                              <input
+                                type="url"
+                                required={videoSourceMode === 'url'}
+                                value={videoForm.url}
+                                onChange={(e) => {
+                                  const newUrl = e.target.value;
+                                  const ytId = extractYouTubeId(newUrl);
+                                  setYoutubeError('');
+                                  setVideoForm((prev) => ({
+                                    ...prev,
+                                    url: newUrl,
+                                    type: 'youtube',
+                                    thumbnailUrl: ytId && (!prev.thumbnailUrl || prev.thumbnailUrl.includes('youtube.com'))
+                                      ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
+                                      : prev.thumbnailUrl,
+                                  }));
+                                }}
+                                placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID"
+                                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium"
+                              />
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
+                                Supports watch URLs, youtu.be shortlinks, embed links, and YouTube Shorts.
+                              </p>
+                            </div>
+
+                            {/* Error Alert */}
+                            {youtubeError && (
+                              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
+                                <AlertCircle size={15} className="shrink-0" />
+                                <span>{youtubeError}</span>
+                              </div>
+                            )}
+
+                            {/* Auto Thumbnail Fetchers */}
+                            {extractYouTubeId(videoForm.url) && (
+                              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
+                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                                  Auto-fetch YouTube Thumbnail:
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const id = extractYouTubeId(videoForm.url);
+                                      if (id) {
+                                        setVideoForm((prev) => ({ ...prev, thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg` }));
+                                        showToast('HQ Thumbnail selected');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold transition-all cursor-pointer"
+                                  >
+                                    HQ Default (480p)
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const id = extractYouTubeId(videoForm.url);
+                                      if (id) {
+                                        setVideoForm((prev) => ({ ...prev, thumbnailUrl: `https://img.youtube.com/vi/${id}/maxresdefault.jpg` }));
+                                        showToast('MaxRes Thumbnail selected');
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold transition-all cursor-pointer"
+                                  >
+                                    MaxRes HD (1080p)
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Right: Live Player Preview */}
+                      <div className="md:col-span-5 space-y-3">
+                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
+                          <div className="flex items-center justify-between mb-2.5">
+                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                              <Play size={13} className="text-red-500" />
+                              <span>Live Player Preview</span>
+                            </span>
+                            {videoForm.url && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                <CheckCircle2 size={11} />
+                                <span>Stream Ready</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center relative group">
+                            {/* Badges Overlay (Optional - only when video/thumb loaded and badge specified) */}
+                            {Boolean(videoForm.url || videoForm.thumbnailUrl) && Boolean(videoForm.badgeText?.trim()) && (
+                              <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none select-none max-w-[55%]">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center gap-1 truncate">
+                                  {videoForm.isVerifiedBadge && <ShieldCheck size={11} className="text-white shrink-0" />}
+                                  <span className="truncate">{videoForm.badgeText}</span>
+                                </span>
+                                {videoForm.qualityBadge && (
+                                  <span className="px-1.5 py-0.5 rounded bg-black/75 text-[10px] font-bold text-amber-300 border border-amber-400/30 shrink-0">
+                                    {videoForm.qualityBadge}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Watermark Overlay (Optional - only when video/thumb loaded and watermark enabled with text) */}
+                            {Boolean(videoForm.url || videoForm.thumbnailUrl) && Boolean(videoForm.watermarkEnabled && videoForm.watermarkText?.trim()) && (
+                              <div
+                                className={`absolute z-20 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-white/80 font-mono text-[10px] tracking-wider uppercase font-bold shadow-md max-w-[45%] truncate ${
+                                  videoForm.watermarkPosition === 'top-left'
+                                    ? 'top-2.5 left-2.5'
+                                    : videoForm.watermarkPosition === 'bottom-left'
+                                    ? 'bottom-2.5 left-2.5'
+                                    : videoForm.watermarkPosition === 'bottom-right'
+                                    ? 'bottom-2.5 right-2.5'
+                                    : 'top-2.5 right-2.5'
+                                }`}
+                              >
+                                <ShieldCheck size={12} className="text-blue-400 shrink-0" />
+                                <span className="truncate">{videoForm.watermarkText}</span>
+                              </div>
+                            )}
+
+                            {extractYouTubeId(videoForm.url) ? (
+                              <iframe
+                                src={`https://www.youtube.com/embed/${extractYouTubeId(videoForm.url)}?autoplay=0`}
+                                title="YouTube Preview"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full border-0"
+                              />
+                            ) : videoForm.url && (videoForm.type === 'video' || videoForm.url.match(/\.(mp4|webm|mov|ogg)$/i) || videoForm.url.includes('/uploads/')) ? (
+                              <video
+                                controls
+                                src={videoForm.url}
+                                className="w-full h-full object-contain bg-black"
+                                poster={videoForm.thumbnailUrl || undefined}
+                              >
+                                Your browser does not support HTML5 video preview.
+                              </video>
+                            ) : videoForm.thumbnailUrl ? (
+                              <div className="w-full h-full relative">
+                                <img
+                                  src={videoForm.thumbnailUrl}
+                                  alt="Thumbnail preview"
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                  <span className="p-3 rounded-full bg-red-600 text-white shadow-lg">
+                                    <Play size={22} fill="currentColor" />
+                                  </span>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-center p-6 text-slate-400">
+                                <Film size={32} className="mx-auto mb-2 text-slate-600" />
+                                <p className="text-xs font-bold text-slate-300">No Video Loaded Yet</p>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                  Upload or paste URL on the left to preview
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          {videoUploadInfo && (
+                            <div className="mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="font-bold text-emerald-700 dark:text-emerald-300 truncate">
+                                    {videoUploadInfo.originalName}
+                                  </p>
+                                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                    {videoUploadInfo.sizeMb ? `Size: ${videoUploadInfo.sizeMb} MB • ` : ''}Ready on Local Storage
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center justify-between pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setVideoStudioStep(1)}
+                            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                          >
+                            <ArrowLeft size={14} />
+                            <span>Back: Step 1 (Curriculum Info)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setVideoStudioStep(3)}
+                            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
+                          >
+                            <span>Next: Step 3 (Thumbnail)</span>
+                            <ArrowRight size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─────────────────────────────────────────────────────────
+                    STEP 3: THUMBNAIL MANAGEMENT
+                   ───────────────────────────────────────────────────────── */}
+                {videoStudioStep === 3 && (
+                  <div className="max-w-3xl mx-auto space-y-6">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 shadow-sm space-y-5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <ImageIcon size={16} className="text-purple-500" />
+                            <span>Thumbnail Image Management</span>
+                          </h4>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Upload a custom 16:9 poster from your computer, retrieve YouTube artwork, or enter an image URL.
+                          </p>
+                        </div>
+
+                        {videoForm.thumbnailUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setVideoForm((prev) => ({ ...prev, thumbnailUrl: '' }))}
+                            className="text-xs text-rose-500 hover:underline font-bold cursor-pointer"
+                          >
+                            Remove Thumbnail
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        {/* Thumbnail Preview Box */}
+                        <div className="md:col-span-5">
+                          <div className="aspect-video w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-900 overflow-hidden flex items-center justify-center relative shadow-inner group">
+                            {/* Badges Preview (Optional - only when thumbnail loaded and badge set) */}
+                            {Boolean(videoForm.thumbnailUrl) && Boolean(videoForm.badgeText?.trim()) && (
+                              <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none select-none max-w-[55%]">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center gap-1 truncate">
+                                  {videoForm.isVerifiedBadge && <ShieldCheck size={11} className="text-white shrink-0" />}
+                                  <span className="truncate">{videoForm.badgeText}</span>
+                                </span>
+                                {videoForm.qualityBadge && (
+                                  <span className="px-1.5 py-0.5 rounded bg-black/75 text-[10px] font-bold text-amber-300 border border-amber-400/30 shrink-0">
+                                    {videoForm.qualityBadge}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Watermark Preview (Optional - only when thumbnail loaded and watermark set) */}
+                            {Boolean(videoForm.thumbnailUrl) && Boolean(videoForm.watermarkEnabled && videoForm.watermarkText?.trim()) && (
+                              <div
+                                className={`absolute z-20 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-white/80 font-mono text-[10px] tracking-wider uppercase font-bold shadow-md max-w-[45%] truncate ${
+                                  videoForm.watermarkPosition === 'top-left'
+                                    ? 'top-2.5 left-2.5'
+                                    : videoForm.watermarkPosition === 'bottom-left'
+                                    ? 'bottom-2.5 left-2.5'
+                                    : videoForm.watermarkPosition === 'bottom-right'
+                                    ? 'bottom-2.5 right-2.5'
+                                    : 'top-2.5 right-2.5'
+                                }`}
+                              >
+                                <ShieldCheck size={12} className="text-blue-400 shrink-0" />
+                                <span className="truncate">{videoForm.watermarkText}</span>
+                              </div>
+                            )}
+
+                            {videoForm.thumbnailUrl ? (
+                              <img
+                                src={videoForm.thumbnailUrl}
+                                alt="Thumbnail preview"
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80';
+                                }}
+                              />
+                            ) : (
+                              <div className="text-center p-4 text-slate-500">
+                                <ImageIcon size={32} className="mx-auto mb-1 opacity-60" />
+                                <span className="text-xs font-semibold">No thumbnail selected</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Controls */}
+                        <div className="md:col-span-7 space-y-4">
+                          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                1. Upload from Computer
+                              </span>
+                              <span className="text-[10px] text-slate-400">JPG, JPEG, PNG, WebP</span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const input = document.getElementById('admin-thumb-file-input');
+                                if (input) input.click();
+                              }}
+                              disabled={isUploadingThumb}
+                              className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                              <Upload size={14} />
+                              <span>{isUploadingThumb ? `Uploading Image (${thumbUploadProgress}%)...` : 'Choose Image File'}</span>
+                            </button>
+                          </div>
+
+                          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                              2. Or Paste Custom Thumbnail URL
+                            </span>
+                            <input
+                              type="url"
+                              value={videoForm.thumbnailUrl}
+                              onChange={(e) => setVideoForm({ ...videoForm, thumbnailUrl: e.target.value })}
+                              placeholder="https://images.unsplash.com/... or https://domain.com/thumb.jpg"
+                              className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </div>
+
+                          {extractYouTubeId(videoForm.url) && (
+                            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-red-600 dark:text-red-400">
+                                3. Retrieve YouTube Artwork:
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const id = extractYouTubeId(videoForm.url);
+                                  if (id) {
+                                    setVideoForm((prev) => ({ ...prev, thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg` }));
+                                    showToast('YouTube HQ thumbnail loaded');
+                                  }
+                                }}
+                                className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs shadow-xs hover:bg-red-500 transition-all cursor-pointer"
+                              >
+                                Fetch YouTube HQ
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setVideoStudioStep(2)}
+                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Back: Step 2 (Media Source)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setVideoStudioStep(4)}
+                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
+                      >
+                        <span>Next: Step 4 (Lesson Settings)</span>
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─────────────────────────────────────────────────────────
+                    STEP 4: LESSON SETTINGS (EXACT USER SPECIFICATIONS)
+                   ───────────────────────────────────────────────────────── */}
+                {videoStudioStep === 4 && (
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 shadow-sm space-y-6">
+                      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <Settings size={17} className="text-blue-500" />
+                          <span>Step 4 – Lesson Settings & Permissions</span>
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Configure student access controls, download permissions, completion requirements, and notifications.
+                        </p>
+                      </div>
+
+                      {/* 1. Visibility */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                          Visibility
+                        </label>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                          {[
+                            { value: 'draft', label: 'Draft', color: 'amber' },
+                            { value: 'published', label: 'Published', color: 'emerald' },
+                            { value: 'archived', label: 'Archived', color: 'slate' },
+                            { value: 'hidden', label: 'Hidden', color: 'purple' },
+                          ].map(({ value, label, color }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, status: value })}
+                              className={`py-2 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center ${
+                                videoForm.status === value
+                                  ? color === 'emerald'
+                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/25'
+                                    : color === 'amber'
+                                    ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-600/25'
+                                    : color === 'purple'
+                                    ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-600/25'
+                                    : 'bg-slate-700 text-white border-slate-700'
+                                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* 2 & 3. Free Preview vs Premium Content */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                            Free Preview
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, freePreview: true, isPremium: false, premiumContent: false })}
+                              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                videoForm.freePreview
+                                  ? 'bg-emerald-600 text-white shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}
+                            >
+                              ON
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, freePreview: false })}
+                              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                !videoForm.freePreview
+                                  ? 'bg-slate-700 text-white shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}
+                            >
+                              OFF
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
+                            Premium Content
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, premiumContent: true, isPremium: true, freePreview: false })}
+                              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                videoForm.premiumContent || videoForm.isPremium
+                                  ? 'bg-amber-500 text-slate-950 font-black shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}
+                            >
+                              ON
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, premiumContent: false, isPremium: false })}
+                              className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                                !(videoForm.premiumContent || videoForm.isPremium)
+                                  ? 'bg-slate-700 text-white shadow-xs'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              }`}
+                            >
+                              OFF
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 4, 5, 6. Downloads Management */}
+                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                          Download Permissions
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          {/* Allow PDF Download */}
+                          <div>
+                            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold block mb-1">
+                              Allow PDF Download
+                            </span>
+                            <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, allowPdfDownload: true })}
+                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  videoForm.allowPdfDownload
+                                    ? 'bg-blue-600 text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, allowPdfDownload: false })}
+                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  !videoForm.allowPdfDownload
+                                    ? 'bg-slate-700 text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                No
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Allow Video Download */}
+                          <div>
+                            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold block mb-1">
+                              Allow Video Download
+                            </span>
+                            <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, allowVideoDownload: true })}
+                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  videoForm.allowVideoDownload
+                                    ? 'bg-blue-600 text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, allowVideoDownload: false })}
+                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  !videoForm.allowVideoDownload
+                                    ? 'bg-slate-700 text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                No
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Allow Assignment Download */}
+                          <div>
+                            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold block mb-1">
+                              Allow Assignment Download
+                            </span>
+                            <div className="flex gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, allowAssignmentDownload: true })}
+                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  videoForm.allowAssignmentDownload
+                                    ? 'bg-blue-600 text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, allowAssignmentDownload: false })}
+                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                  !videoForm.allowAssignmentDownload
+                                    ? 'bg-slate-700 text-white shadow-xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                No
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 7 & 8. Estimated Duration & Difficulty Level */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Estimated Duration
+                          </label>
+                          <input
+                            type="text"
+                            value={videoForm.estimatedDuration}
+                            onChange={(e) => setVideoForm({ ...videoForm, estimatedDuration: e.target.value, duration: e.target.value })}
+                            placeholder="Example: 45 Minutes"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Difficulty Level
+                          </label>
+                          <div className="grid grid-cols-3 gap-2">
+                            {['Beginner', 'Intermediate', 'Advanced'].map((lvl) => (
+                              <button
+                                key={lvl}
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, difficultyLevel: lvl })}
+                                className={`py-2 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                                  videoForm.difficultyLevel === lvl
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                    : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                {lvl}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 9 & 10. Release Date & Expiry Date */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <Calendar size={13} className="text-blue-500" />
+                            <span>Release Date (Publish Date)</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={videoForm.releaseDate}
+                            onChange={(e) => setVideoForm({ ...videoForm, releaseDate: e.target.value })}
+                            className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                            <Clock size={13} className="text-amber-500" />
+                            <span>Expiry Date (Optional)</span>
+                          </label>
+                          <input
+                            type="date"
+                            value={videoForm.expiryDate}
+                            onChange={(e) => setVideoForm({ ...videoForm, expiryDate: e.target.value })}
+                            className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+                      </div>
+
+                      {/* 11 & 12. Lesson Order & Completion Requirement */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Lesson Order
+                          </label>
+                          <input
+                            type="text"
+                            value={videoForm.lessonOrder}
+                            onChange={(e) => setVideoForm({ ...videoForm, lessonOrder: e.target.value, lesson: e.target.value })}
+                            placeholder="Example: Lesson 1, Lesson 2, Lesson 3"
+                            className="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Completion Requirement
+                          </label>
+                          <select
+                            value={videoForm.completionRequirement}
+                            onChange={(e) => setVideoForm({ ...videoForm, completionRequirement: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                          >
+                            <option value="Video Only">Video Only</option>
+                            <option value="Video + PDF">Video + PDF</option>
+                            <option value="Video + Quiz">Video + Quiz</option>
+                            <option value="Complete All">Complete All</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* 13, 14, 15, 16, 17. Certificate, Progress Tracking, Notifications, Attendance */}
+                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          {/* Certificate Eligible */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                              <Award size={14} className="text-amber-500" />
+                              <span>Certificate Eligible</span>
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, certificateEligible: true })}
+                                className={`px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                  videoForm.certificateEligible ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                }`}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, certificateEligible: false })}
+                                className={`px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                  !videoForm.certificateEligible ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                }`}
+                              >
+                                No
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Progress Tracking */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Progress Tracking
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, progressTracking: !videoForm.progressTracking })}
+                              className={`px-3 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                videoForm.progressTracking ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              {videoForm.progressTracking ? 'Enabled' : 'Disabled'}
+                            </button>
+                          </div>
+
+                          {/* Attendance Required */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                              Attendance Required
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({
+                                ...videoForm,
+                                attendanceRequired: videoForm.attendanceRequired === 'Required' ? 'Optional' : 'Required',
+                              })}
+                              className={`px-3 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                videoForm.attendanceRequired === 'Required' ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              {videoForm.attendanceRequired || 'Optional'}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          {/* Student Notifications */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                              <Bell size={14} className="text-blue-500" />
+                              <span>Student Notifications</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, studentNotifications: !videoForm.studentNotifications })}
+                              className={`px-3 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                videoForm.studentNotifications ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              {videoForm.studentNotifications ? 'Notify Students' : 'Silent'}
+                            </button>
+                          </div>
+
+                          {/* Parent Notification */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                              <Mail size={14} className="text-purple-500" />
+                              <span>Parent Notification</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, parentNotification: !videoForm.parentNotification })}
+                              className={`px-3 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                videoForm.parentNotification ? 'bg-purple-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              {videoForm.parentNotification ? 'Send Message' : 'Disabled'}
+                            </button>
+                          </div>
+
+                          {/* Comments & Discussion */}
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                              <MessageSquare size={14} className="text-blue-500" />
+                              <span>Comments</span>
+                            </span>
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, commentsEnabled: true })}
+                                className={`px-2 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                  videoForm.commentsEnabled ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                }`}
+                              >
+                                Enable
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, commentsEnabled: false })}
+                                className={`px-2 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                  !videoForm.commentsEnabled ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                }`}
+                              >
+                                Disable
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 18 & 19. Discussion Forum & Live Class Link */}
+                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                              Discussion Forum
+                            </span>
+                            <p className="text-[11px] text-slate-500">Allow students to ask doubts for this lesson</p>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, discussionForumEnabled: true })}
+                              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                videoForm.discussionForumEnabled ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              Enable
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, discussionForumEnabled: false })}
+                              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                !videoForm.discussionForumEnabled ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              Disable
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                            Live Class Link Platform
+                          </label>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            {['None', 'Google Meet', 'Zoom', 'Microsoft Teams'].map((plat) => (
+                              <button
+                                key={plat}
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, liveClassPlatform: plat })}
+                                className={`py-1.5 px-2 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                                  videoForm.liveClassPlatform === plat
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                    : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                }`}
+                              >
+                                {plat}
+                              </button>
+                            ))}
+                          </div>
+
+                          {videoForm.liveClassPlatform !== 'None' && (
+                            <input
+                              type="url"
+                              value={videoForm.liveClassLink}
+                              onChange={(e) => setVideoForm({ ...videoForm, liveClassLink: e.target.value })}
+                              placeholder={`Paste ${videoForm.liveClassPlatform} URL (e.g. https://meet.google.com/...)`}
+                              className="w-full mt-2 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 20. SEO Configuration */}
+                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <Globe size={14} className="text-blue-500" />
+                          <span>SEO Configuration</span>
+                        </span>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                              Slug
+                            </label>
+                            <input
+                              type="text"
+                              value={videoForm.seoSlug}
+                              onChange={(e) => setVideoForm({ ...videoForm, seoSlug: e.target.value })}
+                              placeholder="e.g. physics-wave-optics-lecture-1"
+                              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                              Meta Title
+                            </label>
+                            <input
+                              type="text"
+                              value={videoForm.seoMetaTitle}
+                              onChange={(e) => setVideoForm({ ...videoForm, seoMetaTitle: e.target.value })}
+                              placeholder="e.g. Wave Optics Class 12 IPE | MyMarks"
+                              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                              Meta Description
+                            </label>
+                            <input
+                              type="text"
+                              value={videoForm.seoMetaDescription}
+                              onChange={(e) => setVideoForm({ ...videoForm, seoMetaDescription: e.target.value })}
+                              placeholder="Complete Wave Optics video lecture for AP & Telangana Intermediate Board exams."
+                              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 21. Watermark & Anti-Piracy Settings (Optional) */}
+                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                              <ShieldCheck size={14} className="text-emerald-500" />
+                              <span>Anti-Piracy Watermark Protection <span className="text-[10px] text-slate-400 font-normal normal-case">(Optional)</span></span>
+                            </span>
+                            <p className="text-[11px] text-slate-500">
+                              Optionally overlay a dynamic copyright/licensing watermark on the video player
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({
+                                ...videoForm,
+                                watermarkEnabled: true,
+                                watermarkText: videoForm.watermarkText || 'MyMarks • Protected Content',
+                              })}
+                              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                videoForm.watermarkEnabled ? 'bg-emerald-600 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              Enable
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, watermarkEnabled: false })}
+                              className={`px-3 py-1 rounded-lg text-xs font-bold cursor-pointer transition-all ${
+                                !videoForm.watermarkEnabled ? 'bg-slate-700 text-white shadow-xs' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                              }`}
+                            >
+                              Disable
+                            </button>
+                          </div>
+                        </div>
+
+                        {videoForm.watermarkEnabled && (
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                                Watermark Text (Optional)
+                              </label>
+                              <input
+                                type="text"
+                                value={videoForm.watermarkText}
+                                onChange={(e) => setVideoForm({ ...videoForm, watermarkText: e.target.value })}
+                                placeholder="e.g. MyMarks • Protected Content"
+                                className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                              />
+                            </div>
+
+                            <div>
+                              <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                                Watermark Position
+                              </label>
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                {[
+                                  { pos: 'top-right', label: 'Top Right' },
+                                  { pos: 'top-left', label: 'Top Left' },
+                                  { pos: 'bottom-right', label: 'Bottom Right' },
+                                  { pos: 'bottom-left', label: 'Bottom Left' },
+                                ].map(({ pos, label }) => (
+                                  <button
+                                    key={pos}
+                                    type="button"
+                                    onClick={() => setVideoForm({ ...videoForm, watermarkPosition: pos })}
+                                    className={`py-1 px-1.5 rounded-md text-[11px] font-bold border transition-all cursor-pointer text-center ${
+                                      videoForm.watermarkPosition === pos
+                                        ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
+                                        : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 22. Badges & Highlighting ("Barge") (Optional) */}
+                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <Award size={14} className="text-amber-500" />
+                          <span>Lesson Badges & Accreditations (Barge) <span className="text-[10px] text-slate-400 font-normal normal-case">(Optional)</span></span>
+                        </span>
+
+                        <div className="space-y-2">
+                          <label className="text-[11px] font-semibold text-slate-500 block">
+                            Quick-Select Badge Presets
+                          </label>
+                          <div className="flex flex-wrap gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setVideoForm({ ...videoForm, badgeText: '', isVerifiedBadge: false })}
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                                !videoForm.badgeText
+                                  ? 'bg-slate-700 text-white border-slate-700 shadow-xs'
+                                  : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+                              }`}
+                            >
+                              None (No Badge)
+                            </button>
+                            {[
+                              'Verified Curriculum',
+                              'High Yield 2026',
+                              'Board Exam Special',
+                              'Top Rated',
+                              'PYQ Solved',
+                              'Formula Sheet Included',
+                            ].map((preset) => (
+                              <button
+                                key={preset}
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, badgeText: preset, isVerifiedBadge: preset.includes('Verified') })}
+                                className={`px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                                  videoForm.badgeText === preset
+                                    ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                                    : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-300'
+                                }`}
+                              >
+                                {preset}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                              Custom Badge Text (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={videoForm.badgeText}
+                              onChange={(e) => setVideoForm({ ...videoForm, badgeText: e.target.value })}
+                              placeholder="Leave blank for no badge (Optional)"
+                              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                              Verified Content Badge
+                            </label>
+                            <div className="flex gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, isVerifiedBadge: true })}
+                                className={`flex-1 py-1 px-2 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                  videoForm.isVerifiedBadge ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                }`}
+                              >
+                                Yes
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoForm({ ...videoForm, isVerifiedBadge: false })}
+                                className={`flex-1 py-1 px-2 rounded-md text-xs font-bold cursor-pointer transition-all ${
+                                  !videoForm.isVerifiedBadge ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
+                                }`}
+                              >
+                                No
+                              </button>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
+                              Resolution Quality Badge
+                            </label>
+                            <select
+                              value={videoForm.qualityBadge}
+                              onChange={(e) => setVideoForm({ ...videoForm, qualityBadge: e.target.value })}
+                              className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-bold"
+                            >
+                              <option value="1080p Full HD">1080p Full HD</option>
+                              <option value="4K Ultra HD">4K Ultra HD</option>
+                              <option value="720p HD">720p HD</option>
+                              <option value="Standard Def">Standard Def</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setVideoStudioStep(3)}
+                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Back: Step 3 (Thumbnail)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setVideoStudioStep(5)}
+                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
+                      >
+                        <span>Next: Step 5 (Live Student Preview)</span>
+                        <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ─────────────────────────────────────────────────────────
+                    STEP 5: LIVE STUDENT CARD PREVIEW
+                   ───────────────────────────────────────────────────────── */}
+                {videoStudioStep === 5 && (
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 border border-blue-500/30 text-center">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-2 border border-blue-500/30">
+                        <Eye size={24} />
+                      </div>
+                      <h4 className="text-base font-black text-slate-900 dark:text-white">
+                        Step 5 – Live Student Dashboard Card Preview
+                      </h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 max-w-lg mx-auto mt-1">
+                        This is the exact interactive card that students will see in their dashboard when this lesson is published.
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                      {/* Left: Exact Student Dashboard Card Preview */}
+                      <div className="md:col-span-7">
+                        <div className="rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between overflow-hidden group">
+                          <div>
+                            {/* Thumbnail Container */}
+                            <div
+                              className="relative aspect-video w-full bg-slate-900 overflow-hidden cursor-pointer"
+                              onClick={() => setPreviewVideoModal({ ...videoForm, id: 'preview-modal-test' })}
+                            >
+                              {videoForm.thumbnailUrl ? (
+                                <img
+                                  src={videoForm.thumbnailUrl}
+                                  alt={videoForm.title || 'Lesson thumbnail'}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                  onError={(e) => {
+                                    e.target.onerror = null;
+                                    e.target.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop';
+                                  }}
+                                />
+                              ) : (
+                                <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-950 p-4">
+                                  <Video size={32} className="text-blue-500 mb-1" />
+                                  <span className="text-[11px] font-bold">Visdom Waves Video</span>
+                                </div>
+                              )}
+
+                              {/* Dark gradient overlay for badges */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30 pointer-events-none" />
+
+                              {/* Play Button Icon on Hover */}
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-13 h-13 rounded-2xl bg-red-600/90 text-white flex items-center justify-center shadow-xl group-hover:scale-110 group-hover:bg-red-500 transition-all duration-300 border border-white/20">
+                                  <Play size={22} fill="currentColor" className="ml-0.5" />
+                                </div>
+                              </div>
+
+                              {/* Top Left: Badges ("Barge") & Type Pill & Access Level */}
+                              <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap z-10">
+                                {Boolean(videoForm.badgeText?.trim()) && (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center gap-1">
+                                    {videoForm.isVerifiedBadge && <ShieldCheck size={10} className="text-white" />}
+                                    <span>{videoForm.badgeText}</span>
+                                  </span>
+                                )}
+                                {Boolean(videoForm.badgeText?.trim()) && videoForm.qualityBadge && (
+                                  <span className="px-1.5 py-0.5 rounded bg-black/75 text-[10px] font-bold text-amber-300 border border-amber-400/30">
+                                    {videoForm.qualityBadge}
+                                  </span>
+                                )}
+                                {videoForm.type === 'youtube' || Boolean(extractYouTubeId(videoForm.url)) ? (
+                                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-red-600 text-white flex items-center gap-1 shadow-md">
+                                    <svg className="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                                    </svg>
+                                    <span>YouTube Lecture</span>
+                                  </span>
+                                ) : (
+                                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-blue-600 text-white flex items-center gap-1 shadow-md">
+                                    <Film size={11} />
+                                    <span>HD Video</span>
+                                  </span>
+                                )}
+
+                                {(videoForm.premiumContent || videoForm.isPremium) ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-slate-950 flex items-center gap-1 shadow-md">
+                                    <Lock size={10} />
+                                    <span>Premium</span>
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500 text-white flex items-center gap-1 shadow-md">
+                                    <Unlock size={10} />
+                                    <span>Free Preview</span>
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Watermark Overlay on Card (Optional) */}
+                              {Boolean(videoForm.watermarkEnabled && videoForm.watermarkText?.trim()) && (
+                                <div
+                                  className={`absolute z-10 pointer-events-none select-none flex items-center gap-1 px-2 py-0.5 rounded bg-black/60 backdrop-blur-xs border border-white/10 text-white/80 font-mono text-[9px] tracking-wider uppercase font-bold shadow-md max-w-[45%] truncate ${
+                                    videoForm.watermarkPosition === 'top-left'
+                                      ? 'top-2.5 left-2.5'
+                                      : videoForm.watermarkPosition === 'bottom-left'
+                                      ? 'bottom-2.5 left-2.5'
+                                      : videoForm.watermarkPosition === 'bottom-right'
+                                      ? 'bottom-2.5 right-2.5'
+                                      : 'top-2.5 right-2.5'
+                                  }`}
+                                >
+                                  <ShieldCheck size={10} className="text-blue-400 shrink-0" />
+                                  <span className="truncate">{videoForm.watermarkText}</span>
+                                </div>
+                              )}
+
+                              {/* Bottom Right: Duration */}
+                              {(videoForm.estimatedDuration || videoForm.duration) && (
+                                <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/80 text-white font-mono text-[11px] font-bold shadow-md">
+                                  {videoForm.estimatedDuration || videoForm.duration}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Body Content */}
+                            <div className="p-4 sm:p-5 space-y-2.5">
+                              {/* Board & Subject Badges */}
+                              <div className="flex items-center justify-between gap-2 flex-wrap">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-cyan-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wider">
+                                    {videoForm.subject || 'Subject'}
+                                  </span>
+                                  {videoForm.chapter && (
+                                    <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
+                                      {videoForm.chapter}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                  {videoForm.year || videoForm.classLevel || 'Intermediate'}
+                                </span>
+                              </div>
+
+                              {/* Title */}
+                              <h3
+                                onClick={() => setPreviewVideoModal({ ...videoForm, id: 'preview-modal-test' })}
+                                className="font-black text-slate-900 dark:text-white text-sm sm:text-base group-hover:text-blue-600 dark:group-hover:text-cyan-400 transition-colors line-clamp-2 cursor-pointer leading-snug"
+                              >
+                                {videoForm.title || 'Untitled Lesson'}
+                              </h3>
+
+                              {/* Lesson or Sub-unit */}
+                              {videoForm.lesson && (
+                                <p className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                                  {videoForm.lesson}
+                                </p>
+                              )}
+
+                              {/* Description */}
+                              <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                                {videoForm.description || 'Comprehensive conceptual breakdown with board blueprint exam proofs and solutions.'}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Footer Action */}
+                          <div className="p-4 sm:p-5 pt-0">
+                            <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-3">
+                              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 truncate max-w-[150px]">
+                                {videoForm.instructor || 'Visdom Waves Faculty'}
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() => setPreviewVideoModal({ ...videoForm, id: 'preview-modal-test' })}
+                                className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer active:scale-95 shrink-0"
+                              >
+                                <Play size={13} fill="currentColor" />
+                                <span>Watch Video</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Pre-publish Inspection Checklist */}
+                      <div className="md:col-span-5 space-y-4">
+                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 shadow-sm space-y-3">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                            Lesson Verification Summary
+                          </span>
+
+                          <div className="space-y-2 text-xs">
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Visibility:</span>
+                              <span className="font-bold uppercase text-emerald-600 dark:text-emerald-400">{videoForm.status}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Access:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">
+                                {videoForm.premiumContent || videoForm.isPremium ? '★ Premium Only' : 'Free Preview'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Highlight Badge:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">
+                                {videoForm.badgeText?.trim() ? (
+                                  <span className="text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                                    <Award size={12} className="text-amber-500" />
+                                    <span>{videoForm.badgeText} ({videoForm.qualityBadge})</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 font-normal">None (Optional)</span>
+                                )}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Watermark:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">
+                                {videoForm.watermarkEnabled && videoForm.watermarkText?.trim() ? (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                    <ShieldCheck size={12} /> Active ({videoForm.watermarkPosition})
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-400 font-normal">Disabled (Optional)</span>
+                                )}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Duration:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">{videoForm.estimatedDuration || videoForm.duration || '—'}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Difficulty:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">{videoForm.difficultyLevel}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Completion:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">{videoForm.completionRequirement}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Certificate Eligible:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">{videoForm.certificateEligible ? 'Yes' : 'No'}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+                              <span className="text-slate-500">Student Notification:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">{videoForm.studentNotifications ? 'Notify' : 'Silent'}</span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5">
+                              <span className="text-slate-500">Parent Notification:</span>
+                              <span className="font-bold text-slate-900 dark:text-white">{videoForm.parentNotification ? 'Send Message' : 'Disabled'}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Direct Submit Callout */}
+                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 space-y-2 text-center">
+                          <CheckCircle2 size={24} className="text-emerald-500 mx-auto" />
+                          <h5 className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                            Ready to Publish Content
+                          </h5>
+                          <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                            Click &quot;Publish Video / Lesson&quot; below to save and update the curriculum in real time.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setVideoStudioStep(4)}
+                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <ArrowLeft size={14} />
+                        <span>Back: Step 4 (Lesson Settings)</span>
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isLoading || isUploadingVideo}
+                        className="px-7 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                      >
+                        <CheckCircle2 size={16} />
+                        <span>{videoModalMode === 'create' ? 'Publish Video / Lesson' : 'Save Changes'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
               </div>
 
               {/* Studio Action Footer (Always Sticky at Bottom) */}
               <div className="shrink-0 px-5 sm:px-8 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
                 <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <span className="font-bold text-slate-700 dark:text-slate-300">
-                    {videoForm.type.toUpperCase()}
+                    Step {videoStudioStep}/5: {
+                      videoStudioStep === 1 ? 'Curriculum Info' :
+                      videoStudioStep === 2 ? 'Media Source' :
+                      videoStudioStep === 3 ? 'Thumbnail' :
+                      videoStudioStep === 4 ? 'Lesson Settings' : 'Student Preview'
+                    }
                   </span>
                   <span>•</span>
+                  <span>{videoForm.board && videoForm.board.includes('Andhra') ? 'AP' : videoForm.board && videoForm.board.includes('Telangana') ? 'TS' : 'AP & TS'}</span>
+                  <span>•</span>
                   <span>{videoForm.subject}</span>
-                  {videoForm.duration && (
-                    <>
-                      <span>•</span>
-                      <span>{videoForm.duration}</span>
-                    </>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setIsVideoFullScreen((prev) => !prev)}
-                    className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-                  >
-                    {isVideoFullScreen ? 'Exit Full Screen' : 'Full Screen View'}
-                  </button>
+                  {videoStudioStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setVideoStudioStep((prev) => Math.max(1, prev - 1))}
+                      className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <ArrowLeft size={13} />
+                      <span>Previous</span>
+                    </button>
+                  )}
+
+                  {videoStudioStep < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setVideoStudioStep((prev) => Math.min(5, prev + 1))}
+                      className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/25 transition-all cursor-pointer flex items-center gap-1"
+                    >
+                      <span>Next Step</span>
+                      <ArrowRight size={13} />
+                    </button>
+                  )}
 
                   <button
                     type="button"
@@ -3472,14 +5227,14 @@ export default function AdminPage({
                   <button
                     type="submit"
                     disabled={isLoading || isUploadingVideo}
-                    className="px-6 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                    className="px-6 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {isLoading ? (
                       <span>Saving...</span>
                     ) : isUploadingVideo ? (
                       <span>Uploading Video...</span>
                     ) : videoModalMode === 'create' ? (
-                      <span>Publish Video / Link</span>
+                      <span>Publish Video / Lesson</span>
                     ) : (
                       <span>Save Changes</span>
                     )}
@@ -3512,10 +5267,21 @@ export default function AdminPage({
             <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-6 text-left">
               {/* Top Close Bar */}
               <div className="p-4 sm:px-6 flex items-center justify-between border-b border-slate-800 bg-slate-900/90">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider">
                     {previewVideoModal.subject || 'Lecture'}
                   </span>
+                  {previewVideoModal.badgeText && (
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center gap-1">
+                      {(previewVideoModal.isVerifiedBadge ?? true) && <ShieldCheck size={11} className="text-white" />}
+                      <span>{previewVideoModal.badgeText}</span>
+                    </span>
+                  )}
+                  {previewVideoModal.qualityBadge && (
+                    <span className="px-1.5 py-0.5 rounded bg-black/60 text-[10px] font-bold text-amber-300 border border-amber-400/30">
+                      {previewVideoModal.qualityBadge}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-400 font-medium hidden sm:inline">•</span>
                   <span className="text-xs text-slate-300 font-semibold truncate max-w-sm">
                     {previewVideoModal.chapter || previewVideoModal.linkType || (isVid ? 'MP4 Video' : isYt ? 'YouTube Lecture' : 'Curriculum Resource')}
@@ -3542,7 +5308,25 @@ export default function AdminPage({
               </div>
 
               {/* Video Player Display Container */}
-              <div className="w-full bg-black">
+              <div className="w-full bg-black relative">
+                {/* Watermark Overlay on Preview Player */}
+                {(previewVideoModal.watermarkEnabled ?? true) && (
+                  <div
+                    className={`absolute z-20 pointer-events-none select-none flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/65 backdrop-blur-xs border border-white/10 text-white/80 font-mono text-[11px] tracking-wider uppercase font-bold shadow-xl ${
+                      previewVideoModal.watermarkPosition === 'top-left'
+                        ? 'top-4 left-4'
+                        : previewVideoModal.watermarkPosition === 'bottom-left'
+                        ? 'bottom-16 left-4'
+                        : previewVideoModal.watermarkPosition === 'bottom-right'
+                        ? 'bottom-16 right-4'
+                        : 'top-4 right-4'
+                    }`}
+                  >
+                    <ShieldCheck size={14} className="text-blue-400" />
+                    <span>{previewVideoModal.watermarkText || 'MyMarks • Protected Content'}</span>
+                  </div>
+                )}
+
                 {isYt && ytId ? (
                   <div className="relative aspect-video w-full bg-black">
                     <iframe

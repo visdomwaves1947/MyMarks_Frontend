@@ -473,14 +473,18 @@ export const fallbackVideos = [
     thumbnailUrl: 'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
     type: 'youtube',
     subject: 'General',
+    board: 'Both Boards',
     classLevel: 'All Levels',
+    year: 'Both Years',
     chapter: 'Interactive Learning Platform',
+    lesson: 'Lesson 1: Platform Tour',
     description: 'Walkthrough of Visdom Waves live 1-on-1 personalized learning dashboard, real-time whiteboarding, and doubt-solving session.',
     duration: '12 mins',
     instructor: 'Visdom Waves Lead',
     tags: ['Platform Demo', 'Classroom Tour', 'Visdom Waves'],
     linkType: 'Lecture Video',
     isFeatured: true,
+    isPremium: false,
     status: 'published',
     viewsCount: 1420,
     createdAt: new Date().toISOString(),
@@ -495,16 +499,46 @@ export const fallbackVideos = [
     thumbnailUrl: 'https://img.youtube.com/vi/fNk_zzaMoSs/hqdefault.jpg',
     type: 'youtube',
     subject: 'Mathematics',
+    board: 'Both Boards',
     classLevel: 'Intermediate 1st Year',
+    year: '1st Year',
     chapter: 'Functions',
+    lesson: 'Lesson 1: Injective & Surjective Mappings',
     description: 'Master injective, surjective, and bijective mappings, domain and range calculations with 7-mark IPE Board exam shortcuts.',
     duration: '48 mins',
     instructor: 'Dr. S. K. Sharma',
     tags: ['Maths 1A', 'Functions', 'IPE 2026', '7 Marks Guaranteed'],
     linkType: 'Lecture Video',
     isFeatured: true,
+    isPremium: false,
     status: 'published',
     viewsCount: 980,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    _id: 'vid-02b',
+    id: 'vid-02b',
+    title: 'Mathematics 2A: Complex Numbers & De Moivre Theorem',
+    url: 'https://www.youtube.com/watch?v=fNk_zzaMoSs',
+    youtubeId: 'fNk_zzaMoSs',
+    embedUrl: 'https://www.youtube.com/embed/fNk_zzaMoSs',
+    thumbnailUrl: 'https://img.youtube.com/vi/fNk_zzaMoSs/hqdefault.jpg',
+    type: 'youtube',
+    subject: 'Mathematics',
+    board: 'Both Boards',
+    classLevel: 'Intermediate 2nd Year',
+    year: '2nd Year',
+    chapter: 'Complex Numbers',
+    lesson: 'Lesson 2: De Moivre Theorem Proofs',
+    description: 'Master nth roots of unity, modulus-amplitude form, and 7-mark senior intermediate board exam problems.',
+    duration: '52 mins',
+    instructor: 'Dr. S. K. Sharma',
+    tags: ['Maths 2A', 'Complex Numbers', 'De Moivre', 'Senior Inter'],
+    linkType: 'Lecture Video',
+    isFeatured: true,
+    isPremium: true,
+    status: 'published',
+    viewsCount: 840,
     createdAt: new Date().toISOString(),
   },
   {
@@ -517,14 +551,18 @@ export const fallbackVideos = [
     thumbnailUrl: 'https://img.youtube.com/vi/bHIhgxav9LY/hqdefault.jpg',
     type: 'youtube',
     subject: 'Physics',
+    board: 'Both Boards',
     classLevel: 'Intermediate 1st Year',
+    year: '1st Year',
     chapter: 'Kinematics',
+    lesson: 'Lesson 3: Projectile Motion',
     description: 'Detailed derivations of trajectory of projectile, maximum height, time of flight, and horizontal range for Board and JEE Foundation.',
     duration: '42 mins',
     instructor: 'Prof. Ananya Rao',
     tags: ['Physics 1', 'Kinematics', 'Projectile Motion', 'Derivations'],
     linkType: 'Lecture Video',
     isFeatured: true,
+    isPremium: false,
     status: 'published',
     viewsCount: 1120,
     createdAt: new Date().toISOString(),
@@ -539,14 +577,18 @@ export const fallbackVideos = [
     thumbnailUrl: 'https://img.youtube.com/vi/WUvTyaaNjfo/hqdefault.jpg',
     type: 'youtube',
     subject: 'Chemistry',
+    board: 'Both Boards',
     classLevel: 'Intermediate 1st Year',
+    year: '1st Year',
     chapter: 'Chemical Bonding',
+    lesson: 'Lesson 2: Hybridization & MOT',
     description: 'Learn hybridization (sp, sp2, sp3), VSEPR theory shapes, and MOT energy diagrams for N2 and O2 molecules.',
     duration: '55 mins',
     instructor: 'Dr. V. Murthy',
     tags: ['Chemistry', 'MOT', 'Hybridization', 'VSEPR'],
     linkType: 'Lecture Video',
     isFeatured: false,
+    isPremium: false,
     status: 'published',
     viewsCount: 760,
     createdAt: new Date().toISOString(),
@@ -558,14 +600,18 @@ export const fallbackVideos = [
     url: 'https://drive.google.com/drive/folders/mymarks-ipe-pyq-resources',
     type: 'drive',
     subject: 'General',
+    board: 'Both Boards',
     classLevel: 'Both Years',
+    year: 'Both Years',
     chapter: 'Board Question Bank',
+    lesson: 'Resource: Solved Question Bank',
     description: 'Comprehensive 10-year solved IPE Question Papers with blueprint marks weightage for MPC, BiPC, CEC, and MEC streams.',
     duration: 'PDF Drive',
     instructor: 'Curriculum Council',
     tags: ['Question Bank', 'PDF Notes', 'IPE Blueprint', 'Official'],
     linkType: 'Notes & PDF',
     isFeatured: true,
+    isPremium: false,
     status: 'published',
     viewsCount: 2340,
     createdAt: new Date().toISOString(),
@@ -577,14 +623,18 @@ export const fallbackVideos = [
     url: 'https://amrita.olabs.edu.in/?sub=1&brch=4&sim=22&cnt=1',
     type: 'link',
     subject: 'Physics',
+    board: 'Both Boards',
     classLevel: 'Intermediate 1st Year',
+    year: '1st Year',
     chapter: 'Lab Practicals',
+    lesson: 'Lab 1: Vernier Caliper & Zero Error',
     description: 'Interactive virtual laboratory simulation to measure zero error, pitch, and least count with real-time digital calculations.',
     duration: 'Interactive',
     instructor: 'Lab Innovations Team',
     tags: ['Practicals', 'Lab Simulator', 'Screw Gauge', 'Interactive'],
     linkType: 'Study Material',
     isFeatured: true,
+    isPremium: false,
     status: 'published',
     viewsCount: 890,
     createdAt: new Date().toISOString(),
@@ -623,11 +673,37 @@ export async function fetchAdminVideos(params = {}) {
   }
 }
 
+/**
+ * Fetch published videos specifically for student dashboard and curriculum modules
+ */
+export async function fetchStudentVideos(params = {}) {
+  const searchParams = { ...params, publishedOnly: 'true', studentView: 'true' };
+  const query = new URLSearchParams(searchParams).toString();
+  const path = `/api/videos${query ? `?${query}` : ''}`;
+
+  try {
+    const res = await resilientFetch(path);
+    if (!res.ok) throw new Error(`Student videos fetch failed (${res.status})`);
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      return data.data;
+    }
+    return fallbackVideos.filter(v => v.status === 'published');
+  } catch (err) {
+    console.warn('[API] Falling back to published local fallback videos:', err.message);
+    return fallbackVideos.filter(v => v.status === 'published');
+  }
+}
+
 export async function createAdminVideoApi(videoData) {
   try {
+    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const res = await resilientFetch('/api/videos', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(videoData),
     });
     const data = await res.json();
@@ -640,9 +716,13 @@ export async function createAdminVideoApi(videoData) {
 
 export async function updateAdminVideoApi(id, videoData) {
   try {
+    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const res = await resilientFetch(`/api/videos/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify(videoData),
     });
     const data = await res.json();
@@ -653,10 +733,34 @@ export async function updateAdminVideoApi(id, videoData) {
   }
 }
 
+export async function toggleAdminVideoStatusApi(id, status) {
+  try {
+    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await resilientFetch(`/api/videos/${id}/status`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ status }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed to toggle status');
+    return data;
+  } catch (err) {
+    throw err;
+  }
+}
+
 export async function deleteAdminVideoApi(id) {
   try {
+    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const res = await resilientFetch(`/api/videos/${id}`, {
       method: 'DELETE',
+      headers,
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to delete video');
@@ -686,9 +790,16 @@ export async function uploadMediaFileApi(file, onProgress) {
   const formData = new FormData();
   formData.append('file', file);
 
+  const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
+
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${baseUrl}/api/upload`);
+    // Use /api/videos/upload with fallback to /api/upload
+    xhr.open('POST', `${baseUrl}/api/videos/upload`);
+
+    if (token) {
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    }
 
     if (xhr.upload && typeof onProgress === 'function') {
       xhr.upload.onprogress = (event) => {
@@ -702,50 +813,63 @@ export async function uploadMediaFileApi(file, onProgress) {
     xhr.onload = () => {
       try {
         const data = JSON.parse(xhr.responseText || '{}');
-        if (xhr.status >= 200 && xhr.status < 300) {
+        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
           resolve(data);
-        } else {
-          // If server upload endpoint is not available, provide fallback data URL
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve({
-              success: true,
-              data: { url: reader.result, name: file.name },
-            });
+        } else if (xhr.status === 404) {
+          // Retry with /api/upload alias
+          const retryXhr = new XMLHttpRequest();
+          retryXhr.open('POST', `${baseUrl}/api/upload`);
+          if (token) retryXhr.setRequestHeader('Authorization', `Bearer ${token}`);
+          retryXhr.onload = () => {
+            try {
+              const retryData = JSON.parse(retryXhr.responseText || '{}');
+              if (retryXhr.status >= 200 && retryXhr.status < 300) {
+                resolve(retryData);
+              } else {
+                throw new Error(retryData.message || 'Upload failed');
+              }
+            } catch (err) {
+              fallbackDataUrl(file, resolve, reject);
+            }
           };
-          reader.onerror = () => reject(new Error(data.message || 'Upload failed'));
-          reader.readAsDataURL(file);
+          retryXhr.onerror = () => fallbackDataUrl(file, resolve, reject);
+          retryXhr.send(formData);
+        } else {
+          // If server upload failed, fallback to local data URL for preview
+          fallbackDataUrl(file, resolve, reject);
         }
       } catch (e) {
-        // Fallback to data URL
-        const reader = new FileReader();
-        reader.onload = () => {
-          resolve({
-            success: true,
-            data: { url: reader.result, name: file.name },
-          });
-        };
-        reader.onerror = () => reject(e);
-        reader.readAsDataURL(file);
+        fallbackDataUrl(file, resolve, reject);
       }
     };
 
     xhr.onerror = () => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof onProgress === 'function') onProgress(100);
-        resolve({
-          success: true,
-          data: { url: reader.result, name: file.name },
-        });
-      };
-      reader.onerror = (err) => reject(err);
-      reader.readAsDataURL(file);
+      fallbackDataUrl(file, resolve, reject);
     };
 
     xhr.send(formData);
   });
 }
+
+function fallbackDataUrl(file, resolve, reject) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    resolve({
+      success: true,
+      data: {
+        url: reader.result,
+        relativeUrl: reader.result,
+        name: file.name,
+        originalName: file.name,
+        mimetype: file.type,
+        size: file.size,
+      },
+    });
+  };
+  reader.onerror = (err) => reject(err);
+  reader.readAsDataURL(file);
+}
+
 
 export async function submitContactMessage(contactData) {
   const baseUrl = getApiBaseUrl();
