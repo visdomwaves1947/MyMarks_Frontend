@@ -231,7 +231,7 @@ export function VisdomBrand({ onClick, className = "" }) {
                 fontSize="14.8" 
                 letterSpacing="0.1"
               >
-                Spend time on MyMarks, gain more marks
+                Spend time in MyMarks, gain more marks
               </text>
             </g>
           </g>
