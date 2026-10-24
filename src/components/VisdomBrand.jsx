@@ -17,7 +17,7 @@ export function VisdomBrand({ onClick, className = "" }) {
         - Lower Elevated Tray: Metallic Gold Border, Matching Yellow Gradient, and Glowing Golden Corner Flares
         - In Lower Tray: Centered "powered by [logo] Visdom Waves" in Razor-Sharp Deep Slate
       */}
-      <div className="relative h-[54px] xs:h-[60px] sm:h-[68px] md:h-[76px] w-auto flex items-center">
+      <div className="relative h-[46px] xs:h-[52px] sm:h-[68px] md:h-[76px] w-auto flex items-center">
         <svg 
           viewBox="8 40 660 162" 
           className="h-full w-auto block select-none overflow-visible filter drop-shadow-[0_3px_10px_rgba(0,0,0,0.10)]"

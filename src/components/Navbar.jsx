@@ -297,10 +297,10 @@ export default function Navbar({
               </a>
             </div>
 
-            {/* Curriculum Accreditation Badge */}
-            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold text-white border border-white/30 bg-white/10 whitespace-nowrap">
-              <GraduationCap size={11} className="text-amber-300" />
-              <span>BIEAP & TSBIE Board</span>
+            {/* Curriculum Accreditation Badge - Visible on Mobile and Desktop */}
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8.5px] xs:text-[9.5px] sm:text-[10px] font-bold text-white border border-white/30 bg-white/10 whitespace-nowrap">
+              <GraduationCap size={10} className="text-amber-300 shrink-0" />
+              <span>AP & TS Board</span>
             </span>
           </div>
         </div>
@@ -315,7 +315,7 @@ export default function Navbar({
             borderBottom: scrolled ? "1px solid #93c5fd" : "1px solid #bfdbfe",
           }}
         >
-          <div className="w-full px-2.5 sm:px-6 lg:px-8 relative z-10 flex items-center justify-between gap-2 sm:gap-4 h-[72px] sm:h-[82px] md:h-[86px]">
+          <div className="w-full px-2 xs:px-3 sm:px-6 lg:px-8 relative z-10 flex items-center justify-between gap-1.5 sm:gap-4 h-[62px] xs:h-[68px] sm:h-[82px] md:h-[86px]">
           {/* Left: Visdom Waves Brand Logo Badge (Exact Reference Graphic Style) */}
           <div className="flex items-center shrink-0">
             <VisdomBrand
@@ -603,7 +603,7 @@ export default function Navbar({
 
       {/* Mobile Slide-Down Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[108px] sm:top-[118px] md:top-[122px] z-40 bg-[#dbeafe] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 border-b border-blue-300 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100vh-120px)] py-4 px-4 select-none">
+        <div className="lg:hidden fixed inset-x-0 top-[98px] xs:top-[104px] sm:top-[118px] md:top-[122px] z-40 bg-[#dbeafe] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 border-b border-blue-300 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100vh-120px)] py-4 px-4 select-none">
           {/* Mobile Search */}
           <form
             onSubmit={handleSearchSubmit}
