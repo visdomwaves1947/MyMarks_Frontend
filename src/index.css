@@ -560,3 +560,168 @@ html.dark textarea {
 .sweep-shine {
   animation: sweepShine 3.2s ease-in-out infinite;
 }
+
+/* 3D Perspective & Hero Continuous Overlay Animations */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.perspective-1200 {
+  perspective: 1200px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+@keyframes heroBookFloatA {
+  0%, 100% {
+    transform: translateY(0px) rotateY(-12deg) rotateX(3deg);
+  }
+  50% {
+    transform: translateY(-8px) rotateY(-15deg) rotateX(5deg);
+  }
+}
+
+@keyframes heroBookFloatB {
+  0%, 100% {
+    transform: translateY(0px) rotateY(-8deg) rotateX(4deg);
+  }
+  50% {
+    transform: translateY(-11px) rotateY(-11deg) rotateX(2deg);
+  }
+}
+
+@keyframes heroBookFloatC {
+  0%, 100% {
+    transform: translateY(0px) rotateY(-14deg) rotateX(2deg);
+  }
+  50% {
+    transform: translateY(-7px) rotateY(-17deg) rotateX(6deg);
+  }
+}
+
+.animate-book-float-a {
+  animation: heroBookFloatA 4.2s ease-in-out infinite;
+}
+
+.animate-book-float-b {
+  animation: heroBookFloatB 4.8s ease-in-out infinite 0.5s;
+}
+
+.animate-book-float-c {
+  animation: heroBookFloatC 3.9s ease-in-out infinite 1s;
+}
+
+@keyframes heroSceneEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroSceneExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(-24px, 0, 0);
+  }
+}
+
+.animate-hero-scene-enter {
+  animation: heroSceneEnter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-hero-scene-exit {
+  animation: heroSceneExit 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes bookMarqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-book-marquee {
+  animation: bookMarqueeScroll 28s linear infinite;
+}
+
+.animate-book-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes spinClockwise {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spinCounterClockwise {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-wheel-spin {
+  animation: spinClockwise 22s linear infinite;
+}
+
+.animate-wheel-spin-reverse {
+  animation: spinCounterClockwise 22s linear infinite;
+}
+
+@keyframes textShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-text-shimmer {
+  background-size: 200% auto;
+  animation: textShimmer 3s ease-in-out infinite;
+}
+
+@keyframes goldFoilShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gold-foil-shine {
+  background: linear-gradient(
+    110deg,
+    rgba(255, 215, 0, 0.15) 0%,
+    rgba(255, 255, 255, 0.4) 45%,
+    rgba(255, 215, 0, 0.8) 50%,
+    rgba(255, 255, 255, 0.4) 55%,
+    rgba(255, 215, 0, 0.15) 100%
+  );
+  background-size: 200% 100%;
+  animation: goldFoilShimmer 4s ease-in-out infinite;
+}
+
