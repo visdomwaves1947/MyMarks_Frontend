@@ -15,6 +15,7 @@ import {
 export default function HeroContinuousOverlay({
   onOpenVideoDemo,
   onOpenBooking,
+  onSceneChange,
 }) {
   const [currentScene, setCurrentScene] = useState(0); // 0, 1, 2, 3
   const [exitingScene, setExitingScene] = useState(null);
@@ -24,20 +25,28 @@ export default function HeroContinuousOverlay({
   // Exact user-specified timing:
   // Scene 0 (My Marks Brand): 3 sec (3000ms)
   // Scene 1 (Powered by Visdom Waves + full info): 3 sec (3000ms)
-  // Scene 2 (AP & TS Rotating Wheels + My Marks center logo): 5 sec (5000ms)
-  // Scene 3 (Continuous Books Showcase): 6 sec (6000ms)
-  const SCENE_DURATIONS = [3000, 3000, 5000, 6000];
-  const TRANSITION_DURATION = 350;
+  // Scene 2 (AP & TS Rotating Wheels + My Marks center logo): 3 sec (3000ms)
+  // Scene 3 (Continuous Books Showcase): 4 sec (4000ms)
+  const SCENE_DURATIONS = [3000, 3000, 3000, 4000];
+  const TRANSITION_DURATION = 250;
+
+  // Sync scene change to parent immediately for zero-lag background transitions
+  useEffect(() => {
+    if (onSceneChange) {
+      onSceneChange(currentScene);
+    }
+  }, [currentScene, onSceneChange]);
 
   const triggerNextScene = (forcedIndex = null) => {
-    setCurrentScene((prev) => {
-      const next = forcedIndex !== null ? forcedIndex : (prev + 1) % 4;
-      setExitingScene(prev);
-      setTimeout(() => {
-        setExitingScene(null);
-      }, TRANSITION_DURATION);
-      return next;
-    });
+    const next = forcedIndex !== null ? forcedIndex : (currentScene + 1) % 4;
+    setExitingScene(currentScene);
+    setCurrentScene(next);
+    if (onSceneChange) {
+      onSceneChange(next);
+    }
+    setTimeout(() => {
+      setExitingScene(null);
+    }, TRANSITION_DURATION);
   };
 
   useEffect(() => {
@@ -218,10 +227,10 @@ export default function HeroContinuousOverlay({
             key={`scene-0-${isExit ? "exit" : "active"}`}
             className={`w-full max-w-4xl mx-auto flex items-center justify-center text-center px-3 select-none ${animationClass}`}
           >
-            <div className="flex items-center justify-center gap-3 xs:gap-3.5 sm:gap-5 md:gap-6">
+            <div className="flex items-center justify-center gap-3 xs:gap-3.5 sm:gap-5 md:gap-6 bg-slate-950/75 backdrop-blur-md px-5 xs:px-7 sm:px-10 py-3.5 xs:py-4 sm:py-5 rounded-3xl border border-white/25 shadow-[0_12px_40px_rgba(0,0,0,0.7)] ring-1 ring-cyan-400/40">
               {/* Ultra-Clear My Marks Logo Image with Crisp Contrast & Glow */}
               <div className="relative group shrink-0">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/50 via-cyan-400/50 to-indigo-500/50 rounded-2xl blur-md opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/60 via-cyan-400/60 to-indigo-500/60 rounded-2xl blur-md opacity-90 group-hover:opacity-100 transition-opacity"></div>
                 <div className="relative w-12 h-12 xs:w-14 xs:h-14 sm:w-18 sm:h-18 md:w-22 md:h-22 rounded-2xl bg-white p-1.5 xs:p-2 shadow-[0_4px_24px_rgba(0,0,0,0.95)] border border-white/90 flex items-center justify-center">
                   <img
                     src="/logomymarks.png"
@@ -233,10 +242,10 @@ export default function HeroContinuousOverlay({
 
               {/* Brand Title with Clear Gap & Text Shimmer Animation */}
               <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3.5">
-                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-medium text-white tracking-tight leading-none whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-none whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
                   My
                 </span>
-                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-medium bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-300 bg-clip-text text-transparent animate-text-shimmer tracking-tight leading-none whitespace-nowrap drop-shadow-[0_4px_20px_rgba(34,211,238,0.7)]">
+                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-300 bg-clip-text text-transparent animate-text-shimmer tracking-tight leading-none whitespace-nowrap drop-shadow-[0_4px_20px_rgba(34,211,238,0.7)]">
                   Marks
                 </span>
               </div>
@@ -257,40 +266,42 @@ export default function HeroContinuousOverlay({
             key={`scene-1-${isExit ? "exit" : "active"}`}
             className={`w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center px-3 select-none ${animationClass}`}
           >
-            {/* Small Subtle Lightweight "Powered by" */}
-            <span className="text-[10px] xs:text-xs sm:text-sm font-light text-slate-300 tracking-[0.25em] uppercase mb-1 sm:mb-1.5 whitespace-nowrap drop-shadow">
-              Powered by
-            </span>
+            <div className="flex flex-col items-center justify-center bg-slate-950/75 backdrop-blur-md px-5 xs:px-7 sm:px-10 py-3 xs:py-4 sm:py-5 rounded-3xl border border-cyan-400/35 shadow-[0_12px_40px_rgba(0,0,0,0.7)] ring-1 ring-cyan-400/40">
+              {/* Small Subtle Lightweight "Powered by" */}
+              <span className="text-[10px] xs:text-xs sm:text-sm font-bold text-white tracking-[0.25em] uppercase mb-1 sm:mb-1.5 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                Powered by
+              </span>
 
-            {/* Full Visdom Waves Brand Layout - Always Horizontal Side-by-Side Like Laptop View */}
-            <div className="flex flex-row items-center justify-center gap-2.5 xs:gap-3 sm:gap-4 md:gap-5 text-left">
-              {/* Visdom Waves Logo with Crisp Backdrop */}
-              <div className="relative group shrink-0">
-                <div className="absolute -inset-1 bg-cyan-400/30 rounded-xl blur-sm"></div>
-                <img
-                  src="/Visdomlogo.png"
-                  alt="Visdom Waves Logo"
-                  className="relative h-8 xs:h-10 sm:h-16 md:h-18 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] shrink-0 [image-rendering:-webkit-optimize-contrast]"
-                />
-              </div>
+              {/* Full Visdom Waves Brand Layout - Always Horizontal Side-by-Side Like Laptop View */}
+              <div className="flex flex-row items-center justify-center gap-2.5 xs:gap-3 sm:gap-4 md:gap-5 text-left">
+                {/* Visdom Waves Logo with Crisp Backdrop */}
+                <div className="relative group shrink-0">
+                  <div className="absolute -inset-1 bg-cyan-400/40 rounded-xl blur-sm"></div>
+                  <img
+                    src="/Visdomlogo.png"
+                    alt="Visdom Waves Logo"
+                    className="relative h-8 xs:h-10 sm:h-16 md:h-18 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] shrink-0 [image-rendering:-webkit-optimize-contrast]"
+                  />
+                </div>
 
-              {/* Full Brand Details: Visdom Waves + Innovations Private Limited + Driven by vision */}
-              <div className="flex flex-col items-start justify-center">
-                <h2 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl font-semibold text-white tracking-tight leading-tight whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
-                  Visdom Waves
-                </h2>
+                {/* Full Brand Details: Visdom Waves + Innovations Private Limited + Driven by vision */}
+                <div className="flex flex-col items-start justify-center">
+                  <h2 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                    Visdom Waves
+                  </h2>
 
-                <h3 className="text-[10px] xs:text-xs sm:text-lg md:text-xl font-medium text-cyan-300 tracking-wide mt-0.5 whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-                  Innovations Private Limited
-                </h3>
+                  <h3 className="text-[10px] xs:text-xs sm:text-lg md:text-xl font-bold text-cyan-300 tracking-wide mt-0.5 whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                    Innovations Private Limited
+                  </h3>
 
-                {/* Slogan: Driven by vision */}
-                <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
-                  <span className="h-[1.5px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]"></span>
-                  <span className="text-[8px] xs:text-[9.5px] sm:text-xs font-semibold text-cyan-200 tracking-[0.2em] uppercase whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
-                    Driven by vision
-                  </span>
-                  <span className="h-[1.5px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]"></span>
+                  {/* Slogan: Driven by vision */}
+                  <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
+                    <span className="h-[2px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]"></span>
+                    <span className="text-[8px] xs:text-[9.5px] sm:text-xs font-bold text-cyan-200 tracking-[0.2em] uppercase whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                      Driven by vision
+                    </span>
+                    <span className="h-[2px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]"></span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -298,9 +309,10 @@ export default function HeroContinuousOverlay({
         );
 
       // =========================================================================
-      // 3. ANIMATION THREE — Government of AP & Telangana Rotating Wheels (5.0s)
-      // Symmetrical layout: [Telangana Wheel] - [My Marks Logo] - [AP Wheel]
-      // Clear logos, labels, smooth rotation, compact mobile fit.
+      // 3. ANIMATION THREE — Government of AP & Telangana Real Golden Chakras (3.0s)
+      // Symmetrical layout: [Telangana Chakra] <--> [AP Chakra]
+      // Real 24-spoke Golden Chakra wheels, text covering full 360° circle,
+      // authentic gold colors, fast rotation, and crisp state seals.
       // =========================================================================
       case 2:
         return (
@@ -308,60 +320,153 @@ export default function HeroContinuousOverlay({
             key={`scene-2-${isExit ? "exit" : "active"}`}
             className={`w-full max-w-4xl mx-auto flex items-center justify-center px-1 xs:px-2 select-none ${animationClass}`}
           >
-            <div className="flex items-center justify-center gap-1.5 xs:gap-2.5 sm:gap-5 md:gap-8 w-full">
-              {/* Left Circular Rotating Wheel: Government of Telangana */}
+            <div className="flex items-center justify-center gap-6 xs:gap-8 sm:gap-14 md:gap-20 w-full bg-slate-950/75 backdrop-blur-md px-4 xs:px-6 sm:px-10 py-3 xs:py-4 sm:py-5 rounded-3xl border border-amber-400/40 shadow-[0_12px_40px_rgba(0,0,0,0.7)] ring-1 ring-amber-400/40">
+              {/* Left Circular Rotating Chakra: Government of Telangana */}
               <div className="flex flex-col items-center">
-                <div className="relative w-14 h-14 xs:w-16 xs:h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 shrink-0">
+                <div className="relative w-18 h-18 xs:w-22 xs:h-22 sm:w-28 sm:h-28 md:w-34 md:h-34 shrink-0">
                   <svg
                     viewBox="0 0 200 200"
-                    className="w-full h-full animate-wheel-spin"
+                    className="w-full h-full animate-wheel-spin drop-shadow-[0_4px_16px_rgba(245,158,11,0.45)]"
                   >
                     <defs>
+                      <linearGradient id="tsGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFF7B8" />
+                        <stop offset="25%" stopColor="#FFD700" />
+                        <stop offset="50%" stopColor="#F59E0B" />
+                        <stop offset="75%" stopColor="#B45309" />
+                        <stop offset="100%" stopColor="#FFE066" />
+                      </linearGradient>
+                      <linearGradient id="tsSpokeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#FFFFFF" />
+                        <stop offset="25%" stopColor="#FFE066" />
+                        <stop offset="60%" stopColor="#F59E0B" />
+                        <stop offset="100%" stopColor="#92400E" />
+                      </linearGradient>
+                      <radialGradient id="tsBeadGrad" cx="35%" cy="35%" r="65%">
+                        <stop offset="0%" stopColor="#FFFFFF" />
+                        <stop offset="40%" stopColor="#FFE57F" />
+                        <stop offset="75%" stopColor="#F59E0B" />
+                        <stop offset="100%" stopColor="#78350F" />
+                      </radialGradient>
                       <path
                         id="tsWheelPath"
-                        d="M 100, 100 m -74, 0 a 74,74 0 1,1 148,0 a 74,74 0 1,1 -148,0"
+                        d="M 100, 100 m -75, 0 a 75,75 0 1,1 150,0 a 75,75 0 1,1 -150,0"
                       />
                     </defs>
-                    {/* Concentric Gold Spoke & Gear Teeth Borders */}
+
+                    {/* Outer 24K Gold Beaded Rim */}
                     <circle
                       cx="100"
                       cy="100"
-                      r="96"
+                      r="97"
                       fill="none"
-                      stroke="#f59e0b"
-                      strokeWidth="2.5"
-                      strokeDasharray="3 4"
-                      opacity="0.9"
+                      stroke="url(#tsGoldGrad)"
+                      strokeWidth="3.5"
                     />
                     <circle
                       cx="100"
                       cy="100"
-                      r="88"
+                      r="93.5"
                       fill="none"
-                      stroke="#fbbf24"
-                      strokeWidth="1.5"
-                      opacity="0.5"
+                      stroke="#78350F"
+                      strokeWidth="1"
+                      opacity="0.6"
+                    />
+
+                    {/* 24 Golden Chakra Outer Studs / Rivets */}
+                    {[...Array(24)].map((_, i) => (
+                      <circle
+                        key={`ts-rim-${i}`}
+                        cx="100"
+                        cy="6"
+                        r="2.2"
+                        fill="url(#tsBeadGrad)"
+                        transform={`rotate(${i * 15} 100 100)`}
+                      />
+                    ))}
+
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="87"
+                      fill="none"
+                      stroke="url(#tsGoldGrad)"
+                      strokeWidth="1.8"
+                    />
+
+                    {/* Full 360° Circular Text Covering Entire Circle */}
+                    <text className="fill-amber-300 text-[8.5px] font-black tracking-[1.4px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                      <textPath href="#tsWheelPath" startOffset="0%">
+                        <tspan textLength="471" lengthAdjust="spacingAndGlyphs">
+                          ★ GOVERNMENT OF TELANGANA ★ TS BIE INTERMEDIATE ★ SYLLABUS 2025-26 ★
+                        </tspan>
+                      </textPath>
+                    </text>
+
+                    {/* Inner Rim Divider */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="64"
+                      fill="none"
+                      stroke="url(#tsGoldGrad)"
+                      strokeWidth="2.5"
                     />
                     <circle
                       cx="100"
                       cy="100"
                       r="60"
                       fill="none"
-                      stroke="#f59e0b"
-                      strokeWidth="1.5"
-                      opacity="0.7"
+                      stroke="#D97706"
+                      strokeWidth="1"
+                      strokeDasharray="2 3"
+                      opacity="0.75"
                     />
-                    {/* Circular Rotating Text */}
-                    <text className="fill-amber-300 text-[10px] sm:text-[10.5px] font-bold tracking-[2.2px] uppercase">
-                      <textPath href="#tsWheelPath" startOffset="0%">
-                        WE SUPPORT TELANGANA INTERMEDIATE SYLLABUS • 
-                      </textPath>
-                    </text>
+
+                    {/* 24 Real Golden Chakra Spokes Radiating Outwards */}
+                    {[...Array(24)].map((_, i) => (
+                      <g key={`ts-spoke-${i}`} transform={`rotate(${i * 15} 100 100)`}>
+                        <line
+                          x1="100"
+                          y1="34"
+                          x2="100"
+                          y2="60"
+                          stroke="url(#tsSpokeGrad)"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        />
+                        <circle
+                          cx="100"
+                          cy="59"
+                          r="1.6"
+                          fill="url(#tsBeadGrad)"
+                        />
+                      </g>
+                    ))}
+
+                    {/* Golden Center Hub Ring */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="34"
+                      fill="none"
+                      stroke="url(#tsGoldGrad)"
+                      strokeWidth="3"
+                    />
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="31"
+                      fill="none"
+                      stroke="#FFE57F"
+                      strokeWidth="1.2"
+                      opacity="0.9"
+                    />
                   </svg>
 
-                  {/* Center Emblem: Government of Telangana Seal */}
+                  {/* Center Emblem: Government of Telangana Seal (Stationary & Regal) */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-7 h-7 xs:w-9 xs:h-9 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-white p-0.5 sm:p-1 shadow-lg border border-amber-400/60 flex items-center justify-center">
+                    <div className="w-9 h-9 xs:w-11 xs:h-11 sm:w-15 sm:h-15 md:w-18 md:h-18 rounded-full bg-white p-0.5 sm:p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.85)] border-2 border-amber-400 ring-2 ring-amber-300/70 flex items-center justify-center">
                       <img
                         src="/ts_logo.png"
                         alt="Telangana Board Seal"
@@ -371,78 +476,157 @@ export default function HeroContinuousOverlay({
                   </div>
                 </div>
 
-                <span className="text-[7px] xs:text-[8px] sm:text-[9.5px] md:text-xs font-medium text-amber-200/90 uppercase tracking-wider mt-0.5 sm:mt-1 whitespace-nowrap drop-shadow">
+                <span className="text-[8.5px] xs:text-[10px] sm:text-xs md:text-sm font-extrabold text-amber-300 uppercase tracking-widest mt-1.5 sm:mt-2 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                   Govt of Telangana
                 </span>
               </div>
 
-              {/* Central My Marks Logo (Decreased size on mobile between TS and AP wheels) */}
-              <div className="flex flex-col items-center justify-center px-0.5 sm:px-1.5 shrink-0">
-                <div className="w-6 h-6 xs:w-7 xs:h-7 sm:w-12 sm:h-12 md:w-16 md:h-16 rounded-lg sm:rounded-xl bg-white p-0.5 sm:p-1 shadow-xl border border-blue-400/50 flex items-center justify-center">
-                  <img
-                    src="/logomymarks.png"
-                    alt="My Marks Logo"
-                    className="w-full h-full object-contain [image-rendering:-webkit-optimize-contrast]"
-                  />
-                </div>
-                <span className="text-[7px] xs:text-[8px] sm:text-[10px] md:text-xs font-semibold text-white tracking-wide mt-0.5 whitespace-nowrap drop-shadow">
-                  My Marks
-                </span>
-              </div>
-
-              {/* Right Circular Rotating Wheel: Government of Andhra Pradesh */}
+              {/* Right Circular Rotating Chakra: Government of Andhra Pradesh */}
               <div className="flex flex-col items-center">
-                <div className="relative w-14 h-14 xs:w-16 xs:h-16 sm:w-24 sm:h-24 md:w-28 md:h-28 shrink-0">
+                <div className="relative w-18 h-18 xs:w-22 xs:h-22 sm:w-28 sm:h-28 md:w-34 md:h-34 shrink-0">
                   <svg
                     viewBox="0 0 200 200"
-                    className="w-full h-full animate-wheel-spin-reverse"
+                    className="w-full h-full animate-wheel-spin-reverse drop-shadow-[0_4px_16px_rgba(245,158,11,0.45)]"
                   >
                     <defs>
+                      <linearGradient id="apGoldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#FFF7B8" />
+                        <stop offset="25%" stopColor="#FFD700" />
+                        <stop offset="50%" stopColor="#F59E0B" />
+                        <stop offset="75%" stopColor="#B45309" />
+                        <stop offset="100%" stopColor="#FFE066" />
+                      </linearGradient>
+                      <linearGradient id="apSpokeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#FFFFFF" />
+                        <stop offset="25%" stopColor="#FFE066" />
+                        <stop offset="60%" stopColor="#F59E0B" />
+                        <stop offset="100%" stopColor="#92400E" />
+                      </linearGradient>
+                      <radialGradient id="apBeadGrad" cx="35%" cy="35%" r="65%">
+                        <stop offset="0%" stopColor="#FFFFFF" />
+                        <stop offset="40%" stopColor="#FFE57F" />
+                        <stop offset="75%" stopColor="#F59E0B" />
+                        <stop offset="100%" stopColor="#78350F" />
+                      </radialGradient>
                       <path
                         id="apWheelPath"
-                        d="M 100, 100 m -74, 0 a 74,74 0 1,1 148,0 a 74,74 0 1,1 -148,0"
+                        d="M 100, 100 m -75, 0 a 75,75 0 1,1 150,0 a 75,75 0 1,1 -150,0"
                       />
                     </defs>
-                    {/* Concentric Gold Spoke & Gear Teeth Borders */}
+
+                    {/* Outer 24K Gold Beaded Rim */}
                     <circle
                       cx="100"
                       cy="100"
-                      r="96"
+                      r="97"
                       fill="none"
-                      stroke="#f59e0b"
-                      strokeWidth="2.5"
-                      strokeDasharray="3 4"
-                      opacity="0.9"
+                      stroke="url(#apGoldGrad)"
+                      strokeWidth="3.5"
                     />
                     <circle
                       cx="100"
                       cy="100"
-                      r="88"
+                      r="93.5"
                       fill="none"
-                      stroke="#fbbf24"
-                      strokeWidth="1.5"
-                      opacity="0.5"
+                      stroke="#78350F"
+                      strokeWidth="1"
+                      opacity="0.6"
+                    />
+
+                    {/* 24 Golden Chakra Outer Studs / Rivets */}
+                    {[...Array(24)].map((_, i) => (
+                      <circle
+                        key={`ap-rim-${i}`}
+                        cx="100"
+                        cy="6"
+                        r="2.2"
+                        fill="url(#apBeadGrad)"
+                        transform={`rotate(${i * 15} 100 100)`}
+                      />
+                    ))}
+
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="87"
+                      fill="none"
+                      stroke="url(#apGoldGrad)"
+                      strokeWidth="1.8"
+                    />
+
+                    {/* Full 360° Circular Text Covering Entire Circle */}
+                    <text className="fill-amber-300 text-[8.5px] font-black tracking-[1.4px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                      <textPath href="#apWheelPath" startOffset="0%">
+                        <tspan textLength="471" lengthAdjust="spacingAndGlyphs">
+                          ★ GOVERNMENT OF ANDHRA PRADESH ★ BIEAP INTERMEDIATE ★ SYLLABUS 2025-26 ★
+                        </tspan>
+                      </textPath>
+                    </text>
+
+                    {/* Inner Rim Divider */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="64"
+                      fill="none"
+                      stroke="url(#apGoldGrad)"
+                      strokeWidth="2.5"
                     />
                     <circle
                       cx="100"
                       cy="100"
                       r="60"
                       fill="none"
-                      stroke="#f59e0b"
-                      strokeWidth="1.5"
-                      opacity="0.7"
+                      stroke="#D97706"
+                      strokeWidth="1"
+                      strokeDasharray="2 3"
+                      opacity="0.75"
                     />
-                    {/* Circular Rotating Text */}
-                    <text className="fill-amber-300 text-[10px] sm:text-[10.5px] font-bold tracking-[2.2px] uppercase">
-                      <textPath href="#apWheelPath" startOffset="0%">
-                        WE SUPPORT AP INTERMEDIATE SYLLABUS • 
-                      </textPath>
-                    </text>
+
+                    {/* 24 Real Golden Chakra Spokes Radiating Outwards */}
+                    {[...Array(24)].map((_, i) => (
+                      <g key={`ap-spoke-${i}`} transform={`rotate(${i * 15} 100 100)`}>
+                        <line
+                          x1="100"
+                          y1="34"
+                          x2="100"
+                          y2="60"
+                          stroke="url(#spokeGold)"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                        />
+                        <circle
+                          cx="100"
+                          cy="59"
+                          r="1.6"
+                          fill="url(#apBeadGrad)"
+                        />
+                      </g>
+                    ))}
+
+                    {/* Golden Center Hub Ring */}
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="34"
+                      fill="none"
+                      stroke="url(#apGoldGrad)"
+                      strokeWidth="3"
+                    />
+                    <circle
+                      cx="100"
+                      cy="100"
+                      r="31"
+                      fill="none"
+                      stroke="#FFE57F"
+                      strokeWidth="1.2"
+                      opacity="0.9"
+                    />
                   </svg>
 
-                  {/* Center Emblem: Government of Andhra Pradesh Seal */}
+                  {/* Center Emblem: Government of Andhra Pradesh Seal (Stationary & Regal) */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-7 h-7 xs:w-9 xs:h-9 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-white p-0.5 sm:p-1 shadow-lg border border-amber-400/60 flex items-center justify-center">
+                    <div className="w-9 h-9 xs:w-11 xs:h-11 sm:w-15 sm:h-15 md:w-18 md:h-18 rounded-full bg-white p-0.5 sm:p-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.85)] border-2 border-amber-400 ring-2 ring-amber-300/70 flex items-center justify-center">
                       <img
                         src="/ap_logo.png"
                         alt="Andhra Pradesh Board Seal"
@@ -452,7 +636,7 @@ export default function HeroContinuousOverlay({
                   </div>
                 </div>
 
-                <span className="text-[7px] xs:text-[8px] sm:text-[9.5px] md:text-xs font-medium text-amber-200/90 uppercase tracking-wider mt-0.5 sm:mt-1 whitespace-nowrap drop-shadow">
+                <span className="text-[8.5px] xs:text-[10px] sm:text-xs md:text-sm font-extrabold text-amber-300 uppercase tracking-widest mt-1.5 sm:mt-2 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
                   Govt of Andhra Pradesh
                 </span>
               </div>
@@ -557,9 +741,9 @@ export default function HeroContinuousOverlay({
       <div className="flex flex-row items-center justify-center gap-1.5 xs:gap-2 sm:gap-4 mt-2 xs:mt-2.5 sm:mt-5 w-full px-2 sm:w-auto">
         <button
           onClick={() => onOpenVideoDemo && onOpenVideoDemo()}
-          className="w-auto px-2 xs:px-2.5 sm:px-7 py-1 xs:py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-medium text-[9.5px] xs:text-[10.5px] sm:text-sm md:text-base shadow-md shadow-indigo-950/70 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1 xs:gap-1.5 cursor-pointer border border-blue-400/40"
+          className="w-auto px-2.5 xs:px-3 sm:px-7 py-1.5 xs:py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-bold text-[10px] xs:text-[11px] sm:text-sm md:text-base shadow-xl shadow-black/60 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer border border-blue-400/50"
         >
-          <Play size={11} className="sm:w-4 sm:h-4" fill="currentColor" />
+          <Play size={12} className="sm:w-4 sm:h-4" fill="currentColor" />
           <span className="whitespace-nowrap">Watch Demo Videos</span>
         </button>
 
@@ -572,15 +756,15 @@ export default function HeroContinuousOverlay({
               onOpenBooking("Intermediate AP & TS Course");
             }
           }}
-          className="w-auto px-2 xs:px-2.5 sm:px-6 py-1 xs:py-1.5 sm:py-2.5 rounded-lg sm:rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-[9.5px] xs:text-[10.5px] sm:text-sm md:text-base border border-white/30 backdrop-blur-md shadow-sm shadow-black/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1 xs:gap-1.5 cursor-pointer"
+          className="w-auto px-2.5 xs:px-3 sm:px-6 py-1.5 xs:py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-950/80 hover:bg-slate-900 text-white font-bold text-[10px] xs:text-[11px] sm:text-sm md:text-base border border-white/40 backdrop-blur-md shadow-xl shadow-black/60 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <BookOpen size={11} className="sm:w-4 sm:h-4" />
+          <BookOpen size={12} className="sm:w-4 sm:h-4" />
           <span className="whitespace-nowrap">Explore Subjects</span>
         </button>
       </div>
 
-      {/* Minimal Elegant Scene Navigation Indicators (Click to switch directly) */}
-      <div className="flex items-center gap-1.5 xs:gap-2 mt-2 xs:mt-2.5 sm:mt-4">
+      {/* Minimal Elegant Scene Navigation Indicators with dark pill for crisp visibility */}
+      <div className="flex items-center gap-1.5 xs:gap-2 mt-2 xs:mt-2.5 sm:mt-4 bg-slate-950/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow-md">
         {[
           { label: "My Marks Brand", index: 0 },
           { label: "Powered by Visdom Waves", index: 1 },
@@ -591,12 +775,13 @@ export default function HeroContinuousOverlay({
           return (
             <button
               key={item.index}
+              id={`hero-dot-${item.index}`}
               onClick={() => triggerNextScene(item.index)}
               title={item.label}
-              className={`h-1 sm:h-1.5 rounded-full transition-all duration-400 cursor-pointer ${
+              className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                 isActive
-                  ? "w-5 xs:w-6 sm:w-9 bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_8px_rgba(34,211,238,0.8)]"
-                  : "w-1 xs:w-1.5 sm:w-2.5 bg-white/30 hover:bg-white/60"
+                  ? "w-6 sm:w-9 bg-gradient-to-r from-cyan-400 to-blue-500 shadow-[0_0_8px_rgba(34,211,238,0.9)]"
+                  : "w-1.5 sm:w-2.5 bg-white/40 hover:bg-white/80"
               }`}
               aria-label={`Switch to ${item.label}`}
             />

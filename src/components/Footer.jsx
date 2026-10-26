@@ -418,15 +418,6 @@ export default function Footer({ onOpenBooking }) {
                     <span>+91 79977 55155</span>
                   </a>
                 </li>
-                <li className="pt-1">
-                  <button
-                    type="button"
-                    onClick={onOpenBooking}
-                    className="w-full sm:w-auto px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-700 hover:to-sky-700 text-white font-medium text-xs tracking-tight shadow-xs hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <span>Book 1-on-1 Free Class</span>
-                  </button>
-                </li>
               </ul>
             </div>
 

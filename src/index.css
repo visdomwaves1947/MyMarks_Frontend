@@ -679,11 +679,11 @@ html.dark textarea {
 }
 
 .animate-wheel-spin {
-  animation: spinClockwise 22s linear infinite;
+  animation: spinClockwise 10s linear infinite;
 }
 
 .animate-wheel-spin-reverse {
-  animation: spinCounterClockwise 22s linear infinite;
+  animation: spinCounterClockwise 10s linear infinite;
 }
 
 @keyframes textShimmer {
