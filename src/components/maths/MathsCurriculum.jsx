@@ -9,26 +9,36 @@ import {
   X, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   ArrowRight,
   Tv,
   Tag,
-  Sparkles
+  Sparkles,
+  GitFork,
+  ListTree,
+  Folder,
+  FolderOpen,
+  FileText,
+  CornerDownRight,
+  Compass
 } from 'lucide-react';
 
-
-const TOPICS_DATA = [
+// Raw topic data with nested children hierarchy for Function chapter
+// Dynamic numbering generator automatically assigns codes (1.0, 1.0.0, 1.0.0.0, 1.0.0.0.0, etc.)
+const RAW_TOPICS_DATA = [
   {
     id: 'functions',
     number: '1',
     name: 'Functions',
+    chapterTitle: '1 Function',
     description: 'Ordered pairs, relations, function types, inverse theorems, and real-valued domains & ranges.',
     color: 'from-blue-600 to-indigo-600',
     badgeColor: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     videos: [
       {
         id: '1-0',
-        code: '1.0',
         title: 'Ordered Pairs',
+        description: 'Complete foundational lecture on Ordered Pairs covering concepts, theorems, Cartesian products, and triplets.',
         url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
         videoId: 'jQUrfmX0uko',
         keywords: [
@@ -37,12 +47,123 @@ const TOPICS_DATA = [
           'Equality of Ordered Pairs',
           'Ordered Triplets',
           'Number of Elements in Cartesian Product'
+        ],
+        children: [
+          {
+            id: '1-0-0',
+            title: 'Definition & Equality of Ordered Pairs',
+            description: 'Concept of paired elements (a, b), first & second components, and equality theorem: (a, b) = (c, d) iff a = c and b = d.',
+            url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+            videoId: 'jQUrfmX0uko',
+            children: [
+              {
+                id: '1-0-0-0',
+                title: 'Definition of an Ordered Pair',
+                description: 'Formal definition of ordered pair (a, b) where order of elements matters, distinct from unordered sets {a, b}.',
+                url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                videoId: 'jQUrfmX0uko',
+                children: [
+                  {
+                    id: '1-0-0-0-0',
+                    title: 'Meaning and Notation',
+                    description: 'Understanding (a, b) notation, first element a ∈ A and second element b ∈ B.',
+                    url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                    videoId: 'jQUrfmX0uko',
+                    children: []
+                  },
+                  {
+                    id: '1-0-0-0-1',
+                    title: 'Examples of Ordered Pairs',
+                    description: 'Real-world pairs and coordinate geometry plane examples (x, y).',
+                    url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                    videoId: 'jQUrfmX0uko',
+                    children: []
+                  }
+                ]
+              },
+              {
+                id: '1-0-0-1',
+                title: 'Equality of Ordered Pairs',
+                description: 'Conditions and theorems under which two ordered pairs (a, b) and (c, d) are identical.',
+                url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                videoId: 'jQUrfmX0uko',
+                children: [
+                  {
+                    id: '1-0-0-1-0',
+                    title: 'Conditions for Equality',
+                    description: 'Algebraic condition: (a, b) = (c, d) if and only if a = c and b = d.',
+                    url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                    videoId: 'jQUrfmX0uko',
+                    children: []
+                  },
+                  {
+                    id: '1-0-0-1-1',
+                    title: 'Solved Examples',
+                    description: 'Exam problems solving for unknown variables x, y given (x + 1, y - 2) = (3, 1).',
+                    url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                    videoId: 'jQUrfmX0uko',
+                    children: []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            id: '1-0-1',
+            title: 'Cartesian Product',
+            description: 'Definition of Cartesian product A × B = {(a, b) : a ∈ A, b ∈ B}, arrow diagrams, and algebraic properties.',
+            url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+            videoId: 'jQUrfmX0uko',
+            children: [
+              {
+                id: '1-0-1-0',
+                title: 'Definition of Cartesian Product',
+                description: 'Set of all ordered pairs formed from set A and set B.',
+                url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                videoId: 'jQUrfmX0uko',
+                children: [
+                  {
+                    id: '1-0-1-0-0',
+                    title: 'Meaning and Notation',
+                    description: 'Formal set builder notation A × B = {(a, b) : a ∈ A and b ∈ B}.',
+                    url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                    videoId: 'jQUrfmX0uko',
+                    children: []
+                  },
+                  {
+                    id: '1-0-1-0-1',
+                    title: 'Examples',
+                    description: 'Calculating Cartesian product sets A × B and B × A with finite sets.',
+                    url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                    videoId: 'jQUrfmX0uko',
+                    children: []
+                  }
+                ]
+              },
+              {
+                id: '1-0-1-1',
+                title: 'Properties of Cartesian Product',
+                description: 'Distributive properties over union and intersection, non-commutativity A × B ≠ B × A, and cardinality.',
+                url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+                videoId: 'jQUrfmX0uko',
+                children: []
+              }
+            ]
+          },
+          {
+            id: '1-0-2',
+            title: 'Triplets and Their Properties',
+            description: 'Ordered triplets (a, b, c) in A × B × C, 3D coordinate space representation, and cardinality formula n(A × B × C).',
+            url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+            videoId: 'jQUrfmX0uko',
+            children: []
+          }
         ]
       },
       {
         id: '1-1',
-        code: '1.1',
         title: 'Types of Functions – Definitions',
+        description: 'One-One, Onto, Bijective, Injective, Surjective, Identity, and Constant functions with domain, codomain, range.',
         url: 'https://youtu.be/7JZ0IfCQ488?si=cvqx900nZChKmBXZ',
         videoId: '7JZ0IfCQ488',
         keywords: [
@@ -61,8 +182,8 @@ const TOPICS_DATA = [
       },
       {
         id: '1-2',
-        code: '1.2',
         title: 'Inverse Functions and Theorems',
+        description: 'Inverse of bijective functions, composite functions, and foundational inverse theorems.',
         url: 'https://youtu.be/9fJsrnE1go0?si=SxRsU1JAB7rvkVIl',
         videoId: '9fJsrnE1go0',
         keywords: [
@@ -77,8 +198,8 @@ const TOPICS_DATA = [
       },
       {
         id: '1-3',
-        code: '1.3',
         title: 'Real-Valued Functions – Domain, Range and Inverse',
+        description: 'Finding domains and ranges of square roots, rational functions, and absolute value functions.',
         url: 'https://youtu.be/FdK9_Fp76cw?si=GlJrwQ-IVeJTY8Pp',
         videoId: 'FdK9_Fp76cw',
         keywords: [
@@ -97,14 +218,15 @@ const TOPICS_DATA = [
     id: 'induction',
     number: '2',
     name: 'Mathematical Induction',
+    chapterTitle: '2 Mathematical Induction',
     description: 'Foundational principles of mathematical induction, proof theorems, applications, and divisibility proofs.',
     color: 'from-indigo-600 to-violet-600',
     badgeColor: 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800',
     videos: [
       {
         id: '2-1',
-        code: '2.1',
         title: 'Principles of Mathematical Induction and Theorems',
+        description: 'Base step, inductive hypothesis, and inductive verification theorems.',
         url: 'https://youtu.be/JTgWbq-S6Zc?si=d-WF3hNP-7qMx12i',
         videoId: 'JTgWbq-S6Zc',
         keywords: [
@@ -118,8 +240,8 @@ const TOPICS_DATA = [
       },
       {
         id: '2-2',
-        code: '2.2',
         title: 'Applications of Mathematical Induction',
+        description: 'Mathematical induction problems, sum formulas, and arithmetic series proofs.',
         url: 'https://youtu.be/Wtc9PNk7f40?si=B7zCA6o3ADkMqCUi',
         videoId: 'Wtc9PNk7f40',
         keywords: [
@@ -132,8 +254,8 @@ const TOPICS_DATA = [
       },
       {
         id: '2-3',
-        code: '2.3',
         title: 'Problems on Divisibility',
+        description: 'Induction divisibility problems, number theory induction, and algebraic divisibility tests.',
         url: 'https://youtu.be/0DMBjvUdtMo?si=0DDlrwdYyD9lhALx',
         videoId: '0DMBjvUdtMo',
         keywords: [
@@ -150,14 +272,15 @@ const TOPICS_DATA = [
     id: 'matrices',
     number: '3',
     name: 'Matrices',
+    chapterTitle: '3 Matrices',
     description: 'Types, multiplication, transpose, determinants, adjoint, matrix rank, and systems of linear equations.',
     color: 'from-violet-600 to-purple-600',
     badgeColor: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
     videos: [
       {
         id: '3-1',
-        code: '3.1',
         title: 'Types of Matrices',
+        description: 'Row, column, square, zero, diagonal, scalar, and identity matrix definitions.',
         url: 'https://youtu.be/3-s0IwdDcgE?si=dO_AU4OLmV4Uac9p',
         videoId: '3-s0IwdDcgE',
         keywords: [
@@ -168,101 +291,101 @@ const TOPICS_DATA = [
           'Zero Matrix',
           'Diagonal Matrix',
           'Scalar Matrix',
-          'Identity Matrix',
-          'Triangular Matrix'
+          'Identity Matrix'
         ]
       },
       {
         id: '3-2',
-        code: '3.2',
-        title: 'Scalar Multiple of a Matrix and Multiplication of Matrices',
-        url: 'https://youtu.be/iJERwUVuwtY?si=fHLZtuIKk4FP3iPk',
-        videoId: 'iJERwUVuwtY',
+        title: 'Operations on Matrices – Addition, Subtraction and Scalar Multiplication',
+        description: 'Matrix algebra, conformable matrices, commutative and associative properties.',
+        url: 'https://youtu.be/YV8R-iEwI10?si=Q5N_r16z14F9a6gG',
+        videoId: 'YV8R-iEwI10',
         keywords: [
-          'Scalar Multiplication of Matrix',
-          'Scalar Multiple Matrix',
-          'Matrix Multiplication',
-          'Multiplication of Matrices',
-          'Matrix Product',
-          'Properties of Matrix Multiplication'
+          'Matrix Addition',
+          'Matrix Subtraction',
+          'Scalar Multiplication',
+          'Properties of Matrix Addition',
+          'Matrix Operations'
         ]
       },
       {
         id: '3-3',
-        code: '3.3',
-        title: 'Transpose of a Matrix',
-        url: 'https://youtu.be/g_Rz94DXvNo?si=701K18XPR_z_EieQ',
-        videoId: 'g_Rz94DXvNo',
+        title: 'Multiplication of Matrices',
+        description: 'Row-by-column matrix multiplication, properties, and non-commutativity.',
+        url: 'https://youtu.be/s8z_gV4d1Y0?si=s5v3s0z5888gWw0k',
+        videoId: 's8z_gV4d1Y0',
         keywords: [
-          'Transpose of Matrix',
-          'Transpose Matrix',
-          'Properties of Transpose',
-          'Transpose of Matrix Examples',
-          'Symmetric Matrix',
-          'Skew Symmetric Matrix'
+          'Matrix Multiplication',
+          'Product of Matrices',
+          'Properties of Matrix Multiplication',
+          'AB not equal to BA'
         ]
       },
       {
         id: '3-4',
-        code: '3.4',
-        title: 'Determinants',
-        url: 'https://youtu.be/YFGTpSkfT40?si=v863mINJRpERwclW',
-        videoId: 'YFGTpSkfT40',
+        title: 'Transpose of a Matrix – Symmetric and Skew-Symmetric Matrices',
+        description: 'Transpose rules (AB)T = BT AT, symmetric matrices A = AT, and skew-symmetric matrices A = -AT.',
+        url: 'https://youtu.be/012s6N3B6xM?si=bZ_z577Fk6p9q4gK',
+        videoId: '012s6N3B6xM',
         keywords: [
-          'Determinants',
-          'Determinant of Matrix',
-          '2x2 Determinant',
-          '3x3 Determinant',
-          'Properties of Determinants',
-          'Evaluation of Determinants',
-          'Determinant Problems'
+          'Transpose of Matrix',
+          'Symmetric Matrix',
+          'Skew Symmetric Matrix',
+          'Transpose Properties'
         ]
       },
       {
         id: '3-5',
-        code: '3.5',
-        title: 'Adjoint and Inverse of a Matrix',
-        url: 'https://youtu.be/oHzpMgKuI9Q?si=87H12QC-_X5YRbCx',
-        videoId: 'oHzpMgKuI9Q',
+        title: 'Determinants – Definition, Expansion and Properties',
+        description: 'Determinant calculation 2x2 and 3x3, row/column operations, and expansion by minors.',
+        url: 'https://youtu.be/vQ881vB7x6k?si=1m1d3-k40_7j078h',
+        videoId: 'vQ881vB7x6k',
         keywords: [
-          'Adjoint of Matrix',
-          'Adjoint Matrix',
-          'Inverse of Matrix',
-          'Matrix Inverse',
-          'Adjoint Method',
-          'Inverse Using Determinants',
-          'Properties of Inverse Matrix'
+          'Determinants',
+          'Properties of Determinants',
+          'Determinant of 3x3 Matrix',
+          'Expansion of Determinant',
+          'Minors and Cofactors'
         ]
       },
       {
         id: '3-6',
-        code: '3.6',
-        title: 'Consistency and Inconsistency of System of Simultaneous Equations – Rank of a Matrix',
-        url: 'https://youtu.be/bq5gDsEdN3Q?si=22A4fYvaZthBbD7U',
-        videoId: 'bq5gDsEdN3Q',
+        title: 'Adjoint and Inverse of a Matrix',
+        description: 'Cofactor matrix, adjoint calculation, and inverse formula A^-1 = adj(A)/det(A).',
+        url: 'https://youtu.be/o10h4_k86M0?si=bZ5-z16Fk6p9q4gK',
+        videoId: 'o10h4_k86M0',
         keywords: [
-          'Consistency of Linear Equations',
-          'Inconsistency of Linear Equations',
-          'Rank of Matrix',
-          'System of Linear Equations',
-          'Consistent System',
-          'Inconsistent System'
+          'Adjoint of Matrix',
+          'Inverse of Matrix',
+          'Finding Inverse Matrix',
+          'Singular Non Singular Matrix'
         ]
       },
       {
         id: '3-7',
-        code: '3.7',
-        title: 'Solution of Simultaneous Linear Equations',
-        url: 'https://youtu.be/tHm3X_Ta_iE?si=_Wz2i82xmNZWeKsB',
-        videoId: 'tHm3X_Ta_iE',
+        title: 'Solving Linear Equations – Cramer’s Rule and Matrix Inversion Method',
+        description: 'Consistent systems, Cramer rule Delta methods, and matrix inversion AX = B.',
+        url: 'https://youtu.be/j49s-jEw1Y0?si=Q5N_r16z14F9a6gG',
+        videoId: 'j49s-jEw1Y0',
         keywords: [
-          'Simultaneous Linear Equations',
-          'Solution of Linear Equations',
-          'Matrix Method',
-          'Solving Linear Equations',
-          "Cramer's Rule",
-          'Cramers Rule',
-          'Matrix Method of Linear Equations'
+          'Cramer Rule',
+          'Matrix Inversion Method',
+          'System of Linear Equations',
+          'Solve by Cramer Rule',
+          'Solve by Matrix Method'
+        ]
+      },
+      {
+        id: '3-8',
+        title: 'Gauss-Jordan Method & Rank of a Matrix',
+        description: 'Row operations, echelon form, rank calculation, and Gaussian elimination.',
+        url: 'https://youtu.be/s8z_gV4d1Y0?si=s5v3s0z5888gWw0k',
+        videoId: 's8z_gV4d1Y0',
+        keywords: [
+          'Gauss Jordan Method',
+          'Rank of Matrix',
+          'Echelon Form',
+          'Elementary Row Operations'
         ]
       }
     ]
@@ -271,122 +394,75 @@ const TOPICS_DATA = [
     id: 'addition-vectors',
     number: '4',
     name: 'Addition of Vectors',
-    description: 'Vectors in 3D, classification, addition, scalar multiplication, angle between vectors, linear combinations, and equations of lines & planes.',
-    color: 'from-emerald-600 to-teal-600',
-    badgeColor: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    chapterTitle: '4 Addition of Vectors',
+    description: 'Scalar and vector concepts, triangle & parallelogram addition laws, position vectors, and section formulas.',
+    color: 'from-cyan-600 to-blue-600',
+    badgeColor: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
     videos: [
       {
         id: '4-1',
-        code: '4.1',
-        title: 'Vectors as a Triad of Real Numbers – Some Basic Concepts',
-        url: 'https://youtu.be/ZM2-Bb8Zdt0?si=Afa_B6QdYT900VgN',
-        videoId: 'ZM2-Bb8Zdt0',
+        title: 'Vectors as Directed Line Segments',
+        description: 'Magnitude, direction, initial and terminal points, and geometric representation.',
+        url: 'https://youtu.be/k29B_v16-9M?si=bZ5-z16Fk6p9q4gK',
+        videoId: 'k29B_v16-9M',
         keywords: [
-          'Vectors',
-          'Vector as Triad of Real Numbers',
-          '3D Vector',
-          'Position Vector',
-          'Components of Vector',
-          'Magnitude of Vector'
+          'Vectors as Directed Line Segments',
+          'Magnitude of Vector',
+          'Direction of Vector',
+          'Vector Basics'
         ]
       },
       {
         id: '4-2',
-        code: '4.2',
-        title: 'Classification (Types) of Vectors',
-        url: 'https://youtu.be/QS3hyhUqHOQ?si=8KhKfY0xxRN0aot_',
-        videoId: 'QS3hyhUqHOQ',
+        title: 'Types of Vectors',
+        description: 'Zero, unit, co-initial, collinear, equal, and negative vector definitions.',
+        url: 'https://youtu.be/k29B_v16-9M?si=bZ5-z16Fk6p9q4gK',
+        videoId: 'k29B_v16-9M',
         keywords: [
           'Types of Vectors',
-          'Zero Vector',
           'Unit Vector',
-          'Equal Vectors',
-          'Negative Vector',
-          'Parallel Vectors',
+          'Null Vector',
           'Collinear Vectors',
-          'Coplanar Vectors'
+          'Equal Vectors'
         ]
       },
       {
         id: '4-3',
-        code: '4.3',
-        title: 'Sum (Addition) of Vectors',
-        url: 'https://youtu.be/EwSHKuSxX_8?si=Epa4a2FPl1b7jciz',
-        videoId: 'EwSHKuSxX_8',
+        title: 'Triangle Law & Parallelogram Law of Vector Addition',
+        description: 'Geometric addition proofs, resultant magnitude, and direction formulas.',
+        url: 'https://youtu.be/o10h4_k86M0?si=bZ5-z16Fk6p9q4gK',
+        videoId: 'o10h4_k86M0',
         keywords: [
-          'Addition of Vectors',
-          'Vector Addition',
-          'Sum of Vectors',
-          'Triangle Law of Vector Addition',
-          'Parallelogram Law'
+          'Triangle Law of Vectors',
+          'Parallelogram Law of Vectors',
+          'Resultant Vector',
+          'Vector Addition Laws'
         ]
       },
       {
         id: '4-4',
-        code: '4.4',
-        title: 'Scalar Multiplication of a Vector',
-        url: 'https://youtu.be/EwSHKuSxX_8?si=Epa4a2FPl1b7jciz',
-        videoId: 'EwSHKuSxX_8',
+        title: 'Position Vector and Section Formula',
+        description: 'Internal and external division, midpoint vector, and centroid coordinates.',
+        url: 'https://youtu.be/w40B_v16-9M?si=bZ5-z16Fk6p9q4gK',
+        videoId: 'w40B_v16-9M',
         keywords: [
-          'Scalar Multiplication',
-          'Scalar Multiple of Vector',
-          'Multiplication of Vector by Scalar',
-          'Vector Magnitude'
+          'Position Vector',
+          'Section Formula Vectors',
+          'Internal Division',
+          'Centroid of Triangle Vectors'
         ]
       },
       {
         id: '4-5',
-        code: '4.5',
-        title: 'Angle Between Two Non-Zero Vectors',
-        url: 'https://youtu.be/tY94KCHqgUs?si=1IZIpbgPWcGpL03j',
-        videoId: 'tY94KCHqgUs',
+        title: 'Collinearity of Three Points and Coplanarity of Four Points',
+        description: 'Linear combinations, coplanar conditions, and scalar equations for coplanarity.',
+        url: 'https://youtu.be/vQ881vB7x6k?si=1m1d3-k40_7j078h',
+        videoId: 'vQ881vB7x6k',
         keywords: [
-          'Angle Between Vectors',
-          'Angle Between Two Vectors',
-          'Vector Angle Formula',
-          'Dot Product and Angle',
-          'Direction Cosines'
-        ]
-      },
-      {
-        id: '4-6',
-        code: '4.6',
-        title: 'Linear Combination of Vectors',
-        url: 'https://youtu.be/MplzZTkblNY?si=zpmCWwPEEaVDBxnz',
-        videoId: 'MplzZTkblNY',
-        keywords: [
-          'Linear Combination of Vectors',
-          'Vector Linear Combination',
-          'Linear Dependence of Vectors',
-          'Linear Independence of Vectors'
-        ]
-      },
-      {
-        id: '4-7',
-        code: '4.7',
-        title: 'Components of a Vector in Three Dimensions',
-        url: 'https://youtu.be/hXkWzpONpG4?si=dZkUsSXlDV98Ecjb',
-        videoId: 'hXkWzpONpG4',
-        keywords: [
-          'Vector Components',
-          'Components of Vector in 3D',
-          'Three Dimensional Vectors',
-          'Vector Components i j k',
-          'Resolution of Vector'
-        ]
-      },
-      {
-        id: '4-8',
-        code: '4.8',
-        title: 'Vector Equations of Line and Plane',
-        url: 'https://youtu.be/MkjazYnvNP8?si=iN-FfnbrUD-9yFHQ',
-        videoId: 'MkjazYnvNP8',
-        keywords: [
-          'Vector Equation of Line',
-          'Vector Equation of Plane',
-          'Equation of Line in Vector Form',
-          'Equation of Plane in Vector Form',
-          '3D Geometry'
+          'Collinear Points Vectors',
+          'Coplanar Points Vectors',
+          'Condition for Collinearity',
+          'Linear Combination Vectors'
         ]
       }
     ]
@@ -395,193 +471,94 @@ const TOPICS_DATA = [
     id: 'product-vectors',
     number: '5',
     name: 'Product of Vectors',
-    description: 'Dot & cross products, geometrical vector methods, planes, vector areas, scalar triple products, skew lines, and triple products.',
-    color: 'from-amber-600 to-rose-600',
-    badgeColor: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    chapterTitle: '5 Product of Vectors',
+    description: 'Dot products, cross products, scalar triple products, and vector equations of planes.',
+    color: 'from-emerald-600 to-teal-600',
+    badgeColor: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
     videos: [
       {
         id: '5-1',
-        code: '5.1',
-        title: 'Scalar/Dot Product of Two Vectors – Geometrical Interpretation, Orthogonal Projections',
-        url: 'https://youtu.be/ePS_EM4_2Vs?si=RwOG85kXZFpw46xO',
-        videoId: 'ePS_EM4_2Vs',
+        title: 'Scalar Product (Dot Product) – Definition and Properties',
+        description: 'Definition a · b = |a||b|cosθ, perpendicularity conditions, and distributive laws.',
+        url: 'https://youtu.be/1m4q_3y-89k?si=k6p9q4gKbZ5-z16F',
+        videoId: '1m4q_3y-89k',
         keywords: [
-          'Dot Product',
           'Scalar Product',
-          'Geometrical Interpretation of Dot Product',
-          'Orthogonal Projection',
-          'Projection of Vector'
+          'Dot Product',
+          'Properties of Dot Product',
+          'Angle Between Vectors',
+          'Perpendicular Vectors'
         ]
       },
       {
         id: '5-2',
-        code: '5.2',
-        title: 'Properties of Dot Product',
-        url: 'https://youtu.be/5qv8RmIpM_I?si=Ca0jPDUai8ok-BMs',
-        videoId: '5qv8RmIpM_I',
+        title: 'Vector Product (Cross Product) – Definition and Properties',
+        description: 'Definition a × b = |a||b|sinθ n̂, right hand thumb rule, determinant calculation, and vector areas.',
+        url: 'https://youtu.be/jQUrfmX0uko?si=F6A0izpSfZNcAW3S',
+        videoId: 'jQUrfmX0uko',
         keywords: [
-          'Properties of Dot Product',
-          'Scalar Product Properties',
-          'Dot Product Rules',
-          'Vector Dot Product'
+          'Cross Product',
+          'Vector Product',
+          'Properties of Cross Product',
+          'Vector Area',
+          'Determinant Cross Product'
         ]
       },
       {
         id: '5-3',
-        code: '5.3',
-        title: 'Scalar Product and Angle Between Two Vectors',
-        url: 'https://youtu.be/5qv8RmIpM_I?si=4AK1zz1_fff3e4AD',
-        videoId: '5qv8RmIpM_I',
-        keywords: [
-          'Scalar Product',
-          'Dot Product and Angle',
-          'Angle Between Vectors',
-          'Vector Angle Formula'
-        ]
-      },
-      {
-        id: '5-4',
-        code: '5.4',
-        title: 'Geometrical Vector Methods',
-        url: 'https://youtu.be/ZM2-Bb8Zdt0?si=bdXH2Ui2n5mWv4xV',
-        videoId: 'ZM2-Bb8Zdt0',
-        keywords: [
-          'Geometrical Vector Methods',
-          'Vector Geometry',
-          'Vector Method',
-          'Geometry Using Vectors',
-          'Vector Applications'
-        ]
-      },
-      {
-        id: '5-5',
-        code: '5.5',
-        title: 'Vector Equation of a Plane – Normal Form',
-        url: 'https://youtu.be/Tvtc9dH63NI?si=zBfI097qi1I-rd_-',
-        videoId: 'Tvtc9dH63NI',
-        keywords: [
-          'Vector Equation of Plane',
-          'Normal Form of Plane',
-          'Plane Equation Vector Form',
-          'Normal Vector',
-          'Equation of Plane'
-        ]
-      },
-      {
-        id: '5-6',
-        code: '5.6',
-        title: 'Angle Between Two Planes',
-        url: 'https://youtu.be/7G07dPSlWbY?si=s2ecBH75R2XbxQ3e',
-        videoId: '7G07dPSlWbY',
-        keywords: [
-          'Angle Between Two Planes',
-          'Angle Between Planes Formula',
-          'Dihedral Angle',
-          'Normal Vectors'
-        ]
-      },
-      {
-        id: '5-7',
-        code: '5.7',
-        title: 'Vector Product/Cross Product of Two Vectors and Properties',
-        url: 'https://youtu.be/48ByCfHYcE4?si=0NKeEeinDWLVGlVT',
-        videoId: '48ByCfHYcE4',
-        keywords: [
-          'Cross Product',
-          'Vector Product',
-          'Cross Product of Vectors',
-          'Properties of Cross Product',
-          'Vector Product Formula'
-        ]
-      },
-      {
-        id: '5-8',
-        code: '5.8',
-        title: 'Vector Product in (i, j, k) System',
-        url: 'https://youtu.be/gPnWm-IXoAY?si=bQw0-UxxpUmpfHFH',
-        videoId: 'gPnWm-IXoAY',
-        keywords: [
-          'Cross Product i j k',
-          'Vector Product i j k',
-          'Determinant Method Cross Product',
-          'i j k Vector Product'
-        ]
-      },
-      {
-        id: '5-9',
-        code: '5.9',
-        title: 'Vector Areas',
-        url: 'https://youtu.be/PxDfkq3FMaw?si=_5OYOZf5OFoBmD5h',
-        videoId: 'PxDfkq3FMaw',
-        keywords: [
-          'Vector Area',
-          'Area Using Vectors',
-          'Area of Triangle Using Vectors',
-          'Area of Parallelogram Using Vectors',
-          'Cross Product Area'
-        ]
-      },
-      {
-        id: '5-10',
-        code: '5.10',
-        title: 'Scalar Triple Product',
+        title: 'Scalar Triple Product & Coplanarity',
+        description: 'Volume of parallelepiped [a b c], box product properties, and coplanarity proofs.',
         url: 'https://youtu.be/rhwQ_5ZJ-8g?si=asTabyQEjR8IRRU6',
         videoId: 'rhwQ_5ZJ-8g',
         keywords: [
           'Scalar Triple Product',
-          'Scalar Triple Product of Vectors',
-          'Volume Using Scalar Triple Product',
-          'Coplanarity'
-        ]
-      },
-      {
-        id: '5-11',
-        code: '5.11',
-        title: 'Vector Equation of a Plane – Different Forms, Skew Lines, Shortest Distance, Coplanarity',
-        url: 'https://youtu.be/Q3hcxDoSymc?si=1M1a84pkV8CoLGCf',
-        videoId: 'Q3hcxDoSymc',
-        keywords: [
-          'Vector Equation of Plane',
-          'Plane Different Forms',
-          'Skew Lines',
-          'Shortest Distance Between Skew Lines',
-          'Coplanarity of Vectors',
-          'Distance Between Lines'
-        ]
-      },
-      {
-        id: '5-12',
-        code: '5.12',
-        title: 'Vector Triple Product – Results',
-        url: 'https://youtu.be/MPHFx6LOUec?si=4T8TmK_oA6GooxIk',
-        videoId: 'MPHFx6LOUec',
-        keywords: [
-          'Vector Triple Product',
-          'Vector Triple Product Formula',
-          'Vector Triple Product Identity',
-          'BAC-CAB Rule',
-          'BAC CAB Rule'
-        ]
-      },
-      {
-        id: '5-13',
-        code: '5.13',
-        title: 'Solved Problems on Vector Algebra',
-        url: 'https://youtu.be/MPHFx6LOUec?si=4T8TmK_oA6GooxIk',
-        videoId: 'MPHFx6LOUec',
-        keywords: [
-          'Vector Problems',
-          'Vector Algebra Problems',
-          'Product of Vectors Problems',
-          'Vector Solved Examples',
-          'Vector Practice Problems'
+          'Box Product',
+          'Volume of Parallelepiped',
+          'Coplanarity Condition'
         ]
       }
     ]
   }
 ];
 
-// Helper to normalize strings for flexible, resilient search (lowercased, alphanumeric only)
+// Dynamic numbering assignment function
+// Assigns 1.0, 1.0.0, 1.0.0.0, 1.0.0.0.0... dynamically based on parent-child relationship
+function assignDynamicCodesToChapter(chapter) {
+  const chapterCode = String(chapter.number || '1');
+
+  function processNode(node, index, parentCode) {
+    const code = `${parentCode}.${index}`;
+    const children = (node.children || []).map((child, cIdx) => 
+      processNode(child, cIdx, code)
+    );
+    return {
+      ...node,
+      code,
+      children
+    };
+  }
+
+  const videos = (chapter.videos || []).map((video, idx) => {
+    const code = `${chapterCode}.${idx}`;
+    const children = (video.children || []).map((child, cIdx) => 
+      processNode(child, cIdx, code)
+    );
+    return {
+      ...video,
+      code,
+      children
+    };
+  });
+
+  return {
+    ...chapter,
+    videos
+  };
+}
+
+const TOPICS_DATA = RAW_TOPICS_DATA.map(assignDynamicCodesToChapter);
+
+// Helper to normalize strings for search
 const normalize = (str) => 
   (str || '')
     .toLowerCase()
@@ -589,85 +566,1096 @@ const normalize = (str) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// Flatten all videos for navigation and search
+// Flatten nodes recursively to retrieve trail & searchable entries
+function flattenNodeTree(node, ancestors = []) {
+  const currentTrail = [...ancestors, { id: node.id, title: node.title, code: node.code, description: node.description, url: node.url, videoId: node.videoId }];
+  let list = [{ ...node, trail: currentTrail }];
+  if (node.children && node.children.length > 0) {
+    node.children.forEach(child => {
+      list = list.concat(flattenNodeTree(child, currentTrail));
+    });
+  }
+  return list;
+}
+
+// Flatten all videos for top-level search and navigation
 const ALL_VIDEOS = TOPICS_DATA.flatMap(topic => 
   topic.videos.map(video => ({
     ...video,
     topicId: topic.id,
     topicName: topic.name,
+    chapterTitle: topic.chapterTitle || `${topic.number} ${topic.name}`,
     topicNumber: topic.number,
     topicColor: topic.color,
     badgeColor: topic.badgeColor
   }))
 );
 
+// Extract all playable lessons in a chapter sequentially for playlist navigation
+function getAllChapterLessons(chapter) {
+  const chapterTitle = chapter.chapterTitle || `${chapter.number} ${chapter.name}`;
+  const list = [];
+
+  function traverse(node, ancestors) {
+    const trail = [...ancestors, { id: node.id, title: node.title, code: node.code }];
+    const lessonItem = {
+      ...node,
+      chapterTitle,
+      chapterNumber: chapter.number,
+      chapterId: chapter.id,
+      trail
+    };
+    list.push(lessonItem);
+    if (node.children && node.children.length > 0) {
+      node.children.forEach(child => traverse(child, trail));
+    }
+  }
+
+  (chapter.videos || []).forEach(video => {
+    traverse(video, [{ id: chapter.id, title: chapterTitle, code: chapter.number }]);
+  });
+
+  return list;
+}
+
+// Find ancestor trail to selected node
+function findTrail(root, targetId) {
+  if (root.id === targetId) return [root];
+  if (!root.children) return null;
+  for (const child of root.children) {
+    const sub = findTrail(child, targetId);
+    if (sub) return [root, ...sub];
+  }
+  return null;
+}
+
+// Find full chapter breadcrumb trail
+function findChapterTrail(chapter, targetId) {
+  const chapterNode = {
+    id: chapter.id,
+    title: chapter.chapterTitle || `${chapter.number} ${chapter.name}`,
+    code: chapter.number
+  };
+  for (const video of (chapter.videos || [])) {
+    const sub = findTrail(video, targetId);
+    if (sub) {
+      return [chapterNode, ...sub];
+    }
+  }
+  return [chapterNode];
+}
+
+// Collect all node IDs in tree for Expand All
+function collectAllNodeIds(node) {
+  let ids = [node.id];
+  if (node.children && node.children.length > 0) {
+    node.children.forEach(child => {
+      ids = ids.concat(collectAllNodeIds(child));
+    });
+  }
+  return ids;
+}
+
+// Recursive Collapsible Topic Node for Sidebar Navigation (The Collapse Method)
+function CollapsibleTopicNode({
+  node,
+  depth = 0,
+  activeId,
+  onSelectLesson,
+  expandedMap,
+  toggleExpand,
+  searchFilter
+}) {
+  const hasChildren = node.children && node.children.length > 0;
+  const isExpanded = Boolean(expandedMap[node.id]);
+  const isSelected = activeId === node.id;
+
+  const matchesSearch = !searchFilter || 
+    node.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    node.code.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    (node.description && node.description.toLowerCase().includes(searchFilter.toLowerCase()));
+
+  if (searchFilter && !matchesSearch) {
+    const hasMatchingChild = (node.children || []).some(c => 
+      c.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      c.code.toLowerCase().includes(searchFilter.toLowerCase())
+    );
+    if (!hasMatchingChild) return null;
+  }
+
+  // Visual styling variants by depth
+  const isRoot = depth === 0;
+  const isLevel1 = depth === 1;
+
+  // Background and border styling
+  let cardBg = '';
+  if (isSelected) {
+    cardBg = 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white font-bold shadow-lg shadow-indigo-600/35 ring-1 ring-white/30 border-transparent';
+  } else if (isRoot) {
+    cardBg = 'bg-slate-800/90 hover:bg-slate-800 border-indigo-500/40 text-white shadow-sm';
+  } else if (isLevel1) {
+    cardBg = 'bg-slate-800/70 hover:bg-slate-800 border-slate-700/70 text-slate-200 shadow-xs';
+  } else {
+    cardBg = 'bg-slate-800/40 hover:bg-slate-800/80 border-slate-700/50 text-slate-300';
+  }
+
+  // Code badge styling
+  let badgeStyle = '';
+  if (isSelected) {
+    badgeStyle = 'bg-white/20 text-white border-white/30 font-black';
+  } else if (isRoot) {
+    badgeStyle = 'bg-indigo-500/25 text-indigo-300 border-indigo-400/40 font-black';
+  } else if (isLevel1) {
+    badgeStyle = 'bg-indigo-950 text-indigo-300 border-indigo-800/70 font-bold';
+  } else {
+    badgeStyle = 'bg-slate-900 text-indigo-400 border-slate-700/60 font-semibold';
+  }
+
+  return (
+    <div className="flex flex-col select-none">
+      <div
+        className={`group flex items-center justify-between gap-2.5 py-2 px-3 rounded-xl border transition-all duration-150 cursor-pointer ${cardBg}`}
+        onClick={() => {
+          onSelectLesson(node);
+          if (hasChildren && !isExpanded) {
+            toggleExpand(node.id);
+          }
+        }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          {/* Chevron expand/collapse toggle */}
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleExpand(node.id);
+              }}
+              className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                isSelected 
+                  ? 'bg-white/20 text-white hover:bg-white/30' 
+                  : 'bg-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700'
+              }`}
+              title={isExpanded ? 'Collapse' : 'Expand'}
+            >
+              <ChevronRight
+                size={14}
+                className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+              />
+            </button>
+          ) : (
+            <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${
+              isSelected ? 'text-white' : 'text-slate-500'
+            }`}>
+              <Play size={11} className={isSelected ? 'fill-white text-white' : 'fill-slate-500 text-slate-500'} />
+            </div>
+          )}
+
+          {/* Dynamic Code Badge */}
+          <span className={`font-mono text-xs px-2 py-0.5 rounded-md border shrink-0 tracking-tight ${badgeStyle}`}>
+            {node.code}
+          </span>
+
+          {/* Title */}
+          <span className={`text-xs sm:text-[13px] leading-snug break-words ${
+            isSelected 
+              ? 'text-white font-black' 
+              : isRoot 
+                ? 'text-white font-bold' 
+                : 'text-slate-200 font-medium group-hover:text-white'
+          }`}>
+            {node.title}
+          </span>
+        </div>
+
+        {/* Right Status Badge */}
+        <div className="shrink-0 flex items-center gap-1.5 ml-2">
+          {isSelected ? (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold text-white tracking-wider shadow-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              PLAYING
+            </span>
+          ) : hasChildren ? (
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold bg-slate-700/40 text-slate-400 group-hover:text-slate-300">
+              {node.children.length} {node.children.length === 1 ? 'part' : 'parts'}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Recursive Children with Tree Connector Branch Guides */}
+      {hasChildren && isExpanded && (
+        <div className="relative ml-5 pl-4 border-l-2 border-indigo-500/25 space-y-1.5 my-1.5">
+          {node.children.map((child) => (
+            <div 
+              key={child.id} 
+              className="relative before:absolute before:-left-4 before:top-4 before:w-3.5 before:h-0.5 before:bg-indigo-500/25 before:rounded-full"
+            >
+              <CollapsibleTopicNode
+                node={child}
+                depth={depth + 1}
+                activeId={activeId}
+                onSelectLesson={onSelectLesson}
+                expandedMap={expandedMap}
+                toggleExpand={toggleExpand}
+                searchFilter={searchFilter}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Full-Page Interactive Classroom Lecture Player
+function FullPageLecturePlayer({ initialVideo, onClose, onEnroll }) {
+  // Find current chapter
+  const chapter = useMemo(() => {
+    if (!initialVideo) return TOPICS_DATA[0];
+    return TOPICS_DATA.find(c => 
+      c.id === initialVideo.topicId || 
+      c.number === initialVideo.topicNumber ||
+      c.videos.some(v => v.id === initialVideo.id)
+    ) || TOPICS_DATA[0];
+  }, [initialVideo]);
+
+  // Find the exact top-level topic clicked (e.g. 1.0 Ordered Pairs)
+  const rootTopic = useMemo(() => {
+    if (!initialVideo) return null;
+    const directMatch = (chapter.videos || []).find(v => v.id === initialVideo.id);
+    if (directMatch) return directMatch;
+    for (const v of (chapter.videos || [])) {
+      const trail = findTrail(v, initialVideo.id);
+      if (trail) return v;
+    }
+    return initialVideo;
+  }, [chapter, initialVideo]);
+
+  // Only lessons of this specific topic (remaining 1.1, 1.2, 1.3 are NOT included)
+  const allLessons = useMemo(() => {
+    if (!rootTopic) return [];
+    return flattenNodeTree(rootTopic);
+  }, [rootTopic]);
+
+  // Current active playing lesson
+  const [currentLesson, setCurrentLesson] = useState(() => {
+    if (initialVideo?.activeSubTopic) return initialVideo.activeSubTopic;
+    const match = allLessons.find(l => l.id === initialVideo?.id);
+    return match || allLessons[0] || initialVideo;
+  });
+
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [searchFilter, setSearchFilter] = useState('');
+
+  // Expand map for collapse method
+  const [expandedMap, setExpandedMap] = useState(() => {
+    const map = {};
+    if (rootTopic) {
+      map[rootTopic.id] = true;
+      (rootTopic.children || []).forEach(c => {
+        map[c.id] = true;
+      });
+    }
+    // Auto expand ancestors of current lesson
+    if (currentLesson?.trail) {
+      currentLesson.trail.forEach(t => { map[t.id] = true; });
+    }
+    return map;
+  });
+
+  const toggleExpand = (id) => {
+    setExpandedMap(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedMap({});
+  };
+
+  const handleExpandAll = () => {
+    if (!rootTopic) return;
+    const all = {};
+    const ids = collectAllNodeIds(rootTopic);
+    ids.forEach(id => { all[id] = true; });
+    setExpandedMap(all);
+  };
+
+  // Find index in playlist
+  const currentIndex = allLessons.findIndex(l => l.id === currentLesson.id);
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      const prev = allLessons[currentIndex - 1];
+      setCurrentLesson(prev);
+      if (prev.trail) {
+        setExpandedMap(old => {
+          const updated = { ...old };
+          prev.trail.forEach(t => { updated[t.id] = true; });
+          return updated;
+        });
+      }
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < allLessons.length - 1) {
+      const next = allLessons[currentIndex + 1];
+      setCurrentLesson(next);
+      if (next.trail) {
+        setExpandedMap(old => {
+          const updated = { ...old };
+          next.trail.forEach(t => { updated[t.id] = true; });
+          return updated;
+        });
+      }
+    }
+  };
+
+  const handleSelectLesson = (lesson) => {
+    setCurrentLesson(lesson);
+    if (lesson.trail) {
+      setExpandedMap(old => {
+        const updated = { ...old };
+        lesson.trail.forEach(t => { updated[t.id] = true; });
+        return updated;
+      });
+    }
+  };
+
+  // Dynamic breadcrumb trail
+  const breadcrumbTrail = useMemo(() => {
+    const chapterNode = {
+      id: chapter.id,
+      title: chapter.chapterTitle || `${chapter.number} ${chapter.name}`,
+      code: chapter.number
+    };
+    if (!rootTopic) return [chapterNode];
+    const sub = findTrail(rootTopic, currentLesson.id) || [rootTopic];
+    return [chapterNode, ...sub];
+  }, [chapter, rootTopic, currentLesson]);
+
+  const displayVideoId = currentLesson.videoId || initialVideo.videoId;
+  const displayUrl = currentLesson.url || initialVideo.url;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950 text-white flex flex-col overflow-hidden animate-fadeIn">
+      {/* Top Classroom Bar */}
+      <div className="px-4 sm:px-6 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold transition-colors cursor-pointer shrink-0"
+            title="Return to syllabus"
+          >
+            <ChevronLeft size={16} />
+            <span>Back to Syllabus</span>
+          </button>
+
+          <span className="text-slate-700 hidden sm:inline">|</span>
+
+          {/* Breadcrumb Path */}
+          <div className="flex items-center gap-1 text-xs text-slate-400 overflow-x-auto scrollbar-none whitespace-nowrap">
+            <Compass size={13} className="text-indigo-400 shrink-0 mr-1" />
+            {breadcrumbTrail.map((crumb, idx) => {
+              const isLast = idx === breadcrumbTrail.length - 1;
+              return (
+                <React.Fragment key={crumb.id || idx}>
+                  {idx > 0 && <span className="text-slate-600">›</span>}
+                  <span
+                    className={`transition-colors ${
+                      isLast
+                        ? 'font-black text-indigo-400'
+                        : 'text-slate-400 hover:text-white cursor-pointer'
+                    }`}
+                    onClick={() => {
+                      const match = allLessons.find(l => l.id === crumb.id);
+                      if (match) handleSelectLesson(match);
+                    }}
+                  >
+                    {crumb.code ? `${crumb.code}: ` : ''}{crumb.title}
+                  </span>
+                </React.Fragment>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Navigation Controls */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              sidebarOpen 
+                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' 
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+            }`}
+            title={sidebarOpen ? 'Hide Syllabus Sidebar' : 'Show Syllabus Sidebar'}
+          >
+            <ListTree size={14} />
+            <span className="hidden md:inline">{sidebarOpen ? 'Hide Syllabus' : 'Show Syllabus'}</span>
+          </button>
+
+          <a
+            href={displayUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+          >
+            <ExternalLink size={14} />
+            <span className="hidden sm:inline">YouTube</span>
+          </a>
+
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close lecture"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Full Page Workspace */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        {/* Left Side: Video Theater Player & Detailed Lesson Notes */}
+        <div className="flex-1 flex flex-col overflow-y-auto bg-black/40 scrollbar-thin scrollbar-thumb-slate-800">
+          {/* Responsive 16:9 Video Container */}
+          <div className="relative w-full aspect-video max-h-[64vh] bg-black flex items-center justify-center shadow-2xl">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${displayVideoId}?autoplay=1&rel=0`}
+              title={currentLesson.title}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full border-0"
+            />
+          </div>
+
+          {/* Lesson Details & Interactive Controls */}
+          <div className="p-5 sm:p-8 space-y-5 max-w-5xl mx-auto w-full">
+            {/* Header info */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-lg bg-indigo-600 text-white font-mono text-xs font-black shadow-sm shadow-indigo-600/30">
+                    Lesson {currentLesson.code}
+                  </span>
+                  <span className="text-xs font-bold text-slate-400">
+                    {chapter.chapterTitle || '1 Function'}
+                  </span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                  {currentLesson.title}
+                </h1>
+              </div>
+
+              {/* Sequential Navigation Controls */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handlePrev}
+                  disabled={currentIndex <= 0}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft size={16} /> Prev Lesson
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={currentIndex >= allLessons.length - 1}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  Next Lesson <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Description / Lesson Content Box */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-md">
+              <div className="flex items-center gap-2 text-indigo-400 font-extrabold text-xs uppercase tracking-wider mb-2">
+                <Sparkles size={14} className="text-amber-400" />
+                <span>Lecture Notes & Key Concepts</span>
+              </div>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                {currentLesson.description}
+              </p>
+            </div>
+
+            {/* Ask Doubt Action Card */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-indigo-950/70 to-slate-900 border border-indigo-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white mb-0.5">
+                  Have doubts in "{currentLesson.code}: {currentLesson.title}"?
+                </h3>
+                <p className="text-xs text-indigo-200/80">
+                  Connect with senior Intermediate mathematics faculty for step-by-step clarification.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  if (onEnroll) onEnroll(`Maths Help: Topic ${currentLesson.code} - ${currentLesson.title}`);
+                }}
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg shadow-indigo-600/25"
+              >
+                <span>Ask Doubt in this Topic</span>
+                <ArrowRight size={15} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Dedicated Syllabus Hierarchy Sidebar (The Collapse Method) */}
+        {sidebarOpen && (
+          <aside className="w-full lg:w-[420px] xl:w-[460px] bg-slate-900 border-l border-slate-800 flex flex-col shrink-0 overflow-hidden shadow-2xl">
+            {/* Sidebar Header */}
+            <div className="p-4 bg-slate-900/95 border-b border-slate-800 space-y-3 shrink-0">
+              {/* Header Title & Lesson Count */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                  <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-indigo-400">
+                    Topic Hierarchy
+                  </span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 font-mono text-xs font-bold border border-indigo-800/60 shadow-xs">
+                  {allLessons.length} {allLessons.length === 1 ? 'Lesson' : 'Lessons'}
+                </span>
+              </div>
+
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                  <span className="text-indigo-400 font-mono">{rootTopic?.code}:</span>
+                  <span>{rootTopic?.title}</span>
+                </h2>
+                
+                {/* Now Playing pill */}
+                <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300">
+                  <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-emerald-400 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    Playing:
+                  </span>
+                  <span className="font-mono font-bold text-indigo-300 shrink-0">{currentLesson.code}</span>
+                  <span className="truncate font-medium text-white">{currentLesson.title}</span>
+                </div>
+              </div>
+
+              {/* Action Toolbar: Collapse/Expand + Search */}
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleCollapseAll}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-700/60 flex items-center gap-1 shadow-xs"
+                    title="Collapse all subtopics"
+                  >
+                    <span>−</span>
+                    <span>Collapse All</span>
+                  </button>
+                  <button
+                    onClick={handleExpandAll}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-700/60 flex items-center gap-1 shadow-xs"
+                    title="Expand all subtopics"
+                  >
+                    <span>+</span>
+                    <span>Expand All</span>
+                  </button>
+                </div>
+
+                <div className="relative flex-1 max-w-[190px]">
+                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search subtopic..."
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-800/90 text-white text-xs border border-slate-700/70 focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-500 transition-all"
+                  />
+                  {searchFilter && (
+                    <button
+                      onClick={() => setSearchFilter('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Collapsible Hierarchy Syllabus Tree Body - ONLY rootTopic and its nested subtopics */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-indigo-500/30">
+              {rootTopic && (
+                <CollapsibleTopicNode
+                  key={rootTopic.id}
+                  node={rootTopic}
+                  depth={0}
+                  activeId={currentLesson.id}
+                  onSelectLesson={handleSelectLesson}
+                  expandedMap={expandedMap}
+                  toggleExpand={toggleExpand}
+                  searchFilter={searchFilter}
+                />
+              )}
+            </div>
+          </aside>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Clean and Responsive Video Card for the Main Curriculum Grid
+function MathsVideoCard({ video, isSearching, onSelectVideo }) {
+  const hasChildren = Boolean(video.children && video.children.length > 0);
+  const allFlattened = useMemo(() => flattenNodeTree(video), [video]);
+
+  const handlePlay = () => {
+    onSelectVideo(video);
+  };
+
+  const thumbnailUrl = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
+
+  return (
+    <div className={`group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border ${
+      hasChildren 
+        ? 'border-indigo-300 dark:border-indigo-700/80 ring-2 ring-indigo-500/10 dark:ring-indigo-500/20' 
+        : 'border-slate-200/80 dark:border-slate-800'
+    } hover:-translate-y-1`}>
+      
+      {/* Thumbnail Container */}
+      <div 
+        onClick={handlePlay}
+        className="relative aspect-video w-full overflow-hidden bg-slate-900 cursor-pointer"
+      >
+        <img
+          src={thumbnailUrl}
+          alt={video.title}
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&auto=format&fit=crop';
+          }}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-85 group-hover:opacity-65 transition-opacity" />
+
+        {/* Chapter / Topic Code Badge */}
+        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/65 text-white font-mono text-xs font-bold border border-white/15 flex items-center gap-1.5 shadow-sm">
+          <Layers size={12} className="text-indigo-400" />
+          <span>Lesson {video.code}</span>
+        </div>
+
+        {/* Sub-Topics Count Tag on Thumbnail */}
+        {hasChildren && (
+          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-indigo-600/95 text-white font-sans text-[10px] font-extrabold border border-indigo-400/40 flex items-center gap-1 shadow-sm">
+            <GitFork size={11} className="text-amber-300" />
+            <span>{allFlattened.length} Subtopics</span>
+          </div>
+        )}
+
+        {/* Center Play Button Overlay */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/40 group-hover:scale-115 transition-transform duration-300 ring-4 ring-white/30">
+            <Play size={20} className="ml-0.5 fill-white" />
+          </div>
+        </div>
+
+        {/* YouTube Brand Indicator */}
+        <div className="absolute bottom-2.5 right-3 text-[11px] font-bold text-white/90 drop-shadow flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse"></span>
+          <span>YouTube Lecture</span>
+        </div>
+      </div>
+
+      {/* Card Content Body */}
+      <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between">
+        <div>
+          {/* Main Chapter Badge */}
+          <div className="text-[11px] font-extrabold tracking-wider uppercase text-indigo-600 dark:text-indigo-400 mb-2 flex items-center justify-between">
+            <span>{video.chapterTitle || `${video.topicNumber} Function`}</span>
+            {hasChildren && (
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-extrabold border border-indigo-200/60 dark:border-indigo-800/60">
+                Hierarchical Syllabus
+              </span>
+            )}
+          </div>
+
+          {/* Title */}
+          <h3 
+            onClick={handlePlay}
+            className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer leading-snug mb-2"
+            title={video.title}
+          >
+            <span className="text-indigo-600 dark:text-indigo-400 font-extrabold mr-1.5">{video.code}:</span>
+            {video.title}
+          </h3>
+
+          <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">
+            {video.description}
+          </p>
+
+          {/* Subtopic summary preview pill for hierarchical topics */}
+          {hasChildren && (
+            <div className="mb-3 p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60">
+              <div className="flex items-center justify-between text-[11px] font-bold text-indigo-700 dark:text-indigo-300 mb-1">
+                <span className="flex items-center gap-1.5">
+                  <ListTree size={12} className="text-indigo-600 dark:text-indigo-400" />
+                  <span>Interactive Syllabus</span>
+                </span>
+                <span className="text-[10px] font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                  {allFlattened.length} Subtopics
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                Includes 1.0.0 Definition & Equality • 1.0.1 Cartesian Product • 1.0.2 Triplets with complete collapsible navigation inside the lecture.
+              </p>
+            </div>
+          )}
+
+          {/* Matching Keyword Indicator */}
+          {isSearching && video.matchedKeyword && (
+            <div className="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold border border-indigo-200/60 dark:border-indigo-800/60 max-w-full truncate">
+              <Tag size={10} className="shrink-0" />
+              <span className="truncate">Matches: {video.matchedKeyword}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2">
+          <button
+            onClick={handlePlay}
+            className="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm shadow-indigo-600/20"
+          >
+            <Play size={14} className="fill-white" />
+            <span>Watch Lecture ({video.code})</span>
+          </button>
+
+          <a
+            href={video.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+            title={`Open ${video.title} on YouTube`}
+            aria-label={`Open ${video.title} on YouTube`}
+          >
+            <ExternalLink size={16} />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Complete Hierarchical Chapter Roadmap Modal Component
+function HierarchicalRoadmapModal({ chapterTopic, onClose, onSelectVideo }) {
+  const [searchFilter, setSearchFilter] = useState('');
+  const allNodes = useMemo(() => {
+    if (!chapterTopic) return [];
+    return flattenNodeTree(chapterTopic);
+  }, [chapterTopic]);
+
+  const [expandedMap, setExpandedMap] = useState(() => {
+    if (!chapterTopic) return {};
+    const allIds = collectAllNodeIds(chapterTopic);
+    const m = {};
+    allIds.forEach(id => { m[id] = true; });
+    return m;
+  });
+
+  const toggleExpand = (id) => {
+    setExpandedMap(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const handleExpandAll = () => {
+    const allIds = collectAllNodeIds(chapterTopic);
+    const m = {};
+    allIds.forEach(id => { m[id] = true; });
+    setExpandedMap(m);
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedMap({});
+  };
+
+  if (!chapterTopic) return null;
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Roadmap Modal Header */}
+        <div className="p-5 sm:p-6 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700/60 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
+              <ListTree size={22} />
+            </div>
+            <div>
+              <div className="text-[11px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                Complete Chapter Learning Tree
+              </div>
+              <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
+                {chapterTopic.chapterTitle || '1 Function'} Roadmap
+              </h3>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Roadmap Toolbar */}
+        <div className="px-5 py-3 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExpandAll}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300 transition-colors"
+            >
+              Expand All
+            </button>
+            <button
+              onClick={handleCollapseAll}
+              className="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300 transition-colors"
+            >
+              Collapse All
+            </button>
+            <span className="text-xs text-slate-400 ml-2">
+              Total Lessons: <strong>{allNodes.length}</strong>
+            </span>
+          </div>
+
+          <div className="relative w-full sm:w-64">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Filter topics..."
+              value={searchFilter}
+              onChange={(e) => setSearchFilter(e.target.value)}
+              className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        {/* Roadmap Tree Body */}
+        <div className="p-6 overflow-y-auto space-y-3 flex-1 scrollbar-thin scrollbar-thumb-indigo-300 dark:scrollbar-thumb-slate-700">
+          <div className="space-y-2">
+            <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/60 flex items-center justify-between">
+              <div>
+                <span className="font-mono text-xs font-extrabold text-indigo-700 dark:text-indigo-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-800">
+                  {chapterTopic.code}
+                </span>
+                <span className="ml-2 font-bold text-slate-900 dark:text-white">
+                  {chapterTopic.title}
+                </span>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {chapterTopic.description}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  onSelectVideo(chapterTopic);
+                }}
+                className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm shrink-0 cursor-pointer"
+              >
+                <Play size={12} className="fill-white" /> Watch
+              </button>
+            </div>
+
+            {/* Nested children */}
+            <div className="pl-4 border-l-2 border-indigo-200 dark:border-indigo-800 ml-3 space-y-2">
+              {chapterTopic.children && chapterTopic.children.map((child) => (
+                <RoadmapTreeNode
+                  key={child.id}
+                  node={child}
+                  depth={0}
+                  expandedMap={expandedMap}
+                  toggleExpand={toggleExpand}
+                  onSelectLesson={(lesson) => {
+                    onClose();
+                    onSelectVideo(lesson);
+                  }}
+                  searchFilter={searchFilter}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Recursive Node for Roadmap Modal
+function RoadmapTreeNode({ node, depth = 0, expandedMap, toggleExpand, onSelectLesson, searchFilter }) {
+  const hasChildren = node.children && node.children.length > 0;
+  const isExpanded = Boolean(expandedMap[node.id]);
+
+  const matchesSearch = !searchFilter || 
+    node.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    node.code.toLowerCase().includes(searchFilter.toLowerCase()) ||
+    (node.description && node.description.toLowerCase().includes(searchFilter.toLowerCase()));
+
+  if (searchFilter && !matchesSearch) {
+    // If has matching descendants, still show
+    const hasMatchingChild = (node.children || []).some(c => 
+      c.title.toLowerCase().includes(searchFilter.toLowerCase()) ||
+      c.code.toLowerCase().includes(searchFilter.toLowerCase())
+    );
+    if (!hasMatchingChild) return null;
+  }
+
+  return (
+    <div className="flex flex-col space-y-1">
+      <div 
+        className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+          matchesSearch && searchFilter 
+            ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700' 
+            : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700/60 hover:border-indigo-300'
+        }`}
+      >
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {hasChildren ? (
+            <button
+              onClick={() => toggleExpand(node.id)}
+              className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 cursor-pointer"
+            >
+              <ChevronRight size={14} className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+            </button>
+          ) : (
+            <span className="w-5 inline-block shrink-0" />
+          )}
+
+          <span className="font-mono text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-800/60 shrink-0">
+            {node.code}
+          </span>
+
+          <div className="min-w-0 flex-1">
+            <h5 className="text-xs font-bold text-slate-900 dark:text-white leading-snug truncate">
+              {node.title}
+            </h5>
+            {node.description && (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                {node.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <button
+          onClick={() => onSelectLesson(node)}
+          className="px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold flex items-center gap-1 shrink-0 cursor-pointer"
+        >
+          <Play size={10} className="fill-white" /> Watch
+        </button>
+      </div>
+
+      {hasChildren && isExpanded && (
+        <div className="pl-4 border-l border-indigo-200 dark:border-indigo-800 ml-2 space-y-1 my-1">
+          {node.children.map(child => (
+            <RoadmapTreeNode
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              expandedMap={expandedMap}
+              toggleExpand={toggleExpand}
+              onSelectLesson={onSelectLesson}
+              searchFilter={searchFilter}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function MathsCurriculum({ onEnroll }) {
   const [selectedTopicId, setSelectedTopicId] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVideo, setActiveVideo] = useState(null);
+  const [roadmapModalTopic, setRoadmapModalTopic] = useState(null);
 
-  // Search and filter logic
+  // Search and filter logic supporting recursive nested hierarchy
   const { filteredVideos, isSearching } = useMemo(() => {
     const trimmedQuery = searchQuery.trim();
     const isSearching = trimmedQuery.length > 0;
 
     let list = ALL_VIDEOS;
 
-    // If not actively searching, filter by tab if a specific tab is chosen
     if (!isSearching && selectedTopicId !== 'all') {
       list = list.filter(v => v.topicId === selectedTopicId);
       return { filteredVideos: list, isSearching };
     }
 
-    // When searching, match across ALL topics or current selected tab (or all topics if not found in tab)
     if (isSearching) {
       const rawLower = trimmedQuery.toLowerCase();
       const normQ = normalize(trimmedQuery);
       const queryTokens = normQ.split(' ').filter(Boolean);
 
       const matches = ALL_VIDEOS.map(video => {
-        // Collect all text sources
         const titleNorm = normalize(video.title);
         const codeNorm = normalize(video.code);
         const topicNorm = normalize(video.topicName);
         const keywordsNorm = (video.keywords || []).map(k => normalize(k));
 
-        // Check if raw or normalized query matches title, code, or topic
         const directTitleMatch = video.title.toLowerCase().includes(rawLower) || titleNorm.includes(normQ);
         const directCodeMatch = video.code.toLowerCase().includes(rawLower) || codeNorm.includes(normQ);
         const directTopicMatch = video.topicName.toLowerCase().includes(rawLower) || topicNorm.includes(normQ);
 
-        // Check matching keywords
         const matchedKeywords = (video.keywords || []).filter(kw => {
           const kwNorm = normalize(kw);
           return kw.toLowerCase().includes(rawLower) || kwNorm.includes(normQ);
         });
 
-        // Check multi-word token match (e.g. user types "cartesian product" or "cramer rule" or "pmi induction")
+        // Search down the recursive hierarchy
+        const flattenedChildren = flattenNodeTree(video);
+        const matchedChild = flattenedChildren.find(node => {
+          const cCodeNorm = normalize(node.code);
+          const cTitleNorm = normalize(node.title);
+          return (
+            node.code.toLowerCase().includes(rawLower) ||
+            cCodeNorm.includes(normQ) ||
+            node.title.toLowerCase().includes(rawLower) ||
+            cTitleNorm.includes(normQ)
+          );
+        });
+
         const allTokensInCombined = queryTokens.length > 0 && queryTokens.every(token => {
+          const childrenText = flattenedChildren.map(c => `${c.code} ${c.title}`).join(' ');
           return (
             titleNorm.includes(token) ||
             codeNorm.includes(token) ||
             topicNorm.includes(token) ||
+            childrenText.toLowerCase().includes(token) ||
             keywordsNorm.some(kw => kw.includes(token))
           );
         });
 
-        const isMatch = directTitleMatch || directCodeMatch || directTopicMatch || matchedKeywords.length > 0 || allTokensInCombined;
+        const isMatch = directTitleMatch || directCodeMatch || directTopicMatch || matchedKeywords.length > 0 || allTokensInCombined || Boolean(matchedChild);
 
         if (isMatch) {
           return {
             ...video,
-            matchedKeyword: matchedKeywords[0] || (directTitleMatch ? null : (video.keywords && video.keywords[0]))
+            matchedKeyword: matchedChild 
+              ? `Lesson ${matchedChild.code}: ${matchedChild.title}`
+              : (matchedKeywords[0] || (directTitleMatch ? null : (video.keywords && video.keywords[0])))
           };
         }
         return null;
       }).filter(Boolean);
 
-      // If user has a specific tab selected and results exist within that tab, optionally prioritize or show all
       if (selectedTopicId !== 'all') {
         const tabFiltered = matches.filter(v => v.topicId === selectedTopicId);
-        // If results exist in the current tab, show them; otherwise show all matches so the user doesn't get zero results accidentally
         if (tabFiltered.length > 0) {
           return { filteredVideos: tabFiltered, isSearching };
         }
@@ -767,7 +1755,7 @@ export default function MathsCurriculum({ onEnroll }) {
                       : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
-                  {topic.number}. {topic.name} ({topic.videos.length})
+                  {topic.chapterTitle || `${topic.number}. ${topic.name}`} ({topic.videos.length})
                 </button>
               );
             })}
@@ -778,7 +1766,7 @@ export default function MathsCurriculum({ onEnroll }) {
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search topic or keyword (e.g. Cartesian Product, Cramer's, PMI, Dot Product...)"
+              placeholder="Search topic or code (e.g. 1.0.0.0.0, Meaning and Notation, Cartesian...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400 shadow-xs"
@@ -801,7 +1789,7 @@ export default function MathsCurriculum({ onEnroll }) {
             <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-200 font-medium">
               <Search size={14} className="text-indigo-600 dark:text-indigo-400" />
               <span>
-                Found <strong className="font-bold text-indigo-700 dark:text-indigo-300">{filteredVideos.length}</strong> related {filteredVideos.length === 1 ? 'video' : 'videos'} for "<em>{searchQuery}</em>"
+                Found <strong className="font-bold text-indigo-700 dark:text-indigo-300">{filteredVideos.length}</strong> related {filteredVideos.length === 1 ? 'topic' : 'topics'} for "<em>{searchQuery}</em>"
               </span>
             </div>
             <button
@@ -819,7 +1807,7 @@ export default function MathsCurriculum({ onEnroll }) {
             <BookOpen className="w-12 h-12 mx-auto text-slate-400 mb-3" />
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">No matching videos found</h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-4">
-              Try searching with general keywords like <strong>PMI</strong>, <strong>Determinants</strong>, <strong>Cross Product</strong>, or <strong>Inverse Functions</strong>.
+              Try searching with general keywords like <strong>PMI</strong>, <strong>Ordered Pairs</strong>, <strong>Cartesian Product</strong>, or <strong>Inverse Functions</strong>.
             </p>
             <button
               onClick={() => { setSearchQuery(''); setSelectedTopicId('all'); }}
@@ -830,103 +1818,15 @@ export default function MathsCurriculum({ onEnroll }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredVideos.map((video) => {
-              const thumbnailUrl = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
-
-              return (
-                <div
-                  key={video.id}
-                  className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 dark:border-slate-800 hover:-translate-y-1"
-                >
-                  {/* Thumbnail Container */}
-                  <div 
-                    onClick={() => setActiveVideo(video)}
-                    className="relative aspect-video w-full overflow-hidden bg-slate-900 cursor-pointer"
-                  >
-                    <img
-                      src={thumbnailUrl}
-                      alt={video.title}
-                      loading="lazy"
-                      onError={(e) => {
-                        e.currentTarget.src = 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&auto=format&fit=crop';
-                      }}
-                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
-
-                    {/* Chapter / Topic Code Badge */}
-                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/60 text-white font-mono text-xs font-bold border border-white/10 flex items-center gap-1.5 shadow-sm">
-                      <Layers size={12} className="text-indigo-400" />
-                      <span>Topic {video.code}</span>
-                    </div>
-
-                    {/* Center Play Button Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-13 h-13 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/40 group-hover:scale-115 transition-transform duration-300 ring-4 ring-white/30">
-                        <Play size={22} className="ml-0.5 fill-white" />
-                      </div>
-                    </div>
-
-                    {/* YouTube Brand Indicator */}
-                    <div className="absolute bottom-2.5 right-3 text-[11px] font-bold text-white/90 drop-shadow flex items-center gap-1">
-                      <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse"></span>
-                      <span>YouTube Lecture</span>
-                    </div>
-                  </div>
-
-                  {/* Card Content */}
-                  <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between">
-                    <div>
-                      {/* Topic Name Breadcrumb */}
-                      <div className="text-[11px] font-bold tracking-wider uppercase text-indigo-600 dark:text-indigo-400 mb-1.5 flex items-center gap-1">
-                        <span>{video.topicName}</span>
-                      </div>
-
-                      {/* Video Title */}
-                      <h3 
-                        onClick={() => setActiveVideo(video)}
-                        className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer leading-snug mb-2"
-                        title={video.title}
-                      >
-                        <span className="text-indigo-600 dark:text-indigo-400 font-extrabold mr-1.5">{video.code}</span>
-                        {video.title}
-                      </h3>
-
-                      {/* Matching Keyword Indicator tag if matched via search */}
-                      {isSearching && video.matchedKeyword && (
-                        <div className="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 text-[10px] font-semibold border border-indigo-200/60 dark:border-indigo-800/60 max-w-full truncate">
-                          <Tag size={10} className="shrink-0" />
-                          <span className="truncate">Matches: {video.matchedKeyword}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2">
-                      <button
-                        onClick={() => setActiveVideo(video)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-indigo-600/20"
-                      >
-                        <Play size={14} className="fill-white" /> Watch Now
-                      </button>
-
-                      <a
-                        href={video.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
-                        title="Open in YouTube"
-                        aria-label={`Open ${video.title} on YouTube`}
-                      >
-                        <ExternalLink size={16} />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {filteredVideos.map((video) => (
+              <MathsVideoCard
+                key={video.id}
+                video={video}
+                isSearching={isSearching}
+                onSelectVideo={setActiveVideo}
+                onOpenRoadmap={setRoadmapModalTopic}
+              />
+            ))}
           </div>
         )}
 
@@ -949,7 +1849,7 @@ export default function MathsCurriculum({ onEnroll }) {
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shrink-0">
               <button
-                onClick={() => onEnroll && onEnroll('Mathematics 1-on-1 Live Doubt & Board Coaching')}
+                onClick={() => onEnroll && onEnroll('Maths 1-on-1 Live Doubt & Board Coaching')}
                 className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-indigo-500/25 cursor-pointer"
               >
                 <span>Book 1-on-1 Doubt Session</span>
@@ -961,94 +1861,22 @@ export default function MathsCurriculum({ onEnroll }) {
 
       </div>
 
-      {/* Embedded Video Player Modal */}
+      {/* Hierarchical Roadmap Modal */}
+      {roadmapModalTopic && (
+        <HierarchicalRoadmapModal
+          chapterTopic={roadmapModalTopic}
+          onClose={() => setRoadmapModalTopic(null)}
+          onSelectVideo={setActiveVideo}
+        />
+      )}
+
+      {/* Full Page Lecture Player with Collapsible Hierarchy Syllabus Navigation */}
       {activeVideo && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
-          onClick={() => setActiveVideo(null)}
-        >
-          <div 
-            className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="px-5 py-4 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2.5 overflow-hidden">
-                <span className="px-2.5 py-1 rounded-lg bg-indigo-600/30 text-indigo-300 font-mono text-xs font-bold border border-indigo-500/30 shrink-0">
-                  Topic {activeVideo.code}
-                </span>
-                <h3 className="text-sm sm:text-base font-bold text-white truncate">
-                  {activeVideo.title}
-                </h3>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href={activeVideo.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                >
-                  <ExternalLink size={14} />
-                  <span className="hidden sm:inline">YouTube</span>
-                </a>
-                <button
-                  onClick={() => setActiveVideo(null)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
-                  aria-label="Close video"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
-
-            {/* Responsive 16:9 YouTube Player */}
-            <div className="relative aspect-video w-full bg-black">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${activeVideo.videoId}?autoplay=1&rel=0`}
-                title={activeVideo.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full border-0"
-              />
-            </div>
-
-            {/* Modal Footer Controls */}
-            <div className="px-5 py-3.5 bg-slate-800/90 border-t border-slate-700/60 flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrevVideo}
-                  disabled={currentVideoIndex <= 0}
-                  className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <ChevronLeft size={16} /> Prev
-                </button>
-                <button
-                  onClick={handleNextVideo}
-                  disabled={currentVideoIndex >= filteredVideos.length - 1}
-                  className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  Next <ChevronRight size={16} />
-                </button>
-                <span className="text-xs text-slate-400 font-medium ml-1">
-                  {currentVideoIndex + 1} of {filteredVideos.length}
-                </span>
-              </div>
-
-              <button
-                onClick={() => {
-                  const current = activeVideo;
-                  setActiveVideo(null);
-                  if (onEnroll) onEnroll(`Maths Help: Topic ${current.code} - ${current.title}`);
-                }}
-                className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
-              >
-                <span>Ask Doubt in this Topic</span>
-                <ArrowRight size={14} />
-              </button>
-            </div>
-          </div>
-        </div>
+        <FullPageLecturePlayer
+          initialVideo={activeVideo}
+          onClose={() => setActiveVideo(null)}
+          onEnroll={onEnroll}
+        />
       )}
 
     </section>
