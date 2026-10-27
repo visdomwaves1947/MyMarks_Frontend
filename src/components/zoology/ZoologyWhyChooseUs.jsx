@@ -3,63 +3,63 @@ import React from 'react';
 export default function ZoologyWhyChooseUs({ onOpenBooking }) {
   const features = [
     {
-      title: "Official Board Curriculum Aligned",
-      subtitle: "100% matched with TS BIE, BIEAP, CBSE, and competitive Zoology exam standards.",
-      image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=800"
+      title: "100% AP & TS Board Syllabus Match",
+      subtitle: "Tailored to BIEAP & TS BIE intermediate blueprints with 60/60 mark question distributions.",
+      image: "https://images.unsplash.com/photo-1530210124550-912dc1381cb8?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Master Literature & Language Faculty",
-      subtitle: "Learn from university professors, published authors, and veteran board examiners.",
+      title: "Master Zoology & Medical NEET Faculty",
+      subtitle: "Mentored by veteran intermediate board paper evaluators and top medical biology faculty.",
+      image: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      title: "Step-by-Step Labeled Diagram Blueprints",
+      subtitle: "Master complete diagrams of Cockroach digestive, nervous, and reproductive systems with neat labeling.",
+      image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      title: "Animal Diversity & Taxonomy Intuition",
+      subtitle: "Understand non-chordate phyla and chordate classes visually with comparative anatomical charts.",
       image: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Line-by-Line Poetry & Prose Breakdowns",
-      subtitle: "Deep analytical notes, theme explanations, character sketches, and stanza annotations.",
-      image: "https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-      title: "Timed Essay & Grammar Mock Tests",
-      subtitle: "Real simulators of board examinations with time management techniques.",
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-      title: "10+ Years Previous Solved Papers",
-      subtitle: "Fully solved board papers with 100/100 model answers and scoring secrets.",
+      title: "10+ Years Previous Solved Board Papers",
+      subtitle: "Complete archive of board exam papers with 60/60 model answer scripts and presentation rubrics.",
       image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Daily Vocabulary & Reading Planners",
-      subtitle: "Curated word banks, phrasal verbs, idioms, and reading habit builders.",
-      image: "https://images.unsplash.com/photo-1471970471555-19d4b113e9ed?auto=format&fit=crop&q=80&w=800"
+      title: "Life Cycle & Pathogenesis Flowcharts",
+      subtitle: "Chapter-wise flowcharts for Plasmodium vivax, Entamoeba histolytica, Ascaris, and Wuchereria.",
+      image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Expected Board Questions & Blueprints",
-      subtitle: "High-yield essay predictions, letter formats, and summary blueprints for maximum marks.",
+      title: "High-Probability Predicted Questions",
+      subtitle: "Carefully curated predicted 8-mark, 4-mark, and 2-mark questions with 95%+ historical hit rates.",
       image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Smart Writing & Progress Tracking",
-      subtitle: "Automated analysis of vocabulary richness, grammar precision, and syllabus mastery.",
-      image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=800"
-    },
-    {
-      title: "Interactive Phonetics & Grammar Lab",
-      subtitle: "Interactive IPA phonetic transcriptions, sentence transformations, and tense charts.",
+      title: "Interactive Histology & Specimen Spotting",
+      subtitle: "Identify tissues, microscope slides, and museum specimens with high-resolution digital spotters.",
       image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Speech & Pronunciation Clinics",
-      subtitle: "Build spoken Zoology confidence, public speaking delivery, and accent clarity.",
+      title: "NEET & EAMCET Medical Speed Shortcuts",
+      subtitle: "Learn fast assertion-reasoning elimination, diagram recall tricks, and high-yield NCERT biology points.",
       image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "Official Language Certificates",
-      subtitle: "Credentials showcasing advanced Zoology writing, literature, and communication mastery.",
+      title: "Timed Board Model Exam Series",
+      subtitle: "Exact 3-hour board pattern simulator tests with step-by-step marking critique by examiners.",
+      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      title: "Official Zoology Distinction Badges",
+      subtitle: "Demonstrated score achievements verified through timed full-syllabus board simulations.",
       image: "https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&q=80&w=800"
     },
     {
-      title: "100% Concept & Fluency Clarity",
-      subtitle: "Zero mindless rote memorizationÃ¢â‚¬â€only genuine mastery of language mechanics.",
+      title: "100% Concept Clarity & Zero Blind Rote",
+      subtitle: "Build deep biological understanding that powers your MBBS, BDS, veterinary, and life science careers.",
       image: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&q=80&w=800"
     }
   ];
@@ -74,7 +74,7 @@ export default function ZoologyWhyChooseUs({ onOpenBooking }) {
             Why Thousands Choose Zoology Learning Academy
           </h2>
           <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 font-medium">
-            The premier platform engineered to build impeccable Zoology grammar, deep literary appreciation, 100/100 board scores, and articulate spoken fluency.
+            The premier platform engineered to build diagram mastery, taxonomy clarity, 60/60 board scores, and NEET medical biology excellence.
           </p>
         </div>
 

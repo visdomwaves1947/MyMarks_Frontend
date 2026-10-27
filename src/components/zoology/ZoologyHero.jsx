@@ -16,12 +16,12 @@ export default function ZoologyHero({ onOpenBooking, onOpenVideoDemo }) {
 
   const handleStartLearning = () => {
     if (onOpenBooking) {
-      onOpenBooking('Zoology Zoology Science Program');
+      onOpenBooking('Zoology Science Program');
     }
   };
 
   const handleExplorePractice = () => {
-    const practiceSection = document.getElementById('Zoology-curriculum') || document.getElementById('roadmaps') || document.getElementById('courses');
+    const practiceSection = document.getElementById('zoology-curriculum') || document.getElementById('Zoology-curriculum') || document.getElementById('roadmaps') || document.getElementById('courses');
     if (practiceSection) {
       practiceSection.scrollIntoView({ behavior: 'smooth' });
     } else if (onOpenVideoDemo) {
