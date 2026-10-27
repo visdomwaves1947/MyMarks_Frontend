@@ -241,6 +241,7 @@ export default function AdminPage({
   const [videoDragOver, setVideoDragOver] = useState(false);
   const [thumbDragOver, setThumbDragOver] = useState(false);
   const [youtubeError, setYoutubeError] = useState('');
+  const [showTopicSection, setShowTopicSection] = useState(false); // Toggle Topic & Sub Topic section (+/-)
 
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'user'|'course'|'booking'|'video', id, title }
 
@@ -252,6 +253,136 @@ export default function AdminPage({
     const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
     const match = trimmed.match(regExp);
     return match && match[1] ? match[1] : '';
+  }, []);
+
+  // Stepper helper for Topic Number (e.g. 1.0, 1.1, 2.0)
+  const stepTopicNumber = useCallback((currentVal, delta) => {
+    const str = String(currentVal || '1.0').trim();
+    const parts = str.split('.');
+    if (parts.length === 1) {
+      const major = parseInt(parts[0], 10) || 1;
+      const next = delta > 0 ? major + 1 : Math.max(1, major - 1);
+      return `${next}.0`;
+    }
+    const major = parseInt(parts[0], 10) || 1;
+    const minor = parseInt(parts[1], 10) || 0;
+    const nextMinor = delta > 0 ? minor + 1 : Math.max(0, minor - 1);
+    return `${major}.${nextMinor}`;
+  }, []);
+
+  // Stepper helper for Sub Topic Number (e.g. 1.0.0, 1.0.1, 1.1.0)
+  const stepSubTopicNumber = useCallback((currentVal, delta) => {
+    const str = String(currentVal || '1.0.0').trim();
+    const parts = str.split('.');
+    if (parts.length === 1) {
+      const major = parseInt(parts[0], 10) || 1;
+      const next = delta > 0 ? major + 1 : Math.max(1, major - 1);
+      return `${next}.0.0`;
+    }
+    if (parts.length === 2) {
+      const major = parseInt(parts[0], 10) || 1;
+      const minor = parseInt(parts[1], 10) || 0;
+      const sub = delta > 0 ? 1 : 0;
+      return `${major}.${minor}.${sub}`;
+    }
+    const major = parseInt(parts[0], 10) || 1;
+    const minor = parseInt(parts[1], 10) || 0;
+    const sub = parseInt(parts[2], 10) || 0;
+    const nextSub = delta > 0 ? sub + 1 : Math.max(0, sub - 1);
+    return `${major}.${minor}.${nextSub}`;
+  }, []);
+
+  // Stepper helper for Sub Sub Topic Number (e.g. 1.0.0.0, 1.0.0.1, 1.1.0.0)
+  const stepSubSubTopicNumber = useCallback((currentVal, delta) => {
+    const str = String(currentVal || '1.0.0.0').trim();
+    const parts = str.split('.');
+    if (parts.length === 1) {
+      const major = parseInt(parts[0], 10) || 1;
+      const next = delta > 0 ? major + 1 : Math.max(1, major - 1);
+      return `${next}.0.0.0`;
+    }
+    if (parts.length === 2) {
+      const major = parseInt(parts[0], 10) || 1;
+      const minor = parseInt(parts[1], 10) || 0;
+      const sub = delta > 0 ? 1 : 0;
+      return `${major}.${minor}.${sub}.0`;
+    }
+    if (parts.length === 3) {
+      const major = parseInt(parts[0], 10) || 1;
+      const minor = parseInt(parts[1], 10) || 0;
+      const sub = parseInt(parts[2], 10) || 0;
+      const subSub = delta > 0 ? 1 : 0;
+      return `${major}.${minor}.${sub}.${subSub}`;
+    }
+    const major = parseInt(parts[0], 10) || 1;
+    const minor = parseInt(parts[1], 10) || 0;
+    const sub = parseInt(parts[2], 10) || 0;
+    const subSub = parseInt(parts[3], 10) || 0;
+    const nextSubSub = delta > 0 ? subSub + 1 : Math.max(0, subSub - 1);
+    return `${major}.${minor}.${sub}.${nextSubSub}`;
+  }, []);
+
+  // Helper to sync curriculum fields without modifying saved keywords
+  const syncCurriculumKeywords = useCallback((prevForm, fieldUpdates) => {
+    return { ...prevForm, ...fieldUpdates };
+  }, []);
+
+  // Helper to save a typed keyword into videoForm.keywords and show it under Summary
+  const handleSaveKeywordToSummary = useCallback((keywordValue, fieldKey) => {
+    if (!keywordValue || !String(keywordValue).trim()) return;
+    const incomingList = String(keywordValue)
+      .split(',')
+      .map((k) => k.trim())
+      .filter(Boolean);
+    if (incomingList.length === 0) return;
+
+    setVideoForm((prev) => {
+      const currentList = typeof prev.keywords === 'string'
+        ? prev.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+        : Array.isArray(prev.keywords)
+        ? prev.keywords.map((k) => String(k).trim()).filter(Boolean)
+        : [];
+      const seen = new Set(currentList.map((k) => k.toLowerCase()));
+      incomingList.forEach((kw) => {
+        if (!seen.has(kw.toLowerCase())) {
+          seen.add(kw.toLowerCase());
+          currentList.push(kw);
+        }
+      });
+      const updatedStr = currentList.join(', ');
+      return {
+        ...prev,
+        keywords: updatedStr,
+        tags: updatedStr,
+      };
+    });
+
+    if (fieldKey) {
+      setSavedKeyFeedback((prev) => ({ ...prev, [fieldKey]: true }));
+      setTimeout(() => {
+        setSavedKeyFeedback((prev) => ({ ...prev, [fieldKey]: false }));
+      }, 1500);
+    }
+  }, []);
+
+  // Helper to remove a single keyword from the saved list under Summary
+  const handleRemoveKeywordFromSummary = useCallback((keywordToRemove) => {
+    setVideoForm((prev) => {
+      const currentList = typeof prev.keywords === 'string'
+        ? prev.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+        : Array.isArray(prev.keywords)
+        ? prev.keywords.map((k) => String(k).trim()).filter(Boolean)
+        : [];
+      const filtered = currentList.filter(
+        (k) => k.toLowerCase() !== String(keywordToRemove).toLowerCase()
+      );
+      const updatedStr = filtered.join(', ');
+      return {
+        ...prev,
+        keywords: updatedStr,
+        tags: updatedStr,
+      };
+    });
   }, []);
 
   // User Form Data
@@ -303,12 +434,27 @@ export default function AdminPage({
     board: 'Both Boards', // 'Andhra Pradesh Intermediate' | 'Telangana Intermediate' | 'Both Boards'
     classLevel: 'Intermediate 1st Year',
     year: '1st Year', // '1st Year' | '2nd Year' | 'Both Years'
+    chapterNumber: 1,
+    chapterName: '',
     chapter: '',
+    chapterKeyword: '',
+    topicNumber: '1.0',
+    topicName: '',
+    topicKeyword: '',
+    subTopicNumber: '1.0.0',
+    subTopicName: '',
+    subTopicKeyword: '',
+    subSubTopicNumber: '1.0.0.0',
+    subSubTopicName: '',
+    subSubTopicKeyword: '',
     lesson: 'Lesson 1',
+    lessonName: 'Lesson 1',
     description: '',
     duration: '45 mins',
     instructor: 'Visdom Waves Faculty',
+    keywords: '',
     tags: '',
+    customKeywords: '',
     linkType: 'Lecture Video',
     thumbnailUrl: '',
     isFeatured: false,
@@ -352,6 +498,7 @@ export default function AdminPage({
     qualityBadge: '1080p Full HD',
   };
   const [videoForm, setVideoForm] = useState(initialVideoForm);
+  const [savedKeyFeedback, setSavedKeyFeedback] = useState({});
 
   // Load all data
   const loadAdminData = useCallback(async () => {
@@ -528,11 +675,16 @@ export default function AdminPage({
         !q ||
         (v.title || '').toLowerCase().includes(q) ||
         (v.chapter || '').toLowerCase().includes(q) ||
+        (v.chapterName || '').toLowerCase().includes(q) ||
+        (v.topicName || v.topic || '').toLowerCase().includes(q) ||
+        (v.subTopicName || '').toLowerCase().includes(q) ||
         (v.lesson || '').toLowerCase().includes(q) ||
+        (v.lessonName || '').toLowerCase().includes(q) ||
         (v.instructor || '').toLowerCase().includes(q) ||
         (v.subject || '').toLowerCase().includes(q) ||
         (v.board || '').toLowerCase().includes(q) ||
         (v.description || '').toLowerCase().includes(q) ||
+        (Array.isArray(v.keywords) && v.keywords.some((k) => k.toLowerCase().includes(q))) ||
         (Array.isArray(v.tags) && v.tags.some((t) => t.toLowerCase().includes(q)));
 
       const matchType = videoTypeFilter === 'all' || v.type === videoTypeFilter;
@@ -703,6 +855,7 @@ export default function AdminPage({
     setVideoUploadProgress(0);
     setVideoUploadInfo(null);
     setYoutubeError('');
+    setShowTopicSection(false);
     setIsVideoModalOpen(true);
   };
 
@@ -715,7 +868,24 @@ export default function AdminPage({
     setVideoSourceMode(isYt ? 'url' : (video.url && video.url.includes('/uploads/videos/') ? 'upload' : 'url'));
     setVideoUploadProgress(0);
     setYoutubeError('');
-    setVideoUploadInfo(video.url && video.url.includes('/uploads/videos/') ? { originalName: video.title, url: video.url } : null);
+    setShowTopicSection(Boolean(video.topicName || video.subTopicName || video.subSubTopicName || video.topic || video.lessonName));
+    let chNum = 1;
+    let chName = video.chapterName || video.chapter || '';
+    if (video.chapterNumber) {
+      chNum = Number(video.chapterNumber) || 1;
+    } else if (video.chapter) {
+      const match = String(video.chapter).match(/^(?:Chapter\s*)?(\d+)(?:\s*[:.\-]\s*(.*))?$/i);
+      if (match) {
+        chNum = parseInt(match[1], 10) || 1;
+        if (match[2]) chName = match[2].trim();
+      }
+    }
+    const subTopic = video.subTopicName || video.lessonName || video.lesson || '';
+    const topNum = video.topicNumber || '1.0';
+    const subNum = video.subTopicNumber || '1.0.0';
+    const subSubNum = video.subSubTopicNumber || '1.0.0.0';
+    const subSubName = video.subSubTopicName || '';
+
     setVideoForm({
       title: video.title || '',
       type: video.type || (isYt ? 'youtube' : 'video'),
@@ -724,12 +894,33 @@ export default function AdminPage({
       board: video.board || 'Both Boards',
       classLevel: video.classLevel || 'Intermediate 1st Year',
       year: video.year || (video.classLevel && video.classLevel.includes('2nd') ? '2nd Year' : '1st Year'),
-      chapter: video.chapter || '',
-      lesson: video.lesson || 'Lesson 1',
+      chapterNumber: chNum,
+      chapterName: chName,
+      chapter: video.chapter || (chName ? `Chapter ${chNum}: ${chName}` : `Chapter ${chNum}`),
+      chapterKeyword: chName || '',
+      topicNumber: topNum,
+      topicName: video.topicName || video.topic || '',
+      topicKeyword: (video.topicName || video.topic) || '',
+      subTopicNumber: subNum,
+      subTopicName: subTopic,
+      subTopicKeyword: subTopic || '',
+      subSubTopicNumber: subSubNum,
+      subSubTopicName: subSubName,
+      subSubTopicKeyword: subSubName || '',
+      lesson: subTopic || 'Lesson 1',
+      lessonName: subTopic || 'Lesson 1',
       description: video.description || '',
       duration: video.duration || video.estimatedDuration || '45 mins',
       instructor: video.instructor || 'Visdom Waves Faculty',
-      tags: Array.isArray(video.tags) ? video.tags.join(', ') : video.tags || '',
+      keywords: Array.isArray(video.keywords) && video.keywords.length > 0
+        ? video.keywords.join(', ')
+        : (Array.isArray(video.tags) ? video.tags.join(', ') : (video.keywords || video.tags || '')),
+      tags: Array.isArray(video.tags) && video.tags.length > 0
+        ? video.tags.join(', ')
+        : (Array.isArray(video.keywords) ? video.keywords.join(', ') : (video.tags || video.keywords || '')),
+      customKeywords: Array.isArray(video.customKeywords) && video.customKeywords.length > 0
+        ? video.customKeywords.join(', ')
+        : (video.customKeywords || ''),
       linkType: video.linkType || 'Lecture Video',
       thumbnailUrl: video.thumbnailUrl || '',
       isFeatured: !!video.isFeatured,
@@ -896,11 +1087,18 @@ export default function AdminPage({
     e.preventDefault();
     setYoutubeError('');
 
-    if (!videoForm.title.trim()) {
-      showToast('Please provide a video/link title', 'error');
-      setVideoStudioStep(1);
-      return;
-    }
+    const chNum = Number(videoForm.chapterNumber) || 1;
+    const cleanChName = (videoForm.chapterName || '').trim();
+    const effectiveChapter = cleanChName ? `Chapter ${chNum}: ${cleanChName}` : (videoForm.chapter || `Chapter ${chNum}`);
+
+    const effectiveTopic = (videoForm.topicName || '').trim();
+    const effectiveSubTopic = (videoForm.subTopicName || videoForm.lessonName || videoForm.lesson || '').trim();
+
+    const effectiveTitle = (videoForm.title || '').trim() || (
+      effectiveTopic && effectiveSubTopic
+        ? `${effectiveTopic}: ${effectiveSubTopic}`
+        : (effectiveTopic || effectiveSubTopic || (cleanChName ? `Chapter ${chNum}: ${cleanChName}` : `${videoForm.subject} Lecture`))
+    );
     if (!videoForm.url.trim()) {
       showToast('Please provide a URL or link', 'error');
       setVideoStudioStep(2);
@@ -920,13 +1118,56 @@ export default function AdminPage({
 
     setIsLoading(true);
     try {
-      const parsedTags = typeof videoForm.tags === 'string'
-        ? videoForm.tags.split(',').map((t) => t.trim()).filter(Boolean)
-        : videoForm.tags || [];
+      const rawKeywords = videoForm.keywords !== undefined && videoForm.keywords !== ''
+        ? videoForm.keywords
+        : videoForm.tags || '';
+      const parsedKeywords = typeof rawKeywords === 'string'
+        ? rawKeywords.split(',').map((t) => t.trim()).filter(Boolean)
+        : Array.isArray(rawKeywords) ? rawKeywords.map(t => String(t).trim()).filter(Boolean) : [];
+
+      const rawCustomKeywords = videoForm.customKeywords || '';
+      const parsedCustomKeywords = typeof rawCustomKeywords === 'string'
+        ? rawCustomKeywords.split(',').map((t) => t.trim()).filter(Boolean)
+        : Array.isArray(rawCustomKeywords) ? rawCustomKeywords.map(t => String(t).trim()).filter(Boolean) : [];
+
+      // Also gather individual box keywords:
+      const boxKeywords = [
+        videoForm.chapterKeyword,
+        videoForm.topicKeyword,
+        videoForm.subTopicKeyword,
+        videoForm.subSubTopicKeyword,
+      ].map((k) => (k ? String(k).trim() : '')).filter(Boolean);
+
+      // Combine curriculum, individual box keywords, and custom search keywords for indexing
+      const combinedKeywords = [];
+      const seenKw = new Set();
+      [...boxKeywords, ...parsedKeywords, ...parsedCustomKeywords].forEach((kw) => {
+        const lower = kw.toLowerCase();
+        if (!seenKw.has(lower)) {
+          seenKw.add(lower);
+          combinedKeywords.push(kw);
+        }
+      });
+
+      const finalKeywords = combinedKeywords.length > 0 ? combinedKeywords : ['General'];
 
       const payload = {
         ...videoForm,
-        tags: parsedTags,
+        title: effectiveTitle,
+        chapterNumber: chNum,
+        chapterName: cleanChName,
+        chapter: effectiveChapter,
+        topicNumber: String(videoForm.topicNumber || '1.0').trim(),
+        topicName: effectiveTopic,
+        subTopicNumber: String(videoForm.subTopicNumber || '1.0.0').trim(),
+        subTopicName: effectiveSubTopic,
+        subSubTopicNumber: String(videoForm.subSubTopicNumber || '1.0.0.0').trim(),
+        subSubTopicName: (videoForm.subSubTopicName || '').trim(),
+        lesson: effectiveSubTopic || 'Lesson 1',
+        lessonName: effectiveSubTopic || 'Lesson 1',
+        keywords: finalKeywords,
+        tags: finalKeywords,
+        customKeywords: parsedCustomKeywords,
         isPremium: videoForm.premiumContent || videoForm.isPremium,
         seo: {
           slug: videoForm.seoSlug || '',
@@ -956,6 +1197,10 @@ export default function AdminPage({
         await updateAdminVideoApi(selectedVideo.id || selectedVideo._id, payload);
         showToast('Video / link details updated successfully!');
       }
+
+      try {
+        window.dispatchEvent(new CustomEvent('mymarks_video_updated', { detail: payload }));
+      } catch {}
 
       setIsVideoModalOpen(false);
       await loadAdminData();
@@ -2462,12 +2707,30 @@ export default function AdminPage({
                             </span>
                           </div>
 
-                          {/* Chapter & Lesson info */}
-                          {(v.chapter || v.lesson) && (
-                            <div className="text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate mb-1">
-                              {v.chapter} {v.lesson ? `• ${v.lesson}` : ''}
-                            </div>
-                          )}
+                          {/* Chapter, Topic & Sub Topic info */}
+                          <div className="space-y-1 mb-1.5">
+                            {(v.chapter || v.topicName) && (
+                              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 truncate">
+                                {v.chapter && <span className="truncate">{v.chapter}</span>}
+                                {v.chapter && v.topicName && <span className="text-slate-400">•</span>}
+                                {v.topicName && (
+                                  <span className="text-blue-600 dark:text-cyan-400 font-semibold truncate bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded text-[10px]">
+                                    Topic {v.topicNumber ? `${v.topicNumber}: ` : ''}{v.topicName}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {(v.subTopicName || v.lessonName || v.lesson) && (
+                              <div className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 truncate">
+                                {v.subTopicNumber ? `Sub ${v.subTopicNumber}: ` : ''}{v.subTopicName || v.lessonName || v.lesson}
+                              </div>
+                            )}
+                            {v.subSubTopicName && (
+                              <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 truncate">
+                                {v.subSubTopicNumber ? `Sub-Sub ${v.subSubTopicNumber}: ` : ''}{v.subSubTopicName}
+                              </div>
+                            )}
+                          </div>
 
                           {/* Video Title */}
                           <h4
@@ -2480,6 +2743,25 @@ export default function AdminPage({
                           <p className="text-xs text-slate-600 dark:text-slate-400 mt-1.5 line-clamp-2 leading-relaxed">
                             {v.description || 'Comprehensive curriculum video breakdown, solved board problems, and high-yield derivations.'}
                           </p>
+
+                          {/* Key Words / Tags */}
+                          {((Array.isArray(v.keywords) && v.keywords.length > 0) || (Array.isArray(v.tags) && v.tags.length > 0)) && (
+                            <div className="flex items-center gap-1 flex-wrap mt-2 pt-1">
+                              {(v.keywords?.length ? v.keywords : v.tags).slice(0, 4).map((kw, i) => (
+                                <span
+                                  key={i}
+                                  className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium"
+                                >
+                                  #{kw}
+                                </span>
+                              ))}
+                              {(v.keywords?.length ? v.keywords : v.tags).length > 4 && (
+                                <span className="text-[10px] text-slate-400 font-medium">
+                                  +{(v.keywords?.length ? v.keywords : v.tags).length - 4}
+                                </span>
+                              )}
+                            </div>
+                          )}
 
                           {/* Educator info */}
                           <div className="mt-3 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
@@ -2606,8 +2888,17 @@ export default function AdminPage({
                                     {v.title}
                                   </p>
                                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                                    {v.chapter} {v.lesson ? `• ${v.lesson}` : ''} {v.duration ? `(${v.duration})` : ''}
+                                    {v.chapter} {v.topicName ? `• Topic ${v.topicNumber ? v.topicNumber + ': ' : ''}${v.topicName}` : ''} {(v.subTopicName || v.lessonName || v.lesson) ? `• Sub ${v.subTopicNumber ? v.subTopicNumber + ': ' : ''}${v.subTopicName || v.lessonName || v.lesson}` : ''} {v.subSubTopicName ? `• Sub-Sub ${v.subSubTopicNumber ? v.subSubTopicNumber + ': ' : ''}${v.subSubTopicName}` : ''} {v.duration ? `(${v.duration})` : ''}
                                   </p>
+                                  {((Array.isArray(v.keywords) && v.keywords.length > 0) || (Array.isArray(v.tags) && v.tags.length > 0)) && (
+                                    <div className="flex items-center gap-1 flex-wrap mt-0.5">
+                                      {(v.keywords?.length ? v.keywords : v.tags).slice(0, 3).map((kw, i) => (
+                                        <span key={i} className="text-[9px] px-1 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-medium">
+                                          #{kw}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -3409,22 +3700,7 @@ export default function AdminPage({
                         <span>Curriculum & Academic Metadata</span>
                       </h4>
 
-                      {/* Video Title */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Video / Lecture Title *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={videoForm.title}
-                          onChange={(e) => setVideoForm({ ...videoForm, title: e.target.value })}
-                          placeholder="e.g. Mathematics 2A: Calculus & Differential Equations Complete Lecture"
-                          className="w-full px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        />
-                      </div>
-
-                      {/* Board & Year */}
+                      {/* Row 1: Target Intermediate Board & Intermediate Year */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
@@ -3433,7 +3709,7 @@ export default function AdminPage({
                           <select
                             value={videoForm.board}
                             onChange={(e) => setVideoForm({ ...videoForm, board: e.target.value })}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs font-medium"
                           >
                             <option value="Both Boards">Both Boards (AP & TS Common Syllabus)</option>
                             <option value="Andhra Pradesh Intermediate">Andhra Pradesh (BIEAP)</option>
@@ -3455,7 +3731,7 @@ export default function AdminPage({
                                 classLevel: y === '1st Year' ? 'Intermediate 1st Year' : y === '2nd Year' ? 'Intermediate 2nd Year' : 'Both Years',
                               });
                             }}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs font-medium"
                           >
                             <option value="1st Year">1st Year (Junior Inter)</option>
                             <option value="2nd Year">2nd Year (Senior Inter)</option>
@@ -3464,119 +3740,591 @@ export default function AdminPage({
                         </div>
                       </div>
 
-                      {/* Subject & Category */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                            Subject Stream *
-                          </label>
-                          <select
-                            value={videoForm.subject}
-                            onChange={(e) => setVideoForm({ ...videoForm, subject: e.target.value })}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
-                          >
-                            <option value="Mathematics">Mathematics</option>
-                            <option value="Physics">Physics</option>
-                            <option value="Chemistry">Chemistry</option>
-                            <option value="Botany">Botany</option>
-                            <option value="Zoology">Zoology</option>
-                            <option value="English">English</option>
-                            <option value="Commerce">Commerce</option>
-                            <option value="Economics">Economics</option>
-                            <option value="Civics">Civics</option>
-                            <option value="History">History</option>
-                            <option value="General">General / Platform Demo</option>
-                          </select>
-                        </div>
+                      {/* Row 2: Subject Name */}
+                      <div>
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                          Subject Name *
+                        </label>
+                        <select
+                          value={videoForm.subject}
+                          onChange={(e) => setVideoForm({ ...videoForm, subject: e.target.value })}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs font-medium"
+                        >
+                          <option value="Mathematics">Mathematics</option>
+                          <option value="Physics">Physics</option>
+                          <option value="Chemistry">Chemistry</option>
+                          <option value="Botany">Botany</option>
+                          <option value="Zoology">Zoology</option>
+                          <option value="English">English</option>
+                          <option value="Commerce">Commerce</option>
+                          <option value="Economics">Economics</option>
+                          <option value="Civics">Civics</option>
+                          <option value="History">History</option>
+                          <option value="General">General / Platform Demo</option>
+                        </select>
+                      </div>
 
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                            Content Category
-                          </label>
-                          <select
-                            value={videoForm.linkType}
-                            onChange={(e) => setVideoForm({ ...videoForm, linkType: e.target.value })}
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
-                          >
-                            <option value="Lecture Video">Full Concept Lecture</option>
-                            <option value="Revision Class">Speed Revision & Crash Course</option>
-                            <option value="PYQ Solution">Board PYQ Solved Analysis</option>
-                            <option value="Lab Practical">Lab Practical & Simulation</option>
-                            <option value="Formula Sheet & PDF">Formula Sheet & Handwritten Notes</option>
-                            <option value="Mock Exam">Online Practice Test</option>
-                          </select>
+                      {/* Row 3: Chapter Name, Number & Key Word */}
+                      <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                          <span>
+                            Chapter Name, Number & Key Word <span className="text-rose-500">*</span>
+                          </span>
+                          <span className="text-[10px] font-normal text-slate-400">Right Box: Chapter Key Word (Optional)</span>
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                          {/* Stepper & Number Box for Chapter */}
+                          <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
+                              Chapter No:
+                            </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {/* Decrease button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = Math.max(1, (Number(videoForm.chapterNumber) || 1) - 1);
+                                  setVideoForm((prev) =>
+                                    syncCurriculumKeywords(prev, {
+                                      chapterNumber: current,
+                                      chapter: prev.chapterName ? `Chapter ${current}: ${prev.chapterName}` : `Chapter ${current}`,
+                                    })
+                                  );
+                                }}
+                                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                title="Decrease Chapter Number"
+                              >
+                                –
+                              </button>
+
+                              {/* Direct typed input box for Chapter Number */}
+                              <input
+                                type="number"
+                                min="1"
+                                value={videoForm.chapterNumber || 1}
+                                onChange={(e) => {
+                                  const num = Math.max(1, parseInt(e.target.value, 10) || 1);
+                                  setVideoForm((prev) =>
+                                    syncCurriculumKeywords(prev, {
+                                      chapterNumber: num,
+                                      chapter: prev.chapterName ? `Chapter ${num}: ${prev.chapterName}` : `Chapter ${num}`,
+                                    })
+                                  );
+                                }}
+                                className="w-12 h-7 text-center font-black text-xs sm:text-sm bg-blue-50 dark:bg-slate-950 border border-blue-200 dark:border-slate-800 rounded-lg text-blue-600 dark:text-cyan-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              />
+
+                              {/* Increase button */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const current = (Number(videoForm.chapterNumber) || 1) + 1;
+                                  setVideoForm((prev) =>
+                                    syncCurriculumKeywords(prev, {
+                                      chapterNumber: current,
+                                      chapter: prev.chapterName ? `Chapter ${current}: ${prev.chapterName}` : `Chapter ${current}`,
+                                    })
+                                  );
+                                }}
+                                className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                title="Increase Chapter Number"
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Chapter Name Input */}
+                          <div className="md:col-span-4 lg:col-span-5">
+                            <input
+                              type="text"
+                              value={videoForm.chapterName || ''}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') e.preventDefault();
+                              }}
+                              onChange={(e) => {
+                                const name = e.target.value;
+                                const num = Number(videoForm.chapterNumber) || 1;
+                                setVideoForm((prev) =>
+                                  syncCurriculumKeywords(prev, {
+                                    chapterName: name,
+                                    chapter: name ? `Chapter ${num}: ${name}` : `Chapter ${num}`,
+                                  })
+                                );
+                              }}
+                              placeholder="Chapter Name (e.g. FUNCTION / Thermodynamics)"
+                              className="w-full h-[42px] px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium shadow-xs"
+                            />
+                          </div>
+
+                          {/* Chapter Key Word Box (Right Side) */}
+                          <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                            <input
+                              type="text"
+                              value={videoForm.chapterKeyword || ''}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleSaveKeywordToSummary(videoForm.chapterKeyword, 'chapterKeyword');
+                                }
+                              }}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setVideoForm((prev) => ({ ...prev, chapterKeyword: val }));
+                              }}
+                              placeholder="Chapter Key Word"
+                              className="w-full h-[42px] px-3 pr-20 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-cyan-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold shadow-xs"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveKeywordToSummary(videoForm.chapterKeyword, 'chapterKeyword')}
+                              className={`absolute right-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer select-none active:scale-95 ${
+                                savedKeyFeedback.chapterKeyword
+                                  ? 'bg-emerald-600 text-white shadow-emerald-500/25'
+                                  : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
+                              }`}
+                              title="Save this keyword to Summary"
+                            >
+                              {savedKeyFeedback.chapterKeyword ? 'Saved ✓' : 'Save'}
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Chapter & Lesson */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Topic & Sub Topic Section with '+' and '-' Toggle */}
+                      <div className="rounded-2xl border border-dashed border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 p-4 transition-all space-y-4">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                              Topic & Sub Topic Details
+                            </span>
+                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                              (Optional)
+                            </span>
+                          </div>
+
+                          {/* "+" and "-" Toggle button */}
+                          <button
+                            type="button"
+                            onClick={() => setShowTopicSection((prev) => !prev)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 text-xs font-bold text-blue-600 dark:text-cyan-400 transition-all cursor-pointer shadow-xs active:scale-95"
+                            title={showTopicSection ? 'Press – to close Topic & Sub Topic' : 'Press + to open Topic & Sub Topic'}
+                          >
+                            <span className="w-5 h-5 rounded-md bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-cyan-300 flex items-center justify-center font-black text-sm select-none">
+                              {showTopicSection ? '–' : '+'}
+                            </span>
+                            <span>{showTopicSection ? '– Close Topic & Sub Topic' : '+ Add Topic & Sub Topic'}</span>
+                          </button>
+                        </div>
+
+                        {showTopicSection && (
+                          <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4 animate-in fade-in duration-150">
+                            {/* Row 4: Topic Name, Number & Key Word (NO STAR) */}
+                            <div className="space-y-1.5">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                <span>Topic Name, Number & Key Word</span>
+                                <span className="text-[10px] font-normal text-blue-500 dark:text-cyan-400">Right Box: Auto-Generates Topic Key Word</span>
+                              </label>
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                                {/* Stepper & Types Box for Topic */}
+                                <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
+                                    Topic No:
+                                  </span>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {/* Decrease button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const next = stepTopicNumber(videoForm.topicNumber || '1.0', -1);
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { topicNumber: next }));
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                      title="Decrease Topic Number (e.g. 1.1 -> 1.0)"
+                                    >
+                                      –
+                                    </button>
+
+                                    {/* Direct typed input box for Topic Number */}
+                                    <input
+                                      type="text"
+                                      value={videoForm.topicNumber !== undefined ? videoForm.topicNumber : '1.0'}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { topicNumber: val }));
+                                      }}
+                                      placeholder="1.0"
+                                      className="w-14 h-7 text-center font-black text-xs sm:text-sm bg-blue-50 dark:bg-slate-950 border border-blue-200 dark:border-slate-800 rounded-lg text-blue-600 dark:text-cyan-400 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                                    />
+
+                                    {/* Increase button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const next = stepTopicNumber(videoForm.topicNumber || '1.0', 1);
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { topicNumber: next }));
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                      title="Increase Topic Number (e.g. 1.0 -> 1.1)"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Topic Name Input */}
+                                <div className="md:col-span-4 lg:col-span-5">
+                                  <input
+                                    type="text"
+                                    value={videoForm.topicName || ''}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.preventDefault();
+                                    }}
+                                    onChange={(e) => {
+                                      const top = e.target.value;
+                                      const sub = videoForm.subTopicName || '';
+                                      setVideoForm((prev) =>
+                                        syncCurriculumKeywords(prev, {
+                                          topicName: top,
+                                          title: sub ? `${top}: ${sub}` : top,
+                                        })
+                                      );
+                                    }}
+                                    placeholder="Topic Name (e.g. Carnot Engine & Cycles / Functions)"
+                                    className="w-full h-[42px] px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium shadow-xs"
+                                  />
+                                </div>
+
+                                {/* Topic Key Word Box (Right Side) */}
+                                <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                                  <input
+                                    type="text"
+                                    value={videoForm.topicKeyword || ''}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSaveKeywordToSummary(videoForm.topicKeyword, 'topicKeyword');
+                                      }
+                                    }}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setVideoForm((prev) => ({ ...prev, topicKeyword: val }));
+                                    }}
+                                    placeholder="Topic Key Word"
+                                    className="w-full h-[42px] px-3 pr-20 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-cyan-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold shadow-xs"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveKeywordToSummary(videoForm.topicKeyword, 'topicKeyword')}
+                                    className={`absolute right-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer select-none active:scale-95 ${
+                                      savedKeyFeedback.topicKeyword
+                                        ? 'bg-emerald-600 text-white shadow-emerald-500/25'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
+                                    }`}
+                                    title="Save this keyword to Summary"
+                                  >
+                                    {savedKeyFeedback.topicKeyword ? 'Saved ✓' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Row 5: Sub Topic Name, Number & Key Word (NO STAR) */}
+                            <div className="space-y-1.5">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                <span>Sub Topic Name, Number & Key Word</span>
+                                <span className="text-[10px] font-normal text-slate-400">Right Box: Sub Topic Key Word (Optional)</span>
+                              </label>
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                                {/* Stepper & Types Box for Sub Topic */}
+                                <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
+                                    Sub Topic No:
+                                  </span>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {/* Decrease button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const next = stepSubTopicNumber(videoForm.subTopicNumber || '1.0.0', -1);
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { subTopicNumber: next }));
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                      title="Decrease Sub Topic Number (e.g. 1.0.1 -> 1.0.0)"
+                                    >
+                                      –
+                                    </button>
+
+                                    {/* Direct typed input box for Sub Topic Number */}
+                                    <input
+                                      type="text"
+                                      value={videoForm.subTopicNumber !== undefined ? videoForm.subTopicNumber : '1.0.0'}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { subTopicNumber: val }));
+                                      }}
+                                      placeholder="1.0.0"
+                                      className="w-16 h-7 text-center font-black text-xs sm:text-sm bg-blue-50 dark:bg-slate-950 border border-blue-200 dark:border-slate-800 rounded-lg text-blue-600 dark:text-cyan-400 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                                    />
+
+                                    {/* Increase button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const next = stepSubTopicNumber(videoForm.subTopicNumber || '1.0.0', 1);
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { subTopicNumber: next }));
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                      title="Increase Sub Topic Number (e.g. 1.0.0 -> 1.0.1)"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Sub Topic Name Input */}
+                                <div className="md:col-span-4 lg:col-span-5">
+                                  <input
+                                    type="text"
+                                    value={videoForm.subTopicName !== undefined ? videoForm.subTopicName : (videoForm.lessonName || videoForm.lesson || '')}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.preventDefault();
+                                    }}
+                                    onChange={(e) => {
+                                      const sub = e.target.value;
+                                      const top = videoForm.topicName || '';
+                                      setVideoForm((prev) =>
+                                        syncCurriculumKeywords(prev, {
+                                          subTopicName: sub,
+                                          lessonName: sub,
+                                          lesson: sub,
+                                          title: top ? `${top}: ${sub}` : sub,
+                                        })
+                                      );
+                                    }}
+                                    placeholder="Sub Topic Name (e.g. Derivation of Carnot Efficiency / Domain Calculation)"
+                                    className="w-full h-[42px] px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium shadow-xs"
+                                  />
+                                </div>
+
+                                {/* Sub Topic Key Word Box (Right Side) */}
+                                <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                                  <input
+                                    type="text"
+                                    value={videoForm.subTopicKeyword || ''}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSaveKeywordToSummary(videoForm.subTopicKeyword, 'subTopicKeyword');
+                                      }
+                                    }}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setVideoForm((prev) => ({ ...prev, subTopicKeyword: val }));
+                                    }}
+                                    placeholder="Sub Topic Key Word"
+                                    className="w-full h-[42px] px-3 pr-20 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-cyan-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold shadow-xs"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveKeywordToSummary(videoForm.subTopicKeyword, 'subTopicKeyword')}
+                                    className={`absolute right-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer select-none active:scale-95 ${
+                                      savedKeyFeedback.subTopicKeyword
+                                        ? 'bg-emerald-600 text-white shadow-emerald-500/25'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
+                                    }`}
+                                    title="Save this keyword to Summary"
+                                  >
+                                    {savedKeyFeedback.subTopicKeyword ? 'Saved ✓' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Row 6: Sub Sub Topic Name, Number & Key Word (NO STAR) */}
+                            <div className="space-y-1.5">
+                              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
+                                <span>Sub Sub Topic Name, Number & Key Word</span>
+                                <span className="text-[10px] font-normal text-slate-400">Right Box: Sub Sub Topic Key Word (Optional)</span>
+                              </label>
+                              <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
+                                {/* Stepper & Types Box for Sub Sub Topic */}
+                                <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
+                                    Sub Sub No:
+                                  </span>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    {/* Decrease button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const next = stepSubSubTopicNumber(videoForm.subSubTopicNumber || '1.0.0.0', -1);
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { subSubTopicNumber: next }));
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                      title="Decrease Sub Sub Topic Number (e.g. 1.0.0.1 -> 1.0.0.0)"
+                                    >
+                                      –
+                                    </button>
+
+                                    {/* Direct typed input box for Sub Sub Topic Number */}
+                                    <input
+                                      type="text"
+                                      value={videoForm.subSubTopicNumber !== undefined ? videoForm.subSubTopicNumber : '1.0.0.0'}
+                                      onChange={(e) => {
+                                        const val = e.target.value;
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { subSubTopicNumber: val }));
+                                      }}
+                                      placeholder="1.0.0.0"
+                                      className="w-18 h-7 text-center font-black text-xs sm:text-sm bg-blue-50 dark:bg-slate-950 border border-blue-200 dark:border-slate-800 rounded-lg text-blue-600 dark:text-cyan-400 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                                    />
+
+                                    {/* Increase button */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const next = stepSubSubTopicNumber(videoForm.subSubTopicNumber || '1.0.0.0', 1);
+                                        setVideoForm((prev) => syncCurriculumKeywords(prev, { subSubTopicNumber: next }));
+                                      }}
+                                      className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer select-none active:scale-95 shrink-0"
+                                      title="Increase Sub Sub Topic Number (e.g. 1.0.0.0 -> 1.0.0.1)"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Sub Sub Topic Name Input */}
+                                <div className="md:col-span-4 lg:col-span-5">
+                                  <input
+                                    type="text"
+                                    value={videoForm.subSubTopicName || ''}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') e.preventDefault();
+                                    }}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setVideoForm((prev) => syncCurriculumKeywords(prev, { subSubTopicName: val }));
+                                    }}
+                                    placeholder="Sub Sub Topic Name (e.g. Special Cases & Exceptions / Problem Types)"
+                                    className="w-full h-[42px] px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium shadow-xs"
+                                  />
+                                </div>
+
+                                {/* Sub Sub Topic Key Word Box (Right Side) */}
+                                <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                                  <input
+                                    type="text"
+                                    value={videoForm.subSubTopicKeyword || ''}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleSaveKeywordToSummary(videoForm.subSubTopicKeyword, 'subSubTopicKeyword');
+                                      }
+                                    }}
+                                    onChange={(e) => {
+                                      const val = e.target.value;
+                                      setVideoForm((prev) => ({ ...prev, subSubTopicKeyword: val }));
+                                    }}
+                                    placeholder="Sub Sub Topic Key Word"
+                                    className="w-full h-[42px] px-3 pr-20 rounded-xl bg-blue-50/60 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 text-blue-700 dark:text-cyan-300 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-semibold shadow-xs"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveKeywordToSummary(videoForm.subSubTopicKeyword, 'subSubTopicKeyword')}
+                                    className={`absolute right-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer select-none active:scale-95 ${
+                                      savedKeyFeedback.subSubTopicKeyword
+                                        ? 'bg-emerald-600 text-white shadow-emerald-500/25'
+                                        : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25'
+                                    }`}
+                                    title="Save this keyword to Summary"
+                                  >
+                                    {savedKeyFeedback.subSubTopicKeyword ? 'Saved ✓' : 'Save'}
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Row 5: Description & Summary */}
+                      <div className="space-y-3">
                         <div>
                           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                            Chapter / Unit Name
+                            Description & Summary
                           </label>
-                          <input
-                            type="text"
-                            value={videoForm.chapter}
-                            onChange={(e) => setVideoForm({ ...videoForm, chapter: e.target.value })}
-                            placeholder="e.g. Thermodynamics & Heat"
+                          <textarea
+                            rows={3}
+                            value={videoForm.description}
+                            onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
+                            placeholder="Outline of topics covered, 7-mark question proofs, board blueprints and key takeaways."
                             className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                            Lesson / Part Name
-                          </label>
-                          <input
-                            type="text"
-                            value={videoForm.lesson}
-                            onChange={(e) => setVideoForm({ ...videoForm, lesson: e.target.value })}
-                            placeholder="e.g. Lesson 3: Carnot Engine & Cycles"
-                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                          />
+                        {/* Saved Key Words shown directly under Description & Summary */}
+                        <div className="rounded-2xl border border-blue-200/80 dark:border-blue-900/40 bg-blue-50/30 dark:bg-blue-950/20 p-3.5 space-y-2">
+                          <div className="flex items-center justify-between flex-wrap gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                                <span>Saved Key Words</span>
+                                {(() => {
+                                  const list = typeof videoForm.keywords === 'string'
+                                    ? videoForm.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+                                    : Array.isArray(videoForm.keywords)
+                                    ? videoForm.keywords.map((k) => String(k).trim()).filter(Boolean)
+                                    : [];
+                                  return (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-cyan-300">
+                                      {list.length}
+                                    </span>
+                                  );
+                                })()}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                              Saved from Chapter / Topic / Sub Topic Key Word boxes
+                            </span>
+                          </div>
+
+                          {(() => {
+                            const list = typeof videoForm.keywords === 'string'
+                              ? videoForm.keywords.split(',').map((k) => k.trim()).filter(Boolean)
+                              : Array.isArray(videoForm.keywords)
+                              ? videoForm.keywords.map((k) => String(k).trim()).filter(Boolean)
+                              : [];
+
+                            if (list.length === 0) {
+                              return (
+                                <div className="text-xs text-slate-400 dark:text-slate-500 italic py-1">
+                                  No key words saved yet. Enter a key word in Chapter, Topic, or Sub Topic and click <span className="font-semibold text-blue-600 dark:text-cyan-400">"Save"</span>.
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="flex items-center gap-2 flex-wrap pt-1">
+                                {list.map((kw, i) => (
+                                  <span
+                                    key={`saved-kw-${i}`}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-900 text-blue-700 dark:text-cyan-300 border border-blue-200 dark:border-blue-900 shadow-2xs"
+                                  >
+                                    <span>#{kw}</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveKeywordFromSummary(kw)}
+                                      className="text-slate-400 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-full w-4 h-4 flex items-center justify-center font-bold text-sm transition-colors cursor-pointer"
+                                      title={`Remove "${kw}"`}
+                                    >
+                                      ×
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </div>
-                      </div>
-
-                      {/* Educator Name */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Educator / Channel Name
-                        </label>
-                        <input
-                          type="text"
-                          value={videoForm.instructor}
-                          onChange={(e) => setVideoForm({ ...videoForm, instructor: e.target.value })}
-                          placeholder="e.g. Dr. S. K. Sharma / Visdom Waves Faculty"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        />
-                      </div>
-
-                      {/* Description / Summary */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Description & Summary
-                        </label>
-                        <textarea
-                          rows={3}
-                          value={videoForm.description}
-                          onChange={(e) => setVideoForm({ ...videoForm, description: e.target.value })}
-                          placeholder="Outline of topics covered, 7-mark question proofs, board blueprints and key takeaways."
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        />
-                      </div>
-
-                      {/* Search Keywords */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Search Keywords / Tags (Comma Separated)
-                        </label>
-                        <input
-                          type="text"
-                          value={videoForm.tags}
-                          onChange={(e) => setVideoForm({ ...videoForm, tags: e.target.value })}
-                          placeholder="IPE 2026, 7 Marks, Calculus, Derivations, Formula"
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                        />
                       </div>
                     </div>
 
@@ -5406,6 +6154,16 @@ export default function AdminPage({
 
                 {/* Metadata Badges */}
                 <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap items-center gap-2 text-xs">
+                  {previewVideoModal.topicName && (
+                    <span className="px-2.5 py-1 rounded-md bg-blue-900/50 text-cyan-300 border border-blue-700/50 font-bold">
+                      Topic: {previewVideoModal.topicName}
+                    </span>
+                  )}
+                  {(previewVideoModal.lessonName || previewVideoModal.lesson) && (
+                    <span className="px-2.5 py-1 rounded-md bg-indigo-900/50 text-indigo-300 border border-indigo-700/50 font-bold">
+                      {previewVideoModal.lessonName || previewVideoModal.lesson}
+                    </span>
+                  )}
                   <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-semibold">
                     Faculty: <strong className="text-white">{previewVideoModal.instructor || 'Visdom Waves Lead'}</strong>
                   </span>
@@ -5417,9 +6175,12 @@ export default function AdminPage({
                       Length: <strong className="text-white">{previewVideoModal.duration}</strong>
                     </span>
                   )}
-                  {Array.isArray(previewVideoModal.tags) && previewVideoModal.tags.map((tag, idx) => (
-                    <span key={idx} className="px-2 py-0.5 rounded bg-slate-800/60 text-slate-400 text-[11px]">
-                      #{tag}
+                  {((Array.isArray(previewVideoModal.keywords) && previewVideoModal.keywords.length > 0)
+                    ? previewVideoModal.keywords
+                    : (Array.isArray(previewVideoModal.tags) ? previewVideoModal.tags : [])
+                  ).map((kw, idx) => (
+                    <span key={idx} className="px-2 py-0.5 rounded bg-slate-800/80 text-blue-300 text-[11px] border border-slate-700/60 font-medium">
+                      #{kw}
                     </span>
                   ))}
                 </div>
