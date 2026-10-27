@@ -8,7 +8,7 @@ import MathsStatsBar from '../components/maths/MathsStatsBar';
 import MathsPricingSection from '../components/maths/MathsPricingSection';
 import MathsFaqSection from '../components/maths/MathsFaqSection';
 
-export default function MathsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
+export default function MathsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap, currentUser }) {
   // Handle hash scrolling if navigating with hash
   useEffect(() => {
     if (window.location.hash) {
@@ -36,6 +36,7 @@ export default function MathsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoad
 
       {/* AP/TS Intermediate Mathematics Modules & Curriculum */}
       <MathsCurriculum 
+        currentUser={currentUser}
         onEnroll={(subjectName) => onOpenBooking(`Enroll in ${subjectName}`)}
       />
 

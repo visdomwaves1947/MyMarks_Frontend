@@ -144,12 +144,21 @@ export default function StudentVideoDashboard({
         const q = searchQuery.trim().toLowerCase();
         const matchTitle = (v.title || '').toLowerCase().includes(q);
         const matchChapter = (v.chapter || '').toLowerCase().includes(q);
+        const matchChapterName = (v.chapterName || '').toLowerCase().includes(q);
+        const matchTopicNumber = (v.topicNumber || '').toLowerCase().includes(q);
+        const matchTopic = (v.topicName || v.topic || '').toLowerCase().includes(q);
+        const matchSubTopicNumber = (v.subTopicNumber || '').toLowerCase().includes(q);
+        const matchSubTopic = (v.subTopicName || '').toLowerCase().includes(q);
+        const matchSubSubTopicNumber = (v.subSubTopicNumber || '').toLowerCase().includes(q);
+        const matchSubSubTopic = (v.subSubTopicName || '').toLowerCase().includes(q);
         const matchLesson = (v.lesson || '').toLowerCase().includes(q);
+        const matchLessonName = (v.lessonName || '').toLowerCase().includes(q);
         const matchDesc = (v.description || '').toLowerCase().includes(q);
         const matchInstructor = (v.instructor || '').toLowerCase().includes(q);
         const matchTags = Array.isArray(v.tags) && v.tags.some(t => t.toLowerCase().includes(q));
+        const matchKeywords = Array.isArray(v.keywords) && v.keywords.some(k => k.toLowerCase().includes(q));
 
-        if (!matchTitle && !matchChapter && !matchLesson && !matchDesc && !matchInstructor && !matchTags) {
+        if (!matchTitle && !matchChapter && !matchChapterName && !matchTopicNumber && !matchTopic && !matchSubTopicNumber && !matchSubTopic && !matchSubSubTopicNumber && !matchSubSubTopic && !matchLesson && !matchLessonName && !matchDesc && !matchInstructor && !matchTags && !matchKeywords) {
           return false;
         }
       }
@@ -459,17 +468,47 @@ export default function StudentVideoDashboard({
                       {v.title}
                     </h3>
 
-                    {/* Lesson or Sub-unit */}
-                    {v.lesson && (
-                      <p className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
-                        {v.lesson}
-                      </p>
+                    {/* Topic Name & Sub Topic Name */}
+                    {(v.topicName || v.subTopicName || v.subSubTopicName || v.lessonName || v.lesson) && (
+                      <div className="flex items-center gap-1.5 flex-wrap text-[11px] font-bold">
+                        {v.topicName && (
+                          <span className="text-blue-600 dark:text-cyan-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-900/50 truncate max-w-[200px]">
+                            Topic {v.topicNumber ? `${v.topicNumber}: ` : ''}{v.topicName}
+                          </span>
+                        )}
+                        {(v.subTopicName || v.lessonName || v.lesson) && (
+                          <span className="text-indigo-600 dark:text-indigo-400 truncate">
+                            {v.subTopicNumber ? `Sub ${v.subTopicNumber}: ` : ''}{v.subTopicName || v.lessonName || v.lesson}
+                          </span>
+                        )}
+                        {v.subSubTopicName && (
+                          <span className="text-slate-500 dark:text-slate-400 text-[10px] font-medium truncate">
+                            {v.subSubTopicNumber ? `Sub-Sub ${v.subSubTopicNumber}: ` : ''}{v.subSubTopicName}
+                          </span>
+                        )}
+                      </div>
                     )}
 
                     {/* Description */}
                     <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
                       {v.description || 'Comprehensive conceptual breakdown with board blueprint exam proofs and solutions.'}
                     </p>
+
+                    {/* Key Words / Tags */}
+                    {((Array.isArray(v.keywords) && v.keywords.length > 0) || (Array.isArray(v.tags) && v.tags.length > 0)) && (
+                      <div className="flex items-center gap-1 flex-wrap pt-0.5">
+                        {(v.keywords?.length ? v.keywords : v.tags).slice(0, 3).map((kw, i) => (
+                          <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-medium">
+                            #{kw}
+                          </span>
+                        ))}
+                        {(v.keywords?.length ? v.keywords : v.tags).length > 3 && (
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            +{(v.keywords?.length ? v.keywords : v.tags).length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -608,10 +647,28 @@ export default function StudentVideoDashboard({
                 <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                      <p className="text-xs font-bold text-slate-500">
-                        {activeVideoModal.chapter && `${activeVideoModal.chapter} • `}
-                        {activeVideoModal.lesson || 'Lecture Module'}
-                      </p>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        {activeVideoModal.chapter && (
+                          <span className="text-xs font-bold text-slate-500">
+                            {activeVideoModal.chapter}
+                          </span>
+                        )}
+                        {activeVideoModal.topicName && (
+                          <span className="text-xs font-bold text-blue-600 dark:text-cyan-400 bg-blue-50 dark:bg-blue-900/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                            Topic {activeVideoModal.topicNumber ? `${activeVideoModal.topicNumber}: ` : ''}{activeVideoModal.topicName}
+                          </span>
+                        )}
+                        {(activeVideoModal.subTopicName || activeVideoModal.lessonName || activeVideoModal.lesson) && (
+                          <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                            {activeVideoModal.subTopicNumber ? `Sub ${activeVideoModal.subTopicNumber}: ` : ''}{activeVideoModal.subTopicName || activeVideoModal.lessonName || activeVideoModal.lesson}
+                          </span>
+                        )}
+                        {activeVideoModal.subSubTopicName && (
+                          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            {activeVideoModal.subSubTopicNumber ? `Sub-Sub ${activeVideoModal.subSubTopicNumber}: ` : ''}{activeVideoModal.subSubTopicName}
+                          </span>
+                        )}
+                      </div>
                       <h4 className="text-base font-black text-slate-900 dark:text-white">
                         {activeVideoModal.title}
                       </h4>
@@ -640,6 +697,22 @@ export default function StudentVideoDashboard({
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       {activeVideoModal.description}
                     </p>
+                  )}
+
+                  {/* Keywords Badges */}
+                  {((Array.isArray(activeVideoModal.keywords) && activeVideoModal.keywords.length > 0) ||
+                    (Array.isArray(activeVideoModal.tags) && activeVideoModal.tags.length > 0)) && (
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Key Words:</span>
+                      {(activeVideoModal.keywords?.length ? activeVideoModal.keywords : activeVideoModal.tags).map((kw, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-cyan-300 border border-blue-200/60 dark:border-blue-800/60"
+                        >
+                          #{kw}
+                        </span>
+                      ))}
+                    </div>
                   )}
 
                   <div className="pt-3 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-3 text-xs">

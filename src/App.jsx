@@ -244,6 +244,7 @@ export default function App() {
                 onOpenBooking={handleOpenBooking}
                 onOpenVideoDemo={() => setVideoDemoOpen(true)}
                 onSelectRoadmap={handleSelectRoadmap}
+                currentUser={currentUser}
               />
             } 
           />
@@ -254,6 +255,7 @@ export default function App() {
                 onOpenBooking={handleOpenBooking}
                 onOpenVideoDemo={() => setVideoDemoOpen(true)}
                 onSelectRoadmap={handleSelectRoadmap}
+                currentUser={currentUser}
               />
             } 
           />
@@ -264,6 +266,7 @@ export default function App() {
                 onOpenBooking={handleOpenBooking}
                 onOpenVideoDemo={() => setVideoDemoOpen(true)}
                 onSelectRoadmap={handleSelectRoadmap}
+                currentUser={currentUser}
               />
             } 
           />

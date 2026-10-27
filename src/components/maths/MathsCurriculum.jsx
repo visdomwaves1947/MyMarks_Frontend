@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { 
   Play, 
   ExternalLink, 
@@ -20,8 +20,10 @@ import {
   FolderOpen,
   FileText,
   CornerDownRight,
-  Compass
+  Compass,
+  Video
 } from 'lucide-react';
+import { fetchStudentVideos } from '../../services/api';
 
 // Raw topic data with nested children hierarchy for Function chapter
 // Dynamic numbering generator automatically assigns codes (1.0, 1.0.0, 1.0.0.0, 1.0.0.0.0, etc.)
@@ -558,6 +560,16 @@ function assignDynamicCodesToChapter(chapter) {
 
 const TOPICS_DATA = RAW_TOPICS_DATA.map(assignDynamicCodesToChapter);
 
+// Helper to extract YouTube ID
+function extractYouTubeId(url) {
+  if (!url) return '';
+  const trimmed = url.trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(trimmed)) return trimmed;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const match = trimmed.match(regExp);
+  return match && match[1] ? match[1] : '';
+}
+
 // Helper to normalize strings for search
 const normalize = (str) => 
   (str || '')
@@ -809,16 +821,17 @@ function CollapsibleTopicNode({
 }
 
 // Full-Page Interactive Classroom Lecture Player
-function FullPageLecturePlayer({ initialVideo, onClose, onEnroll }) {
+function FullPageLecturePlayer({ initialVideo, onClose, onEnroll, topicsData = [] }) {
   // Find current chapter
   const chapter = useMemo(() => {
-    if (!initialVideo) return TOPICS_DATA[0];
-    return TOPICS_DATA.find(c => 
+    const list = topicsData && topicsData.length > 0 ? topicsData : TOPICS_DATA;
+    if (!initialVideo) return list[0];
+    return list.find(c => 
       c.id === initialVideo.topicId || 
       c.number === initialVideo.topicNumber ||
-      c.videos.some(v => v.id === initialVideo.id)
-    ) || TOPICS_DATA[0];
-  }, [initialVideo]);
+      (c.videos && c.videos.some(v => v.id === initialVideo.id))
+    ) || list[0];
+  }, [initialVideo, topicsData]);
 
   // Find the exact top-level topic clicked (e.g. 1.0 Ordered Pairs)
   const rootTopic = useMemo(() => {
@@ -1024,13 +1037,24 @@ function FullPageLecturePlayer({ initialVideo, onClose, onEnroll }) {
         <div className="flex-1 flex flex-col overflow-y-auto bg-black/40 scrollbar-thin scrollbar-thumb-slate-800">
           {/* Responsive 16:9 Video Container */}
           <div className="relative w-full aspect-video max-h-[64vh] bg-black flex items-center justify-center shadow-2xl">
-            <iframe
-              src={`https://www.youtube-nocookie.com/embed/${displayVideoId}?autoplay=1&rel=0`}
-              title={currentLesson.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="absolute inset-0 w-full h-full border-0"
-            />
+            {displayVideoId ? (
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${displayVideoId}?autoplay=1&rel=0`}
+                title={currentLesson.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full border-0"
+              />
+            ) : displayUrl ? (
+              <video
+                src={displayUrl}
+                controls
+                autoPlay
+                className="absolute inset-0 w-full h-full object-contain bg-black"
+              />
+            ) : (
+              <div className="text-slate-400 text-sm">Video media unavailable</div>
+            )}
           </div>
 
           {/* Lesson Details & Interactive Controls */}
@@ -1213,7 +1237,11 @@ function MathsVideoCard({ video, isSearching, onSelectVideo }) {
     onSelectVideo(video);
   };
 
-  const thumbnailUrl = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
+  const thumbnailUrl =
+    video.thumbnailUrl ||
+    (video.videoId
+      ? `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`
+      : 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&auto=format&fit=crop');
 
   return (
     <div className={`group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border ${
@@ -1241,9 +1269,17 @@ function MathsVideoCard({ video, isSearching, onSelectVideo }) {
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-85 group-hover:opacity-65 transition-opacity" />
 
         {/* Chapter / Topic Code Badge */}
-        <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/65 text-white font-mono text-xs font-bold border border-white/15 flex items-center gap-1.5 shadow-sm">
-          <Layers size={12} className="text-indigo-400" />
-          <span>Lesson {video.code}</span>
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap">
+          <div className="px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/65 text-white font-mono text-xs font-bold border border-white/15 flex items-center gap-1.5 shadow-sm">
+            <Layers size={12} className="text-indigo-400" />
+            <span>Lesson {video.code}</span>
+          </div>
+          {video.isDbUploaded && (
+            <div className="px-2 py-0.5 rounded-lg bg-emerald-600/95 text-white font-sans text-[10px] font-extrabold border border-emerald-400/50 shadow-sm flex items-center gap-1">
+              <CheckCircle2 size={10} />
+              <span>Admin Uploaded</span>
+            </div>
+          )}
         </div>
 
         {/* Sub-Topics Count Tag on Thumbnail */}
@@ -1261,10 +1297,10 @@ function MathsVideoCard({ video, isSearching, onSelectVideo }) {
           </div>
         </div>
 
-        {/* YouTube Brand Indicator */}
+        {/* Video Media Type Indicator */}
         <div className="absolute bottom-2.5 right-3 text-[11px] font-bold text-white/90 drop-shadow flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse"></span>
-          <span>YouTube Lecture</span>
+          <span>{video.videoId ? 'YouTube Lecture' : 'Video Lecture'}</span>
         </div>
       </div>
 
@@ -1579,21 +1615,181 @@ function RoadmapTreeNode({ node, depth = 0, expandedMap, toggleExpand, onSelectL
   );
 }
 
-export default function MathsCurriculum({ onEnroll }) {
+export default function MathsCurriculum({ onEnroll, currentUser }) {
+  const studentBoard = currentUser?.board || 'Andhra Pradesh Intermediate';
+  const studentYear = currentUser?.year || '1st Year';
+
+  // Board selector: defaults to student's board
+  const [selectedBoard, setSelectedBoard] = useState(() => {
+    if (studentBoard && /telangana/i.test(studentBoard)) return 'Telangana Intermediate';
+    if (studentBoard && /andhra|bieap|ap/i.test(studentBoard)) return 'Andhra Pradesh Intermediate';
+    return 'Andhra Pradesh Intermediate';
+  });
+
+  // Year selector: defaults to student's year
+  const [selectedYear, setSelectedYear] = useState(() => {
+    if (studentYear && /2nd|second/i.test(studentYear)) return '2nd Year';
+    return '1st Year';
+  });
+
   const [selectedTopicId, setSelectedTopicId] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeVideo, setActiveVideo] = useState(null);
   const [roadmapModalTopic, setRoadmapModalTopic] = useState(null);
+  const [dbVideos, setDbVideos] = useState([]);
+  const [isLoadingDb, setIsLoadingDb] = useState(false);
+
+  // Fetch published videos for Mathematics matching board & year
+  const loadDbVideos = useCallback(() => {
+    setIsLoadingDb(true);
+    fetchStudentVideos({
+      subject: 'Mathematics',
+      board: selectedBoard,
+      year: selectedYear,
+    })
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setDbVideos(data);
+        }
+      })
+      .catch((err) => console.warn('Could not load database videos:', err))
+      .finally(() => {
+        setIsLoadingDb(false);
+      });
+  }, [selectedBoard, selectedYear]);
+
+  useEffect(() => {
+    loadDbVideos();
+  }, [loadDbVideos]);
+
+  // Listen to video updates from Admin panel
+  useEffect(() => {
+    const handleUpdate = () => {
+      loadDbVideos();
+    };
+    window.addEventListener('mymarks_video_updated', handleUpdate);
+    return () => window.removeEventListener('mymarks_video_updated', handleUpdate);
+  }, [loadDbVideos]);
+
+  // Combine RAW_TOPICS_DATA with dbVideos dynamically
+  const topicsData = useMemo(() => {
+    const chapters = RAW_TOPICS_DATA.map((ch) => ({
+      ...ch,
+      videos: [...(ch.videos || [])],
+    }));
+
+    if (!dbVideos || dbVideos.length === 0) {
+      return chapters.map(assignDynamicCodesToChapter);
+    }
+
+    const findChapterForVideo = (v) => {
+      const chNum = v.chapterNumber ? Number(v.chapterNumber) : null;
+      const rawChName = (v.chapterName || v.chapter || '').trim();
+
+      if (chNum) {
+        const byNum = chapters.find((c) => Number(c.number) === chNum);
+        if (byNum) return byNum;
+      }
+
+      if (rawChName) {
+        const lower = rawChName.toLowerCase();
+        const byName = chapters.find((c) =>
+          c.name.toLowerCase().includes(lower) ||
+          lower.includes(c.name.toLowerCase()) ||
+          (c.chapterTitle && c.chapterTitle.toLowerCase().includes(lower))
+        );
+        if (byName) return byName;
+      }
+
+      return null;
+    };
+
+    dbVideos.forEach((v, idx) => {
+      const vYtId = v.youtubeId || extractYouTubeId(v.url);
+      const isAlreadyInChapters = chapters.some((c) =>
+        c.videos.some((vid) => (vid.url && vid.url === v.url) || (vid.videoId && vid.videoId === vYtId))
+      );
+      if (isAlreadyInChapters) return;
+
+      const matchedChapter = findChapterForVideo(v);
+
+      const parsedKeywords = Array.isArray(v.keywords)
+        ? v.keywords
+        : typeof v.keywords === 'string'
+        ? v.keywords.split(',').map((s) => s.trim()).filter(Boolean)
+        : Array.isArray(v.tags)
+        ? v.tags
+        : typeof v.tags === 'string'
+        ? v.tags.split(',').map((s) => s.trim()).filter(Boolean)
+        : [];
+
+      const videoNode = {
+        id: v._id ? `db-${v._id}` : `db-${idx}`,
+        title: v.title,
+        description:
+          v.description ||
+          (v.subTopicName
+            ? `Comprehensive board lecture on ${v.subTopicName} with theorem derivations and exam proofs.`
+            : 'Board-focused mathematical concept breakdown and theorem proofs.'),
+        url: v.url,
+        videoId: vYtId,
+        thumbnailUrl:
+          v.thumbnailUrl ||
+          (vYtId ? `https://img.youtube.com/vi/${vYtId}/hqdefault.jpg` : ''),
+        keywords: parsedKeywords,
+        isDbUploaded: true,
+        board: v.board || 'Both Boards',
+        year: v.year || '1st Year',
+        children: [],
+      };
+
+      if (matchedChapter) {
+        matchedChapter.videos.push(videoNode);
+      } else {
+        const newNum = String(v.chapterNumber || chapters.length + 1);
+        const newName = v.chapterName || v.chapter || `Chapter ${newNum}`;
+        const newChapter = {
+          id: `ch-${newNum}-${newName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+          number: newNum,
+          name: newName,
+          chapterTitle: v.chapter ? v.chapter : `${newNum} ${newName}`,
+          description: `AP & TS Intermediate Board syllabus lectures for ${newName}.`,
+          color: 'from-blue-600 to-indigo-600',
+          badgeColor:
+            'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+          videos: [videoNode],
+        };
+        chapters.push(newChapter);
+      }
+    });
+
+    return chapters.map(assignDynamicCodesToChapter);
+  }, [dbVideos]);
+
+  // Flatten all merged videos
+  const allVideos = useMemo(() => {
+    return topicsData.flatMap((topic) =>
+      topic.videos.map((video) => ({
+        ...video,
+        topicId: topic.id,
+        topicName: topic.name,
+        chapterTitle: topic.chapterTitle || `${topic.number} ${topic.name}`,
+        topicNumber: topic.number,
+        topicColor: topic.color,
+        badgeColor: topic.badgeColor,
+      }))
+    );
+  }, [topicsData]);
 
   // Search and filter logic supporting recursive nested hierarchy
   const { filteredVideos, isSearching } = useMemo(() => {
     const trimmedQuery = searchQuery.trim();
     const isSearching = trimmedQuery.length > 0;
 
-    let list = ALL_VIDEOS;
+    let list = allVideos;
 
     if (!isSearching && selectedTopicId !== 'all') {
-      list = list.filter(v => v.topicId === selectedTopicId);
+      list = list.filter((v) => v.topicId === selectedTopicId);
       return { filteredVideos: list, isSearching };
     }
 
@@ -1602,60 +1798,72 @@ export default function MathsCurriculum({ onEnroll }) {
       const normQ = normalize(trimmedQuery);
       const queryTokens = normQ.split(' ').filter(Boolean);
 
-      const matches = ALL_VIDEOS.map(video => {
-        const titleNorm = normalize(video.title);
-        const codeNorm = normalize(video.code);
-        const topicNorm = normalize(video.topicName);
-        const keywordsNorm = (video.keywords || []).map(k => normalize(k));
+      const matches = allVideos
+        .map((video) => {
+          const titleNorm = normalize(video.title);
+          const codeNorm = normalize(video.code);
+          const topicNorm = normalize(video.topicName);
+          const keywordsNorm = (video.keywords || []).map((k) => normalize(k));
 
-        const directTitleMatch = video.title.toLowerCase().includes(rawLower) || titleNorm.includes(normQ);
-        const directCodeMatch = video.code.toLowerCase().includes(rawLower) || codeNorm.includes(normQ);
-        const directTopicMatch = video.topicName.toLowerCase().includes(rawLower) || topicNorm.includes(normQ);
+          const directTitleMatch =
+            video.title.toLowerCase().includes(rawLower) || titleNorm.includes(normQ);
+          const directCodeMatch =
+            video.code.toLowerCase().includes(rawLower) || codeNorm.includes(normQ);
+          const directTopicMatch =
+            video.topicName.toLowerCase().includes(rawLower) || topicNorm.includes(normQ);
 
-        const matchedKeywords = (video.keywords || []).filter(kw => {
-          const kwNorm = normalize(kw);
-          return kw.toLowerCase().includes(rawLower) || kwNorm.includes(normQ);
-        });
+          const matchedKeywords = (video.keywords || []).filter((kw) => {
+            const kwNorm = normalize(kw);
+            return kw.toLowerCase().includes(rawLower) || kwNorm.includes(normQ);
+          });
 
-        // Search down the recursive hierarchy
-        const flattenedChildren = flattenNodeTree(video);
-        const matchedChild = flattenedChildren.find(node => {
-          const cCodeNorm = normalize(node.code);
-          const cTitleNorm = normalize(node.title);
-          return (
-            node.code.toLowerCase().includes(rawLower) ||
-            cCodeNorm.includes(normQ) ||
-            node.title.toLowerCase().includes(rawLower) ||
-            cTitleNorm.includes(normQ)
-          );
-        });
+          const flattenedChildren = flattenNodeTree(video);
+          const matchedChild = flattenedChildren.find((node) => {
+            const cCodeNorm = normalize(node.code);
+            const cTitleNorm = normalize(node.title);
+            return (
+              node.code.toLowerCase().includes(rawLower) ||
+              cCodeNorm.includes(normQ) ||
+              node.title.toLowerCase().includes(rawLower) ||
+              cTitleNorm.includes(normQ)
+            );
+          });
 
-        const allTokensInCombined = queryTokens.length > 0 && queryTokens.every(token => {
-          const childrenText = flattenedChildren.map(c => `${c.code} ${c.title}`).join(' ');
-          return (
-            titleNorm.includes(token) ||
-            codeNorm.includes(token) ||
-            topicNorm.includes(token) ||
-            childrenText.toLowerCase().includes(token) ||
-            keywordsNorm.some(kw => kw.includes(token))
-          );
-        });
+          const allTokensInCombined =
+            queryTokens.length > 0 &&
+            queryTokens.every((token) => {
+              const childrenText = flattenedChildren.map((c) => `${c.code} ${c.title}`).join(' ');
+              return (
+                titleNorm.includes(token) ||
+                codeNorm.includes(token) ||
+                topicNorm.includes(token) ||
+                childrenText.toLowerCase().includes(token) ||
+                keywordsNorm.some((kw) => kw.includes(token))
+              );
+            });
 
-        const isMatch = directTitleMatch || directCodeMatch || directTopicMatch || matchedKeywords.length > 0 || allTokensInCombined || Boolean(matchedChild);
+          const isMatch =
+            directTitleMatch ||
+            directCodeMatch ||
+            directTopicMatch ||
+            matchedKeywords.length > 0 ||
+            allTokensInCombined ||
+            Boolean(matchedChild);
 
-        if (isMatch) {
-          return {
-            ...video,
-            matchedKeyword: matchedChild 
-              ? `Lesson ${matchedChild.code}: ${matchedChild.title}`
-              : (matchedKeywords[0] || (directTitleMatch ? null : (video.keywords && video.keywords[0])))
-          };
-        }
-        return null;
-      }).filter(Boolean);
+          if (isMatch) {
+            return {
+              ...video,
+              matchedKeyword: matchedChild
+                ? `Lesson ${matchedChild.code}: ${matchedChild.title}`
+                : matchedKeywords[0] || (directTitleMatch ? null : video.keywords && video.keywords[0]),
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
 
       if (selectedTopicId !== 'all') {
-        const tabFiltered = matches.filter(v => v.topicId === selectedTopicId);
+        const tabFiltered = matches.filter((v) => v.topicId === selectedTopicId);
         if (tabFiltered.length > 0) {
           return { filteredVideos: tabFiltered, isSearching };
         }
@@ -1665,32 +1873,14 @@ export default function MathsCurriculum({ onEnroll }) {
     }
 
     return { filteredVideos: list, isSearching };
-  }, [selectedTopicId, searchQuery]);
-
-  // Find index in filtered list for next/prev navigation
-  const currentVideoIndex = useMemo(() => {
-    if (!activeVideo) return -1;
-    return filteredVideos.findIndex(v => v.id === activeVideo.id);
-  }, [activeVideo, filteredVideos]);
-
-  const handlePrevVideo = () => {
-    if (currentVideoIndex > 0) {
-      setActiveVideo(filteredVideos[currentVideoIndex - 1]);
-    }
-  };
-
-  const handleNextVideo = () => {
-    if (currentVideoIndex >= 0 && currentVideoIndex < filteredVideos.length - 1) {
-      setActiveVideo(filteredVideos[currentVideoIndex + 1]);
-    }
-  };
+  }, [allVideos, selectedTopicId, searchQuery]);
 
   return (
     <section id="maths-curriculum" className="py-16 sm:py-24 bg-[#EBF0F7] dark:bg-[#0B0F19] border-b border-slate-200 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs sm:text-sm font-bold mb-4 border border-indigo-200/60 dark:border-indigo-800/60">
             <Tv size={15} />
             <span>AP & TS Intermediate Mathematics Video Lectures</span>
@@ -1728,6 +1918,7 @@ export default function MathsCurriculum({ onEnroll }) {
           </div>
         </div>
 
+
         {/* Filter Controls: Topic Tabs & Smart Keyword Search Bar */}
         <div className="mb-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
           
@@ -1741,9 +1932,9 @@ export default function MathsCurriculum({ onEnroll }) {
                   : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              All Topics ({ALL_VIDEOS.length})
+              All Topics ({allVideos.length})
             </button>
-            {TOPICS_DATA.map((topic) => {
+            {topicsData.map((topic) => {
               const isActive = selectedTopicId === topic.id && !isSearching;
               return (
                 <button
@@ -1813,7 +2004,7 @@ export default function MathsCurriculum({ onEnroll }) {
               onClick={() => { setSearchQuery(''); setSelectedTopicId('all'); }}
               className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-colors cursor-pointer"
             >
-              Reset Search & View All ({ALL_VIDEOS.length})
+              Reset Search & View All ({allVideos.length})
             </button>
           </div>
         ) : (
@@ -1874,6 +2065,7 @@ export default function MathsCurriculum({ onEnroll }) {
       {activeVideo && (
         <FullPageLecturePlayer
           initialVideo={activeVideo}
+          topicsData={topicsData}
           onClose={() => setActiveVideo(null)}
           onEnroll={onEnroll}
         />
