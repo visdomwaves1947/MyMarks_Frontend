@@ -71,8 +71,7 @@ export default function NewsScroller({ onOpenBooking }) {
           className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-pulse flex-shrink-0"
           style={{ boxShadow: '0 0 5px rgba(255,255,255,0.9)' }}
         />
-        <span className="sm:hidden text-[7.5px] xs:text-[8.5px] font-black tracking-wide">NEWS</span>
-        <span className="hidden sm:inline text-[11px] font-black tracking-widest">News & Events</span>
+        <span className="text-[8px] xs:text-[9px] sm:text-[11.5px] font-black tracking-widest">NEWS</span>
       </div>
 
       {/* Scrolling Ticker Track */}

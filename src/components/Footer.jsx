@@ -426,12 +426,12 @@ export default function Footer({ onOpenBooking }) {
         </div>
       </div>
 
-      {/* Motivational Caption Banner: SPEND TIME ON MYMARKS, GAIN MORE MARKS */}
+      {/* Motivational Caption Banner: WATCH MYMARKS, GAIN MORE MARKS */}
       <div className="w-full border-t border-blue-300/80 dark:border-slate-800 bg-[#b9d9fc]/70 dark:bg-slate-900/60 py-2.5 sm:py-3 px-3 sm:px-6 overflow-hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-4 select-none">
           <div className="h-[1px] w-6 sm:w-16 md:w-24 bg-gradient-to-r from-transparent to-blue-600/50 shrink" />
           <p className="text-[11px] xs:text-xs sm:text-sm md:text-[14.5px] font-extrabold text-blue-700 dark:text-blue-400 uppercase tracking-[0.16em] sm:tracking-[0.24em] md:tracking-[0.28em] font-sans whitespace-nowrap text-center leading-none antialiased">
-            SPEND TIME IN MYMARKS, GAIN MORE MARKS
+            WATCH MYMARKS, GAIN MORE MARKS
           </p>
           <div className="h-[1px] w-6 sm:w-16 md:w-24 bg-gradient-to-l from-transparent to-blue-600/50 shrink" />
         </div>
