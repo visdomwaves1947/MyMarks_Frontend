@@ -25,9 +25,9 @@ export default function HeroContinuousOverlay({
   // Exact user-specified timing:
   // Scene 0 (My Marks Brand): 3 sec (3000ms)
   // Scene 1 (Powered by Visdom Waves + full info): 3 sec (3000ms)
-  // Scene 2 (AP & TS Rotating Wheels + My Marks center logo): 3 sec (3000ms)
-  // Scene 3 (Continuous Books Showcase): 4 sec (4000ms)
-  const SCENE_DURATIONS = [3000, 3000, 3000, 4000];
+  // Scene 2 (AP & TS Rotating Wheels): 3 sec (3000ms)
+  // Scene 3 (Continuous Books Showcase with Real AP/TS Covers): 7 sec (7000ms)
+  const SCENE_DURATIONS = [3000, 3000, 3000, 7000];
   const TRANSITION_DURATION = 250;
 
   // Sync scene change to parent immediately for zero-lag background transitions
@@ -62,7 +62,7 @@ export default function HeroContinuousOverlay({
     };
   }, [currentScene, isPaused]);
 
-  // AP and TS Intermediate Educational Subject Books Collection
+  // AP and TS Intermediate Educational Subject Books Collection with 100% Unique, Alternating Covers
   const INTERMEDIATE_BOOKS = [
     {
       id: "maths",
@@ -73,29 +73,8 @@ export default function HeroContinuousOverlay({
       color: "from-blue-700 via-indigo-900 to-slate-950",
       badge: "MPC / MEC",
       symbol: "∫ dx",
+      coverImage: "/books/maths.jpg",
       floatClass: "animate-book-float-a",
-    },
-    {
-      id: "physics",
-      subject: "Physics",
-      code: "1st & 2nd Year",
-      stream: "MPC • BiPC",
-      curriculum: "30M Board Practicals",
-      color: "from-purple-700 via-violet-900 to-slate-950",
-      badge: "30M Lab",
-      symbol: "⚛",
-      floatClass: "animate-book-float-b",
-    },
-    {
-      id: "chemistry",
-      subject: "Chemistry",
-      code: "1st & 2nd Year",
-      stream: "MPC • BiPC",
-      curriculum: "Salt Analysis & Titration",
-      color: "from-emerald-700 via-teal-900 to-slate-950",
-      badge: "30M Lab",
-      symbol: "⚗",
-      floatClass: "animate-book-float-c",
     },
     {
       id: "botany",
@@ -106,6 +85,67 @@ export default function HeroContinuousOverlay({
       color: "from-green-700 via-emerald-950 to-slate-950",
       badge: "BiPC NEET",
       symbol: "🌿",
+      coverImage: "/books/botany.jpg",
+      floatClass: "animate-book-float-b",
+    },
+    {
+      id: "civics",
+      subject: "Civics",
+      code: "Political Science",
+      stream: "CEC • HEC",
+      curriculum: "Indian Constitution",
+      color: "from-amber-800 via-stone-900 to-slate-950",
+      badge: "HEC / Law",
+      symbol: "🏛",
+      coverImage: "/books/civics.jpg",
+      floatClass: "animate-book-float-c",
+    },
+    {
+      id: "chemistry",
+      subject: "Chemistry",
+      code: "1st & 2nd Year",
+      stream: "MPC • BiPC",
+      curriculum: "Salt Analysis & Titration",
+      color: "from-cyan-700 via-teal-900 to-slate-950",
+      badge: "30M Lab",
+      symbol: "⚗",
+      coverImage: "/books/chemistry.jpg",
+      floatClass: "animate-book-float-a",
+    },
+    {
+      id: "telugu",
+      subject: "Telugu",
+      code: "Part II Language",
+      stream: "All Streams",
+      curriculum: "Sahityam & Vyakaranam",
+      color: "from-rose-800 via-amber-950 to-slate-950",
+      badge: "Part II",
+      symbol: "క",
+      coverImage: "/books/telugu.jpg",
+      floatClass: "animate-book-float-b",
+    },
+    {
+      id: "physics",
+      subject: "Physics",
+      code: "1st & 2nd Year",
+      stream: "MPC • BiPC",
+      curriculum: "30M Board Practicals",
+      color: "from-purple-700 via-violet-900 to-slate-950",
+      badge: "30M Lab",
+      symbol: "⚛",
+      coverImage: "/books/physics.jpg",
+      floatClass: "animate-book-float-c",
+    },
+    {
+      id: "economics",
+      subject: "Economics",
+      code: "Micro & Macro Economics",
+      stream: "CEC • MEC • HEC",
+      curriculum: "National Income & Curves",
+      color: "from-amber-600 via-yellow-900 to-slate-950",
+      badge: "CEC / MEC",
+      symbol: "📈",
+      coverImage: "/books/economics.jpg",
       floatClass: "animate-book-float-a",
     },
     {
@@ -117,73 +157,20 @@ export default function HeroContinuousOverlay({
       color: "from-teal-700 via-cyan-950 to-slate-950",
       badge: "BiPC NEET",
       symbol: "🧬",
+      coverImage: "/books/zoology.jpg",
       floatClass: "animate-book-float-b",
     },
     {
-      id: "languages-sanskrit",
-      subject: "Sanskrit",
-      code: "Part II Language",
-      stream: "All Streams",
-      curriculum: "Vyakaranam & Shlokas",
-      color: "from-amber-700 via-rose-950 to-slate-950",
-      badge: "Part II",
-      symbol: "📜",
-      floatClass: "animate-book-float-c",
-    },
-    {
-      id: "languages-telugu",
-      subject: "Telugu",
-      code: "Part II Language",
-      stream: "All Streams",
-      curriculum: "Sahityam & Vyakaranam",
-      color: "from-orange-700 via-amber-950 to-slate-950",
-      badge: "Part II",
-      symbol: "క",
-      floatClass: "animate-book-float-a",
-    },
-    {
-      id: "languages-english",
+      id: "english",
       subject: "English",
       code: "Part I Compulsory",
       stream: "All Streams",
       curriculum: "Literature & Grammar",
-      color: "from-rose-700 via-pink-950 to-slate-950",
+      color: "from-sky-700 via-blue-950 to-slate-950",
       badge: "Part I",
       symbol: "Aa",
-      floatClass: "animate-book-float-b",
-    },
-    {
-      id: "commerce",
-      subject: "Commerce",
-      code: "Accountancy & Business",
-      stream: "CEC • MEC",
-      curriculum: "Ledgers & Balance Sheets",
-      color: "from-amber-600 via-yellow-900 to-slate-950",
-      badge: "CA Base",
-      symbol: "₹",
+      coverImage: "/books/english.jpg",
       floatClass: "animate-book-float-c",
-    },
-    {
-      id: "economics",
-      subject: "Economics",
-      code: "Micro & Macro Economics",
-      stream: "CEC • MEC • HEC",
-      curriculum: "National Income & Curves",
-      color: "from-yellow-700 via-amber-950 to-slate-950",
-      badge: "CEC / MEC",
-      symbol: "📈",
-      floatClass: "animate-book-float-a",
-    },
-    {
-      id: "civics",
-      subject: "Civics",
-      code: "Political Science",
-      stream: "CEC • HEC",
-      curriculum: "Indian Constitution",
-      color: "from-indigo-800 via-blue-950 to-slate-950",
-      badge: "HEC / Law",
-      symbol: "🏛",
-      floatClass: "animate-book-float-b",
     },
     {
       id: "history",
@@ -191,9 +178,34 @@ export default function HeroContinuousOverlay({
       code: "Heritage & Civilizations",
       stream: "HEC",
       curriculum: "Timelines & Heritage",
-      color: "from-stone-700 via-amber-950 to-slate-950",
+      color: "from-rose-800 via-stone-950 to-slate-950",
       badge: "HEC",
       symbol: "🏺",
+      coverImage: "/books/history.jpg",
+      floatClass: "animate-book-float-a",
+    },
+    {
+      id: "commerce",
+      subject: "Commerce",
+      code: "Accountancy & Business",
+      stream: "CEC • MEC",
+      curriculum: "Ledgers & Balance Sheets",
+      color: "from-orange-600 via-amber-900 to-slate-950",
+      badge: "CA Base",
+      symbol: "₹",
+      coverImage: "/books/commerce.jpg",
+      floatClass: "animate-book-float-b",
+    },
+    {
+      id: "sanskrit",
+      subject: "Sanskrit",
+      code: "Part II Language",
+      stream: "All Streams",
+      curriculum: "Vyakaranam & Shlokas",
+      color: "from-indigo-800 via-blue-950 to-slate-950",
+      badge: "Part II",
+      symbol: "📜",
+      coverImage: "/books/sanskrit.jpg",
       floatClass: "animate-book-float-c",
     },
     {
@@ -202,9 +214,10 @@ export default function HeroContinuousOverlay({
       code: "Python, SQL & Logic",
       stream: "MPC • Vocational",
       curriculum: "30M Practical Lab",
-      color: "from-sky-700 via-blue-950 to-slate-950",
+      color: "from-cyan-700 via-slate-950 to-slate-950",
       badge: "30M Lab",
       symbol: "01",
+      coverImage: "/books/cs.jpg",
       floatClass: "animate-book-float-a",
     },
   ];
@@ -227,11 +240,11 @@ export default function HeroContinuousOverlay({
             key={`scene-0-${isExit ? "exit" : "active"}`}
             className={`w-full max-w-4xl mx-auto flex items-center justify-center text-center px-3 select-none ${animationClass}`}
           >
-            <div className="flex items-center justify-center gap-3 xs:gap-3.5 sm:gap-5 md:gap-6 bg-slate-950/75 backdrop-blur-md px-5 xs:px-7 sm:px-10 py-3.5 xs:py-4 sm:py-5 rounded-3xl border border-white/25 shadow-[0_12px_40px_rgba(0,0,0,0.7)] ring-1 ring-cyan-400/40">
+            <div className="flex items-center justify-center gap-3 xs:gap-3.5 sm:gap-5 md:gap-6 py-2">
               {/* Ultra-Clear My Marks Logo Image with Crisp Contrast & Glow */}
               <div className="relative group shrink-0">
-                <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/60 via-cyan-400/60 to-indigo-500/60 rounded-2xl blur-md opacity-90 group-hover:opacity-100 transition-opacity"></div>
-                <div className="relative w-12 h-12 xs:w-14 xs:h-14 sm:w-18 sm:h-18 md:w-22 md:h-22 rounded-2xl bg-white p-1.5 xs:p-2 shadow-[0_4px_24px_rgba(0,0,0,0.95)] border border-white/90 flex items-center justify-center">
+                <div className="absolute -inset-1.5 bg-gradient-to-r from-blue-500/70 via-cyan-400/70 to-indigo-500/70 rounded-2xl blur-md opacity-90 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative w-12 h-12 xs:w-14 xs:h-14 sm:w-18 sm:h-18 md:w-22 md:h-22 rounded-2xl bg-white p-1.5 xs:p-2 shadow-[0_6px_28px_rgba(0,0,0,0.95)] border-2 border-white flex items-center justify-center">
                   <img
                     src="/logomymarks.png"
                     alt="My Marks Logo"
@@ -240,12 +253,12 @@ export default function HeroContinuousOverlay({
                 </div>
               </div>
 
-              {/* Brand Title with Clear Gap & Text Shimmer Animation */}
+              {/* Brand Title with Clear Gap & Text Shimmer Animation - Refined Font Weights & Ultra-Visible Drop Shadows */}
               <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-3.5">
-                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black text-white tracking-tight leading-none whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight leading-none whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_0_24px_rgba(0,0,0,0.85)]">
                   My
                 </span>
-                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-black bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-300 bg-clip-text text-transparent animate-text-shimmer tracking-tight leading-none whitespace-nowrap drop-shadow-[0_4px_20px_rgba(34,211,238,0.7)]">
+                <span className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl font-bold bg-gradient-to-r from-cyan-300 via-blue-400 to-indigo-300 bg-clip-text text-transparent animate-text-shimmer tracking-tight leading-none whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_0_24px_rgba(0,0,0,0.85)]">
                   Marks
                 </span>
               </div>
@@ -266,9 +279,9 @@ export default function HeroContinuousOverlay({
             key={`scene-1-${isExit ? "exit" : "active"}`}
             className={`w-full max-w-4xl mx-auto flex flex-col items-center justify-center text-center px-3 select-none ${animationClass}`}
           >
-            <div className="flex flex-col items-center justify-center bg-slate-950/75 backdrop-blur-md px-5 xs:px-7 sm:px-10 py-3 xs:py-4 sm:py-5 rounded-3xl border border-cyan-400/35 shadow-[0_12px_40px_rgba(0,0,0,0.7)] ring-1 ring-cyan-400/40">
-              {/* Small Subtle Lightweight "Powered by" */}
-              <span className="text-[10px] xs:text-xs sm:text-sm font-bold text-white tracking-[0.25em] uppercase mb-1 sm:mb-1.5 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+            <div className="flex flex-col items-center justify-center py-2">
+              {/* Clear, High-Visibility "Powered by" */}
+              <span className="text-[11px] xs:text-xs sm:text-sm font-bold text-cyan-200 tracking-[0.25em] uppercase mb-1 sm:mb-1.5 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)]">
                 Powered by
               </span>
 
@@ -276,31 +289,31 @@ export default function HeroContinuousOverlay({
               <div className="flex flex-row items-center justify-center gap-2.5 xs:gap-3 sm:gap-4 md:gap-5 text-left">
                 {/* Visdom Waves Logo with Crisp Backdrop */}
                 <div className="relative group shrink-0">
-                  <div className="absolute -inset-1 bg-cyan-400/40 rounded-xl blur-sm"></div>
+                  <div className="absolute -inset-1 bg-cyan-400/50 rounded-xl blur-md"></div>
                   <img
                     src="/Visdomlogo.png"
                     alt="Visdom Waves Logo"
-                    className="relative h-8 xs:h-10 sm:h-16 md:h-18 w-auto object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] shrink-0 [image-rendering:-webkit-optimize-contrast]"
+                    className="relative h-9 xs:h-11 sm:h-16 md:h-18 w-auto object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_6px_20px_rgba(0,0,0,0.95)] shrink-0 [image-rendering:-webkit-optimize-contrast]"
                   />
                 </div>
 
-                {/* Full Brand Details: Visdom Waves + Innovations Private Limited + Driven by vision */}
+                {/* Full Brand Details: Visdom Waves + Innovations Private Limited + Driven by vision (Refined Font Weights) */}
                 <div className="flex flex-col items-start justify-center">
-                  <h2 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl font-black text-white tracking-tight leading-tight whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)]">
+                  <h2 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl font-bold text-white tracking-tight leading-tight whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_4px_16px_rgba(0,0,0,0.95)] drop-shadow-[0_0_24px_rgba(0,0,0,0.85)]">
                     Visdom Waves
                   </h2>
 
-                  <h3 className="text-[10px] xs:text-xs sm:text-lg md:text-xl font-bold text-cyan-300 tracking-wide mt-0.5 whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                  <h3 className="text-[10px] xs:text-xs sm:text-lg md:text-xl font-semibold text-cyan-300 tracking-wide mt-0.5 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)]">
                     Innovations Private Limited
                   </h3>
 
                   {/* Slogan: Driven by vision */}
                   <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5 sm:mt-1">
-                    <span className="h-[2px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]"></span>
-                    <span className="text-[8px] xs:text-[9.5px] sm:text-xs font-bold text-cyan-200 tracking-[0.2em] uppercase whitespace-nowrap drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+                    <span className="h-[2px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,1)]"></span>
+                    <span className="text-[9px] xs:text-[10.5px] sm:text-xs font-semibold text-cyan-200 tracking-[0.2em] uppercase whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_3px_8px_rgba(0,0,0,0.95)]">
                       Driven by vision
                     </span>
-                    <span className="h-[2px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.9)]"></span>
+                    <span className="h-[2px] w-3 xs:w-4 sm:w-6 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,1)]"></span>
                   </div>
                 </div>
               </div>
@@ -320,7 +333,7 @@ export default function HeroContinuousOverlay({
             key={`scene-2-${isExit ? "exit" : "active"}`}
             className={`w-full max-w-4xl mx-auto flex items-center justify-center px-1 xs:px-2 select-none ${animationClass}`}
           >
-            <div className="flex items-center justify-center gap-6 xs:gap-8 sm:gap-14 md:gap-20 w-full bg-slate-950/75 backdrop-blur-md px-4 xs:px-6 sm:px-10 py-3 xs:py-4 sm:py-5 rounded-3xl border border-amber-400/40 shadow-[0_12px_40px_rgba(0,0,0,0.7)] ring-1 ring-amber-400/40">
+            <div className="flex items-center justify-center gap-6 xs:gap-8 sm:gap-14 md:gap-20 w-full py-2">
               {/* Left Circular Rotating Chakra: Government of Telangana */}
               <div className="flex flex-col items-center">
                 <div className="relative w-18 h-18 xs:w-22 xs:h-22 sm:w-28 sm:h-28 md:w-34 md:h-34 shrink-0">
@@ -395,7 +408,7 @@ export default function HeroContinuousOverlay({
                     />
 
                     {/* Full 360° Circular Text Covering Entire Circle */}
-                    <text className="fill-amber-300 text-[8.5px] font-black tracking-[1.4px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    <text className="fill-amber-300 text-[8.5px] font-bold tracking-[1.3px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
                       <textPath href="#tsWheelPath" startOffset="0%">
                         <tspan textLength="471" lengthAdjust="spacingAndGlyphs">
                           ★ GOVERNMENT OF TELANGANA ★ TS BIE INTERMEDIATE ★ SYLLABUS 2025-26 ★
@@ -476,7 +489,7 @@ export default function HeroContinuousOverlay({
                   </div>
                 </div>
 
-                <span className="text-[8.5px] xs:text-[10px] sm:text-xs md:text-sm font-extrabold text-amber-300 uppercase tracking-widest mt-1.5 sm:mt-2 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                <span className="text-[9px] xs:text-[10.5px] sm:text-xs md:text-sm font-bold text-amber-300 uppercase tracking-widest mt-1.5 sm:mt-2 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)] drop-shadow-[0_0_16px_rgba(0,0,0,0.9)]">
                   Govt of Telangana
                 </span>
               </div>
@@ -555,7 +568,7 @@ export default function HeroContinuousOverlay({
                     />
 
                     {/* Full 360° Circular Text Covering Entire Circle */}
-                    <text className="fill-amber-300 text-[8.5px] font-black tracking-[1.4px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
+                    <text className="fill-amber-300 text-[8.5px] font-bold tracking-[1.3px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
                       <textPath href="#apWheelPath" startOffset="0%">
                         <tspan textLength="471" lengthAdjust="spacingAndGlyphs">
                           ★ GOVERNMENT OF ANDHRA PRADESH ★ BIEAP INTERMEDIATE ★ SYLLABUS 2025-26 ★
@@ -636,7 +649,7 @@ export default function HeroContinuousOverlay({
                   </div>
                 </div>
 
-                <span className="text-[8.5px] xs:text-[10px] sm:text-xs md:text-sm font-extrabold text-amber-300 uppercase tracking-widest mt-1.5 sm:mt-2 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)]">
+                <span className="text-[9px] xs:text-[10.5px] sm:text-xs md:text-sm font-bold text-amber-300 uppercase tracking-widest mt-1.5 sm:mt-2 whitespace-nowrap drop-shadow-[0_2px_4px_rgba(0,0,0,1)] drop-shadow-[0_4px_12px_rgba(0,0,0,0.95)] drop-shadow-[0_0_16px_rgba(0,0,0,0.9)]">
                   Govt of Andhra Pradesh
                 </span>
               </div>
@@ -661,49 +674,49 @@ export default function HeroContinuousOverlay({
               <div className="absolute left-0 inset-y-0 w-6 sm:w-14 bg-gradient-to-r from-[#040d28] to-transparent z-20 pointer-events-none" />
               <div className="absolute right-0 inset-y-0 w-6 sm:w-14 bg-gradient-to-l from-[#040d28] to-transparent z-20 pointer-events-none" />
 
-              {/* Continuous Horizontal Marquee Track of Realistic Hardcover Textbooks */}
+              {/* Continuous Horizontal Marquee Track of Realistic Hardcover Textbooks with Real AP & TS Covers */}
               <div className="flex items-center gap-2 xs:gap-2.5 sm:gap-4 md:gap-5 w-max animate-book-marquee transform-style-3d">
                 {[...INTERMEDIATE_BOOKS, ...INTERMEDIATE_BOOKS].map(
                   (book, index) => (
                     <div
                       key={`${book.id}-${index}`}
-                      className={`relative w-22 xs:w-26 sm:w-34 md:w-38 h-30 xs:h-34 sm:h-46 md:h-50 rounded-r-xl rounded-l-sm bg-gradient-to-br ${book.color} border border-white/20 shadow-2xl transition-all duration-300 hover:scale-105 shrink-0 text-left flex flex-col justify-between p-1.5 xs:p-2 sm:p-2.5 cursor-pointer group ${book.floatClass}`}
+                      className={`relative w-28 xs:w-32 sm:w-40 md:w-44 h-40 xs:h-46 sm:h-56 md:h-62 rounded-r-xl rounded-l-sm overflow-hidden border border-white/20 shadow-2xl transition-all duration-300 hover:scale-105 shrink-0 text-left flex flex-col justify-between cursor-pointer group bg-gradient-to-br ${book.color} ${book.floatClass}`}
                     >
-                      {/* Realistic Hardcover Book Spine Bevel on Left Edge */}
-                      <div className="absolute left-0 inset-y-0 w-1.5 xs:w-2 sm:w-2.5 bg-gradient-to-r from-black/60 via-white/20 to-black/40 rounded-l-sm border-r border-white/10" />
+                      {/* Actual Real AP & TS Subject Textbook Cover Image */}
+                      <img
+                        src={book.coverImage}
+                        alt={`${book.subject} AP & TS Textbook`}
+                        className="absolute inset-0 w-full h-full object-cover object-top brightness-[0.98] group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                        loading="lazy"
+                      />
+
+                      {/* Hardcover Book Spine Bevel on Left Edge */}
+                      <div className="absolute left-0 inset-y-0 w-2 xs:w-2.5 sm:w-3 bg-gradient-to-r from-black/80 via-white/30 to-black/50 rounded-l-sm border-r border-white/20 z-20 pointer-events-none" />
 
                       {/* Right Paper Edge Bevel */}
-                      <div className="absolute right-0 inset-y-1 w-1 bg-gradient-to-b from-slate-200 via-amber-100 to-slate-300 rounded-r-sm opacity-80 shadow-md" />
+                      <div className="absolute right-0 inset-y-1 w-1 bg-gradient-to-b from-slate-200 via-amber-100 to-slate-300 rounded-r-sm opacity-90 shadow-md z-20 pointer-events-none" />
 
-                      {/* Top Header: Board + Stream Indicator */}
-                      <div className="pl-1.5 sm:pl-2 flex items-center justify-between">
-                        <span className="text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] font-semibold text-white/80 tracking-wider uppercase whitespace-nowrap">
-                          {book.stream}
-                        </span>
-                        <span className="text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] font-semibold px-1 py-0.5 rounded bg-white/15 border border-white/20 text-cyan-200 whitespace-nowrap">
+                      {/* Top Header: Stream & Board Tag */}
+                      <div className="relative z-10 pl-3 pr-1.5 pt-1.5 xs:pt-2 flex items-center justify-between pointer-events-none">
+                        <span className="text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] font-bold text-amber-300 tracking-wider uppercase px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-sm border border-amber-400/40 whitespace-nowrap shadow-sm">
                           {book.badge}
                         </span>
+                        <span className="text-[7px] xs:text-[8px] sm:text-[9px] font-semibold text-white/95 px-1 py-0.5 rounded bg-black/60 backdrop-blur-sm border border-white/20 whitespace-nowrap">
+                          {book.stream}
+                        </span>
                       </div>
 
-                      {/* Center Subject Name & Emblem */}
-                      <div className="pl-1.5 sm:pl-2 my-auto">
-                        <div className="w-5 h-5 xs:w-6 xs:h-6 sm:w-8 sm:h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white mb-0.5 shadow-inner group-hover:scale-110 transition-transform font-serif font-black text-[11px] sm:text-sm">
-                          {book.symbol}
-                        </div>
-                        <h3 className="text-[10px] xs:text-[11px] sm:text-sm md:text-base font-semibold text-white leading-tight line-clamp-1 drop-shadow">
+                      {/* Bottom Frosted High-Contrast Bar: Visible Subject Name & Code (Never clips on mobile) */}
+                      <div className="relative z-10 pl-3 pr-2 pb-1.5 xs:pb-2 pt-3 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent pointer-events-none flex flex-col gap-0.5">
+                        <h3 className="text-[11px] xs:text-xs sm:text-sm md:text-base font-extrabold text-white tracking-wide leading-tight truncate drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                           {book.subject}
                         </h3>
-                        <p className="text-[7.5px] xs:text-[8.5px] sm:text-[10px] text-cyan-200/80 leading-tight mt-0.5 line-clamp-1">
-                          {book.code}
-                        </p>
-                      </div>
-
-                      {/* Bottom Footer: Curriculum / Practicals */}
-                      <div className="pl-1.5 sm:pl-2 pt-0.5 sm:pt-1 border-t border-white/15 flex items-center justify-between text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] text-white/70">
-                        <span className="truncate">{book.curriculum}</span>
-                        <span className="text-cyan-300 font-bold group-hover:translate-x-0.5 transition-transform">
-                          →
-                        </span>
+                        <div className="flex items-center justify-between text-[7.5px] xs:text-[8.5px] sm:text-[9.5px] text-cyan-200/90">
+                          <span className="truncate drop-shadow">{book.code}</span>
+                          <span className="text-cyan-300 font-bold group-hover:translate-x-0.5 transition-transform shrink-0 ml-1">
+                            →
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )
@@ -724,8 +737,8 @@ export default function HeroContinuousOverlay({
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
     >
-      {/* Dynamic Overlay Canvas Stage (Compact Mobile Height, Zero Layout Shift) */}
-      <div className="relative w-full min-h-[100px] xs:min-h-[120px] sm:min-h-[160px] md:min-h-[200px] flex items-center justify-center overflow-hidden">
+      {/* Dynamic Overlay Canvas Stage (Comfortable Height for Textbooks, Zero Vertical Clipping) */}
+      <div className="relative w-full min-h-[175px] xs:min-h-[200px] sm:min-h-[240px] md:min-h-[270px] flex items-center justify-center overflow-hidden">
         {/* Render Current Active Scene */}
         {renderScene(currentScene, false)}
 
@@ -741,7 +754,7 @@ export default function HeroContinuousOverlay({
       <div className="flex flex-row items-center justify-center gap-1.5 xs:gap-2 sm:gap-4 mt-2 xs:mt-2.5 sm:mt-5 w-full px-2 sm:w-auto">
         <button
           onClick={() => onOpenVideoDemo && onOpenVideoDemo()}
-          className="w-auto px-2.5 xs:px-3 sm:px-7 py-1.5 xs:py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 hover:from-blue-500 hover:to-indigo-600 text-white font-bold text-[10px] xs:text-[11px] sm:text-sm md:text-base shadow-xl shadow-black/60 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer border border-blue-400/50"
+          className="w-auto px-2.5 xs:px-3 sm:px-6 py-1.5 xs:py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-[10px] xs:text-[11px] sm:text-sm md:text-base border border-blue-400/50 backdrop-blur-md shadow-xl shadow-blue-950/50 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <Play size={12} className="sm:w-4 sm:h-4" fill="currentColor" />
           <span className="whitespace-nowrap">Watch Demo Videos</span>
@@ -756,15 +769,15 @@ export default function HeroContinuousOverlay({
               onOpenBooking("Intermediate AP & TS Course");
             }
           }}
-          className="w-auto px-2.5 xs:px-3 sm:px-6 py-1.5 xs:py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-slate-950/80 hover:bg-slate-900 text-white font-bold text-[10px] xs:text-[11px] sm:text-sm md:text-base border border-white/40 backdrop-blur-md shadow-xl shadow-black/60 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
+          className="w-auto px-2.5 xs:px-3 sm:px-6 py-1.5 xs:py-2 sm:py-2.5 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-[10px] xs:text-[11px] sm:text-sm md:text-base border border-blue-400/50 backdrop-blur-md shadow-xl shadow-blue-950/50 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <BookOpen size={12} className="sm:w-4 sm:h-4" />
           <span className="whitespace-nowrap">Explore Subjects</span>
         </button>
       </div>
 
-      {/* Minimal Elegant Scene Navigation Indicators with dark pill for crisp visibility */}
-      <div className="flex items-center gap-1.5 xs:gap-2 mt-2 xs:mt-2.5 sm:mt-4 bg-slate-950/60 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow-md">
+      {/* Minimal Elegant Scene Navigation Indicators */}
+      <div className="flex items-center gap-1.5 xs:gap-2 mt-2 xs:mt-2.5 sm:mt-4 bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full border border-white/15 shadow-sm">
         {[
           { label: "My Marks Brand", index: 0 },
           { label: "Powered by Visdom Waves", index: 1 },
