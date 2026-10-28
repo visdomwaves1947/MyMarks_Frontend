@@ -89,6 +89,7 @@ import {
   seedAdminVideosApi,
   uploadMediaFileApi
 } from '../services/api';
+import { TOPICS_DATA } from '../components/maths/MathsCurriculum';
 
 const MASTER_EMAIL = 'md@visdomwaves.com';
 const MASTER_PASS = 'Md@1947';
@@ -242,8 +243,13 @@ export default function AdminPage({
   const [thumbDragOver, setThumbDragOver] = useState(false);
   const [youtubeError, setYoutubeError] = useState('');
   const [showTopicSection, setShowTopicSection] = useState(false); // Toggle Topic & Sub Topic section (+/-)
-
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'user'|'course'|'booking'|'video', id, title }
+
+  // Old Videos Storage & Replace State
+  const [replaceExistingVideo, setReplaceExistingVideo] = useState(true); // Optional replace & archive old video
+  const [isArchiveStorageModalOpen, setIsArchiveStorageModalOpen] = useState(false);
+  const [archiveSearch, setArchiveSearch] = useState('');
+  const [archiveFilterLevel, setArchiveFilterLevel] = useState('all');
 
   // Helper to extract YouTube ID
   const extractYouTubeId = useCallback((url) => {
@@ -254,6 +260,26 @@ export default function AdminPage({
     const match = trimmed.match(regExp);
     return match && match[1] ? match[1] : '';
   }, []);
+
+  // Safe thumbnail helper that guards against broken YouTube thumbnail 404s
+  const getSafeThumbnailUrl = useCallback((rawThumbUrl, ytId) => {
+    let thumb = (rawThumbUrl || '').trim();
+    let id = (ytId || extractYouTubeId(thumb) || '').trim();
+
+    // Map known dead/404 YouTube IDs to active educational video IDs
+    const BAD_IDS = ['2TzFm9u5e10', 'WUvTyaaNjfo', 'YV8R-iEwI10', 's8z_gV4d1Y0', '012s6N3B6xM', 'vQ881vB7x6k', 'o10h4_k86M0', 'j49s-jEw1Y0', 'k29B_v16-9M', 'w40B_v16-9M', '1m4q_3y-89k'];
+    if (BAD_IDS.includes(id) || BAD_IDS.some(bad => thumb.includes(bad))) {
+      id = '3-s0IwdDcgE';
+      thumb = 'https://img.youtube.com/vi/3-s0IwdDcgE/hqdefault.jpg';
+    }
+    if (thumb && !BAD_IDS.some(bad => thumb.includes(bad))) {
+      return thumb;
+    }
+    if (id && !BAD_IDS.includes(id)) {
+      return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    }
+    return 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80';
+  }, [extractYouTubeId]);
 
   // Stepper helper for Topic Number (e.g. 1.0, 1.1, 2.0)
   const stepTopicNumber = useCallback((currentVal, delta) => {
@@ -428,6 +454,8 @@ export default function AdminPage({
   // Video & Resource Form Data with Step 4 Lesson Settings
   const initialVideoForm = {
     title: '',
+    uploadLevel: 'chapter', // 'chapter' | 'topic' | 'subTopic' | 'subSubTopic'
+    code: '1.0',
     type: 'youtube', // 'youtube' | 'video' | 'link' | 'drive' | 'document'
     url: '',
     subject: 'Mathematics',
@@ -500,6 +528,212 @@ export default function AdminPage({
   const [videoForm, setVideoForm] = useState(initialVideoForm);
   const [savedKeyFeedback, setSavedKeyFeedback] = useState({});
 
+  // Separate media per hierarchy level: Chapter, Topic, Sub Topic, Sub Sub Topic
+  const initialLevelMedia = {
+    chapter: { url: '', type: 'youtube', thumbnailUrl: '', originalName: '', isUploading: false, progress: 0 },
+    topic: { url: '', type: 'youtube', thumbnailUrl: '', originalName: '', isUploading: false, progress: 0 },
+    subTopic: { url: '', type: 'youtube', thumbnailUrl: '', originalName: '', isUploading: false, progress: 0 },
+    subSubTopic: { url: '', type: 'youtube', thumbnailUrl: '', originalName: '', isUploading: false, progress: 0 },
+  };
+
+  const [levelMedia, setLevelMedia] = useState(initialLevelMedia);
+  const [activeUploadContext, setActiveUploadContext] = useState('chapter'); // 'chapter' | 'topic' | 'subTopic' | 'subSubTopic'
+
+  // Quick YouTube Modal State (attached from Curriculum Info row buttons)
+  const [quickYoutubeModal, setQuickYoutubeModal] = useState({
+    isOpen: false,
+    context: '',
+    contextLabel: '',
+    url: '',
+  });
+
+  const handleRemoveLevelMedia = useCallback((context) => {
+    setLevelMedia((prev) => ({
+      ...prev,
+      [context]: { url: '', type: 'youtube', thumbnailUrl: '', originalName: '', isUploading: false, progress: 0 },
+    }));
+    showToast(`Removed video from ${context === 'chapter' ? 'Chapter' : context === 'topic' ? 'Topic' : context === 'subTopic' ? 'Sub Topic' : 'Sub Sub Topic'}`, 'info');
+  }, []);
+
+  const handleOpenYouTubeModal = useCallback((context = 'chapter', label = '') => {
+    setActiveUploadContext(context);
+    setVideoForm((prev) => {
+      let nextTitle = prev.title;
+      if (!nextTitle) {
+        if (context === 'topic' && prev.topicName) {
+          nextTitle = prev.topicName;
+        } else if (context === 'subTopic' && (prev.subTopicName || prev.lessonName)) {
+          nextTitle = prev.subTopicName || prev.lessonName;
+        } else if (context === 'subSubTopic' && prev.subSubTopicName) {
+          nextTitle = prev.subSubTopicName;
+        } else if (prev.chapterName) {
+          nextTitle = prev.chapterName;
+        }
+      }
+      return {
+        ...prev,
+        uploadLevel: context,
+        title: nextTitle || prev.title,
+      };
+    });
+
+    setQuickYoutubeModal({
+      isOpen: true,
+      context,
+      contextLabel: label || 'Curriculum Item',
+      url: levelMedia[context]?.url || (videoForm.uploadLevel === context ? videoForm.url : ''),
+    });
+  }, [levelMedia, videoForm.uploadLevel, videoForm.url]);
+
+  const handleTriggerVideoUpload = useCallback((context = 'chapter', label = '') => {
+    setActiveUploadContext(context);
+    setVideoForm((prev) => {
+      let nextTitle = prev.title;
+      if (!nextTitle) {
+        if (context === 'topic' && prev.topicName) {
+          nextTitle = prev.topicName;
+        } else if (context === 'subTopic' && (prev.subTopicName || prev.lessonName)) {
+          nextTitle = prev.subTopicName || prev.lessonName;
+        } else if (context === 'subSubTopic' && prev.subSubTopicName) {
+          nextTitle = prev.subSubTopicName;
+        } else if (prev.chapterName) {
+          nextTitle = prev.chapterName;
+        }
+      }
+      return {
+        ...prev,
+        uploadLevel: context,
+        title: nextTitle || prev.title,
+      };
+    });
+
+    const input = document.getElementById('admin-video-file-input');
+    if (input) {
+      input.value = '';
+      input.click();
+    }
+  }, []);
+
+  const handleTriggerThumbUpload = useCallback((context = 'chapter') => {
+    setActiveUploadContext(context);
+    const input = document.getElementById('admin-thumb-file-input');
+    if (input) {
+      input.value = '';
+      input.click();
+    }
+  }, []);
+
+  // Small Action Buttons on Right Side of Save: YouTube URL, Upload video, and Thumbnail
+  const renderMediaActionButtons = useCallback((context, label) => {
+    const media = levelMedia[context] || {};
+    const isThisYt = (media.type === 'youtube' || Boolean(extractYouTubeId(media.url))) && Boolean(media.url);
+    const isThisVideo = media.type === 'video' && Boolean(media.url);
+    const isThisThumb = Boolean(media.thumbnailUrl);
+    const isRowUploading = Boolean(media.isUploading);
+    const rowProgress = media.progress || 0;
+
+    return (
+      <div className="flex flex-col gap-1.5 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap">
+          {/* YouTube URL Small Button */}
+          <button
+            type="button"
+            onClick={() => handleOpenYouTubeModal(context, label)}
+            className={`h-[42px] px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs select-none active:scale-95 whitespace-nowrap ${
+              isThisYt
+                ? 'bg-red-600 text-white shadow-red-500/25 border border-red-600 ring-2 ring-red-400/30'
+                : 'bg-red-50 hover:bg-red-100/90 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60'
+            }`}
+            title={isThisYt ? `YouTube URL Linked: ${media.url}` : `Attach YouTube Video URL for ${label}`}
+          >
+            <svg className="w-3.5 h-3.5 fill-current shrink-0" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span>{isThisYt ? 'YouTube URL ✓' : 'YouTube URL'}</span>
+          </button>
+
+          {/* Upload Video Small Button */}
+          <button
+            type="button"
+            disabled={isRowUploading || isUploadingVideo}
+            onClick={() => handleTriggerVideoUpload(context, label)}
+            className={`h-[42px] px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs select-none active:scale-95 whitespace-nowrap ${
+              isThisVideo
+                ? 'bg-blue-600 text-white shadow-blue-500/25 border border-blue-600 ring-2 ring-blue-400/30'
+                : 'bg-blue-50 hover:bg-blue-100/90 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-600 dark:text-cyan-400 border border-blue-200 dark:border-blue-900/60'
+            } ${isRowUploading ? 'opacity-70 cursor-wait' : ''}`}
+            title={isThisVideo ? `Video Uploaded: ${media.originalName || media.url}` : `Upload Video File for ${label}`}
+          >
+            {isRowUploading ? (
+              <RefreshCw size={13} className="animate-spin text-blue-600 dark:text-cyan-300 shrink-0" />
+            ) : (
+              <Upload size={13} className="shrink-0" />
+            )}
+            <span>
+              {isRowUploading
+                ? `Uploading ${rowProgress}%`
+                : isThisVideo
+                ? 'Upload video ✓'
+                : 'Upload video'}
+            </span>
+          </button>
+
+          {/* Upload Thumbnail Small Button */}
+          <button
+            type="button"
+            disabled={isUploadingThumb}
+            onClick={() => handleTriggerThumbUpload(context)}
+            className={`h-[42px] px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs select-none active:scale-95 whitespace-nowrap ${
+              isThisThumb
+                ? 'bg-purple-600 text-white shadow-purple-500/25 border border-purple-600 ring-2 ring-purple-400/30'
+                : 'bg-purple-50 hover:bg-purple-100/90 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-900/60'
+            } ${isUploadingThumb ? 'opacity-70 cursor-wait' : ''}`}
+            title={isThisThumb ? `Thumbnail Active: ${media.thumbnailUrl}` : `Upload Custom Thumbnail for ${label}`}
+          >
+            {isUploadingThumb ? (
+              <RefreshCw size={13} className="animate-spin text-purple-600 dark:text-purple-300 shrink-0" />
+            ) : (
+              <ImageIcon size={13} className="shrink-0" />
+            )}
+            <span>
+              {isThisThumb
+                ? 'Thumbnail ✓'
+                : 'Thumbnail'}
+            </span>
+          </button>
+        </div>
+
+        {/* Attached Video Chip Indicator with Clear button */}
+        {media.url && (
+          <div className="flex items-center justify-between gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-[11px] font-semibold animate-in fade-in">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></span>
+              <span className="truncate max-w-[200px]" title={media.originalName || media.url}>
+                {media.type === 'youtube' ? 'YouTube' : 'Video'}: {media.originalName || (media.url.length > 25 ? media.url.substring(0, 25) + '...' : media.url)}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => handleRemoveLevelMedia(context)}
+              className="text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 px-1 font-black cursor-pointer text-xs"
+              title="Detach video from this level"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }, [
+    levelMedia,
+    handleOpenYouTubeModal,
+    handleTriggerVideoUpload,
+    handleTriggerThumbUpload,
+    handleRemoveLevelMedia,
+    isUploadingVideo,
+    isUploadingThumb,
+  ]);
+
   // Load all data
   const loadAdminData = useCallback(async () => {
     setIsRefreshing(true);
@@ -532,7 +766,23 @@ export default function AdminPage({
       // 5. Videos & Links
       const videosRes = await fetchAdminVideos({ limit: 100 });
       if (videosRes.success && Array.isArray(videosRes.data)) {
-        setVideos(videosRes.data);
+        const sanitized = videosRes.data.map((v) => {
+          let t = v.thumbnailUrl || '';
+          let u = v.url || '';
+          let yt = v.youtubeId || extractYouTubeId(u) || extractYouTubeId(t) || '';
+          if (t.includes('2TzFm9u5e10') || u.includes('2TzFm9u5e10') || yt === '2TzFm9u5e10') {
+            t = 'https://img.youtube.com/vi/bHIhgxav9LY/hqdefault.jpg';
+            u = 'https://www.youtube.com/watch?v=bHIhgxav9LY';
+            yt = 'bHIhgxav9LY';
+          }
+          if (t.includes('WUvTyaaNjfo') || u.includes('WUvTyaaNjfo') || yt === 'WUvTyaaNjfo') {
+            t = 'https://img.youtube.com/vi/jQUrfmX0uko/hqdefault.jpg';
+            u = 'https://www.youtube.com/watch?v=jQUrfmX0uko';
+            yt = 'jQUrfmX0uko';
+          }
+          return { ...v, thumbnailUrl: t, url: u, youtubeId: yt };
+        });
+        setVideos(sanitized);
       }
 
       const elapsed = Math.round(performance.now() - start);
@@ -707,12 +957,125 @@ export default function AdminPage({
         v.classLevel === 'All Levels';
 
       const matchStatus =
-        videoStatusFilter === 'all' ||
-        (v.status || 'published').toLowerCase() === videoStatusFilter.toLowerCase();
+        videoStatusFilter === 'all'
+          ? (v.status !== 'archived' && !v.isArchived)
+          : videoStatusFilter === 'archived'
+          ? (v.status === 'archived' || v.isArchived)
+          : (v.status || 'published').toLowerCase() === videoStatusFilter.toLowerCase();
 
       return matchSearch && matchType && matchSubject && matchBoard && matchYear && matchStatus;
     });
   }, [videos, videoSearch, videoTypeFilter, videoSubjectFilter, videoBoardFilter, videoYearFilter, videoStatusFilter]);
+
+  // Old Videos Storage: all preserved, replaced, and archived videos
+  const archivedVideos = useMemo(() => {
+    return videos.filter((v) => v.status === 'archived' || v.isArchived);
+  }, [videos]);
+
+  // Filtered list within Old Videos Storage modal
+  const filteredArchivedVideos = useMemo(() => {
+    return archivedVideos.filter((v) => {
+      const q = archiveSearch.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        (v.title || '').toLowerCase().includes(q) ||
+        (v.code || '').toLowerCase().includes(q) ||
+        (v.chapter || '').toLowerCase().includes(q) ||
+        (v.chapterName || '').toLowerCase().includes(q) ||
+        (v.topicName || v.topic || '').toLowerCase().includes(q) ||
+        (v.subTopicName || '').toLowerCase().includes(q) ||
+        (v.subSubTopicName || '').toLowerCase().includes(q) ||
+        (v.replacedByTitle || '').toLowerCase().includes(q) ||
+        (v.replacedByCode || '').toLowerCase().includes(q);
+
+      const matchLevel =
+        archiveFilterLevel === 'all' ||
+        (v.uploadLevel || '').toLowerCase() === archiveFilterLevel.toLowerCase();
+
+      return matchSearch && matchLevel;
+    });
+  }, [archivedVideos, archiveSearch, archiveFilterLevel]);
+
+  // Detect active existing videos matching the current hierarchy levels being uploaded
+  const existingVideosForHierarchy = useMemo(() => {
+    const results = [];
+    const chNum = Number(videoForm.chapterNumber) || 1;
+    const tCode = String(videoForm.topicNumber || '1.0').trim();
+    const stCode = String(videoForm.subTopicNumber || '1.0.0').trim();
+    const sstCode = String(videoForm.subSubTopicNumber || '1.0.0.0').trim();
+
+    // Active videos (not archived)
+    const activeList = videos.filter(
+      (v) =>
+        (v._id || v.id) !== (selectedVideo?._id || selectedVideo?.id) &&
+        v.status !== 'archived' &&
+        !v.isArchived
+    );
+
+    // Topic check
+    if (levelMedia.topic?.url?.trim() || (!levelMedia.chapter?.url && !levelMedia.subTopic?.url && !levelMedia.subSubTopic?.url && videoForm.url?.trim())) {
+      const match = activeList.find((v) =>
+        (v.code && v.code.trim() === tCode) ||
+        (String(v.topicNumber || '').trim() === tCode && Number(v.chapterNumber) === chNum)
+      );
+      if (match) {
+        results.push({ level: 'topic', label: `Topic ${tCode}`, code: tCode, existingVideo: match });
+      } else if (TOPICS_DATA && Array.isArray(TOPICS_DATA)) {
+        const defaultCh = TOPICS_DATA.find((c) => Number(c.number) === chNum);
+        if (defaultCh && Array.isArray(defaultCh.videos)) {
+          const defaultItem = defaultCh.videos.find((dv) => dv.code === tCode);
+          if (defaultItem) {
+            results.push({
+              level: 'topic',
+              label: `Topic ${tCode}`,
+              code: tCode,
+              existingVideo: {
+                title: defaultItem.title,
+                code: tCode,
+                chapterNumber: chNum,
+                isDefaultCurriculum: true,
+              },
+            });
+          }
+        }
+      }
+    }
+
+    // Sub Topic check
+    if (levelMedia.subTopic?.url?.trim()) {
+      const match = activeList.find((v) =>
+        (v.code && v.code.trim() === stCode) ||
+        (String(v.subTopicNumber || '').trim() === stCode && Number(v.chapterNumber) === chNum)
+      );
+      if (match) {
+        results.push({ level: 'subTopic', label: `Sub Topic ${stCode}`, code: stCode, existingVideo: match });
+      }
+    }
+
+    // Sub Sub Topic check
+    if (levelMedia.subSubTopic?.url?.trim()) {
+      const match = activeList.find((v) =>
+        (v.code && v.code.trim() === sstCode) ||
+        (String(v.subSubTopicNumber || '').trim() === sstCode && Number(v.chapterNumber) === chNum)
+      );
+      if (match) {
+        results.push({ level: 'subSubTopic', label: `Sub Sub Topic ${sstCode}`, code: sstCode, existingVideo: match });
+      }
+    }
+
+    // Chapter check
+    if (levelMedia.chapter?.url?.trim()) {
+      const match = activeList.find((v) =>
+        (v.code && v.code.trim() === String(chNum)) ||
+        (Number(v.chapterNumber) === chNum && (v.uploadLevel === 'chapter' || (!v.topicNumber && !v.topicName)))
+      );
+      if (match) {
+        results.push({ level: 'chapter', label: `Chapter ${chNum}`, code: String(chNum), existingVideo: match });
+      }
+    }
+
+    return results;
+  }, [videos, videoForm.chapterNumber, videoForm.topicNumber, videoForm.subTopicNumber, videoForm.subSubTopicNumber, levelMedia, videoForm.url, selectedVideo]);
 
 
   // User Actions
@@ -849,6 +1212,8 @@ export default function AdminPage({
   const handleOpenAddVideo = (mode = 'upload', step = 1) => {
     setVideoModalMode('create');
     setVideoForm(initialVideoForm);
+    setLevelMedia(initialLevelMedia);
+    setActiveUploadContext('chapter');
     setVideoSourceMode(mode);
     setVideoStudioStep(step);
     setIsVideoFullScreen(true); // Automatically open in full screen
@@ -885,9 +1250,24 @@ export default function AdminPage({
     const subNum = video.subTopicNumber || '1.0.0';
     const subSubNum = video.subSubTopicNumber || '1.0.0.0';
     const subSubName = video.subSubTopicName || '';
+    const detectedLevel = video.uploadLevel || (
+      subSubName ? 'subSubTopic' :
+      subTopic ? 'subTopic' :
+      (video.topicName || video.topic) ? 'topic' : 'chapter'
+    );
+
+    setLevelMedia({
+      chapter: detectedLevel === 'chapter' ? { url: video.url || '', type: video.type || 'youtube', thumbnailUrl: video.thumbnailUrl || '', originalName: video.title || '' } : { url: '', type: 'youtube', thumbnailUrl: '', originalName: '' },
+      topic: detectedLevel === 'topic' ? { url: video.url || '', type: video.type || 'youtube', thumbnailUrl: video.thumbnailUrl || '', originalName: video.title || '' } : { url: '', type: 'youtube', thumbnailUrl: '', originalName: '' },
+      subTopic: detectedLevel === 'subTopic' ? { url: video.url || '', type: video.type || 'youtube', thumbnailUrl: video.thumbnailUrl || '', originalName: video.title || '' } : { url: '', type: 'youtube', thumbnailUrl: '', originalName: '' },
+      subSubTopic: detectedLevel === 'subSubTopic' ? { url: video.url || '', type: video.type || 'youtube', thumbnailUrl: video.thumbnailUrl || '', originalName: video.title || '' } : { url: '', type: 'youtube', thumbnailUrl: '', originalName: '' },
+    });
+    setActiveUploadContext(detectedLevel);
 
     setVideoForm({
       title: video.title || '',
+      uploadLevel: detectedLevel,
+      code: video.code || (detectedLevel === 'subSubTopic' ? subSubNum : detectedLevel === 'subTopic' ? subNum : detectedLevel === 'topic' ? topNum : String(chNum)),
       type: video.type || (isYt ? 'youtube' : 'video'),
       url: video.url || '',
       subject: video.subject || 'Mathematics',
@@ -977,6 +1357,71 @@ export default function AdminPage({
     }
   };
 
+  // Restore an archived video back to active curriculum (swaps with current if one is active)
+  const handleRestoreArchivedVideo = async (videoToRestore) => {
+    if (!videoToRestore) return;
+    const vidTitle = videoToRestore.title || 'this video';
+    if (!window.confirm(`Restore "${vidTitle}" back as the active video?`)) return;
+
+    setIsLoading(true);
+    try {
+      // Find if an active video currently occupies this node code
+      const currentActive = videos.find(
+        (v) =>
+          (v._id || v.id) !== (videoToRestore._id || videoToRestore.id) &&
+          v.status === 'published' &&
+          !v.isArchived &&
+          (
+            (v.code && videoToRestore.code && v.code.trim() === videoToRestore.code.trim()) ||
+            (v.topicNumber && videoToRestore.topicNumber && v.topicNumber === videoToRestore.topicNumber && Number(v.chapterNumber) === Number(videoToRestore.chapterNumber))
+          )
+      );
+
+      // If active video exists, swap it by archiving the current one to storage
+      if (currentActive) {
+        await updateAdminVideoApi(currentActive._id || currentActive.id, {
+          status: 'archived',
+          isArchived: true,
+          archivedAt: new Date().toISOString(),
+          replacedByTitle: videoToRestore.title || '',
+          replacedByCode: videoToRestore.code || '',
+        });
+      }
+
+      // Activate the restored video
+      await updateAdminVideoApi(videoToRestore._id || videoToRestore.id, {
+        status: 'published',
+        isArchived: false,
+        archivedAt: null,
+      });
+
+      showToast(`Restored "${vidTitle}" to active curriculum!`);
+      try {
+        window.dispatchEvent(new CustomEvent('mymarks_video_updated', { detail: videoToRestore }));
+      } catch {}
+      await loadAdminData();
+    } catch (err) {
+      showToast(err.message || 'Failed to restore video', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Delete a video permanently from storage
+  const handleDeleteArchivedVideo = async (id, title) => {
+    if (!window.confirm(`Permanently delete "${title || 'this video'}" from storage? This cannot be undone.`)) return;
+    setIsLoading(true);
+    try {
+      await deleteAdminVideoApi(id);
+      showToast('Video permanently removed from storage');
+      await loadAdminData();
+    } catch (err) {
+      showToast(err.message || 'Delete failed', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Video file upload handler
   const handleVideoFileSelect = async (file) => {
     if (!file) return;
@@ -1021,23 +1466,47 @@ export default function AdminPage({
     setIsUploadingVideo(true);
     setVideoUploadProgress(1);
 
+    const ctx = activeUploadContext || 'chapter';
+    setLevelMedia((prev) => ({
+      ...prev,
+      [ctx]: { ...prev[ctx], isUploading: true, progress: 1 },
+    }));
+
     try {
       const res = await uploadMediaFileApi(file, (percent) => {
         setVideoUploadProgress(percent);
+        setLevelMedia((prev) => ({
+          ...prev,
+          [ctx]: { ...prev[ctx], progress: percent },
+        }));
       });
 
       if (res.success && res.data?.url) {
+        setLevelMedia((prev) => ({
+          ...prev,
+          [ctx]: {
+            url: res.data.url,
+            type: 'video',
+            thumbnailUrl: prev[ctx]?.thumbnailUrl || '',
+            originalName: file.name,
+            isUploading: false,
+            progress: 100,
+          },
+        }));
+
         setVideoForm(prev => ({
           ...prev,
           url: res.data.url,
           type: 'video',
+          uploadLevel: ctx,
         }));
         setVideoUploadInfo({
           originalName: file.name,
           sizeMb: (file.size / (1024 * 1024)).toFixed(2),
           url: res.data.url,
         });
-        showToast('Video uploaded successfully to Visdom Waves storage!');
+        const ctxLabel = ctx === 'chapter' ? 'Chapter' : ctx === 'topic' ? 'Topic' : ctx === 'subTopic' ? 'Sub Topic' : 'Sub Sub Topic';
+        showToast(`Video uploaded successfully for ${ctxLabel}!`);
       } else {
         throw new Error(res.message || 'Upload failed');
       }
@@ -1045,6 +1514,10 @@ export default function AdminPage({
       console.error('Video upload failed:', err);
       showToast(err.message || 'Video upload failed. Check server connection.', 'error');
     } finally {
+      setLevelMedia((prev) => ({
+        ...prev,
+        [ctx]: { ...prev[ctx], isUploading: false },
+      }));
       setIsUploadingVideo(false);
     }
   };
@@ -1058,6 +1531,7 @@ export default function AdminPage({
       return;
     }
 
+    const ctx = activeUploadContext || 'chapter';
     setIsUploadingThumb(true);
     setThumbUploadProgress(1);
 
@@ -1067,11 +1541,19 @@ export default function AdminPage({
       });
 
       if (res.success && res.data?.url) {
+        setLevelMedia((prev) => ({
+          ...prev,
+          [ctx]: {
+            ...prev[ctx],
+            thumbnailUrl: res.data.url,
+          },
+        }));
         setVideoForm(prev => ({
           ...prev,
           thumbnailUrl: res.data.url,
         }));
-        showToast('Thumbnail uploaded successfully!');
+        const ctxLabel = ctx === 'chapter' ? 'Chapter' : ctx === 'topic' ? 'Topic' : ctx === 'subTopic' ? 'Sub Topic' : 'Sub Sub Topic';
+        showToast(`Thumbnail uploaded successfully for ${ctxLabel}!`);
       } else {
         throw new Error(res.message || 'Thumbnail upload failed');
       }
@@ -1093,27 +1575,87 @@ export default function AdminPage({
 
     const effectiveTopic = (videoForm.topicName || '').trim();
     const effectiveSubTopic = (videoForm.subTopicName || videoForm.lessonName || videoForm.lesson || '').trim();
+    const effectiveSubSubTopic = (videoForm.subSubTopicName || '').trim();
 
-    const effectiveTitle = (videoForm.title || '').trim() || (
-      effectiveTopic && effectiveSubTopic
-        ? `${effectiveTopic}: ${effectiveSubTopic}`
-        : (effectiveTopic || effectiveSubTopic || (cleanChName ? `Chapter ${chNum}: ${cleanChName}` : `${videoForm.subject} Lecture`))
-    );
-    if (!videoForm.url.trim()) {
-      showToast('Please provide a URL or link', 'error');
-      setVideoStudioStep(2);
-      return;
+    // Collect all separate videos configured across Chapter, Topic, Sub Topic, and Sub Sub Topic
+    const itemsToSave = [];
+
+    if (levelMedia.chapter?.url?.trim()) {
+      itemsToSave.push({
+        level: 'chapter',
+        code: String(chNum),
+        title: cleanChName ? `Chapter ${chNum}: ${cleanChName}` : (videoForm.title || `Chapter ${chNum}`),
+        media: levelMedia.chapter,
+      });
     }
 
-    const ytId = extractYouTubeId(videoForm.url);
-    if (videoForm.type === 'youtube' || videoSourceMode === 'url') {
-      const isYtLink = videoForm.url.includes('youtube') || videoForm.url.includes('youtu.be');
-      if (isYtLink && !ytId) {
-        setYoutubeError('Invalid YouTube URL format. Please provide a valid YouTube link (e.g. https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID)');
-        showToast('Invalid YouTube video link', 'error');
-        setVideoStudioStep(2);
-        return;
+    if (levelMedia.topic?.url?.trim()) {
+      itemsToSave.push({
+        level: 'topic',
+        code: String(videoForm.topicNumber || '1.0').trim(),
+        title: effectiveTopic || (videoForm.title || `Topic ${videoForm.topicNumber || '1.0'}`),
+        media: levelMedia.topic,
+      });
+    }
+
+    if (levelMedia.subTopic?.url?.trim()) {
+      itemsToSave.push({
+        level: 'subTopic',
+        code: String(videoForm.subTopicNumber || '1.0.0').trim(),
+        title: effectiveSubTopic || (videoForm.title || `Sub Topic ${videoForm.subTopicNumber || '1.0.0'}`),
+        media: levelMedia.subTopic,
+      });
+    }
+
+    if (levelMedia.subSubTopic?.url?.trim()) {
+      itemsToSave.push({
+        level: 'subSubTopic',
+        code: String(videoForm.subSubTopicNumber || '1.0.0.0').trim(),
+        title: effectiveSubSubTopic || (videoForm.title || `Sub Sub Topic ${videoForm.subSubTopicNumber || '1.0.0.0'}`),
+        media: levelMedia.subSubTopic,
+      });
+    }
+
+    // Fallback if none in levelMedia but videoForm.url is set
+    if (itemsToSave.length === 0 && videoForm.url?.trim()) {
+      let fallbackLevel = videoForm.uploadLevel;
+      if (!fallbackLevel || fallbackLevel === 'chapter') {
+        if (effectiveSubSubTopic) fallbackLevel = 'subSubTopic';
+        else if (effectiveSubTopic) fallbackLevel = 'subTopic';
+        else if (effectiveTopic) fallbackLevel = 'topic';
+        else fallbackLevel = 'chapter';
       }
+
+      let fallbackCode = '1.0';
+      if (fallbackLevel === 'subSubTopic') fallbackCode = String(videoForm.subSubTopicNumber || '1.0.0.0').trim();
+      else if (fallbackLevel === 'subTopic') fallbackCode = String(videoForm.subTopicNumber || '1.0.0').trim();
+      else if (fallbackLevel === 'topic') fallbackCode = String(videoForm.topicNumber || '1.0').trim();
+      else fallbackCode = String(chNum);
+
+      let fallbackTitle = (videoForm.title || '').trim();
+      if (!fallbackTitle) {
+        if (fallbackLevel === 'subSubTopic') fallbackTitle = effectiveSubSubTopic;
+        else if (fallbackLevel === 'subTopic') fallbackTitle = effectiveSubTopic;
+        else if (fallbackLevel === 'topic') fallbackTitle = effectiveTopic;
+        else fallbackTitle = cleanChName ? `Chapter ${chNum}: ${cleanChName}` : '';
+      }
+
+      itemsToSave.push({
+        level: fallbackLevel,
+        code: fallbackCode,
+        title: fallbackTitle || `${videoForm.subject} Lecture`,
+        media: {
+          url: videoForm.url,
+          type: videoForm.type,
+          thumbnailUrl: videoForm.thumbnailUrl,
+        },
+      });
+    }
+
+    if (itemsToSave.length === 0) {
+      showToast('Please attach or upload at least one video (Chapter, Topic, Sub Topic, or Sub Sub Topic)', 'error');
+      setVideoStudioStep(1);
+      return;
     }
 
     setIsLoading(true);
@@ -1151,56 +1693,185 @@ export default function AdminPage({
 
       const finalKeywords = combinedKeywords.length > 0 ? combinedKeywords : ['General'];
 
-      const payload = {
-        ...videoForm,
-        title: effectiveTitle,
-        chapterNumber: chNum,
-        chapterName: cleanChName,
-        chapter: effectiveChapter,
-        topicNumber: String(videoForm.topicNumber || '1.0').trim(),
-        topicName: effectiveTopic,
-        subTopicNumber: String(videoForm.subTopicNumber || '1.0.0').trim(),
-        subTopicName: effectiveSubTopic,
-        subSubTopicNumber: String(videoForm.subSubTopicNumber || '1.0.0.0').trim(),
-        subSubTopicName: (videoForm.subSubTopicName || '').trim(),
-        lesson: effectiveSubTopic || 'Lesson 1',
-        lessonName: effectiveSubTopic || 'Lesson 1',
-        keywords: finalKeywords,
-        tags: finalKeywords,
-        customKeywords: parsedCustomKeywords,
-        isPremium: videoForm.premiumContent || videoForm.isPremium,
-        seo: {
-          slug: videoForm.seoSlug || '',
-          metaTitle: videoForm.seoMetaTitle || '',
-          metaDescription: videoForm.seoMetaDescription || '',
-        },
-      };
-
-      if (ytId) {
-        payload.youtubeId = ytId;
-        payload.type = 'youtube';
-        payload.embedUrl = `https://www.youtube.com/embed/${ytId}`;
-        if (!payload.thumbnailUrl) {
-          payload.thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-        }
-      } else if (payload.type === 'video' || payload.url.includes('/uploads/')) {
-        payload.type = 'video';
-        if (!payload.embedUrl) {
-          payload.embedUrl = payload.url;
-        }
-      }
-
       if (videoModalMode === 'create') {
-        await createAdminVideoApi(payload);
-        showToast('New video / link published successfully!');
+        for (const item of itemsToSave) {
+          const ytId = extractYouTubeId(item.media.url);
+          const payload = {
+            ...videoForm,
+            uploadLevel: item.level,
+            code: item.code,
+            title: item.title,
+            url: item.media.url,
+            type: item.media.type || (ytId ? 'youtube' : 'video'),
+            thumbnailUrl: item.media.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : videoForm.thumbnailUrl),
+            chapterNumber: chNum,
+            chapterName: cleanChName,
+            chapter: effectiveChapter,
+            topicNumber: String(videoForm.topicNumber || '1.0').trim(),
+            topicName: effectiveTopic,
+            subTopicNumber: String(videoForm.subTopicNumber || '1.0.0').trim(),
+            subTopicName: effectiveSubTopic,
+            subSubTopicNumber: String(videoForm.subSubTopicNumber || '1.0.0.0').trim(),
+            subSubTopicName: effectiveSubSubTopic,
+            lesson: effectiveSubTopic || 'Lesson 1',
+            lessonName: effectiveSubTopic || 'Lesson 1',
+            keywords: finalKeywords,
+            tags: finalKeywords,
+            customKeywords: parsedCustomKeywords,
+            isPremium: videoForm.premiumContent || videoForm.isPremium,
+            seo: {
+              slug: videoForm.seoSlug || '',
+              metaTitle: videoForm.seoMetaTitle || '',
+              metaDescription: videoForm.seoMetaDescription || '',
+            },
+          };
+
+          if (ytId) {
+            payload.youtubeId = ytId;
+            payload.type = 'youtube';
+            payload.embedUrl = `https://www.youtube.com/embed/${ytId}`;
+            if (!payload.thumbnailUrl) {
+              payload.thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+            }
+          } else if (payload.type === 'video' || payload.url.includes('/uploads/')) {
+            payload.type = 'video';
+            if (!payload.embedUrl) {
+              payload.embedUrl = payload.url;
+            }
+          }
+
+          // If replacement mode is enabled, archive any existing active video at this code level to Old Videos Storage
+          if (replaceExistingVideo) {
+            const existingVideo = videos.find(
+              (v) =>
+                (v._id || v.id) !== (selectedVideo?._id || selectedVideo?.id) &&
+                v.status !== 'archived' &&
+                !v.isArchived &&
+                (
+                  (v.code && item.code && v.code.trim() === item.code.trim()) ||
+                  (item.level === 'topic' && String(v.topicNumber || '').trim() === item.code && Number(v.chapterNumber) === chNum) ||
+                  (item.level === 'subTopic' && String(v.subTopicNumber || '').trim() === item.code && Number(v.chapterNumber) === chNum) ||
+                  (item.level === 'subSubTopic' && String(v.subSubTopicNumber || '').trim() === item.code && Number(v.chapterNumber) === chNum) ||
+                  (item.level === 'chapter' && Number(v.chapterNumber) === chNum && (v.uploadLevel === 'chapter' || (!v.topicNumber && !v.topicName)))
+                )
+            );
+
+            if (existingVideo) {
+              try {
+                await updateAdminVideoApi(existingVideo._id || existingVideo.id, {
+                  status: 'archived',
+                  isArchived: true,
+                  archivedAt: new Date().toISOString(),
+                  replacedByTitle: item.title,
+                  replacedByCode: item.code,
+                });
+              } catch (archErr) {
+                console.warn('[Admin] Failed to move old video to storage:', archErr);
+              }
+            } else if (TOPICS_DATA && Array.isArray(TOPICS_DATA)) {
+              // Archive standard curriculum video if replacing a default lesson
+              const defaultCh = TOPICS_DATA.find((c) => Number(c.number) === chNum);
+              if (defaultCh && Array.isArray(defaultCh.videos)) {
+                const defaultItem = defaultCh.videos.find((dv) =>
+                  (dv.code && dv.code.trim() === item.code.trim()) ||
+                  (item.level === 'topic' && dv.code === `${chNum}.0`)
+                );
+                if (defaultItem) {
+                  try {
+                    await createAdminVideoApi({
+                      title: defaultItem.title,
+                      url: defaultItem.url,
+                      type: 'youtube',
+                      youtubeId: defaultItem.videoId || extractYouTubeId(defaultItem.url),
+                      thumbnailUrl: defaultItem.thumbnailUrl || (defaultItem.videoId ? `https://img.youtube.com/vi/${defaultItem.videoId}/hqdefault.jpg` : ''),
+                      subject: 'Mathematics',
+                      board: videoForm.board || 'Both Boards',
+                      classLevel: videoForm.classLevel || 'Intermediate 1st Year',
+                      year: videoForm.year || '1st Year',
+                      chapterNumber: chNum,
+                      chapterName: cleanChName,
+                      chapter: effectiveChapter,
+                      topicNumber: defaultItem.code || String(videoForm.topicNumber || '1.0').trim(),
+                      topicName: defaultItem.title,
+                      uploadLevel: item.level,
+                      code: defaultItem.code || item.code,
+                      description: defaultItem.description || '',
+                      status: 'archived',
+                      isArchived: true,
+                      archivedAt: new Date().toISOString(),
+                      replacedByTitle: item.title,
+                      replacedByCode: item.code,
+                    });
+                  } catch (defArchErr) {
+                    console.warn('[Admin] Failed to archive default curriculum item:', defArchErr);
+                  }
+                }
+              }
+            }
+          }
+
+          await createAdminVideoApi(payload);
+          try {
+            window.dispatchEvent(new CustomEvent('mymarks_video_updated', { detail: payload }));
+          } catch {}
+        }
+
+        showToast(
+          itemsToSave.length > 1
+            ? `Successfully published ${itemsToSave.length} separate videos across Chapter, Topic & Subtopics!`
+            : 'New video published successfully!'
+        );
       } else {
+        // Edit mode - save primary item
+        const primaryItem = itemsToSave[0];
+        const ytId = extractYouTubeId(primaryItem.media.url);
+        const payload = {
+          ...videoForm,
+          uploadLevel: primaryItem.level,
+          code: primaryItem.code,
+          title: primaryItem.title,
+          url: primaryItem.media.url,
+          type: primaryItem.media.type || (ytId ? 'youtube' : 'video'),
+          thumbnailUrl: primaryItem.media.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : videoForm.thumbnailUrl),
+          chapterNumber: chNum,
+          chapterName: cleanChName,
+          chapter: effectiveChapter,
+          topicNumber: String(videoForm.topicNumber || '1.0').trim(),
+          topicName: effectiveTopic,
+          subTopicNumber: String(videoForm.subTopicNumber || '1.0.0').trim(),
+          subTopicName: effectiveSubTopic,
+          subSubTopicNumber: String(videoForm.subSubTopicNumber || '1.0.0.0').trim(),
+          subSubTopicName: effectiveSubSubTopic,
+          lesson: effectiveSubTopic || 'Lesson 1',
+          lessonName: effectiveSubTopic || 'Lesson 1',
+          keywords: finalKeywords,
+          tags: finalKeywords,
+          customKeywords: parsedCustomKeywords,
+          isPremium: videoForm.premiumContent || videoForm.isPremium,
+          seo: {
+            slug: videoForm.seoSlug || '',
+            metaTitle: videoForm.seoMetaTitle || '',
+            metaDescription: videoForm.seoMetaDescription || '',
+          },
+        };
+
+        if (ytId) {
+          payload.youtubeId = ytId;
+          payload.type = 'youtube';
+          payload.embedUrl = `https://www.youtube.com/embed/${ytId}`;
+          if (!payload.thumbnailUrl) {
+            payload.thumbnailUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+          }
+        } else if (payload.type === 'video' || payload.url.includes('/uploads/')) {
+          payload.type = 'video';
+          if (!payload.embedUrl) {
+            payload.embedUrl = payload.url;
+          }
+        }
+
         await updateAdminVideoApi(selectedVideo.id || selectedVideo._id, payload);
         showToast('Video / link details updated successfully!');
       }
-
-      try {
-        window.dispatchEvent(new CustomEvent('mymarks_video_updated', { detail: payload }));
-      } catch {}
 
       setIsVideoModalOpen(false);
       await loadAdminData();
@@ -2328,7 +2999,7 @@ export default function AdminPage({
         {activeTab === 'videos' && (
           <div className="space-y-5">
             {/* KPI Metric Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
               <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
                 <div>
                   <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Media</p>
@@ -2343,7 +3014,7 @@ export default function AdminPage({
                 <div>
                   <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">Published</p>
                   <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
-                    {videos.filter((v) => v.status === 'published').length}
+                    {videos.filter((v) => v.status === 'published' && !v.isArchived).length}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
@@ -2355,7 +3026,7 @@ export default function AdminPage({
                 <div>
                   <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Drafts</p>
                   <p className="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
-                    {videos.filter((v) => v.status === 'draft').length}
+                    {videos.filter((v) => v.status === 'draft' && !v.isArchived).length}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
@@ -2367,7 +3038,7 @@ export default function AdminPage({
                 <div>
                   <p className="text-[11px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">YouTube</p>
                   <p className="text-xl sm:text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">
-                    {videos.filter((v) => v.type === 'youtube' || Boolean(extractYouTubeId(v.url))).length}
+                    {videos.filter((v) => (v.type === 'youtube' || Boolean(extractYouTubeId(v.url))) && !v.isArchived).length}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center font-bold">
@@ -2377,17 +3048,38 @@ export default function AdminPage({
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between col-span-2 sm:col-span-1">
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
                 <div>
                   <p className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">MP4 Uploads</p>
                   <p className="text-xl sm:text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
-                    {videos.filter((v) => v.type === 'video' || (v.url && v.url.includes('/uploads/'))).length}
+                    {videos.filter((v) => (v.type === 'video' || (v.url && v.url.includes('/uploads/'))) && !v.isArchived).length}
                   </p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
                   <Film size={18} />
                 </div>
               </div>
+
+              {/* 6th Card: Old Videos Storage */}
+              <button
+                type="button"
+                onClick={() => setIsArchiveStorageModalOpen(true)}
+                className="p-4 rounded-2xl bg-gradient-to-br from-purple-500/10 via-indigo-500/10 to-purple-600/15 hover:from-purple-500/20 hover:to-indigo-500/25 border border-purple-500/25 dark:border-purple-500/40 shadow-xs flex items-center justify-between text-left transition-all cursor-pointer group col-span-2 sm:col-span-1"
+                title="Click to manage preserved old videos in storage"
+              >
+                <div>
+                  <p className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider flex items-center gap-1">
+                    <span>Old Videos</span>
+                    <ArrowUpRight size={11} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </p>
+                  <p className="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 mt-0.5">
+                    {archivedVideos.length}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold group-hover:scale-105 transition-transform">
+                  <FolderGit2 size={18} />
+                </div>
+              </button>
             </div>
 
             {/* Filter Bar & Action Controls */}
@@ -2415,6 +3107,21 @@ export default function AdminPage({
 
                 {/* Primary Action Buttons */}
                 <div className="flex items-center gap-2 flex-wrap shrink-0">
+                  {/* Old Videos Storage Button */}
+                  <button
+                    onClick={() => setIsArchiveStorageModalOpen(true)}
+                    className="px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-purple-600/25 transition-all cursor-pointer whitespace-nowrap"
+                    title="Open Old Videos Storage to see and restore replaced videos"
+                  >
+                    <FolderGit2 size={14} />
+                    <span>Old Videos Storage</span>
+                    {archivedVideos.length > 0 && (
+                      <span className="ml-1 px-1.5 py-0.5 rounded-full bg-white/25 text-white text-[10px] font-black">
+                        {archivedVideos.length}
+                      </span>
+                    )}
+                  </button>
+
                   <button
                     onClick={() => handleOpenAddVideo('upload')}
                     className="px-3.5 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer whitespace-nowrap"
@@ -2507,9 +3214,10 @@ export default function AdminPage({
                     onChange={(e) => setVideoStatusFilter(e.target.value)}
                     className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
                   >
-                    <option value="all">All Status</option>
+                    <option value="all">Active Videos ({videos.filter((v) => v.status !== 'archived' && !v.isArchived).length})</option>
                     <option value="published">Published</option>
-                    <option value="draft">Draft</option>
+                    <option value="draft">Drafts</option>
+                    <option value="archived">Old Videos Storage ({archivedVideos.length})</option>
                   </select>
 
                   {/* Type Filter */}
@@ -2591,7 +3299,7 @@ export default function AdminPage({
                   const isDirectVideo = v.type === 'video' || Boolean(
                     v.url && (v.url.includes('/uploads/') || /\.(mp4|webm|mov|mkv|ogg|ogv|m4v)(\?.*)?$/i.test(v.url))
                   );
-                  const thumb = v.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '');
+                  const thumb = getSafeThumbnailUrl(v.thumbnailUrl, ytId);
 
                   return (
                     <div
@@ -2610,7 +3318,8 @@ export default function AdminPage({
                               alt={v.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                               onError={(e) => {
-                                e.currentTarget.style.display = 'none';
+                                e.currentTarget.onerror = null;
+                                e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80';
                               }}
                             />
                           ) : (
@@ -2664,22 +3373,36 @@ export default function AdminPage({
                             )}
                           </div>
 
-                          {/* Top Right: Status Badge Button (Click to Toggle) */}
+                          {/* Top Right: Status Badge Button (Click to Toggle or Restore) */}
                           <div className="absolute top-2.5 right-2.5">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleVideoStatus(v);
-                              }}
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-all shadow-md ${
-                                v.status === 'published'
-                                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                  : 'bg-amber-600 text-white hover:bg-amber-700'
-                              }`}
-                              title={v.status === 'published' ? 'Click to unpublish (move to draft)' : 'Click to publish to student dashboard'}
-                            >
-                              {v.status === 'published' ? '● Published' : '○ Draft'}
-                            </button>
+                            {v.status === 'archived' || v.isArchived ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRestoreArchivedVideo(v);
+                                }}
+                                className="px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-all shadow-md bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-1"
+                                title="Click to restore this old video back as active video"
+                              >
+                                <RefreshCw size={10} />
+                                <span>Archived</span>
+                              </button>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleVideoStatus(v);
+                                }}
+                                className={`px-2 py-0.5 rounded-md text-[10px] font-bold cursor-pointer transition-all shadow-md ${
+                                  v.status === 'published'
+                                    ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                    : 'bg-amber-600 text-white hover:bg-amber-700'
+                                }`}
+                                title={v.status === 'published' ? 'Click to unpublish (move to draft)' : 'Click to publish to student dashboard'}
+                              >
+                                {v.status === 'published' ? '● Published' : '○ Draft'}
+                              </button>
+                            )}
                           </div>
 
                           {/* Bottom Right: Duration */}
@@ -2789,17 +3512,27 @@ export default function AdminPage({
                           </button>
 
                           <div className="flex items-center gap-1">
-                            <button
-                              onClick={() => handleToggleVideoStatus(v)}
-                              className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                                v.status === 'published'
-                                  ? 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-                                  : 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30'
-                              }`}
-                              title={v.status === 'published' ? 'Unpublish video' : 'Publish video'}
-                            >
-                              <CheckCircle2 size={15} />
-                            </button>
+                            {v.status === 'archived' || v.isArchived ? (
+                              <button
+                                onClick={() => handleRestoreArchivedVideo(v)}
+                                className="p-1.5 rounded-lg text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
+                                title="Restore this video back to active curriculum"
+                              >
+                                <RefreshCw size={15} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => handleToggleVideoStatus(v)}
+                                className={`p-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                                  v.status === 'published'
+                                    ? 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                                    : 'text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+                                }`}
+                                title={v.status === 'published' ? 'Unpublish video' : 'Publish video'}
+                              >
+                                <CheckCircle2 size={15} />
+                              </button>
+                            )}
 
                             <button
                               onClick={() => handleCopyVideoLink(v.url, v.id || v._id)}
@@ -2859,7 +3592,7 @@ export default function AdminPage({
                       {filteredVideos.map((v) => {
                         const ytId = extractYouTubeId(v.url) || v.youtubeId;
                         const isYouTube = v.type === 'youtube' || Boolean(ytId);
-                        const thumb = v.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '');
+                        const thumb = getSafeThumbnailUrl(v.thumbnailUrl, ytId);
 
                         return (
                           <tr key={v.id || v._id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
@@ -2870,7 +3603,15 @@ export default function AdminPage({
                                   onClick={() => setPreviewVideoModal(v)}
                                 >
                                   {thumb ? (
-                                    <img src={thumb} alt={v.title} className="w-full h-full object-cover" />
+                                    <img
+                                      src={thumb}
+                                      alt={v.title}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80';
+                                      }}
+                                    />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center bg-slate-800 text-slate-500">
                                       <Video size={16} />
@@ -2947,21 +3688,41 @@ export default function AdminPage({
                             </td>
 
                             <td className="py-3 px-4 whitespace-nowrap">
-                              <button
-                                onClick={() => handleToggleVideoStatus(v)}
-                                className={`px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
-                                  v.status === 'published'
-                                    ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
-                                    : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
-                                }`}
-                                title="Click to toggle status"
-                              >
-                                {v.status === 'published' ? '● Published' : '○ Draft'}
-                              </button>
+                              {v.status === 'archived' || v.isArchived ? (
+                                <button
+                                  onClick={() => handleRestoreArchivedVideo(v)}
+                                  className="px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all bg-purple-500/15 text-purple-600 dark:text-purple-300 border border-purple-500/30 hover:bg-purple-500/25 flex items-center gap-1"
+                                  title="Click to restore this old video to active curriculum"
+                                >
+                                  <RefreshCw size={10} />
+                                  <span>Archived</span>
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={() => handleToggleVideoStatus(v)}
+                                  className={`px-2.5 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
+                                    v.status === 'published'
+                                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20'
+                                      : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                                  }`}
+                                  title="Click to toggle status"
+                                >
+                                  {v.status === 'published' ? '● Published' : '○ Draft'}
+                                </button>
+                              )}
                             </td>
 
                             <td className="py-3 px-4 text-right whitespace-nowrap">
                               <div className="flex items-center justify-end gap-1">
+                                {(v.status === 'archived' || v.isArchived) && (
+                                  <button
+                                    onClick={() => handleRestoreArchivedVideo(v)}
+                                    className="p-1.5 rounded-lg text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
+                                    title="Restore from Storage"
+                                  >
+                                    <RefreshCw size={14} />
+                                  </button>
+                                )}
                                 <button
                                   onClick={() => setPreviewVideoModal(v)}
                                   className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -3616,15 +4377,13 @@ export default function AdminPage({
                       {videoModalMode === 'create' ? 'Lesson Studio • Create & Publish Content' : 'Edit Lesson / Video Details'}
                     </h3>
                     <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                      Step {videoStudioStep} of 5
+                      Step {videoStudioStep} of 3
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
-                    {videoStudioStep === 1 && 'Step 1: Define academic curriculum info, board, year, and chapter'}
-                    {videoStudioStep === 2 && 'Step 2: Choose media source (Upload MP4 or embed YouTube video)'}
-                    {videoStudioStep === 3 && 'Step 3: Upload custom thumbnail image or fetch YouTube artwork'}
-                    {videoStudioStep === 4 && 'Step 4: Configure lesson settings, visibility, downloads, and SEO'}
-                    {videoStudioStep === 5 && 'Step 5: Live student dashboard card preview before publishing'}
+                    {videoStudioStep === 1 && 'Step 1: Define academic curriculum info, board, year, video, and thumbnail'}
+                    {videoStudioStep === 2 && 'Step 2: Configure lesson settings, visibility, downloads, and SEO'}
+                    {videoStudioStep === 3 && 'Step 3: Live student dashboard card preview before publishing'}
                   </p>
                 </div>
               </div>
@@ -3652,14 +4411,12 @@ export default function AdminPage({
               </div>
             </div>
 
-            {/* Studio Stepper Bar (5 Steps) */}
+            {/* Studio Stepper Bar (3 Steps) */}
             <div className="shrink-0 px-4 sm:px-8 py-2.5 bg-slate-50 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
               {[
                 { step: 1, label: '1. Curriculum Info', icon: BookOpen },
-                { step: 2, label: '2. Media Source', icon: Film },
-                { step: 3, label: '3. Thumbnail', icon: ImageIcon },
-                { step: 4, label: '4. Lesson Settings', icon: Settings },
-                { step: 5, label: '5. Student Preview', icon: Eye },
+                { step: 2, label: '2. Lesson Settings', icon: Settings },
+                { step: 3, label: '3. Student Preview', icon: Eye },
               ].map(({ step, label, icon: Icon }) => {
                 const isActive = videoStudioStep === step;
                 const isPassed = videoStudioStep > step;
@@ -3690,18 +4447,23 @@ export default function AdminPage({
               <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
                 
                 {/* ─────────────────────────────────────────────────────────
-                    STEP 1: CURRICULUM INFORMATION
+                    STEP 1: CURRICULUM INFORMATION (FULL SCREEN STUDIO)
                    ───────────────────────────────────────────────────────── */}
                 {videoStudioStep === 1 && (
-                  <div className="max-w-4xl mx-auto space-y-6">
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 shadow-sm space-y-5">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <BookOpen size={16} className="text-blue-500" />
-                        <span>Curriculum & Academic Metadata</span>
-                      </h4>
+                  <div className="w-full space-y-6 animate-in fade-in duration-150">
+                    <div className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 sm:p-7 shadow-sm space-y-6">
+                      <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                          <BookOpen size={16} className="text-blue-500" />
+                          <span>Curriculum & Academic Metadata</span>
+                        </h4>
+                        <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                          Full Screen Curriculum Studio
+                        </span>
+                      </div>
 
-                      {/* Row 1: Target Intermediate Board & Intermediate Year */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {/* Row 1: Target Intermediate Board, Intermediate Year, Subject Name (Side by Side) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                             Target Intermediate Board *
@@ -3738,43 +4500,44 @@ export default function AdminPage({
                             <option value="Both Years">Both Years (Comprehensive)</option>
                           </select>
                         </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                            Subject Name *
+                          </label>
+                          <select
+                            value={videoForm.subject}
+                            onChange={(e) => setVideoForm({ ...videoForm, subject: e.target.value })}
+                            className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs font-medium"
+                          >
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Botany">Botany</option>
+                            <option value="Zoology">Zoology</option>
+                            <option value="English">English</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Economics">Economics</option>
+                            <option value="Civics">Civics</option>
+                            <option value="History">History</option>
+                            <option value="General">General / Platform Demo</option>
+                          </select>
+                        </div>
                       </div>
 
-                      {/* Row 2: Subject Name */}
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                          Subject Name *
-                        </label>
-                        <select
-                          value={videoForm.subject}
-                          onChange={(e) => setVideoForm({ ...videoForm, subject: e.target.value })}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs font-medium"
-                        >
-                          <option value="Mathematics">Mathematics</option>
-                          <option value="Physics">Physics</option>
-                          <option value="Chemistry">Chemistry</option>
-                          <option value="Botany">Botany</option>
-                          <option value="Zoology">Zoology</option>
-                          <option value="English">English</option>
-                          <option value="Commerce">Commerce</option>
-                          <option value="Economics">Economics</option>
-                          <option value="Civics">Civics</option>
-                          <option value="History">History</option>
-                          <option value="General">General / Platform Demo</option>
-                        </select>
-                      </div>
-
-                      {/* Row 3: Chapter Name, Number & Key Word */}
+                      {/* Row 2: Chapter Name, Number & Key Word with YouTube URL & Upload video on right of Save */}
                       <div className="space-y-1.5">
                         <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                           <span>
                             Chapter Name, Number & Key Word <span className="text-rose-500">*</span>
                           </span>
-                          <span className="text-[10px] font-normal text-slate-400">Right Box: Chapter Key Word (Optional)</span>
+                          <span className="text-[10px] font-normal text-slate-400">
+                            Right: Key Word (Save) & Media Actions (YouTube URL / Upload video / Thumbnail)
+                          </span>
                         </label>
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
                           {/* Stepper & Number Box for Chapter */}
-                          <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                          <div className="md:col-span-3 lg:col-span-2 xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
                             <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
                               Chapter No:
                             </span>
@@ -3835,7 +4598,7 @@ export default function AdminPage({
                           </div>
 
                           {/* Chapter Name Input */}
-                          <div className="md:col-span-4 lg:col-span-5">
+                          <div className="md:col-span-4 lg:col-span-4 xl:col-span-4">
                             <input
                               type="text"
                               value={videoForm.chapterName || ''}
@@ -3857,8 +4620,8 @@ export default function AdminPage({
                             />
                           </div>
 
-                          {/* Chapter Key Word Box (Right Side) */}
-                          <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                          {/* Chapter Key Word Box with Save */}
+                          <div className="md:col-span-5 lg:col-span-3 xl:col-span-3 relative flex items-center">
                             <input
                               type="text"
                               value={videoForm.chapterKeyword || ''}
@@ -3888,11 +4651,16 @@ export default function AdminPage({
                               {savedKeyFeedback.chapterKeyword ? 'Saved ✓' : 'Save'}
                             </button>
                           </div>
+
+                          {/* Right Side of Save: Small Buttons for YouTube URL & Upload video */}
+                          <div className="md:col-span-12 lg:col-span-3 xl:col-span-3 flex items-center gap-2 flex-wrap">
+                            {renderMediaActionButtons('chapter', `Chapter ${videoForm.chapterNumber || 1}: ${videoForm.chapterName || ''}`)}
+                          </div>
                         </div>
                       </div>
 
                       {/* Topic & Sub Topic Section with '+' and '-' Toggle */}
-                      <div className="rounded-2xl border border-dashed border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 p-4 transition-all space-y-4">
+                      <div className="rounded-2xl border border-dashed border-blue-200 dark:border-blue-900/40 bg-blue-50/40 dark:bg-blue-950/20 p-4 sm:p-5 transition-all space-y-4">
                         <div className="flex items-center justify-between gap-3 flex-wrap">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
@@ -3919,15 +4687,17 @@ export default function AdminPage({
 
                         {showTopicSection && (
                           <div className="pt-3 border-t border-slate-200/80 dark:border-slate-800/80 space-y-4 animate-in fade-in duration-150">
-                            {/* Row 4: Topic Name, Number & Key Word (NO STAR) */}
+                            {/* Row 3: Topic Name, Number & Key Word (NO STAR) */}
                             <div className="space-y-1.5">
                               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                 <span>Topic Name, Number & Key Word</span>
-                                <span className="text-[10px] font-normal text-blue-500 dark:text-cyan-400">Right Box: Auto-Generates Topic Key Word</span>
+                                <span className="text-[10px] font-normal text-blue-500 dark:text-cyan-400">
+                                  Right: Key Word (Save) & Media Actions (YouTube URL / Upload video / Thumbnail)
+                                </span>
                               </label>
                               <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
                                 {/* Stepper & Types Box for Topic */}
-                                <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                                <div className="md:col-span-3 lg:col-span-2 xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
                                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
                                     Topic No:
                                   </span>
@@ -3973,7 +4743,7 @@ export default function AdminPage({
                                 </div>
 
                                 {/* Topic Name Input */}
-                                <div className="md:col-span-4 lg:col-span-5">
+                                <div className="md:col-span-4 lg:col-span-4 xl:col-span-4">
                                   <input
                                     type="text"
                                     value={videoForm.topicName || ''}
@@ -3995,8 +4765,8 @@ export default function AdminPage({
                                   />
                                 </div>
 
-                                {/* Topic Key Word Box (Right Side) */}
-                                <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                                {/* Topic Key Word Box with Save */}
+                                <div className="md:col-span-5 lg:col-span-3 xl:col-span-3 relative flex items-center">
                                   <input
                                     type="text"
                                     value={videoForm.topicKeyword || ''}
@@ -4026,18 +4796,25 @@ export default function AdminPage({
                                     {savedKeyFeedback.topicKeyword ? 'Saved ✓' : 'Save'}
                                   </button>
                                 </div>
+
+                                {/* Right Side of Save: Small Buttons for YouTube URL & Upload video */}
+                                <div className="md:col-span-12 lg:col-span-3 xl:col-span-3 flex items-center gap-2 flex-wrap">
+                                  {renderMediaActionButtons('topic', `Topic ${videoForm.topicNumber || '1.0'}: ${videoForm.topicName || ''}`)}
+                                </div>
                               </div>
                             </div>
 
-                            {/* Row 5: Sub Topic Name, Number & Key Word (NO STAR) */}
+                            {/* Row 4: Sub Topic Name, Number & Key Word (NO STAR) */}
                             <div className="space-y-1.5">
                               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                 <span>Sub Topic Name, Number & Key Word</span>
-                                <span className="text-[10px] font-normal text-slate-400">Right Box: Sub Topic Key Word (Optional)</span>
+                                <span className="text-[10px] font-normal text-slate-400">
+                                  Right: Key Word (Save) & Media Actions (YouTube URL / Upload video / Thumbnail)
+                                </span>
                               </label>
                               <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
                                 {/* Stepper & Types Box for Sub Topic */}
-                                <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                                <div className="md:col-span-3 lg:col-span-2 xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
                                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
                                     Sub Topic No:
                                   </span>
@@ -4083,7 +4860,7 @@ export default function AdminPage({
                                 </div>
 
                                 {/* Sub Topic Name Input */}
-                                <div className="md:col-span-4 lg:col-span-5">
+                                <div className="md:col-span-4 lg:col-span-4 xl:col-span-4">
                                   <input
                                     type="text"
                                     value={videoForm.subTopicName !== undefined ? videoForm.subTopicName : (videoForm.lessonName || videoForm.lesson || '')}
@@ -4107,8 +4884,8 @@ export default function AdminPage({
                                   />
                                 </div>
 
-                                {/* Sub Topic Key Word Box (Right Side) */}
-                                <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                                {/* Sub Topic Key Word Box with Save */}
+                                <div className="md:col-span-5 lg:col-span-3 xl:col-span-3 relative flex items-center">
                                   <input
                                     type="text"
                                     value={videoForm.subTopicKeyword || ''}
@@ -4138,18 +4915,25 @@ export default function AdminPage({
                                     {savedKeyFeedback.subTopicKeyword ? 'Saved ✓' : 'Save'}
                                   </button>
                                 </div>
+
+                                {/* Right Side of Save: Small Buttons for YouTube URL & Upload video */}
+                                <div className="md:col-span-12 lg:col-span-3 xl:col-span-3 flex items-center gap-2 flex-wrap">
+                                  {renderMediaActionButtons('subTopic', `Sub Topic ${videoForm.subTopicNumber || '1.0.0'}: ${videoForm.subTopicName || ''}`)}
+                                </div>
                               </div>
                             </div>
 
-                            {/* Row 6: Sub Sub Topic Name, Number & Key Word (NO STAR) */}
+                            {/* Row 5: Sub Sub Topic Name, Number & Key Word (NO STAR) */}
                             <div className="space-y-1.5">
                               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                 <span>Sub Sub Topic Name, Number & Key Word</span>
-                                <span className="text-[10px] font-normal text-slate-400">Right Box: Sub Sub Topic Key Word (Optional)</span>
+                                <span className="text-[10px] font-normal text-slate-400">
+                                  Right: Key Word (Save) & Media Actions (YouTube URL / Upload video / Thumbnail)
+                                </span>
                               </label>
                               <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5 items-center">
                                 {/* Stepper & Types Box for Sub Sub Topic */}
-                                <div className="md:col-span-4 lg:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
+                                <div className="md:col-span-3 lg:col-span-2 xl:col-span-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1.5 flex items-center justify-between gap-1 shadow-xs h-[42px]">
                                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400 pl-0.5 shrink-0">
                                     Sub Sub No:
                                   </span>
@@ -4195,7 +4979,7 @@ export default function AdminPage({
                                 </div>
 
                                 {/* Sub Sub Topic Name Input */}
-                                <div className="md:col-span-4 lg:col-span-5">
+                                <div className="md:col-span-4 lg:col-span-4 xl:col-span-4">
                                   <input
                                     type="text"
                                     value={videoForm.subSubTopicName || ''}
@@ -4211,8 +4995,8 @@ export default function AdminPage({
                                   />
                                 </div>
 
-                                {/* Sub Sub Topic Key Word Box (Right Side) */}
-                                <div className="md:col-span-4 lg:col-span-4 relative flex items-center">
+                                {/* Sub Sub Topic Key Word Box with Save */}
+                                <div className="md:col-span-5 lg:col-span-3 xl:col-span-3 relative flex items-center">
                                   <input
                                     type="text"
                                     value={videoForm.subSubTopicKeyword || ''}
@@ -4242,13 +5026,155 @@ export default function AdminPage({
                                     {savedKeyFeedback.subSubTopicKeyword ? 'Saved ✓' : 'Save'}
                                   </button>
                                 </div>
+
+                                {/* Right Side of Save: Small Buttons for YouTube URL & Upload video */}
+                                <div className="md:col-span-12 lg:col-span-3 xl:col-span-3 flex items-center gap-2 flex-wrap">
+                                  {renderMediaActionButtons('subSubTopic', `Sub Sub Topic ${videoForm.subSubTopicNumber || '1.0.0.0'}: ${videoForm.subSubTopicName || ''}`)}
+                                </div>
                               </div>
                             </div>
                           </div>
                         )}
                       </div>
 
-                      {/* Row 5: Description & Summary */}
+                      {/* Attached Media & Thumbnail Status Banner */}
+                      {(videoForm.url || videoForm.thumbnailUrl) && (
+                        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-blue-500/10 border border-emerald-500/20 space-y-3 animate-in fade-in">
+                          {/* Attached Video Status */}
+                          {videoForm.url && (
+                            <div className="flex items-center justify-between gap-3 flex-wrap">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                                  <CheckCircle2 size={16} />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                                      {videoForm.type === 'youtube' || Boolean(extractYouTubeId(videoForm.url)) ? 'YouTube Video Attached' : 'Video File Uploaded'}
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                      Video Linked ✓
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-600 dark:text-slate-300 truncate max-w-md lg:max-w-xl font-mono mt-0.5">
+                                    {videoForm.type === 'youtube' || Boolean(extractYouTubeId(videoForm.url))
+                                      ? videoForm.url
+                                      : (videoUploadInfo?.originalName || videoForm.url)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setVideoForm((prev) => ({ ...prev, url: '' }));
+                                    setVideoUploadInfo(null);
+                                    showToast('Video unlinked from lesson', 'info');
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold transition-colors cursor-pointer"
+                                  title="Unlink video"
+                                >
+                                  Unlink Video
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Attached Thumbnail Status */}
+                          {videoForm.thumbnailUrl && (
+                            <div className={`flex items-center justify-between gap-3 flex-wrap ${videoForm.url ? 'pt-2.5 border-t border-emerald-500/15' : ''}`}>
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="w-12 h-8 rounded-lg overflow-hidden bg-slate-900 shrink-0 border border-purple-500/30">
+                                  <img
+                                    src={videoForm.thumbnailUrl}
+                                    alt="Thumbnail preview"
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80';
+                                    }}
+                                  />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider">
+                                      Custom Thumbnail Active
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/20">
+                                      Thumbnail ✓
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-600 dark:text-slate-300 truncate max-w-md lg:max-w-xl font-mono mt-0.5">
+                                    {videoForm.thumbnailUrl}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={handleTriggerThumbUpload}
+                                  className="px-2.5 py-1.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-xs font-bold transition-all cursor-pointer"
+                                  title="Change thumbnail image"
+                                >
+                                  Change Image
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setVideoForm((prev) => ({ ...prev, thumbnailUrl: '' }));
+                                    showToast('Thumbnail removed', 'info');
+                                  }}
+                                  className="px-2.5 py-1.5 rounded-xl text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 text-xs font-bold transition-colors cursor-pointer"
+                                  title="Remove thumbnail"
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Video Uploading Progress Bar */}
+                      {isUploadingVideo && (
+                        <div className="p-3.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 space-y-2 animate-in fade-in">
+                          <div className="flex items-center justify-between text-xs font-bold text-blue-700 dark:text-cyan-300">
+                            <span className="flex items-center gap-1.5">
+                              <RefreshCw size={13} className="animate-spin" />
+                              <span>Uploading Video File to Storage...</span>
+                            </span>
+                            <span>{videoUploadProgress}%</span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-blue-200 dark:bg-blue-900 overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-150"
+                              style={{ width: `${videoUploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Thumbnail Uploading Progress Bar */}
+                      {isUploadingThumb && (
+                        <div className="p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900/60 space-y-2 animate-in fade-in">
+                          <div className="flex items-center justify-between text-xs font-bold text-purple-700 dark:text-purple-300">
+                            <span className="flex items-center gap-1.5">
+                              <RefreshCw size={13} className="animate-spin" />
+                              <span>Uploading Thumbnail Image to Storage...</span>
+                            </span>
+                            <span>{thumbUploadProgress}%</span>
+                          </div>
+                          <div className="w-full h-2 rounded-full bg-purple-200 dark:bg-purple-900 overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-purple-500 to-indigo-600 transition-all duration-150"
+                              style={{ width: `${thumbUploadProgress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Row 6: Description & Summary */}
                       <div className="space-y-3">
                         <div>
                           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
@@ -4328,13 +5254,83 @@ export default function AdminPage({
                       </div>
                     </div>
 
+                    {/* Active Video Detection & Replace Option Card */}
+                    <div className={`p-4 rounded-2xl border transition-all ${
+                      existingVideosForHierarchy.length > 0
+                        ? 'bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/10 border-amber-500/30 dark:border-amber-400/30'
+                        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                    }`}>
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                            existingVideosForHierarchy.length > 0
+                              ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                              : 'bg-purple-500/10 text-purple-600 dark:text-purple-400'
+                          }`}>
+                            <FolderGit2 size={18} />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                Video Replacement &amp; Archive Control
+                              </span>
+                              {existingVideosForHierarchy.length > 0 ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                  {existingVideosForHierarchy.length} Active Video{existingVideosForHierarchy.length > 1 ? 's' : ''} Already Present
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                                  Ready to Publish
+                                </span>
+                              )}
+                            </div>
+
+                            {existingVideosForHierarchy.length > 0 ? (
+                              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                An active video already exists for this lesson:
+                                {existingVideosForHierarchy.map((item) => (
+                                  <strong key={item.code} className="ml-1 text-slate-900 dark:text-white">
+                                    [{item.code}] &quot;{item.existingVideo.title}&quot;
+                                  </strong>
+                                ))}
+                              </p>
+                            ) : (
+                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                If an existing video is present at this code level (e.g. 1.0: Ordered Pairs), choose whether to replace and store the old video.
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Interactive Toggle Option */}
+                        <label className="flex items-center gap-2.5 cursor-pointer select-none bg-white dark:bg-slate-950 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs shrink-0 hover:border-purple-400 dark:hover:border-purple-500 transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={replaceExistingVideo}
+                            onChange={(e) => setReplaceExistingVideo(e.target.checked)}
+                            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500 cursor-pointer"
+                          />
+                          <div className="text-left">
+                            <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
+                              Replace &amp; Store Old Video
+                            </p>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                              {replaceExistingVideo
+                                ? 'Old video will be preserved in Old Videos Storage'
+                                : 'Keep both as separate lesson items'}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
                     <div className="flex justify-end pt-2">
                       <button
                         type="button"
                         onClick={() => setVideoStudioStep(2)}
                         className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
                       >
-                        <span>Next: Step 2 (Media Source)</span>
+                        <span>Next: Step 2 (Lesson Settings)</span>
                         <ArrowRight size={14} />
                       </button>
                     </div>
@@ -4342,533 +5338,18 @@ export default function AdminPage({
                 )}
 
                 {/* ─────────────────────────────────────────────────────────
-                    STEP 2: MEDIA SOURCE (MP4 UPLOAD OR YOUTUBE)
+                    STEP 2: LESSON SETTINGS (EXACT USER SPECIFICATIONS)
                    ───────────────────────────────────────────────────────── */}
                 {videoStudioStep === 2 && (
-                  <div className="max-w-4xl mx-auto space-y-6">
-                    {/* Media Type Switcher */}
-                    <div className="flex items-center p-1.5 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 max-w-md mx-auto">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVideoSourceMode('upload');
-                          setVideoForm((prev) => ({ ...prev, type: 'video' }));
-                          setYoutubeError('');
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          videoSourceMode === 'upload'
-                            ? 'bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs'
-                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
-                        }`}
-                      >
-                        <UploadCloud size={15} />
-                        <span>Upload Video File (MP4/WebM)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setVideoSourceMode('url');
-                          setVideoForm((prev) => ({ ...prev, type: 'youtube' }));
-                          setYoutubeError('');
-                        }}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          videoSourceMode === 'url'
-                            ? 'bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 shadow-xs'
-                            : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
-                        }`}
-                      >
-                        <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                        </svg>
-                        <span>Add YouTube Video</span>
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                      {/* Left: Input / Dropzone */}
-                      <div className="md:col-span-7 space-y-4">
-                        {videoSourceMode === 'upload' ? (
-                          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 shadow-sm">
-                            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-                              <UploadCloud size={15} className="text-blue-500" />
-                              <span>Upload Educational Video File</span>
-                            </label>
-
-                            <div
-                              onDragOver={(e) => {
-                                e.preventDefault();
-                                setVideoDragOver(true);
-                              }}
-                              onDragLeave={() => setVideoDragOver(false)}
-                              onDrop={(e) => {
-                                e.preventDefault();
-                                setVideoDragOver(false);
-                                if (e.dataTransfer.files?.[0]) handleVideoFileSelect(e.dataTransfer.files[0]);
-                              }}
-                              onClick={() => {
-                                const input = document.getElementById('admin-video-file-input');
-                                if (input) input.click();
-                              }}
-                              className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all ${
-                                videoDragOver
-                                  ? 'border-blue-500 bg-blue-500/10 scale-[1.01]'
-                                  : 'border-slate-300 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 bg-white dark:bg-slate-900/60'
-                              }`}
-                            >
-                              <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 border border-blue-200 dark:border-blue-500/20">
-                                <Upload size={26} className={isUploadingVideo ? 'animate-bounce' : ''} />
-                              </div>
-
-                              <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-                                {isUploadingVideo ? 'Uploading Video to Visdom Waves Storage...' : 'Click to Browse or Drag Video Here'}
-                              </h4>
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                                Supported formats: MP4, WebM, QuickTime MOV & MKV • Max 500 MB
-                              </p>
-
-                              {isUploadingVideo && (
-                                <div className="mt-4 max-w-xs mx-auto">
-                                  <div className="flex items-center justify-between text-xs font-bold text-blue-600 dark:text-blue-400 mb-1">
-                                    <span>Uploading Video...</span>
-                                    <span>{videoUploadProgress}%</span>
-                                  </div>
-                                  <div className="w-full h-2 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                                    <div
-                                      className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-200"
-                                      style={{ width: `${videoUploadProgress}%` }}
-                                    />
-                                  </div>
-                                </div>
-                              )}
-
-                              {!isUploadingVideo && (
-                                <button
-                                  type="button"
-                                  className="mt-4 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/25 transition-all inline-flex items-center gap-1.5"
-                                >
-                                  <Upload size={14} />
-                                  <span>Select Video from Computer</span>
-                                </button>
-                              )}
-                            </div>
-
-                            {/* Direct URL Fallback */}
-                            <div className="mt-4">
-                              <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">
-                                Or paste direct video file URL:
-                              </label>
-                              <input
-                                type="url"
-                                value={videoForm.url}
-                                onChange={(e) => setVideoForm((prev) => ({ ...prev, url: e.target.value, type: 'video' }))}
-                                placeholder="https://domain.com/videos/lecture.mp4"
-                                className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 shadow-sm space-y-4">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                                <svg className="w-4 h-4 fill-red-600" viewBox="0 0 24 24">
-                                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                                </svg>
-                                <span>YouTube Video URL *</span>
-                              </label>
-
-                              {extractYouTubeId(videoForm.url) && (
-                                <span className="px-2.5 py-1 rounded-md text-[11px] font-mono font-bold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
-                                  YouTube ID: {extractYouTubeId(videoForm.url)}
-                                </span>
-                              )}
-                            </div>
-
-                            <div>
-                              <input
-                                type="url"
-                                required={videoSourceMode === 'url'}
-                                value={videoForm.url}
-                                onChange={(e) => {
-                                  const newUrl = e.target.value;
-                                  const ytId = extractYouTubeId(newUrl);
-                                  setYoutubeError('');
-                                  setVideoForm((prev) => ({
-                                    ...prev,
-                                    url: newUrl,
-                                    type: 'youtube',
-                                    thumbnailUrl: ytId && (!prev.thumbnailUrl || prev.thumbnailUrl.includes('youtube.com'))
-                                      ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`
-                                      : prev.thumbnailUrl,
-                                  }));
-                                }}
-                                placeholder="https://www.youtube.com/watch?v=VIDEO_ID or https://youtu.be/VIDEO_ID"
-                                className="w-full px-4 py-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium"
-                              />
-                              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                                Supports watch URLs, youtu.be shortlinks, embed links, and YouTube Shorts.
-                              </p>
-                            </div>
-
-                            {/* Error Alert */}
-                            {youtubeError && (
-                              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2">
-                                <AlertCircle size={15} className="shrink-0" />
-                                <span>{youtubeError}</span>
-                              </div>
-                            )}
-
-                            {/* Auto Thumbnail Fetchers */}
-                            {extractYouTubeId(videoForm.url) && (
-                              <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
-                                  Auto-fetch YouTube Thumbnail:
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const id = extractYouTubeId(videoForm.url);
-                                      if (id) {
-                                        setVideoForm((prev) => ({ ...prev, thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg` }));
-                                        showToast('HQ Thumbnail selected');
-                                      }
-                                    }}
-                                    className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold transition-all cursor-pointer"
-                                  >
-                                    HQ Default (480p)
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const id = extractYouTubeId(videoForm.url);
-                                      if (id) {
-                                        setVideoForm((prev) => ({ ...prev, thumbnailUrl: `https://img.youtube.com/vi/${id}/maxresdefault.jpg` }));
-                                        showToast('MaxRes Thumbnail selected');
-                                      }
-                                    }}
-                                    className="px-3 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 text-xs font-bold transition-all cursor-pointer"
-                                  >
-                                    MaxRes HD (1080p)
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Right: Live Player Preview */}
-                      <div className="md:col-span-5 space-y-3">
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-4 shadow-sm">
-                          <div className="flex items-center justify-between mb-2.5">
-                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                              <Play size={13} className="text-red-500" />
-                              <span>Live Player Preview</span>
-                            </span>
-                            {videoForm.url && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                                <CheckCircle2 size={11} />
-                                <span>Stream Ready</span>
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-center relative group">
-                            {/* Badges Overlay (Optional - only when video/thumb loaded and badge specified) */}
-                            {Boolean(videoForm.url || videoForm.thumbnailUrl) && Boolean(videoForm.badgeText?.trim()) && (
-                              <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none select-none max-w-[55%]">
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center gap-1 truncate">
-                                  {videoForm.isVerifiedBadge && <ShieldCheck size={11} className="text-white shrink-0" />}
-                                  <span className="truncate">{videoForm.badgeText}</span>
-                                </span>
-                                {videoForm.qualityBadge && (
-                                  <span className="px-1.5 py-0.5 rounded bg-black/75 text-[10px] font-bold text-amber-300 border border-amber-400/30 shrink-0">
-                                    {videoForm.qualityBadge}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Watermark Overlay (Optional - only when video/thumb loaded and watermark enabled with text) */}
-                            {Boolean(videoForm.url || videoForm.thumbnailUrl) && Boolean(videoForm.watermarkEnabled && videoForm.watermarkText?.trim()) && (
-                              <div
-                                className={`absolute z-20 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-white/80 font-mono text-[10px] tracking-wider uppercase font-bold shadow-md max-w-[45%] truncate ${
-                                  videoForm.watermarkPosition === 'top-left'
-                                    ? 'top-2.5 left-2.5'
-                                    : videoForm.watermarkPosition === 'bottom-left'
-                                    ? 'bottom-2.5 left-2.5'
-                                    : videoForm.watermarkPosition === 'bottom-right'
-                                    ? 'bottom-2.5 right-2.5'
-                                    : 'top-2.5 right-2.5'
-                                }`}
-                              >
-                                <ShieldCheck size={12} className="text-blue-400 shrink-0" />
-                                <span className="truncate">{videoForm.watermarkText}</span>
-                              </div>
-                            )}
-
-                            {extractYouTubeId(videoForm.url) ? (
-                              <iframe
-                                src={`https://www.youtube.com/embed/${extractYouTubeId(videoForm.url)}?autoplay=0`}
-                                title="YouTube Preview"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                                className="w-full h-full border-0"
-                              />
-                            ) : videoForm.url && (videoForm.type === 'video' || videoForm.url.match(/\.(mp4|webm|mov|ogg)$/i) || videoForm.url.includes('/uploads/')) ? (
-                              <video
-                                controls
-                                src={videoForm.url}
-                                className="w-full h-full object-contain bg-black"
-                                poster={videoForm.thumbnailUrl || undefined}
-                              >
-                                Your browser does not support HTML5 video preview.
-                              </video>
-                            ) : videoForm.thumbnailUrl ? (
-                              <div className="w-full h-full relative">
-                                <img
-                                  src={videoForm.thumbnailUrl}
-                                  alt="Thumbnail preview"
-                                  className="w-full h-full object-cover"
-                                />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                  <span className="p-3 rounded-full bg-red-600 text-white shadow-lg">
-                                    <Play size={22} fill="currentColor" />
-                                  </span>
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-center p-6 text-slate-400">
-                                <Film size={32} className="mx-auto mb-2 text-slate-600" />
-                                <p className="text-xs font-bold text-slate-300">No Video Loaded Yet</p>
-                                <p className="text-[11px] text-slate-500 mt-0.5">
-                                  Upload or paste URL on the left to preview
-                                </p>
-                              </div>
-                            )}
-                          </div>
-
-                          {videoUploadInfo && (
-                            <div className="mt-3 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-between text-xs">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
-                                <div className="min-w-0">
-                                  <p className="font-bold text-emerald-700 dark:text-emerald-300 truncate">
-                                    {videoUploadInfo.originalName}
-                                  </p>
-                                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                                    {videoUploadInfo.sizeMb ? `Size: ${videoUploadInfo.sizeMb} MB • ` : ''}Ready on Local Storage
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setVideoStudioStep(1)}
-                            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                          >
-                            <ArrowLeft size={14} />
-                            <span>Back: Step 1 (Curriculum Info)</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setVideoStudioStep(3)}
-                            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
-                          >
-                            <span>Next: Step 3 (Thumbnail)</span>
-                            <ArrowRight size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* ─────────────────────────────────────────────────────────
-                    STEP 3: THUMBNAIL MANAGEMENT
-                   ───────────────────────────────────────────────────────── */}
-                {videoStudioStep === 3 && (
-                  <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 shadow-sm space-y-5">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                            <ImageIcon size={16} className="text-purple-500" />
-                            <span>Thumbnail Image Management</span>
-                          </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            Upload a custom 16:9 poster from your computer, retrieve YouTube artwork, or enter an image URL.
-                          </p>
-                        </div>
-
-                        {videoForm.thumbnailUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setVideoForm((prev) => ({ ...prev, thumbnailUrl: '' }))}
-                            className="text-xs text-rose-500 hover:underline font-bold cursor-pointer"
-                          >
-                            Remove Thumbnail
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                        {/* Thumbnail Preview Box */}
-                        <div className="md:col-span-5">
-                          <div className="aspect-video w-full rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-900 overflow-hidden flex items-center justify-center relative shadow-inner group">
-                            {/* Badges Preview (Optional - only when thumbnail loaded and badge set) */}
-                            {Boolean(videoForm.thumbnailUrl) && Boolean(videoForm.badgeText?.trim()) && (
-                              <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 flex-wrap pointer-events-none select-none max-w-[55%]">
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center gap-1 truncate">
-                                  {videoForm.isVerifiedBadge && <ShieldCheck size={11} className="text-white shrink-0" />}
-                                  <span className="truncate">{videoForm.badgeText}</span>
-                                </span>
-                                {videoForm.qualityBadge && (
-                                  <span className="px-1.5 py-0.5 rounded bg-black/75 text-[10px] font-bold text-amber-300 border border-amber-400/30 shrink-0">
-                                    {videoForm.qualityBadge}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Watermark Preview (Optional - only when thumbnail loaded and watermark set) */}
-                            {Boolean(videoForm.thumbnailUrl) && Boolean(videoForm.watermarkEnabled && videoForm.watermarkText?.trim()) && (
-                              <div
-                                className={`absolute z-20 pointer-events-none select-none flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-xs border border-white/10 text-white/80 font-mono text-[10px] tracking-wider uppercase font-bold shadow-md max-w-[45%] truncate ${
-                                  videoForm.watermarkPosition === 'top-left'
-                                    ? 'top-2.5 left-2.5'
-                                    : videoForm.watermarkPosition === 'bottom-left'
-                                    ? 'bottom-2.5 left-2.5'
-                                    : videoForm.watermarkPosition === 'bottom-right'
-                                    ? 'bottom-2.5 right-2.5'
-                                    : 'top-2.5 right-2.5'
-                                }`}
-                              >
-                                <ShieldCheck size={12} className="text-blue-400 shrink-0" />
-                                <span className="truncate">{videoForm.watermarkText}</span>
-                              </div>
-                            )}
-
-                            {videoForm.thumbnailUrl ? (
-                              <img
-                                src={videoForm.thumbnailUrl}
-                                alt="Thumbnail preview"
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80';
-                                }}
-                              />
-                            ) : (
-                              <div className="text-center p-4 text-slate-500">
-                                <ImageIcon size={32} className="mx-auto mb-1 opacity-60" />
-                                <span className="text-xs font-semibold">No thumbnail selected</span>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Controls */}
-                        <div className="md:col-span-7 space-y-4">
-                          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                                1. Upload from Computer
-                              </span>
-                              <span className="text-[10px] text-slate-400">JPG, JPEG, PNG, WebP</span>
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const input = document.getElementById('admin-thumb-file-input');
-                                if (input) input.click();
-                              }}
-                              disabled={isUploadingThumb}
-                              className="w-full py-2.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-md shadow-purple-600/25 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                              <Upload size={14} />
-                              <span>{isUploadingThumb ? `Uploading Image (${thumbUploadProgress}%)...` : 'Choose Image File'}</span>
-                            </button>
-                          </div>
-
-                          <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                              2. Or Paste Custom Thumbnail URL
-                            </span>
-                            <input
-                              type="url"
-                              value={videoForm.thumbnailUrl}
-                              onChange={(e) => setVideoForm({ ...videoForm, thumbnailUrl: e.target.value })}
-                              placeholder="https://images.unsplash.com/... or https://domain.com/thumb.jpg"
-                              className="w-full px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-purple-500"
-                            />
-                          </div>
-
-                          {extractYouTubeId(videoForm.url) && (
-                            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-between gap-2">
-                              <span className="text-xs font-bold text-red-600 dark:text-red-400">
-                                3. Retrieve YouTube Artwork:
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const id = extractYouTubeId(videoForm.url);
-                                  if (id) {
-                                    setVideoForm((prev) => ({ ...prev, thumbnailUrl: `https://img.youtube.com/vi/${id}/hqdefault.jpg` }));
-                                    showToast('YouTube HQ thumbnail loaded');
-                                  }
-                                }}
-                                className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-bold text-xs shadow-xs hover:bg-red-500 transition-all cursor-pointer"
-                              >
-                                Fetch YouTube HQ
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <button
-                        type="button"
-                        onClick={() => setVideoStudioStep(2)}
-                        className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
-                      >
-                        <ArrowLeft size={14} />
-                        <span>Back: Step 2 (Media Source)</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setVideoStudioStep(4)}
-                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
-                      >
-                        <span>Next: Step 4 (Lesson Settings)</span>
-                        <ArrowRight size={14} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* ─────────────────────────────────────────────────────────
-                    STEP 4: LESSON SETTINGS (EXACT USER SPECIFICATIONS)
-                   ───────────────────────────────────────────────────────── */}
-                {videoStudioStep === 4 && (
-                  <div className="max-w-4xl mx-auto space-y-6">
-                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-6 shadow-sm space-y-6">
+                  <div className="w-full space-y-6 animate-in fade-in duration-150">
+                    <div className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 p-5 sm:p-7 shadow-sm space-y-6">
                       <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
                         <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                           <Settings size={17} className="text-blue-500" />
-                          <span>Step 4 – Lesson Settings & Permissions</span>
+                          <span>Step 2 – Lesson Settings & Permissions</span>
                         </h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          Configure student access controls, download permissions, completion requirements, and notifications.
+                          Configure student access controls, completion requirements, and notifications.
                         </p>
                       </div>
 
@@ -4969,109 +5450,7 @@ export default function AdminPage({
                         </div>
                       </div>
 
-                      {/* 4, 5, 6. Downloads Management */}
-                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
-                          Download Permissions
-                        </span>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          {/* Allow PDF Download */}
-                          <div>
-                            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold block mb-1">
-                              Allow PDF Download
-                            </span>
-                            <div className="flex gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, allowPdfDownload: true })}
-                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                                  videoForm.allowPdfDownload
-                                    ? 'bg-blue-600 text-white shadow-xs'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                }`}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, allowPdfDownload: false })}
-                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                                  !videoForm.allowPdfDownload
-                                    ? 'bg-slate-700 text-white shadow-xs'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                }`}
-                              >
-                                No
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Allow Video Download */}
-                          <div>
-                            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold block mb-1">
-                              Allow Video Download
-                            </span>
-                            <div className="flex gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, allowVideoDownload: true })}
-                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                                  videoForm.allowVideoDownload
-                                    ? 'bg-blue-600 text-white shadow-xs'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                }`}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, allowVideoDownload: false })}
-                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                                  !videoForm.allowVideoDownload
-                                    ? 'bg-slate-700 text-white shadow-xs'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                }`}
-                              >
-                                No
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Allow Assignment Download */}
-                          <div>
-                            <span className="text-xs text-slate-600 dark:text-slate-400 font-semibold block mb-1">
-                              Allow Assignment Download
-                            </span>
-                            <div className="flex gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, allowAssignmentDownload: true })}
-                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                                  videoForm.allowAssignmentDownload
-                                    ? 'bg-blue-600 text-white shadow-xs'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                }`}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, allowAssignmentDownload: false })}
-                                className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold cursor-pointer transition-all ${
-                                  !videoForm.allowAssignmentDownload
-                                    ? 'bg-slate-700 text-white shadow-xs'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                }`}
-                              >
-                                No
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* 7 & 8. Estimated Duration & Difficulty Level */}
+                      {/* Estimated Duration & Difficulty Level */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
@@ -5170,37 +5549,9 @@ export default function AdminPage({
                         </div>
                       </div>
 
-                      {/* 13, 14, 15, 16, 17. Certificate, Progress Tracking, Notifications, Attendance */}
+                      {/* Progress Tracking, Notifications, Attendance */}
                       <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-3">
-                          {/* Certificate Eligible */}
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                              <Award size={14} className="text-amber-500" />
-                              <span>Certificate Eligible</span>
-                            </span>
-                            <div className="flex gap-1">
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, certificateEligible: true })}
-                                className={`px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
-                                  videoForm.certificateEligible ? 'bg-amber-500 text-slate-950' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
-                                }`}
-                              >
-                                Yes
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setVideoForm({ ...videoForm, certificateEligible: false })}
-                                className={`px-2.5 py-1 rounded-md text-xs font-bold cursor-pointer transition-all ${
-                                  !videoForm.certificateEligible ? 'bg-slate-700 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'
-                                }`}
-                              >
-                                No
-                              </button>
-                            </div>
-                          </div>
-
                           {/* Progress Tracking */}
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
@@ -5366,54 +5717,6 @@ export default function AdminPage({
                         </div>
                       </div>
 
-                      {/* 20. SEO Configuration */}
-                      <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                          <Globe size={14} className="text-blue-500" />
-                          <span>SEO Configuration</span>
-                        </span>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                              Slug
-                            </label>
-                            <input
-                              type="text"
-                              value={videoForm.seoSlug}
-                              onChange={(e) => setVideoForm({ ...videoForm, seoSlug: e.target.value })}
-                              placeholder="e.g. physics-wave-optics-lecture-1"
-                              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                              Meta Title
-                            </label>
-                            <input
-                              type="text"
-                              value={videoForm.seoMetaTitle}
-                              onChange={(e) => setVideoForm({ ...videoForm, seoMetaTitle: e.target.value })}
-                              placeholder="e.g. Wave Optics Class 12 IPE | MyMarks"
-                              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
-
-                          <div className="sm:col-span-2">
-                            <label className="text-[11px] font-semibold text-slate-500 block mb-1">
-                              Meta Description
-                            </label>
-                            <input
-                              type="text"
-                              value={videoForm.seoMetaDescription}
-                              onChange={(e) => setVideoForm({ ...videoForm, seoMetaDescription: e.target.value })}
-                              placeholder="Complete Wave Optics video lecture for AP & Telangana Intermediate Board exams."
-                              className="w-full px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
-                            />
-                          </div>
-                        </div>
-                      </div>
 
                       {/* 21. Watermark & Anti-Piracy Settings (Optional) */}
                       <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
@@ -5607,19 +5910,19 @@ export default function AdminPage({
                     <div className="flex items-center justify-between pt-2">
                       <button
                         type="button"
-                        onClick={() => setVideoStudioStep(3)}
+                        onClick={() => setVideoStudioStep(1)}
                         className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <ArrowLeft size={14} />
-                        <span>Back: Step 3 (Thumbnail)</span>
+                        <span>Back: Step 1 (Curriculum Info)</span>
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => setVideoStudioStep(5)}
+                        onClick={() => setVideoStudioStep(3)}
                         className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer"
                       >
-                        <span>Next: Step 5 (Live Student Preview)</span>
+                        <span>Next: Step 3 (Live Student Preview)</span>
                         <ArrowRight size={14} />
                       </button>
                     </div>
@@ -5627,16 +5930,16 @@ export default function AdminPage({
                 )}
 
                 {/* ─────────────────────────────────────────────────────────
-                    STEP 5: LIVE STUDENT CARD PREVIEW
+                    STEP 3: LIVE STUDENT CARD PREVIEW
                    ───────────────────────────────────────────────────────── */}
-                {videoStudioStep === 5 && (
-                  <div className="max-w-4xl mx-auto space-y-6">
+                {videoStudioStep === 3 && (
+                  <div className="w-full space-y-6 animate-in fade-in duration-150">
                     <div className="p-5 rounded-3xl bg-gradient-to-r from-blue-900/40 via-indigo-900/30 to-purple-900/40 border border-blue-500/30 text-center">
                       <div className="w-12 h-12 rounded-2xl bg-blue-500/20 text-blue-400 flex items-center justify-center mx-auto mb-2 border border-blue-500/30">
                         <Eye size={24} />
                       </div>
                       <h4 className="text-base font-black text-slate-900 dark:text-white">
-                        Step 5 – Live Student Dashboard Card Preview
+                        Step 3 – Live Student Dashboard Card Preview
                       </h4>
                       <p className="text-xs text-slate-600 dark:text-slate-300 max-w-lg mx-auto mt-1">
                         This is the exact interactive card that students will see in their dashboard when this lesson is published.
@@ -5871,18 +6174,51 @@ export default function AdminPage({
                             </div>
 
                             <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
-                              <span className="text-slate-500">Certificate Eligible:</span>
-                              <span className="font-bold text-slate-900 dark:text-white">{videoForm.certificateEligible ? 'Yes' : 'No'}</span>
-                            </div>
-
-                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                               <span className="text-slate-500">Student Notification:</span>
                               <span className="font-bold text-slate-900 dark:text-white">{videoForm.studentNotifications ? 'Notify' : 'Silent'}</span>
                             </div>
 
-                            <div className="flex items-center justify-between py-1.5">
+                            <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
                               <span className="text-slate-500">Parent Notification:</span>
                               <span className="font-bold text-slate-900 dark:text-white">{videoForm.parentNotification ? 'Send Message' : 'Disabled'}</span>
+                            </div>
+
+                            {/* Attached Media Checklist per Hierarchy Level */}
+                            <div className="pt-2.5 border-t border-slate-200 dark:border-slate-800 space-y-1.5">
+                              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block">
+                                Attached Videos per Hierarchy:
+                              </span>
+                              <div className="space-y-1">
+                                {[
+                                  { key: 'chapter', label: `1. Chapter (${videoForm.chapterName || 'Chapter ' + (videoForm.chapterNumber || 1)})` },
+                                  { key: 'topic', label: `2. Topic (${videoForm.topicName || 'Topic ' + (videoForm.topicNumber || '1.0')})` },
+                                  { key: 'subTopic', label: `3. Sub Topic (${videoForm.subTopicName || 'Sub Topic ' + (videoForm.subTopicNumber || '1.0.0')})` },
+                                  { key: 'subSubTopic', label: `4. Sub Sub Topic (${videoForm.subSubTopicName || 'Sub Sub ' + (videoForm.subSubTopicNumber || '1.0.0.0')})` },
+                                ].map((item) => {
+                                  const m = levelMedia[item.key];
+                                  const hasVid = Boolean(m?.url);
+                                  return (
+                                    <div key={item.key} className="flex items-center justify-between text-[11px] py-0.5">
+                                      <span className="text-slate-600 dark:text-slate-400 truncate max-w-[190px]">{item.label}</span>
+                                      {hasVid ? (
+                                        <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1 shrink-0">
+                                          ✓ {m.type === 'youtube' ? 'YouTube' : 'Video'}
+                                        </span>
+                                      ) : (
+                                        <span className="text-slate-400 dark:text-slate-500 italic shrink-0">Not Attached</span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Replacement Mode Indicator */}
+                            <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[11px]">
+                              <span className="text-slate-500 font-medium">Replacement Action:</span>
+                              <span className={`font-bold ${replaceExistingVideo ? 'text-purple-600 dark:text-purple-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                                {replaceExistingVideo ? 'Replace & Store Old Video ✓' : 'Keep Both as Separate'}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -5903,11 +6239,11 @@ export default function AdminPage({
                     <div className="flex items-center justify-between pt-2">
                       <button
                         type="button"
-                        onClick={() => setVideoStudioStep(4)}
+                        onClick={() => setVideoStudioStep(2)}
                         className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
                       >
                         <ArrowLeft size={14} />
-                        <span>Back: Step 4 (Lesson Settings)</span>
+                        <span>Back: Step 2 (Lesson Settings)</span>
                       </button>
 
                       <button
@@ -5928,11 +6264,9 @@ export default function AdminPage({
               <div className="shrink-0 px-5 sm:px-8 py-3.5 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-wrap items-center justify-between gap-3">
                 <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
                   <span className="font-bold text-slate-700 dark:text-slate-300">
-                    Step {videoStudioStep}/5: {
+                    Step {videoStudioStep}/3: {
                       videoStudioStep === 1 ? 'Curriculum Info' :
-                      videoStudioStep === 2 ? 'Media Source' :
-                      videoStudioStep === 3 ? 'Thumbnail' :
-                      videoStudioStep === 4 ? 'Lesson Settings' : 'Student Preview'
+                      videoStudioStep === 2 ? 'Lesson Settings' : 'Student Preview'
                     }
                   </span>
                   <span>•</span>
@@ -5953,10 +6287,10 @@ export default function AdminPage({
                     </button>
                   )}
 
-                  {videoStudioStep < 5 && (
+                  {videoStudioStep < 3 && (
                     <button
                       type="button"
-                      onClick={() => setVideoStudioStep((prev) => Math.min(5, prev + 1))}
+                      onClick={() => setVideoStudioStep((prev) => Math.min(3, prev + 1))}
                       className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md shadow-blue-600/25 transition-all cursor-pointer flex items-center gap-1"
                     >
                       <span>Next Step</span>
@@ -5990,6 +6324,455 @@ export default function AdminPage({
                 </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          QUICK YOUTUBE MODAL (FROM CURRICULUM INFO ROW BUTTONS)
+         ───────────────────────────────────────────────────────────── */}
+      {quickYoutubeModal.isOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4 text-slate-900 dark:text-slate-100">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-md shadow-red-500/20">
+                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">Attach YouTube Video URL</h4>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {quickYoutubeModal.contextLabel || 'Curriculum Item'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickYoutubeModal({ isOpen: false, context: '', contextLabel: '', url: '' })}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Input & Paste */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                Enter or Paste YouTube Video URL *
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={quickYoutubeModal.url}
+                  onChange={(e) => setQuickYoutubeModal(prev => ({ ...prev, url: e.target.value }))}
+                  placeholder="https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                  className="flex-1 px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const url = quickYoutubeModal.url.trim();
+                      const id = extractYouTubeId(url);
+                      if (!id && url) {
+                        showToast('Please enter a valid YouTube video URL', 'error');
+                        return;
+                      }
+                      const ctx = quickYoutubeModal.context || activeUploadContext || 'chapter';
+                      const thumb = id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+
+                      setLevelMedia((prev) => ({
+                        ...prev,
+                        [ctx]: {
+                          ...prev[ctx],
+                          url,
+                          type: 'youtube',
+                          thumbnailUrl: thumb || prev[ctx]?.thumbnailUrl || '',
+                          isUploading: false,
+                          progress: 0,
+                        },
+                      }));
+
+                      setVideoForm(prev => ({
+                        ...prev,
+                        uploadLevel: ctx,
+                        url,
+                        type: 'youtube',
+                        thumbnailUrl: thumb || prev.thumbnailUrl,
+                      }));
+                      setVideoSourceMode('url');
+                      setQuickYoutubeModal({ isOpen: false, context: '', contextLabel: '', url: '' });
+                      const ctxLabel = ctx === 'chapter' ? 'Chapter' : ctx === 'topic' ? 'Topic' : ctx === 'subTopic' ? 'Sub Topic' : 'Sub Sub Topic';
+                      showToast(`YouTube video attached for ${ctxLabel}!`);
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const text = await navigator.clipboard.readText();
+                      if (text) setQuickYoutubeModal(prev => ({ ...prev, url: text }));
+                    } catch (e) {
+                      console.warn(e);
+                    }
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold transition-colors cursor-pointer"
+                  title="Paste from clipboard"
+                >
+                  Paste
+                </button>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Supports standard watch links, youtu.be shortlinks, live streams and YouTube Shorts.
+              </p>
+            </div>
+
+            {/* Live Preview if valid ID */}
+            {(() => {
+              const id = extractYouTubeId(quickYoutubeModal.url);
+              if (!id) return null;
+              return (
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center gap-3">
+                  <img
+                    src={`https://img.youtube.com/vi/${id}/hqdefault.jpg`}
+                    alt="YouTube thumbnail preview"
+                    className="w-24 h-16 object-cover rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300">
+                      YouTube ID: {id}
+                    </span>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 truncate font-medium">
+                      HQ Artwork preview ready
+                    </p>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-2">
+              {(() => {
+                const ctx = quickYoutubeModal.context || activeUploadContext || 'chapter';
+                const hasExisting = Boolean(levelMedia[ctx]?.url);
+                return hasExisting ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleRemoveLevelMedia(ctx);
+                      setQuickYoutubeModal({ isOpen: false, context: '', contextLabel: '', url: '' });
+                    }}
+                    className="text-xs font-bold text-rose-600 hover:text-rose-700 dark:text-rose-400 cursor-pointer"
+                  >
+                    Remove Video
+                  </button>
+                ) : (
+                  <div />
+                );
+              })()}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setQuickYoutubeModal({ isOpen: false, context: '', contextLabel: '', url: '' })}
+                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = quickYoutubeModal.url.trim();
+                    const id = extractYouTubeId(url);
+                    if (!id && url) {
+                      showToast('Please enter a valid YouTube video URL', 'error');
+                      return;
+                    }
+                    const ctx = quickYoutubeModal.context || activeUploadContext || 'chapter';
+                    const thumb = id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : '';
+
+                    setLevelMedia((prev) => ({
+                      ...prev,
+                      [ctx]: {
+                        ...prev[ctx],
+                        url,
+                        type: 'youtube',
+                        thumbnailUrl: thumb || prev[ctx]?.thumbnailUrl || '',
+                        isUploading: false,
+                        progress: 0,
+                      },
+                    }));
+
+                    setVideoForm(prev => ({
+                      ...prev,
+                      uploadLevel: ctx,
+                      url,
+                      type: 'youtube',
+                      thumbnailUrl: thumb || prev.thumbnailUrl,
+                    }));
+                    setVideoSourceMode('url');
+                    setQuickYoutubeModal({ isOpen: false, context: '', contextLabel: '', url: '' });
+                    const ctxLabel = ctx === 'chapter' ? 'Chapter' : ctx === 'topic' ? 'Topic' : ctx === 'subTopic' ? 'Sub Topic' : 'Sub Sub Topic';
+                    showToast(`YouTube video URL attached for ${ctxLabel}!`);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-md shadow-red-600/25 cursor-pointer transition-all active:scale-95"
+                >
+                  Attach Video
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL: OLD VIDEOS STORAGE & ARCHIVES
+         ───────────────────────────────────────────────────────────── */}
+      {isArchiveStorageModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 dark:bg-black/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="relative w-full max-w-5xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
+            {/* Header */}
+            <div className="p-5 sm:p-6 pb-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 bg-slate-50/70 dark:bg-slate-950/50">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-lg shadow-purple-600/30 shrink-0">
+                  <FolderGit2 size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+                      Old Videos Storage &amp; Archives
+                    </h3>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                      {archivedVideos.length} Saved Video{archivedVideos.length === 1 ? '' : 's'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    Previously replaced videos are preserved here. You can preview, restore them back to the active curriculum anytime, or delete.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsArchiveStorageModalOpen(false)}
+                className="p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                title="Close Storage"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Filter Toolbar */}
+            <div className="p-4 px-5 sm:px-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search old videos by code (e.g. 1.0, 1.0.1), title, chapter, or replaced notes..."
+                  value={archiveSearch}
+                  onChange={(e) => setArchiveSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 font-medium"
+                />
+                {archiveSearch && (
+                  <button
+                    onClick={() => setArchiveSearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <select
+                  value={archiveFilterLevel}
+                  onChange={(e) => setArchiveFilterLevel(e.target.value)}
+                  className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
+                >
+                  <option value="all">All Levels</option>
+                  <option value="chapter">Chapter Videos</option>
+                  <option value="topic">Topic Videos</option>
+                  <option value="subTopic">Sub Topic Videos</option>
+                  <option value="subSubTopic">Sub Sub Topic Videos</option>
+                </select>
+
+                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 whitespace-nowrap pl-1">
+                  {filteredArchivedVideos.length} found
+                </span>
+              </div>
+            </div>
+
+            {/* Content List */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+              {filteredArchivedVideos.length === 0 ? (
+                <div className="text-center py-16 px-4 space-y-3">
+                  <div className="w-16 h-16 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto">
+                    <FolderGit2 size={32} />
+                  </div>
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                    {archiveSearch ? 'No matching archived videos found' : 'No Old Videos in Storage'}
+                  </h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                    {archiveSearch
+                      ? 'Try searching with another keyword or hierarchy code like 1.0 or Ordered Pairs.'
+                      : 'When you upload a new video for an existing lesson (e.g. 1.0: Ordered Pairs) with replacement enabled, the old version will be stored here automatically.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredArchivedVideos.map((v) => {
+                    const isYt = v.type === 'youtube' || Boolean(v.youtubeId) || Boolean(extractYouTubeId(v.url));
+                    const ytId = v.youtubeId || extractYouTubeId(v.url);
+                    const thumb = getSafeThumbnailUrl(v.thumbnailUrl, ytId);
+                    const archivedDate = v.archivedAt ? new Date(v.archivedAt).toLocaleDateString() : new Date(v.updatedAt || Date.now()).toLocaleDateString();
+
+                    return (
+                      <div
+                        key={v._id || v.id}
+                        className="rounded-2xl bg-slate-50/80 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800/80 overflow-hidden flex flex-col justify-between hover:border-purple-400 dark:hover:border-purple-500 transition-all group"
+                      >
+                        <div>
+                          {/* Thumbnail preview */}
+                          <div
+                            onClick={() => setPreviewVideoModal(v)}
+                            className="relative aspect-video w-full bg-slate-900 overflow-hidden cursor-pointer"
+                          >
+                            {thumb ? (
+                              <img
+                                src={thumb}
+                                alt={v.title}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                onError={(e) => {
+                                  e.currentTarget.onerror = null;
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80';
+                                }}
+                              />
+                            ) : (
+                              <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-900">
+                                <Video size={28} className="text-purple-500 mb-1" />
+                                <span className="text-[10px] font-bold">Archived Video</span>
+                              </div>
+                            )}
+
+                            {/* Play overlay on hover */}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <div className="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                                <Play size={16} fill="currentColor" className="ml-0.5" />
+                              </div>
+                            </div>
+
+                            {/* Top Badges */}
+                            <div className="absolute top-2 left-2 flex items-center gap-1">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-700/90 text-white shadow">
+                                Archived
+                              </span>
+                              {isYt ? (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-red-600/90 text-white">
+                                  YouTube
+                                </span>
+                              ) : (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-600/90 text-white">
+                                  MP4 Video
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Code badge */}
+                            {v.code && (
+                              <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 text-cyan-300 font-mono text-[10px] font-bold">
+                                Code: {v.code}
+                              </div>
+                            )}
+
+                            {v.duration && (
+                              <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-black/80 text-white font-mono text-[10px] font-bold">
+                                {v.duration}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Card Content */}
+                          <div className="p-3.5 space-y-2">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 uppercase">
+                                {v.uploadLevel || 'Video'}
+                              </span>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold truncate max-w-[170px]">
+                                {v.subject} • Chapter {v.chapterNumber || 1}
+                              </span>
+                            </div>
+
+                            <h5 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm line-clamp-2 leading-snug">
+                              {v.title}
+                            </h5>
+
+                            {/* Replacement Details Box */}
+                            <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20 text-[11px] text-purple-700 dark:text-purple-300 space-y-0.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold flex items-center gap-1">
+                                  <Clock size={11} /> Archived on:
+                                </span>
+                                <span>{archivedDate}</span>
+                              </div>
+                              {v.replacedByTitle && (
+                                <div className="truncate text-[10px] text-slate-600 dark:text-slate-400">
+                                  Replaced by: <strong>{v.replacedByTitle}</strong>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Card Actions */}
+                        <div className="p-3.5 pt-0">
+                          <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-1.5">
+                            <button
+                              onClick={() => setPreviewVideoModal(v)}
+                              className="px-2.5 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-300 dark:hover:bg-slate-700 text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                              title="Preview video"
+                            >
+                              <Play size={12} fill="currentColor" />
+                              <span>Play</span>
+                            </button>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleRestoreArchivedVideo(v)}
+                                className="px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer shadow-xs"
+                                title="Restore as active curriculum video"
+                              >
+                                <RefreshCw size={12} />
+                                <span>Restore</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteArchivedVideo(v._id || v.id, v.title)}
+                                className="p-1.5 rounded-lg text-rose-500 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                                title="Delete permanently"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>All archived items are kept safe in this storage and hidden from the student curriculum.</span>
+              <button
+                onClick={() => setIsArchiveStorageModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold cursor-pointer transition-colors"
+              >
+                Close Storage
+              </button>
+            </div>
           </div>
         </div>
       )}
