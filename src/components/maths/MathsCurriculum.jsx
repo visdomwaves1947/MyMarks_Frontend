@@ -300,8 +300,8 @@ const RAW_TOPICS_DATA = [
         id: '3-2',
         title: 'Operations on Matrices – Addition, Subtraction and Scalar Multiplication',
         description: 'Matrix algebra, conformable matrices, commutative and associative properties.',
-        url: 'https://youtu.be/YV8R-iEwI10?si=Q5N_r16z14F9a6gG',
-        videoId: 'YV8R-iEwI10',
+        url: 'https://youtu.be/0DMBjvUdtMo',
+        videoId: '0DMBjvUdtMo',
         keywords: [
           'Matrix Addition',
           'Matrix Subtraction',
@@ -314,8 +314,8 @@ const RAW_TOPICS_DATA = [
         id: '3-3',
         title: 'Multiplication of Matrices',
         description: 'Row-by-column matrix multiplication, properties, and non-commutativity.',
-        url: 'https://youtu.be/s8z_gV4d1Y0?si=s5v3s0z5888gWw0k',
-        videoId: 's8z_gV4d1Y0',
+        url: 'https://youtu.be/3-s0IwdDcgE',
+        videoId: '3-s0IwdDcgE',
         keywords: [
           'Matrix Multiplication',
           'Product of Matrices',
@@ -327,8 +327,8 @@ const RAW_TOPICS_DATA = [
         id: '3-4',
         title: 'Transpose of a Matrix – Symmetric and Skew-Symmetric Matrices',
         description: 'Transpose rules (AB)T = BT AT, symmetric matrices A = AT, and skew-symmetric matrices A = -AT.',
-        url: 'https://youtu.be/012s6N3B6xM?si=bZ_z577Fk6p9q4gK',
-        videoId: '012s6N3B6xM',
+        url: 'https://youtu.be/0DMBjvUdtMo',
+        videoId: '0DMBjvUdtMo',
         keywords: [
           'Transpose of Matrix',
           'Symmetric Matrix',
@@ -340,8 +340,8 @@ const RAW_TOPICS_DATA = [
         id: '3-5',
         title: 'Determinants – Definition, Expansion and Properties',
         description: 'Determinant calculation 2x2 and 3x3, row/column operations, and expansion by minors.',
-        url: 'https://youtu.be/vQ881vB7x6k?si=1m1d3-k40_7j078h',
-        videoId: 'vQ881vB7x6k',
+        url: 'https://youtu.be/3-s0IwdDcgE',
+        videoId: '3-s0IwdDcgE',
         keywords: [
           'Determinants',
           'Properties of Determinants',
@@ -354,8 +354,8 @@ const RAW_TOPICS_DATA = [
         id: '3-6',
         title: 'Adjoint and Inverse of a Matrix',
         description: 'Cofactor matrix, adjoint calculation, and inverse formula A^-1 = adj(A)/det(A).',
-        url: 'https://youtu.be/o10h4_k86M0?si=bZ5-z16Fk6p9q4gK',
-        videoId: 'o10h4_k86M0',
+        url: 'https://youtu.be/0DMBjvUdtMo',
+        videoId: '0DMBjvUdtMo',
         keywords: [
           'Adjoint of Matrix',
           'Inverse of Matrix',
@@ -367,8 +367,8 @@ const RAW_TOPICS_DATA = [
         id: '3-7',
         title: 'Solving Linear Equations – Cramer’s Rule and Matrix Inversion Method',
         description: 'Consistent systems, Cramer rule Delta methods, and matrix inversion AX = B.',
-        url: 'https://youtu.be/j49s-jEw1Y0?si=Q5N_r16z14F9a6gG',
-        videoId: 'j49s-jEw1Y0',
+        url: 'https://youtu.be/3-s0IwdDcgE',
+        videoId: '3-s0IwdDcgE',
         keywords: [
           'Cramer Rule',
           'Matrix Inversion Method',
@@ -381,8 +381,8 @@ const RAW_TOPICS_DATA = [
         id: '3-8',
         title: 'Gauss-Jordan Method & Rank of a Matrix',
         description: 'Row operations, echelon form, rank calculation, and Gaussian elimination.',
-        url: 'https://youtu.be/s8z_gV4d1Y0?si=s5v3s0z5888gWw0k',
-        videoId: 's8z_gV4d1Y0',
+        url: 'https://youtu.be/0DMBjvUdtMo',
+        videoId: '0DMBjvUdtMo',
         keywords: [
           'Gauss Jordan Method',
           'Rank of Matrix',
@@ -405,8 +405,8 @@ const RAW_TOPICS_DATA = [
         id: '4-1',
         title: 'Vectors as Directed Line Segments',
         description: 'Magnitude, direction, initial and terminal points, and geometric representation.',
-        url: 'https://youtu.be/k29B_v16-9M?si=bZ5-z16Fk6p9q4gK',
-        videoId: 'k29B_v16-9M',
+        url: 'https://youtu.be/rhwQ_5ZJ-8g',
+        videoId: 'rhwQ_5ZJ-8g',
         keywords: [
           'Vectors as Directed Line Segments',
           'Magnitude of Vector',
@@ -418,8 +418,8 @@ const RAW_TOPICS_DATA = [
         id: '4-2',
         title: 'Types of Vectors',
         description: 'Zero, unit, co-initial, collinear, equal, and negative vector definitions.',
-        url: 'https://youtu.be/k29B_v16-9M?si=bZ5-z16Fk6p9q4gK',
-        videoId: 'k29B_v16-9M',
+        url: 'https://youtu.be/rhwQ_5ZJ-8g',
+        videoId: 'rhwQ_5ZJ-8g',
         keywords: [
           'Types of Vectors',
           'Unit Vector',
@@ -432,8 +432,8 @@ const RAW_TOPICS_DATA = [
         id: '4-3',
         title: 'Triangle Law & Parallelogram Law of Vector Addition',
         description: 'Geometric addition proofs, resultant magnitude, and direction formulas.',
-        url: 'https://youtu.be/o10h4_k86M0?si=bZ5-z16Fk6p9q4gK',
-        videoId: 'o10h4_k86M0',
+        url: 'https://youtu.be/rhwQ_5ZJ-8g',
+        videoId: 'rhwQ_5ZJ-8g',
         keywords: [
           'Triangle Law of Vectors',
           'Parallelogram Law of Vectors',
@@ -445,8 +445,8 @@ const RAW_TOPICS_DATA = [
         id: '4-4',
         title: 'Position Vector and Section Formula',
         description: 'Internal and external division, midpoint vector, and centroid coordinates.',
-        url: 'https://youtu.be/w40B_v16-9M?si=bZ5-z16Fk6p9q4gK',
-        videoId: 'w40B_v16-9M',
+        url: 'https://youtu.be/rhwQ_5ZJ-8g',
+        videoId: 'rhwQ_5ZJ-8g',
         keywords: [
           'Position Vector',
           'Section Formula Vectors',
@@ -458,8 +458,8 @@ const RAW_TOPICS_DATA = [
         id: '4-5',
         title: 'Collinearity of Three Points and Coplanarity of Four Points',
         description: 'Linear combinations, coplanar conditions, and scalar equations for coplanarity.',
-        url: 'https://youtu.be/vQ881vB7x6k?si=1m1d3-k40_7j078h',
-        videoId: 'vQ881vB7x6k',
+        url: 'https://youtu.be/rhwQ_5ZJ-8g',
+        videoId: 'rhwQ_5ZJ-8g',
         keywords: [
           'Collinear Points Vectors',
           'Coplanar Points Vectors',
@@ -482,8 +482,8 @@ const RAW_TOPICS_DATA = [
         id: '5-1',
         title: 'Scalar Product (Dot Product) – Definition and Properties',
         description: 'Definition a · b = |a||b|cosθ, perpendicularity conditions, and distributive laws.',
-        url: 'https://youtu.be/1m4q_3y-89k?si=k6p9q4gKbZ5-z16F',
-        videoId: '1m4q_3y-89k',
+        url: 'https://youtu.be/rhwQ_5ZJ-8g',
+        videoId: 'rhwQ_5ZJ-8g',
         keywords: [
           'Scalar Product',
           'Dot Product',
@@ -529,7 +529,8 @@ function assignDynamicCodesToChapter(chapter) {
   const chapterCode = String(chapter.number || '1');
 
   function processNode(node, index, parentCode) {
-    const code = `${parentCode}.${index}`;
+    const defaultCode = `${parentCode}.${index}`;
+    const code = (node.code && String(node.code).startsWith(parentCode)) ? node.code : (node.code || defaultCode);
     const children = (node.children || []).map((child, cIdx) => 
       processNode(child, cIdx, code)
     );
@@ -541,7 +542,8 @@ function assignDynamicCodesToChapter(chapter) {
   }
 
   const videos = (chapter.videos || []).map((video, idx) => {
-    const code = `${chapterCode}.${idx}`;
+    const defaultCode = `${chapterCode}.${idx}`;
+    const code = (video.code && String(video.code).startsWith(chapterCode)) ? video.code : (video.code || defaultCode);
     const children = (video.children || []).map((child, cIdx) => 
       processNode(child, cIdx, code)
     );
@@ -558,7 +560,7 @@ function assignDynamicCodesToChapter(chapter) {
   };
 }
 
-const TOPICS_DATA = RAW_TOPICS_DATA.map(assignDynamicCodesToChapter);
+export const TOPICS_DATA = RAW_TOPICS_DATA.map(assignDynamicCodesToChapter);
 
 // Helper to extract YouTube ID
 function extractYouTubeId(url) {
@@ -1237,10 +1239,19 @@ function MathsVideoCard({ video, isSearching, onSelectVideo }) {
     onSelectVideo(video);
   };
 
+  let cleanVideoId = video.videoId;
+  let cleanThumb = video.thumbnailUrl || '';
+  const BAD_IDS = ['2TzFm9u5e10', 'WUvTyaaNjfo', 'YV8R-iEwI10', 's8z_gV4d1Y0', '012s6N3B6xM', 'vQ881vB7x6k', 'o10h4_k86M0', 'j49s-jEw1Y0', 'k29B_v16-9M', 'w40B_v16-9M', '1m4q_3y-89k'];
+
+  if (BAD_IDS.includes(cleanVideoId) || BAD_IDS.some(bad => cleanThumb.includes(bad))) {
+    cleanVideoId = '3-s0IwdDcgE';
+    cleanThumb = 'https://img.youtube.com/vi/3-s0IwdDcgE/hqdefault.jpg';
+  }
+
   const thumbnailUrl =
-    video.thumbnailUrl ||
-    (video.videoId
-      ? `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`
+    cleanThumb ||
+    (cleanVideoId && !BAD_IDS.includes(cleanVideoId)
+      ? `https://img.youtube.com/vi/${cleanVideoId}/hqdefault.jpg`
       : 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&auto=format&fit=crop');
 
   return (
@@ -1344,7 +1355,7 @@ function MathsVideoCard({ video, isSearching, onSelectVideo }) {
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
-                Includes 1.0.0 Definition & Equality • 1.0.1 Cartesian Product • 1.0.2 Triplets with complete collapsible navigation inside the lecture.
+                Includes {allFlattened.slice(0, 3).map(c => `${c.code} ${c.title}`).join(' • ')}{allFlattened.length > 3 ? ' with complete collapsible navigation inside the lecture.' : '.'}
               </p>
             </div>
           )}
@@ -1671,12 +1682,12 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
     return () => window.removeEventListener('mymarks_video_updated', handleUpdate);
   }, [loadDbVideos]);
 
-  // Combine RAW_TOPICS_DATA with dbVideos dynamically
+  // Combine TOPICS_DATA with dbVideos dynamically
   const topicsData = useMemo(() => {
-    const chapters = RAW_TOPICS_DATA.map((ch) => ({
-      ...ch,
-      videos: [...(ch.videos || [])],
-    }));
+    // Deep clone pre-coded TOPICS_DATA so all nodes have explicit codes (e.g. 1.0, 2.0, 2.1)
+    const chapters = JSON.parse(JSON.stringify(TOPICS_DATA));
+
+    const archivedVideos = (dbVideos || []).filter((v) => v.status === 'archived' || v.isArchived);
 
     if (!dbVideos || dbVideos.length === 0) {
       return chapters.map(assignDynamicCodesToChapter);
@@ -1692,11 +1703,12 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
       }
 
       if (rawChName) {
-        const lower = rawChName.toLowerCase();
+        const cleanName = rawChName.replace(/^Chapter\s*\d+\s*:\s*/i, '').trim().toLowerCase();
         const byName = chapters.find((c) =>
-          c.name.toLowerCase().includes(lower) ||
-          lower.includes(c.name.toLowerCase()) ||
-          (c.chapterTitle && c.chapterTitle.toLowerCase().includes(lower))
+          c.name.toLowerCase() === cleanName ||
+          c.name.toLowerCase().includes(cleanName) ||
+          cleanName.includes(c.name.toLowerCase()) ||
+          (c.chapterTitle && c.chapterTitle.toLowerCase().includes(cleanName))
         );
         if (byName) return byName;
       }
@@ -1704,14 +1716,10 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
       return null;
     };
 
-    dbVideos.forEach((v, idx) => {
-      const vYtId = v.youtubeId || extractYouTubeId(v.url);
-      const isAlreadyInChapters = chapters.some((c) =>
-        c.videos.some((vid) => (vid.url && vid.url === v.url) || (vid.videoId && vid.videoId === vYtId))
-      );
-      if (isAlreadyInChapters) return;
+    const activeVideos = dbVideos.filter((v) => v.status !== 'archived' && !v.isArchived);
 
-      const matchedChapter = findChapterForVideo(v);
+    activeVideos.forEach((v, idx) => {
+      const vYtId = v.youtubeId || extractYouTubeId(v.url);
 
       const parsedKeywords = Array.isArray(v.keywords)
         ? v.keywords
@@ -1723,33 +1731,28 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
         ? v.tags.split(',').map((s) => s.trim()).filter(Boolean)
         : [];
 
-      const videoNode = {
-        id: v._id ? `db-${v._id}` : `db-${idx}`,
-        title: v.title,
-        description:
-          v.description ||
-          (v.subTopicName
-            ? `Comprehensive board lecture on ${v.subTopicName} with theorem derivations and exam proofs.`
-            : 'Board-focused mathematical concept breakdown and theorem proofs.'),
-        url: v.url,
-        videoId: vYtId,
-        thumbnailUrl:
-          v.thumbnailUrl ||
-          (vYtId ? `https://img.youtube.com/vi/${vYtId}/hqdefault.jpg` : ''),
-        keywords: parsedKeywords,
-        isDbUploaded: true,
-        board: v.board || 'Both Boards',
-        year: v.year || '1st Year',
-        children: [],
-      };
+      // Determine upload level accurately from payload or fallback hints
+      let level = v.uploadLevel;
+      if (!level) {
+        if (v.subSubTopicName?.trim() || ((v.subSubTopicNumber || '').split('.').filter(Boolean).length >= 4)) {
+          level = 'subSubTopic';
+        } else if (v.subTopicName?.trim() || ((v.subTopicNumber || '').split('.').filter(Boolean).length >= 3)) {
+          level = 'subTopic';
+        } else if (v.topicName?.trim() || ((v.topicNumber || '').split('.').filter(Boolean).length >= 2)) {
+          level = 'topic';
+        } else {
+          level = 'chapter';
+        }
+      }
 
-      if (matchedChapter) {
-        matchedChapter.videos.push(videoNode);
-      } else {
+      let matchedChapter = findChapterForVideo(v);
+      if (!matchedChapter) {
         const newNum = String(v.chapterNumber || chapters.length + 1);
-        const newName = v.chapterName || v.chapter || `Chapter ${newNum}`;
-        const newChapter = {
-          id: `ch-${newNum}-${newName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`,
+        const newName = (v.chapterName || v.chapter || `Chapter ${newNum}`)
+          .replace(/^Chapter\s*\d+\s*:\s*/i, '')
+          .trim();
+        matchedChapter = {
+          id: `ch-${newNum}-${newName.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'chapter'}`,
           number: newNum,
           name: newName,
           chapterTitle: v.chapter ? v.chapter : `${newNum} ${newName}`,
@@ -1757,9 +1760,285 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
           color: 'from-blue-600 to-indigo-600',
           badgeColor:
             'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-          videos: [videoNode],
+          videos: [],
         };
-        chapters.push(newChapter);
+        chapters.push(matchedChapter);
+      }
+
+      if (!matchedChapter.videos) {
+        matchedChapter.videos = [];
+      }
+
+      let safeThumb = v.thumbnailUrl || '';
+      let safeYtId = vYtId;
+      if (safeThumb.includes('2TzFm9u5e10') || safeYtId === '2TzFm9u5e10') {
+        safeThumb = 'https://img.youtube.com/vi/bHIhgxav9LY/hqdefault.jpg';
+        safeYtId = 'bHIhgxav9LY';
+      }
+      if (safeThumb.includes('WUvTyaaNjfo') || safeYtId === 'WUvTyaaNjfo') {
+        safeThumb = 'https://img.youtube.com/vi/jQUrfmX0uko/hqdefault.jpg';
+        safeYtId = 'jQUrfmX0uko';
+      }
+      const defaultThumb = safeThumb || (safeYtId ? `https://img.youtube.com/vi/${safeYtId}/hqdefault.jpg` : '');
+
+      if (level === 'subSubTopic') {
+        // Hierarchy: Chapter -> Topic -> SubTopic -> SubSubTopic
+        const targetTopicCode = String(v.topicNumber || `${matchedChapter.number}.0`).trim();
+        const targetTopicName = (v.topicName || '').trim();
+
+        let topicNode = matchedChapter.videos.find((t) =>
+          (t.code && t.code === targetTopicCode) ||
+          (targetTopicName && t.title && t.title.toLowerCase() === targetTopicName.toLowerCase())
+        );
+
+        if (!topicNode) {
+          topicNode = {
+            id: `topic-${matchedChapter.number}-${targetTopicCode.replace(/\./g, '-')}`,
+            code: targetTopicCode,
+            title: targetTopicName || `Topic ${targetTopicCode}`,
+            description: v.description || `Lectures and concepts for ${targetTopicName || targetTopicCode}`,
+            keywords: parsedKeywords,
+            isDbUploaded: true,
+            children: [],
+          };
+          matchedChapter.videos.push(topicNode);
+        } else {
+          // Replace or update existing topic node
+          if (targetTopicName) topicNode.title = targetTopicName;
+          if (v.description) topicNode.description = v.description;
+          topicNode.code = targetTopicCode;
+          topicNode.isDbUploaded = true;
+          if (parsedKeywords.length) topicNode.keywords = parsedKeywords;
+          if (v.url) {
+            topicNode.url = v.url;
+            topicNode.videoId = vYtId || topicNode.videoId;
+            topicNode.thumbnailUrl = defaultThumb || topicNode.thumbnailUrl;
+          }
+        }
+
+        if (!topicNode.children) topicNode.children = [];
+
+        const targetSubCode = String(v.subTopicNumber || `${topicNode.code}.0`).trim();
+        const targetSubName = (v.subTopicName || '').trim();
+
+        let subTopicNode = topicNode.children.find((s) =>
+          (s.code && s.code === targetSubCode) ||
+          (targetSubName && s.title && s.title.toLowerCase() === targetSubName.toLowerCase())
+        );
+
+        if (!subTopicNode) {
+          subTopicNode = {
+            id: `sub-${targetSubCode.replace(/\./g, '-')}`,
+            code: targetSubCode,
+            title: targetSubName || `Sub Topic ${targetSubCode}`,
+            description: `Study module for ${targetSubName || targetSubCode}`,
+            keywords: parsedKeywords,
+            isDbUploaded: true,
+            children: [],
+          };
+          topicNode.children.push(subTopicNode);
+        }
+
+        if (!subTopicNode.children) subTopicNode.children = [];
+
+        const targetSubSubCode = String(v.subSubTopicNumber || `${subTopicNode.code}.0`).trim();
+        const targetSubSubName = (v.subSubTopicName || v.title || '').trim();
+
+        let subSubNode = subTopicNode.children.find((ss) =>
+          (ss.code && ss.code === targetSubSubCode) ||
+          (targetSubSubName && ss.title && ss.title.toLowerCase() === targetSubSubName.toLowerCase()) ||
+          (ss.url && ss.url === v.url) ||
+          (ss.videoId && ss.videoId === vYtId)
+        );
+
+        if (subSubNode) {
+          subSubNode.url = v.url || subSubNode.url;
+          subSubNode.videoId = vYtId || subSubNode.videoId;
+          subSubNode.thumbnailUrl = defaultThumb || subSubNode.thumbnailUrl;
+          subSubNode.title = targetSubSubName || subSubNode.title;
+          subSubNode.description = v.description || subSubNode.description;
+          subSubNode.isDbUploaded = true;
+          if (parsedKeywords.length) subSubNode.keywords = parsedKeywords;
+        } else {
+          subSubNode = {
+            id: v._id ? `db-${v._id}` : `subsub-${targetSubSubCode.replace(/\./g, '-')}-${idx}`,
+            code: targetSubSubCode,
+            title: targetSubSubName || `Sub Sub Topic ${targetSubSubCode}`,
+            description: v.description || `Lecture on ${targetSubSubName || targetSubSubCode}`,
+            url: v.url,
+            videoId: vYtId,
+            thumbnailUrl: defaultThumb,
+            keywords: parsedKeywords,
+            isDbUploaded: true,
+            board: v.board || 'Both Boards',
+            year: v.year || '1st Year',
+            children: [],
+          };
+          subTopicNode.children.push(subSubNode);
+        }
+      } else if (level === 'subTopic') {
+        // Hierarchy: Chapter -> Topic -> SubTopic
+        const targetTopicCode = String(v.topicNumber || `${matchedChapter.number}.0`).trim();
+        const targetTopicName = (v.topicName || '').trim();
+
+        let topicNode = matchedChapter.videos.find((t) =>
+          (t.code && t.code === targetTopicCode) ||
+          (targetTopicName && t.title && t.title.toLowerCase() === targetTopicName.toLowerCase())
+        );
+
+        if (!topicNode) {
+          topicNode = {
+            id: `topic-${matchedChapter.number}-${targetTopicCode.replace(/\./g, '-')}`,
+            code: targetTopicCode,
+            title: targetTopicName || `Topic ${targetTopicCode}`,
+            description: v.description || `Lectures and concepts for ${targetTopicName || targetTopicCode}`,
+            keywords: parsedKeywords,
+            isDbUploaded: true,
+            children: [],
+          };
+          matchedChapter.videos.push(topicNode);
+        } else {
+          if (targetTopicName) topicNode.title = targetTopicName;
+          if (v.description) topicNode.description = v.description;
+          topicNode.code = targetTopicCode;
+          topicNode.isDbUploaded = true;
+          if (parsedKeywords.length) topicNode.keywords = parsedKeywords;
+          if (v.url) {
+            topicNode.url = v.url;
+            topicNode.videoId = vYtId || topicNode.videoId;
+            topicNode.thumbnailUrl = defaultThumb || topicNode.thumbnailUrl;
+          }
+        }
+
+        if (!topicNode.children) topicNode.children = [];
+
+        const targetSubCode = String(v.subTopicNumber || `${topicNode.code}.0`).trim();
+        const targetSubName = (v.subTopicName || v.title || '').trim();
+
+        let subTopicNode = topicNode.children.find((s) =>
+          (s.code && s.code === targetSubCode) ||
+          (targetSubName && s.title && s.title.toLowerCase() === targetSubName.toLowerCase()) ||
+          (s.url && s.url === v.url) ||
+          (s.videoId && s.videoId === vYtId)
+        );
+
+        if (subTopicNode) {
+          subTopicNode.url = v.url || subTopicNode.url;
+          subTopicNode.videoId = vYtId || subTopicNode.videoId;
+          subTopicNode.thumbnailUrl = defaultThumb || subTopicNode.thumbnailUrl;
+          subTopicNode.title = targetSubName || subTopicNode.title;
+          subTopicNode.description = v.description || subTopicNode.description;
+          subTopicNode.isDbUploaded = true;
+          if (parsedKeywords.length) subTopicNode.keywords = parsedKeywords;
+        } else {
+          subTopicNode = {
+            id: v._id ? `db-${v._id}` : `sub-${targetSubCode.replace(/\./g, '-')}-${idx}`,
+            code: targetSubCode,
+            title: targetSubName || `Sub Topic ${targetSubCode}`,
+            description: v.description || `Module lecture on ${targetSubName || targetSubCode}`,
+            url: v.url,
+            videoId: vYtId,
+            thumbnailUrl: defaultThumb,
+            keywords: parsedKeywords,
+            isDbUploaded: true,
+            board: v.board || 'Both Boards',
+            year: v.year || '1st Year',
+            children: [],
+          };
+          topicNode.children.push(subTopicNode);
+        }
+      } else if (level === 'topic') {
+        // Hierarchy: Chapter -> Topic
+        const targetTopicCode = String(v.topicNumber || `${matchedChapter.number}.0`).trim();
+        const targetTopicName = (v.topicName || v.title || '').trim();
+
+        let topicNode = matchedChapter.videos.find((t) =>
+          (t.code && t.code === targetTopicCode) ||
+          (targetTopicName && t.title && t.title.toLowerCase() === targetTopicName.toLowerCase()) ||
+          (t.url && t.url === v.url) ||
+          (t.videoId && t.videoId === vYtId)
+        );
+
+        if (topicNode) {
+          topicNode.url = v.url || topicNode.url;
+          topicNode.videoId = vYtId || topicNode.videoId;
+          topicNode.thumbnailUrl = defaultThumb || topicNode.thumbnailUrl;
+          topicNode.title = targetTopicName || topicNode.title;
+          topicNode.description = v.description || topicNode.description;
+          topicNode.code = targetTopicCode;
+          topicNode.isDbUploaded = true;
+          if (parsedKeywords.length) topicNode.keywords = parsedKeywords;
+        } else {
+          topicNode = {
+            id: v._id ? `db-${v._id}` : `topic-${matchedChapter.number}-${targetTopicCode.replace(/\./g, '-')}-${idx}`,
+            code: targetTopicCode,
+            title: targetTopicName || `Topic ${targetTopicCode}`,
+            description: v.description || `Lectures and concepts for ${targetTopicName || targetTopicCode}`,
+            url: v.url,
+            videoId: vYtId,
+            thumbnailUrl: defaultThumb,
+            keywords: parsedKeywords,
+            isDbUploaded: true,
+            board: v.board || 'Both Boards',
+            year: v.year || '1st Year',
+            children: [],
+          };
+          matchedChapter.videos.push(topicNode);
+        }
+      } else {
+        // Chapter level
+        const cleanTitle = (v.title || v.chapterName || `Chapter ${matchedChapter.number} Video`).trim();
+        const existingVid = matchedChapter.videos.find((vid) =>
+          (vid.url && vid.url === v.url) ||
+          (vid.videoId && vid.videoId === vYtId) ||
+          (vid.title && vid.title.toLowerCase() === cleanTitle.toLowerCase()) ||
+          (vid.code && vid.code === `${matchedChapter.number}.0`)
+        );
+
+        if (existingVid) {
+          existingVid.url = v.url || existingVid.url;
+          existingVid.videoId = vYtId || existingVid.videoId;
+          existingVid.thumbnailUrl = defaultThumb || existingVid.thumbnailUrl;
+          existingVid.title = cleanTitle || existingVid.title;
+          existingVid.isDbUploaded = true;
+        } else {
+          matchedChapter.videos.push({
+            id: v._id ? `db-${v._id}` : `ch-vid-${matchedChapter.number}-${idx}`,
+            code: `${matchedChapter.number}.${matchedChapter.videos.length}`,
+            title: cleanTitle,
+            description: v.description || `Overview lecture for Chapter ${matchedChapter.number}`,
+            url: v.url,
+            videoId: vYtId,
+            thumbnailUrl: defaultThumb,
+            keywords: parsedKeywords,
+            isDbUploaded: true,
+            board: v.board || 'Both Boards',
+            year: v.year || '1st Year',
+            children: [],
+          });
+        }
+      }
+    });
+
+    // Clean up replaced or archived videos to prevent duplicate cards
+    chapters.forEach((ch) => {
+      if (Array.isArray(ch.videos)) {
+        ch.videos = ch.videos.filter((vid, vIdx, arr) => {
+          // If a DB-uploaded item exists for this exact code, drop un-uploaded placeholder/default
+          if (!vid.isDbUploaded) {
+            const hasDbReplacement = arr.some((other) => other.isDbUploaded && other.code === vid.code);
+            if (hasDbReplacement) return false;
+          }
+          // If video is archived in DB, drop it from active curriculum
+          const isArchived = archivedVideos.some((a) =>
+            (a.url && vid.url && a.url === vid.url) ||
+            (a.youtubeId && vid.videoId && a.youtubeId === vid.videoId) ||
+            (a.title && vid.title && a.title.toLowerCase().trim() === vid.title.toLowerCase().trim()) ||
+            (a.code && vid.code && a.code === vid.code && Number(a.chapterNumber) === Number(ch.number) && a.replacedByTitle)
+          );
+          if (isArchived) return false;
+          return true;
+        });
       }
     });
 
