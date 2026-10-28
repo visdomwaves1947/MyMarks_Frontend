@@ -13,7 +13,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 20,
     badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
     gradient: "from-blue-600 via-indigo-600 to-cyan-600",
-    image: "https://i.pinimg.com/736x/7e/ff/20/7eff2083afbca2a2e99a1525fcc40ce6.jpg",
+    image: "/books/maths.jpg",
     overview:
       "Comprehensive intermediate mathematics laboratory practicals covering conic sections locus plotting, differential calculus tangent-normal verification, 3D vectors and plane projections, and dynamic graph simulations for AP BIEAP, TS BIE, and CBSE curricula.",
     markingBreakdown: [
@@ -127,7 +127,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 20,
     badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
     gradient: "from-purple-600 via-indigo-600 to-blue-600",
-    image: "https://i.pinimg.com/736x/59/63/26/596326ea62c6f1c23ff12882c8c00e7e.jpg",
+    image: "/books/physics.jpg",
     overview:
       "Comprehensive intermediate board practical guide compliant with AP BIEAP, TS BIE, and CBSE curricula. Covers mechanics, wave optics, electricity, and magnetism with precision apparatus instructions, error minimizing techniques, and guaranteed 30/30 scoring blueprints.",
     markingBreakdown: [
@@ -273,7 +273,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 20,
     badgeColor: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
     gradient: "from-emerald-600 via-teal-600 to-cyan-600",
-    image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=600&auto=format&fit=crop",
+    image: "/books/chemistry.jpg",
     overview:
       "State-of-the-art qualitative salt analysis, titrimetric volumetric analysis, functional group diagnostics, and chemical kinetics compliant with AP BIEAP, TS BIE, and CBSE intermediate guidelines. Master systematic cation/anion separation schemes and exact viva answer patterns.",
     markingBreakdown: [
@@ -369,7 +369,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 24,
     badgeColor: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
     gradient: "from-green-600 via-emerald-600 to-teal-600",
-    image: "https://i.pinimg.com/736x/73/a6/34/73a634a96be17ca114e7ac1375713492.jpg",
+    image: "/books/botany.jpg",
     overview:
       "Precision anatomical section cutting, floral dissection, physiological demonstration, and herbarium technique for AP & TS BIE Intermediate BiPC students. Master razor-thin tissue preparation, safranin staining, and diagnostic microscopic identifying comments.",
     markingBreakdown: [
@@ -464,7 +464,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 22,
     badgeColor: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
     gradient: "from-teal-600 via-cyan-600 to-blue-600",
-    image: "https://images.unsplash.com/photo-1555169062-013468b47731?q=80&w=600&auto=format&fit=crop",
+    image: "/books/zoology.jpg",
     overview:
       "Interactive specimen identification, histochemical slides analysis, vertebrate skeletal systems, and human physiological demonstrations for AP & TS Intermediate BiPC students. Master systematic biological taxonomy and microscopic spotting comments for full marks.",
     markingBreakdown: [
@@ -553,7 +553,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 20,
     badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
     gradient: "from-blue-600 via-indigo-600 to-violet-600",
-    image: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop",
+    image: "/books/cs.jpg",
     overview:
       "Official intermediate board programming lab covering Python / C++, relational SQL databases, data structures (Stacks & Queues), and file management. Master dry-run tracing, edge-case testing, and terminal execution for 100% practical marks.",
     markingBreakdown: [
@@ -643,7 +643,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 20,
     badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     gradient: "from-amber-600 via-orange-600 to-red-600",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop",
+    image: "/books/electronics.jpg",
     overview:
       "Hardware circuit breadboard wiring, semiconductor component characteristics, power supply rectification, and digital logic gate truth tables for intermediate electronics students. Gain practical hands-on mastery of multimeters, oscilloscopes, and circuit debugging.",
     markingBreakdown: [
@@ -733,7 +733,7 @@ export const LAB_SUBJECTS = [
     experimentMarks: 20,
     badgeColor: "bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20",
     gradient: "from-amber-600 via-orange-600 to-rose-600",
-    image: "https://images.unsplash.com/photo-1524661135-423995f22d0b?q=80&w=600&auto=format&fit=crop",
+    image: "/books/geography.jpg",
     overview:
       "Cartographic techniques, Survey of India topographical sheet analysis, map scale calculations, relief contour representation, weather instruments, and spatial surveying for intermediate humanities students.",
     markingBreakdown: [
