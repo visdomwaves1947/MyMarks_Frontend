@@ -84,7 +84,7 @@ export default function HeroContinuousOverlay({
       curriculum: "Taxonomy & Genetics",
       color: "from-green-700 via-emerald-950 to-slate-950",
       badge: "BiPC NEET",
-      symbol: "🌿",
+      symbol: "Bio",
       coverImage: "/books/botany.jpg",
       floatClass: "animate-book-float-b",
     },
@@ -96,7 +96,7 @@ export default function HeroContinuousOverlay({
       curriculum: "Indian Constitution",
       color: "from-amber-800 via-stone-900 to-slate-950",
       badge: "HEC / Law",
-      symbol: "🏛",
+      symbol: "Civ",
       coverImage: "/books/civics.jpg",
       floatClass: "animate-book-float-c",
     },
@@ -108,7 +108,7 @@ export default function HeroContinuousOverlay({
       curriculum: "Salt Analysis & Titration",
       color: "from-cyan-700 via-teal-900 to-slate-950",
       badge: "30M Lab",
-      symbol: "⚗",
+      symbol: "Chem",
       coverImage: "/books/chemistry.jpg",
       floatClass: "animate-book-float-a",
     },
@@ -132,7 +132,7 @@ export default function HeroContinuousOverlay({
       curriculum: "30M Board Practicals",
       color: "from-purple-700 via-violet-900 to-slate-950",
       badge: "30M Lab",
-      symbol: "⚛",
+      symbol: "Phy",
       coverImage: "/books/physics.jpg",
       floatClass: "animate-book-float-c",
     },
@@ -144,7 +144,7 @@ export default function HeroContinuousOverlay({
       curriculum: "National Income & Curves",
       color: "from-amber-600 via-yellow-900 to-slate-950",
       badge: "CEC / MEC",
-      symbol: "📈",
+      symbol: "Eco",
       coverImage: "/books/economics.jpg",
       floatClass: "animate-book-float-a",
     },
@@ -156,7 +156,7 @@ export default function HeroContinuousOverlay({
       curriculum: "Physiology & Spotting",
       color: "from-teal-700 via-cyan-950 to-slate-950",
       badge: "BiPC NEET",
-      symbol: "🧬",
+      symbol: "Zoo",
       coverImage: "/books/zoology.jpg",
       floatClass: "animate-book-float-b",
     },
@@ -180,7 +180,7 @@ export default function HeroContinuousOverlay({
       curriculum: "Timelines & Heritage",
       color: "from-rose-800 via-stone-950 to-slate-950",
       badge: "HEC",
-      symbol: "🏺",
+      symbol: "His",
       coverImage: "/books/history.jpg",
       floatClass: "animate-book-float-a",
     },
@@ -192,7 +192,7 @@ export default function HeroContinuousOverlay({
       curriculum: "Ledgers & Balance Sheets",
       color: "from-orange-600 via-amber-900 to-slate-950",
       badge: "CA Base",
-      symbol: "₹",
+      symbol: "Rs",
       coverImage: "/books/commerce.jpg",
       floatClass: "animate-book-float-b",
     },
@@ -204,7 +204,7 @@ export default function HeroContinuousOverlay({
       curriculum: "Vyakaranam & Shlokas",
       color: "from-indigo-800 via-blue-950 to-slate-950",
       badge: "Part II",
-      symbol: "📜",
+      symbol: "San",
       coverImage: "/books/sanskrit.jpg",
       floatClass: "animate-book-float-c",
     },
@@ -216,7 +216,7 @@ export default function HeroContinuousOverlay({
       curriculum: "30M Practical Lab",
       color: "from-cyan-700 via-slate-950 to-slate-950",
       badge: "30M Lab",
-      symbol: "01",
+      symbol: "CS",
       coverImage: "/books/cs.jpg",
       floatClass: "animate-book-float-a",
     },
@@ -411,7 +411,7 @@ export default function HeroContinuousOverlay({
                     <text className="fill-amber-300 text-[8.5px] font-bold tracking-[1.3px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
                       <textPath href="#tsWheelPath" startOffset="0%">
                         <tspan textLength="471" lengthAdjust="spacingAndGlyphs">
-                          ★ GOVERNMENT OF TELANGANA ★ TS BIE INTERMEDIATE ★ SYLLABUS 2025-26 ★
+                          • GOVERNMENT OF TELANGANA • TS BIE INTERMEDIATE • SYLLABUS 2025-26 •
                         </tspan>
                       </textPath>
                     </text>
@@ -571,7 +571,7 @@ export default function HeroContinuousOverlay({
                     <text className="fill-amber-300 text-[8.5px] font-bold tracking-[1.3px] uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,0.95)]">
                       <textPath href="#apWheelPath" startOffset="0%">
                         <tspan textLength="471" lengthAdjust="spacingAndGlyphs">
-                          ★ GOVERNMENT OF ANDHRA PRADESH ★ BIEAP INTERMEDIATE ★ SYLLABUS 2025-26 ★
+                          • GOVERNMENT OF ANDHRA PRADESH • BIEAP INTERMEDIATE • SYLLABUS 2025-26 •
                         </tspan>
                       </textPath>
                     </text>

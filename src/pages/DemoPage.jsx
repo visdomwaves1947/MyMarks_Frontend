@@ -5,6 +5,7 @@ import HowToUse from "../components/HowToUse";
 import NightSkyHeroBackground from "../components/NightSkyHeroBackground";
 import NewsScroller from "../components/NewsScroller";
 import HeroContinuousOverlay from "../components/HeroContinuousOverlay";
+import WhyChooseMyMarksSection, { StudentReviewsSection } from "../components/home/WhyChooseMyMarksSection";
 
 export default function DemoPage({
   onOpenBooking,
@@ -15,10 +16,8 @@ export default function DemoPage({
 }) {
   const [activeHeroScene, setActiveHeroScene] = useState(0);
 
-
-
   return (
-    <div className="relative overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="relative overflow-hidden bg-[#e6f0fa] dark:bg-[#071328] text-slate-900 dark:text-slate-100 transition-colors duration-300">
       {/* Background Math Grid Pattern & Glows */}
       <div className="absolute inset-0 bg-math-grid opacity-70 dark:opacity-40 pointer-events-none -z-10"></div>
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-300/25 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse-subtle"></div>
@@ -55,6 +54,12 @@ export default function DemoPage({
         onOpenSignUp={() => onOpenBooking && onOpenBooking("Sign Up")}
       />
 
+      {/* Why Thousands Choose MyMarks, Score Simulator & 100% Refund Guarantee (Placed Below How to Use MyMarks) */}
+      <WhyChooseMyMarksSection
+        onOpenBooking={onOpenBooking}
+        showTestimonials={false}
+      />
+
       {/* AP/TS Intermediate Subjects Grid */}
       <IntermediateSubjects
         onEnroll={(subjectName) =>
@@ -64,6 +69,9 @@ export default function DemoPage({
         onOpenSignIn={onOpenSignIn}
         onOpenSignUp={onOpenSignUp}
       />
+
+      {/* What Our Students Say Testimonials Marquee */}
+      <StudentReviewsSection />
     </div>
   );
 }

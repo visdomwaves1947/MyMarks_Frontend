@@ -6,7 +6,7 @@ export default function HowToUse({ onOpenSignUp }) {
     {
       icon: UserPlus,
       title: "1. Create Your Account",
-      desc: "Sign up for free to access your personalized student dashboard and track your progress."
+      desc: "Sign up to access your personalized student dashboard and track your progress."
     },
     {
       icon: BookOpen,
@@ -26,49 +26,47 @@ export default function HowToUse({ onOpenSignUp }) {
   ];
 
   return (
-    <section className="py-16 sm:py-24 bg-[#fefce8] dark:bg-[#151403] border-t border-amber-200/80 dark:border-amber-900/40 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-amber-200/30 dark:bg-amber-900/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
-      
+    <section className="py-10 sm:py-14 bg-[#e6f0fa] dark:bg-[#071328] border-t border-blue-200/60 dark:border-blue-900/40 relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
-            How to Use My Marks
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-10">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-slate-900 dark:text-white tracking-tight">
+            How to Use MyMarks
           </h2>
-          <p className="text-slate-700 dark:text-slate-300 text-base sm:text-xl font-medium">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal mt-1 leading-relaxed">
             Follow these four simple steps to begin your journey towards board exam excellence.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 sm:mb-10">
           {steps.map((step, idx) => {
             const Icon = step.icon;
             return (
               <div 
                 key={idx} 
-                className="relative flex flex-col items-center text-center p-6 rounded-2xl bg-[#cde4fd] dark:bg-[#0d2238] border-2 border-sky-300 dark:border-sky-600 shadow-md hover:shadow-xl transition-all duration-300 group"
+                className="relative flex flex-col items-center text-center p-5 rounded-2xl bg-[#c8e1fd] dark:bg-[#0f2a4a] border-2 border-[#93c5fd] dark:border-[#1e4b7a] shadow-xs hover:shadow-md transition-all duration-300 group"
               >
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg mb-6 group-hover:scale-110 transition-transform duration-300">
-                  <Icon size={28} />
+                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 mb-4 group-hover:scale-105 transition-transform duration-300">
+                  <Icon size={22} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">
+                <h3 className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white mb-2">
                   {step.title}
                 </h3>
-                <p className="text-sm text-slate-700 dark:text-slate-200 leading-relaxed font-medium">
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-normal leading-relaxed">
                   {step.desc}
                 </p>
                 {/* Arrow connector for desktop */}
                 {idx < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-14 -right-4 w-8 border-t-2 border-dashed border-sky-400 dark:border-sky-600"></div>
+                  <div className="hidden lg:block absolute top-11 -right-3 w-6 border-t-2 border-dashed border-[#93c5fd] dark:border-[#1e4b7a]"></div>
                 )}
               </div>
             );
           })}
         </div>
 
-        <div className="text-center mt-12">
+        <div className="text-center">
           <button 
             onClick={() => onOpenSignUp && onOpenSignUp()}
-            className="inline-flex items-center justify-center px-8 py-3.5 text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 rounded-xl transition-colors shadow-md hover:shadow-lg cursor-pointer"
+            className="inline-flex items-center justify-center px-6 py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-xl transition-all shadow-md shadow-blue-500/20 cursor-pointer"
           >
             Get Started Now
           </button>
