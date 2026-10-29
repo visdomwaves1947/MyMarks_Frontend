@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
 @layer base {
   *, ::before, ::after {
     box-sizing: border-box;
@@ -11,7 +11,7 @@
   }
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #EBF0F7;
+    background-color: #E6F0FA;
     color: #0F172A;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
@@ -23,6 +23,23 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
   }
+}
+
+/* Light Theme Universal Background (#E6F0FA) for Home & All Pages */
+html:not(.dark) body,
+html:not(.dark) [class*="bg-[#EBF0F7]"],
+html:not(.dark) [class*="bg-[#E6F0FA]"] {
+  background-color: #E6F0FA !important;
+}
+
+html:not(.dark) [class*="from-[#EBF0F7]"] {
+  --tw-gradient-from: #E6F0FA var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgb(230 240 250 / 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+
+html:not(.dark) [class*="to-[#EBF0F7]"] {
+  --tw-gradient-to: #E6F0FA var(--tw-gradient-to-position) !important;
 }
 
 /* Keyframe animations for Brand Oval, Logo Mascot, and Typography */
