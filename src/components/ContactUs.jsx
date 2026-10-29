@@ -3,14 +3,16 @@ import {
   Signal,
   Wifi,
   Battery,
-  ChevronDown,
   Send,
   LoaderCircle,
   CheckCircle2,
   AlertCircle,
   X,
+  Copy,
+  Check,
 } from 'lucide-react';
 import { submitContactMessage } from '../services/api';
+import NightSkyHeroBackground from './NightSkyHeroBackground';
 
 export default function ContactUs() {
   const [contactInfo] = useState({
@@ -36,14 +38,13 @@ export default function ContactUs() {
 
   const [submitting, setSubmitting] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
+  const [copiedKey, setCopiedKey] = useState(null);
+
   const [currentTime, setCurrentTime] = useState({
     time: '9:42 AM',
     day: 'Tuesday',
     date: '16 July 2025',
   });
-
-  // 3D Tilt state for smartphone mockup
-  const [tilt, setTilt] = useState({ x: 0, y: 0 });
 
   // Rotary Phone Dial states
   const [dialAngle, setDialAngle] = useState(0);
@@ -59,6 +60,16 @@ export default function ContactUs() {
     setTimeout(() => {
       setToast(null);
     }, 3500);
+  };
+
+  const copyToClipboard = (text, key) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopiedKey(key);
+    showToast(`Copied "${text}" to clipboard!`, 'success');
+    setTimeout(() => {
+      setCopiedKey(null);
+    }, 2000);
   };
 
   // Clock in Asia/Kolkata IST
@@ -86,21 +97,6 @@ export default function ContactUs() {
     const timer = setInterval(updateTime, 10000);
     return () => clearInterval(timer);
   }, []);
-
-  // Tilt Handler for Smartphone
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-    setTilt({
-      x: -((y / (rect.height / 2)) * 10),
-      y: (x / (rect.width / 2)) * 10,
-    });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ x: 0, y: 0 });
-  };
 
   const handleChange = (e) => {
     let value = e.target.value;
@@ -241,36 +237,64 @@ export default function ContactUs() {
         </div>
       )}
 
-      {/* Main Hero & Content Section with Nature Wallpaper */}
-      <section
-        className="relative overflow-hidden pt-20 pb-16 bg-cover bg-center min-h-screen"
-        style={{ backgroundImage: 'url(/HILLS.png)' }}
-      >
-        {/* Subtle backdrop overlay */}
-        <div className="absolute inset-0 bg-white/15 dark:bg-slate-950/35 backdrop-blur-[1px] z-0" />
+      {/* Hero Section with World Map Illustrated Background (Cardless, High-Clarity Text) */}
+      <div className="relative w-full overflow-hidden min-h-[280px] sm:min-h-[320px] flex items-center justify-center py-12 sm:py-16 border-b border-sky-300/40 dark:border-slate-800 shadow-md">
+        {/* World Map Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/contact-hero-bg.jpg"
+            alt="World Map Contact Us Background"
+            className="w-full h-full object-cover object-center brightness-[0.88] contrast-[1.05]"
+            loading="eager"
+            fetchPriority="high"
+          />
+          {/* Subtle contrast scrim for crystal-clear readability without any card */}
+          <div className="absolute inset-0 bg-slate-950/40 dark:bg-slate-950/65" />
+          <div className="absolute inset-0 bg-gradient-to-b from-sky-950/30 via-slate-950/20 to-slate-950/75" />
+        </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 space-y-12">
-          {/* Top Title Block */}
-          <div className="max-w-4xl mx-auto text-center flex flex-col items-center justify-center space-y-2 select-none">
-            <span className="text-[10px] sm:text-xs font-black text-cyan-800 dark:text-cyan-300 uppercase tracking-widest bg-white/95 dark:bg-slate-900/95 px-3 py-0.5 rounded-full shadow-md">
-              Get In Touch
+        {/* Hero Content (Clean Floating Text, No Card Container) */}
+        <div className="relative z-10 w-full max-w-3xl mx-auto px-4 text-center flex flex-col items-center justify-center space-y-3.5 select-text">
+          {/* Top Badge: 24/7 Educational Guidance & Support */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/75 dark:bg-slate-900/85 border border-sky-400/50 shadow-md backdrop-blur-md">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-xs sm:text-[13px] font-semibold tracking-wide uppercase text-cyan-200">
+              24/7 Educational Guidance & Support
             </span>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-[#0A192F] dark:text-white uppercase tracking-wider leading-tight drop-shadow-[0_2px_8px_rgba(255,255,255,0.4)] dark:drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]">
-              Connect With Us
-            </h1>
-            <p className="text-xs sm:text-sm md:text-base font-extrabold text-[#0A192F]/85 dark:text-white/85 max-w-xl mx-auto leading-tight">
-              Have questions about the Intermediate syllabus, grammar lessons, or mock tests?
-            </p>
-            <p className="text-xs sm:text-sm md:text-base font-extrabold text-[#0A192F]/85 dark:text-white/85 max-w-xl mx-auto leading-tight">
-              Fill out the form below or write to us directly.
-            </p>
           </div>
 
-          {/* Cards Grid: Vintage Rotary Phone (Left) + 3D Smartphone Form (Right) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-stretch">
-            {/* LEFT CARD: Realistic Vintage Rotary Telephone */}
-            <div className="lg:col-span-5 relative flex items-center justify-center p-2 sm:p-4 group select-none hover:-translate-y-2 hover:scale-[1.015] transition-all duration-500">
-              <div className="w-full max-w-[550px] aspect-[1/1.05] relative z-10">
+          {/* Heading: Connect With Us */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white tracking-tight leading-tight whitespace-nowrap drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
+            Connect With <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-sky-200 to-blue-300 font-extrabold drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">Us</span>
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-xs sm:text-sm md:text-base font-medium text-slate-100 dark:text-slate-200 max-w-xl mx-auto leading-relaxed drop-shadow-[0_2px_8px_rgba(0,0,0,0.95)]">
+            Have questions regarding syllabus, subject lessons, or mock tests? Reach out to us below and our academic guidance team will assist you.
+          </p>
+        </div>
+      </div>
+
+      {/* Main Content Section with Home Hero's Animated Night Sky Background */}
+      <section className="relative overflow-hidden pt-10 pb-16 min-h-screen bg-[#071328] text-white">
+        {/* Animated 3D HD Night Sky Canvas (Luminous Stars, Meteors, Nebula Clouds & Realistic Moon) */}
+        <NightSkyHeroBackground />
+
+        {/* Ambient Center Highlight for Cosmic Night Sky */}
+        <div
+          className="absolute inset-0 pointer-events-none z-[1]"
+          style={{
+            background:
+              'radial-gradient(circle at center, transparent 35%, rgba(4, 13, 40, 0.35) 75%, rgba(4, 13, 40, 0.65) 100%)',
+          }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Stack: Vintage Rotary Telephone (Top) + Interactive Communicator Mobile (Bottom) */}
+          <div className="flex flex-col items-center gap-10 w-full">
+            {/* TOP CARD: Realistic Vintage Rotary Telephone - Compact & Scaled Down */}
+            <div className="w-full relative flex items-center justify-center p-2 sm:p-4 group hover:-translate-y-1 hover:scale-[1.01] transition-all duration-500">
+              <div className="w-full max-w-[390px] sm:max-w-[410px] aspect-[1/0.95] max-h-[360px] relative z-10 select-text">
                 <svg
                   className="w-full h-full drop-shadow-[0_20px_40px_rgba(6,182,212,0.25)] dark:drop-shadow-[0_25px_50px_rgba(0,0,0,0.85)] group-hover:drop-shadow-[0_30px_60px_rgba(6,182,212,0.45)] transition-all duration-500"
                   viewBox="0 0 600 650"
@@ -287,18 +311,6 @@ export default function ContactUs() {
                       <stop offset="50%" stopColor="#0891b2" stopOpacity="0.4" />
                       <stop offset="100%" stopColor="#0e7490" stopOpacity="0.15" />
                     </linearGradient>
-
-                    <pattern id="phoneImgPattern" patternUnits="userSpaceOnUse" width="600" height="650">
-                      <image
-                        href="/HILLS.png"
-                        x="0"
-                        y="0"
-                        width="600"
-                        height="650"
-                        preserveAspectRatio="xMidYMid slice"
-                        className="opacity-45"
-                      />
-                    </pattern>
                   </defs>
 
                   {/* Handset resting prongs */}
@@ -313,15 +325,6 @@ export default function ContactUs() {
                     strokeWidth="2.5"
                   />
                   <rect
-                    x="195"
-                    y="115"
-                    width="22"
-                    height="70"
-                    rx="6"
-                    fill="url(#phoneImgPattern)"
-                    opacity="0.4"
-                  />
-                  <rect
                     x="383"
                     y="115"
                     width="22"
@@ -330,15 +333,6 @@ export default function ContactUs() {
                     fill="url(#phoneBodyGrad)"
                     stroke="url(#phoneBorderGrad)"
                     strokeWidth="2.5"
-                  />
-                  <rect
-                    x="383"
-                    y="115"
-                    width="22"
-                    height="70"
-                    rx="6"
-                    fill="url(#phoneImgPattern)"
-                    opacity="0.4"
                   />
                   <path
                     d="M 185 165 H 415"
@@ -363,20 +357,6 @@ export default function ContactUs() {
                     strokeWidth="3.5"
                     className="transition-all duration-500 group-hover:stroke-cyan-400"
                   />
-                  <path
-                    d="M 170 175 
-                       C 220 170, 380 170, 430 175 
-                       C 445 210, 480 280, 530 360 
-                       C 570 425, 570 480, 570 610 
-                       C 570 630, 550 640, 530 640 
-                       H 70 
-                       C 50 640, 30 630, 30 610 
-                       C 30 480, 30 425, 70 360 
-                       C 120 280, 155 210, 170 175 Z"
-                    fill="url(#phoneImgPattern)"
-                    opacity="0.45"
-                    className="pointer-events-none"
-                  />
 
                   {/* Vintage Handset on top */}
                   <path
@@ -390,17 +370,6 @@ export default function ContactUs() {
                     stroke="url(#phoneBorderGrad)"
                     strokeWidth="3.5"
                     className="transition-all duration-500 group-hover:stroke-cyan-400"
-                  />
-                  <path
-                    d="M 30 180 
-                       C 20 125, 120 60, 300 60 
-                       C 480 60, 580 125, 570 180 
-                       C 545 220, 490 170, 420 135 
-                       C 345 110, 255 110, 180 135 
-                       C 110 170, 55 220, 30 180 Z"
-                    fill="url(#phoneImgPattern)"
-                    opacity="0.45"
-                    className="pointer-events-none"
                   />
 
                   {/* Rotary Dial Outer Rim */}
@@ -504,9 +473,12 @@ export default function ContactUs() {
                   />
 
                   {/* Top Header Text (Inside Handset Arc) */}
-                  <foreignObject x="110" y="65" width="380" height="70">
+                  <foreignObject x="110" y="60" width="380" height="75">
                     <div className="w-full h-full flex flex-col justify-center items-center text-white font-sans text-center">
-                      <h2 className="text-[13px] sm:text-[15px] font-black tracking-widest uppercase text-cyan-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)]">
+                      <span className="text-[10px] sm:text-[11px] font-bold text-cyan-300 tracking-wider">
+                        {currentTime.day}, {currentTime.date} • {currentTime.time}
+                      </span>
+                      <h2 className="text-[13px] sm:text-[15px] font-black tracking-widest uppercase text-cyan-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.85)] mt-0.5">
                         Contact Information
                       </h2>
                     </div>
@@ -523,6 +495,14 @@ export default function ContactUs() {
                         >
                           {contactInfo.contactEmail}
                         </a>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(contactInfo.contactEmail, 'phone-email')}
+                          className="p-1 rounded bg-slate-800/80 hover:bg-cyan-900/60 text-slate-300 hover:text-cyan-300 cursor-pointer ml-1"
+                          title="Copy Email"
+                        >
+                          {copiedKey === 'phone-email' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        </button>
                       </div>
                       <div className="flex items-center gap-2 text-[12px] sm:text-[14.5px] font-semibold text-slate-100 whitespace-nowrap">
                         <span className="text-cyan-400">☎ Phone:</span>
@@ -532,6 +512,14 @@ export default function ContactUs() {
                         >
                           {contactInfo.contactPhone}
                         </a>
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(contactInfo.contactPhone, 'phone-phone')}
+                          className="p-1 rounded bg-slate-800/80 hover:bg-cyan-900/60 text-slate-300 hover:text-cyan-300 cursor-pointer ml-1"
+                          title="Copy Phone"
+                        >
+                          {copiedKey === 'phone-phone' ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                        </button>
                       </div>
                     </div>
                   </foreignObject>
@@ -618,29 +606,20 @@ export default function ContactUs() {
               </div>
             </div>
 
-            {/* RIGHT CARD: 3D Interactive Smartphone Form */}
-            <div className="lg:col-span-7 flex items-center justify-center p-2 sm:p-4 relative">
+            {/* BOTTOM CARD: Realistic Smartphone Form (Stable, Wide, No Scroll) */}
+            <div className="w-full flex items-center justify-center p-2 sm:p-4 relative">
               {/* Back ambient radial glow */}
-              <div className="absolute -inset-8 bg-gradient-to-tr from-cyan-500/10 via-blue-500/10 to-transparent rounded-[60px] blur-3xl opacity-50 dark:opacity-40 animate-pulse pointer-events-none z-0" />
+              <div className="absolute -inset-8 bg-gradient-to-tr from-cyan-500/10 via-blue-500/10 to-transparent rounded-[60px] blur-3xl opacity-50 dark:opacity-40 pointer-events-none z-0" />
 
-              {/* Smartphone Chassis with Mouse-Tracking Perspective */}
-              <div
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-                style={{
-                  transform: `perspective(1200px) rotateX(${tilt.x}deg) rotateY(${tilt.y}deg)`,
-                  transformStyle: 'preserve-3d',
-                  transition: tilt.x === 0 && tilt.y === 0 ? 'transform 0.5s ease-out' : 'none',
-                }}
-                className="w-full max-w-[395px] relative group select-none z-10"
-              >
+              {/* Smartphone Chassis - Perfectly Stable & Wide */}
+              <div className="w-full max-w-[680px] relative select-none z-10">
                 {/* Metallic Smartphone Outer Frame */}
                 <div className="rounded-[52px] p-[3px] bg-gradient-to-tr from-slate-400 via-slate-100 to-slate-500 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.65)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.85)] relative">
                   {/* Black Bezel */}
                   <div className="rounded-[49px] p-[10px] bg-black ring-1 ring-slate-800/80">
-                    {/* Screen Container */}
+                    {/* Screen Container with /phone_wallpaper.png */}
                     <div
-                      className="w-full h-[710px] rounded-[38px] overflow-hidden text-slate-900 relative flex flex-col border border-slate-300 shadow-inner bg-amber-500"
+                      className="w-full h-[520px] rounded-[38px] overflow-hidden text-slate-900 relative flex flex-col border border-slate-300 shadow-inner bg-amber-500"
                       style={{
                         backgroundImage: 'url(/phone_wallpaper.png)',
                         backgroundSize: 'cover',
@@ -648,7 +627,7 @@ export default function ContactUs() {
                       }}
                     >
                       {/* Glass Sheen Effect */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-30 transition-transform duration-500 group-hover:translate-x-4 group-hover:translate-y-4" />
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-30" />
                       <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] pointer-events-none z-10" />
 
                       {/* Ambient screen color accents */}
@@ -656,8 +635,8 @@ export default function ContactUs() {
                       <div className="absolute bottom-10 right-10 w-44 h-44 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none z-0" />
 
                       {/* Phone Top Status Bar */}
-                      <div className="w-full h-8 flex items-center justify-between px-6 bg-white/60 backdrop-blur-md border-b border-black/5 text-[10px] font-semibold text-slate-800 z-40 select-none relative">
-                        <span className="tracking-wide">{currentTime.time}</span>
+                      <div className="w-full h-8 flex items-center justify-between px-6 bg-white/60 backdrop-blur-md border-b border-black/5 text-[10px] font-semibold text-slate-800 z-40 select-none relative shrink-0">
+                        <span className="tracking-wide font-bold">{currentTime.time}</span>
 
                         {/* Speaker Grill & Selfie Camera (Dynamic Island style) */}
                         <div className="absolute left-1/2 -translate-x-1/2 top-2 flex items-center gap-1.5 z-50">
@@ -672,47 +651,35 @@ export default function ContactUs() {
                           <Signal className="w-3.5 h-3.5" />
                           <Wifi className="w-3.5 h-3.5" />
                           <Battery className="w-3.5 h-3.5 text-cyan-800" />
-                          <span className="text-[8.5px]">100%</span>
+                          <span className="text-[8.5px] font-bold">100%</span>
                         </div>
                       </div>
 
-                      {/* Scrollable Form Body inside Smartphone */}
-                      <div className="flex-1 overflow-y-auto scrollbar-none px-5 pt-4 pb-6 relative z-20 flex flex-col">
-                        {/* Digital Clock Widget */}
-                        <div className="flex flex-col items-center justify-center text-center mt-1 mb-4 select-none">
-                          <div className="text-[20px] font-black text-slate-900 tracking-widest">
+                      {/* Inside Screen Content - Perfectly Visible Without Scroll */}
+                      <div className="flex-1 px-5 sm:px-8 py-3 relative z-20 flex flex-col justify-between overflow-hidden">
+                        
+                        {/* Header: Digital Clock & Contact Us */}
+                        <div className="text-center select-none pt-0.5">
+                          <div className="text-[20px] sm:text-[22px] font-black text-slate-900 tracking-widest drop-shadow-xs">
                             {currentTime.time}
                           </div>
-                          <div className="text-[9.5px] font-bold text-cyan-800 uppercase tracking-widest mt-0.5">
+                          <div className="text-[9.5px] font-bold text-cyan-800 uppercase tracking-widest">
                             {currentTime.day}, {currentTime.date}
                           </div>
-                        </div>
-
-                        {/* Heading & Subtitle */}
-                        <div className="text-center mb-5">
-                          <h2 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-800 via-blue-900 to-cyan-800 uppercase tracking-widest">
+                          <h2 className="text-xs sm:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-800 via-blue-900 to-cyan-800 uppercase tracking-widest mt-0.5">
                             Contact Us
                           </h2>
-                          <p className="text-[9.5px] sm:text-[10px] text-slate-750 font-bold leading-snug mt-1 max-w-[280px] mx-auto text-slate-700">
+                          <p className="text-[10px] text-slate-700 font-bold leading-tight max-w-[420px] mx-auto">
                             We're here to answer your questions. Send us a message and we'll respond as soon as possible.
                           </p>
                         </div>
 
-                        {/* Interactive Form */}
-                        <form
-                          onSubmit={handleSubmit}
-                          className="space-y-4 flex-1 flex flex-col justify-between"
-                        >
-                          <div className="space-y-3.5">
-                            {/* Full Name Field */}
+                        {/* Form Inputs (2-column layout on wide screens, 100% visible) */}
+                        <form onSubmit={handleSubmit} className="space-y-2.5 my-auto">
+                          {/* Row 1: Name & Email */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             <div className="relative group">
-                              <label
-                                className={`absolute left-3 transition-all duration-200 pointer-events-none z-10 ${
-                                  focusedField === 'name' || formData.name
-                                    ? 'text-cyan-800 text-[8.5px] top-1.5 font-bold uppercase tracking-wider'
-                                    : 'text-slate-700 text-[11px] sm:text-xs top-3 font-semibold'
-                                }`}
-                              >
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
                                 Your Name <span className="text-red-500">*</span>
                               </label>
                               <input
@@ -725,23 +692,13 @@ export default function ContactUs() {
                                 required
                                 autoComplete="off"
                                 spellCheck="false"
-                                className={`w-full text-xs bg-white/70 border rounded-xl px-3 text-slate-900 font-semibold transition-all duration-300 ${
-                                  focusedField === 'name' || formData.name
-                                    ? 'pt-5 pb-1.5 border-cyan-600 shadow-[0_0_15px_rgba(6,182,212,0.25)] bg-white/90'
-                                    : 'py-3 border-slate-300'
-                                } focus:outline-none focus:ring-0 focus:border-cyan-600`}
+                                placeholder="Enter your full name"
+                                className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs"
                               />
                             </div>
 
-                            {/* Email Address Field */}
                             <div className="relative group">
-                              <label
-                                className={`absolute left-3 transition-all duration-200 pointer-events-none z-10 ${
-                                  focusedField === 'email' || formData.email
-                                    ? 'text-cyan-800 text-[8.5px] top-1.5 font-bold uppercase tracking-wider'
-                                    : 'text-slate-700 text-[11px] sm:text-xs top-3 font-semibold'
-                                }`}
-                              >
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
                                 Email Address <span className="text-red-500">*</span>
                               </label>
                               <input
@@ -754,23 +711,16 @@ export default function ContactUs() {
                                 required
                                 autoComplete="off"
                                 spellCheck="false"
-                                className={`w-full text-xs bg-white/70 border rounded-xl px-3 text-slate-900 font-semibold transition-all duration-300 ${
-                                  focusedField === 'email' || formData.email
-                                    ? 'pt-5 pb-1.5 border-cyan-600 shadow-[0_0_15px_rgba(6,182,212,0.25)] bg-white/90'
-                                    : 'py-3 border-slate-300'
-                                } focus:outline-none focus:ring-0 focus:border-cyan-600`}
+                                placeholder="name@example.com"
+                                className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs"
                               />
                             </div>
+                          </div>
 
-                            {/* Phone Number Field (with dial flash effect) */}
+                          {/* Row 2: Phone & Subject */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             <div className="relative group">
-                              <label
-                                className={`absolute left-3 transition-all duration-200 pointer-events-none z-10 ${
-                                  focusedField === 'phone' || formData.phone
-                                    ? 'text-cyan-800 text-[8.5px] top-1.5 font-bold uppercase tracking-wider'
-                                    : 'text-slate-700 text-[11px] sm:text-xs top-3 font-semibold'
-                                }`}
-                              >
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
                                 Phone Number <span className="text-red-500">*</span>
                               </label>
                               <input
@@ -784,85 +734,67 @@ export default function ContactUs() {
                                 required
                                 autoComplete="off"
                                 spellCheck="false"
-                                className={`w-full text-xs bg-white/70 border rounded-xl px-3 text-slate-900 font-semibold transition-all duration-300 ${
+                                placeholder="10-digit mobile number"
+                                className={`w-full text-xs bg-white/85 backdrop-blur-sm border rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs ${
                                   highlightPhoneInput
-                                    ? 'pt-5 pb-1.5 border-cyan-600 ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.6)] scale-[1.01] bg-white/90'
-                                    : focusedField === 'phone' || formData.phone
-                                    ? 'pt-5 pb-1.5 border-cyan-600 shadow-[0_0_15px_rgba(6,182,212,0.25)] bg-white/90'
-                                    : 'py-3 border-slate-300'
-                                } focus:outline-none focus:ring-0 focus:border-cyan-600`}
+                                    ? 'border-cyan-600 ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.6)] scale-[1.01]'
+                                    : 'border-slate-300'
+                                }`}
                               />
                             </div>
 
-                            {/* Inquiry Subject Dropdown */}
                             <div className="relative group">
-                              <label className="absolute left-3 top-1.5 text-cyan-800 text-[8.5px] font-bold uppercase tracking-wider z-10 pointer-events-none">
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
                                 Inquiry Subject
                               </label>
                               <select
                                 name="subject"
                                 value={formData.subject}
                                 onChange={handleChange}
-                                className="w-full text-xs bg-white/70 border border-slate-300 rounded-xl pt-5 pb-1.5 px-3 text-slate-900 font-semibold focus:outline-none focus:ring-0 focus:border-cyan-600 transition-all duration-300 appearance-none cursor-pointer"
+                                onFocus={() => setFocusedField('subject')}
+                                onBlur={() => setFocusedField(null)}
+                                className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold cursor-pointer focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs"
                               >
                                 <option value="General Inquiry">General Inquiry</option>
                                 <option value="Admissions">Admissions</option>
                                 <option value="Courses">Courses</option>
                                 <option value="Technical Support">Technical Support</option>
                                 <option value="Feedback">Feedback</option>
-                                <option value="Other">Other</option>
                               </select>
-                              <ChevronDown className="w-3.5 h-3.5 absolute right-3 top-[18px] text-slate-700 pointer-events-none z-20" />
-                            </div>
-
-                            {/* Message Textarea */}
-                            <div className="relative group">
-                              <label
-                                className={`absolute left-3 transition-all duration-200 pointer-events-none z-10 ${
-                                  focusedField === 'message' || formData.message
-                                    ? 'text-cyan-800 text-[8.5px] top-1.5 font-bold uppercase tracking-wider'
-                                    : 'text-slate-700 text-[11px] sm:text-xs top-3 font-semibold'
-                                }`}
-                              >
-                                Your Message <span className="text-red-500">*</span>
-                              </label>
-                              <textarea
-                                name="message"
-                                value={formData.message}
-                                onFocus={() => setFocusedField('message')}
-                                onBlur={() => setFocusedField(null)}
-                                onChange={handleChange}
-                                required
-                                rows={3}
-                                autoComplete="off"
-                                spellCheck="false"
-                                className={`w-full text-xs bg-white/70 border rounded-xl px-3 text-slate-900 font-semibold transition-all duration-300 ${
-                                  focusedField === 'message' || formData.message
-                                    ? 'pt-5 pb-1.5 border-cyan-600 shadow-[0_0_15px_rgba(6,182,212,0.25)] bg-white/90'
-                                    : 'py-3 border-slate-300'
-                                } focus:outline-none focus:ring-0 focus:border-cyan-600 resize-none`}
-                              />
-                              <div className="flex justify-between items-center text-[9.5px] font-extrabold mt-1 px-1 select-none">
-                                <span className="text-slate-700">Max 300 words</span>
-                                <span
-                                  className={
-                                    wordCount > 300
-                                      ? 'text-red-600 font-black animate-pulse'
-                                      : 'text-cyan-900 font-black'
-                                  }
-                                >
-                                  {wordCount} / 300 words
-                                </span>
-                              </div>
                             </div>
                           </div>
 
+                          {/* Row 3: Message Textarea */}
+                          <div className="relative group">
+                            <div className="flex justify-between items-center mb-0.5">
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950">
+                                Your Message <span className="text-red-500">*</span>
+                              </label>
+                              <span className="text-[8.5px] font-bold text-slate-600">
+                                {wordCount} / 300 words
+                              </span>
+                            </div>
+                            <textarea
+                              name="message"
+                              rows={2}
+                              value={formData.message}
+                              onFocus={() => setFocusedField('message')}
+                              onBlur={() => setFocusedField(null)}
+                              onChange={handleChange}
+                              required
+                              autoComplete="off"
+                              spellCheck="false"
+                              placeholder="Write your message here..."
+                              className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs resize-none"
+                            />
+                          </div>
+
                           {/* Submit Button */}
-                          <div className="mt-4">
+                          <div className="pt-1">
                             <button
                               type="submit"
                               disabled={submitting}
-                              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-extrabold text-[11px] tracking-wider uppercase shadow-[0_4px_20px_rgba(6,182,212,0.35)] hover:shadow-[0_6px_25px_rgba(6,182,212,0.55)] transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-cyan-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                             >
                               {submitting ? (
                                 <>
@@ -879,6 +811,7 @@ export default function ContactUs() {
                           </div>
                         </form>
                       </div>
+
                     </div>
                   </div>
 
