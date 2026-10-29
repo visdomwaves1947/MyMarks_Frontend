@@ -90,6 +90,8 @@ import {
   uploadMediaFileApi
 } from '../services/api';
 import { TOPICS_DATA } from '../components/maths/MathsCurriculum';
+import AdminNavbar from '../components/admin/AdminNavbar';
+import AdminSidebar from '../components/admin/AdminSidebar';
 
 const MASTER_EMAIL = 'md@visdomwaves.com';
 const MASTER_PASS = 'Md@1947';
@@ -2149,7 +2151,7 @@ export default function AdminPage({
   // RENDER: Full Admin Dashboard
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-[#070B14] text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-red-600 selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#E6F0FA] dark:bg-[#070B14] text-slate-800 dark:text-slate-100 flex flex-col font-sans selection:bg-red-600 selection:text-white transition-colors duration-200">
       {/* Toast Notification Container */}
       {toast && (
         <div
@@ -2170,200 +2172,33 @@ export default function AdminPage({
         </div>
       )}
 
-      {/* Top Main Navigation Header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-6 py-3 transition-colors duration-200 shadow-xs dark:shadow-none">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-          {/* Brand Left */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-amber-500 p-0.5 shadow-md shadow-red-600/20">
-              <div className="w-full h-full rounded-[10px] bg-slate-950 flex items-center justify-center text-white font-black text-base">
-                M
-              </div>
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-black text-lg tracking-tight text-slate-900 dark:text-white">
-                  MyMarks<span className="text-red-500">.co.in</span>
-                </span>
-                <span className="px-2 py-0.5 rounded-md bg-red-500/10 dark:bg-red-500/15 border border-red-500/25 dark:border-red-500/30 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-wider">
-                  Admin Hub
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
-                Comprehensive Management for Intermediate & Secondary Education
-              </p>
-            </div>
-          </div>
+      {/* Top Main Navigation Header - Same Website Brand Style */}
+      <AdminNavbar
+        currentUser={currentUser}
+        theme={activeTheme}
+        toggleTheme={handleToggleTheme}
+        onLogout={handleAdminLogout}
+      />
 
-          {/* Right Controls */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Live Database Status Pill */}
-            <div
-              className={`hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${
-                apiStatus.online
-                  ? 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300 dark:border-emerald-500/25 text-emerald-700 dark:text-emerald-300'
-                  : 'bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/25 text-amber-700 dark:text-amber-300'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  apiStatus.online ? 'bg-emerald-500 dark:bg-emerald-400 animate-pulse' : 'bg-amber-500 dark:bg-amber-400'
-                }`}
-              />
-              <span>{apiStatus.online ? `MongoDB Connected (${apiStatus.latency}ms)` : 'Offline Fallback'}</span>
-            </div>
+      {/* Main Dashboard Layout with Left Sidebar + Workspace Content */}
+      <div className="grow flex flex-col lg:flex-row w-full min-h-[calc(100vh-122px)]">
+        {/* Left Vertical Navigation Sidebar */}
+        <AdminSidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          usersCount={users.length}
+          coursesCount={courses.length}
+          videosCount={videos.length}
+          bookingsCount={bookings.length}
+          apiStatus={apiStatus}
+          loadAdminData={loadAdminData}
+          isRefreshing={isRefreshing}
+          theme={activeTheme}
+          toggleTheme={handleToggleTheme}
+        />
 
-            {/* Dark / Light Mode Toggle Pill Switch */}
-            <button
-              type="button"
-              onClick={handleToggleTheme}
-              className="relative flex items-center w-[54px] h-[30px] rounded-full bg-slate-200 dark:bg-slate-700 transition-colors duration-300 focus:outline-none shadow-inner ring-1 ring-slate-300 dark:ring-white/20 cursor-pointer shrink-0"
-              aria-label="Toggle dark mode"
-              title={activeTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            >
-              {/* Sliding White Knob */}
-              <div
-                className={`absolute top-[3px] w-[24px] h-[24px] bg-white rounded-full shadow-md transition-transform duration-300 ease-out z-0 ${
-                  activeTheme === 'dark' ? 'translate-x-[26px]' : 'translate-x-[3px]'
-                }`}
-              />
-              <div className="relative flex justify-between items-center w-full px-[6px] z-10 pointer-events-none">
-                <Sun
-                  className={`w-3.5 h-3.5 transition-colors duration-300 ${
-                    activeTheme === 'dark' ? 'text-slate-400' : 'text-amber-500 font-bold'
-                  }`}
-                />
-                <Moon
-                  className={`w-3.5 h-3.5 transition-colors duration-300 ${
-                    activeTheme === 'dark' ? 'text-indigo-400 font-bold' : 'text-slate-400'
-                  }`}
-                />
-              </div>
-            </button>
-
-            {/* Refresh Button */}
-            <button
-              onClick={loadAdminData}
-              disabled={isRefreshing}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs dark:shadow-none"
-              title="Refresh all data"
-            >
-              <RefreshCw size={14} className={isRefreshing ? 'animate-spin text-red-500' : ''} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
-
-            {/* Go to Website */}
-            <button
-              onClick={() => navigate('/demo')}
-              className="px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs dark:shadow-none"
-            >
-              <span>View Website</span>
-              <ExternalLink size={13} />
-            </button>
-
-            {/* Logout */}
-            <button
-              onClick={handleAdminLogout}
-              className="p-2 sm:px-3 sm:py-1.5 rounded-xl bg-red-500/10 hover:bg-red-600 dark:bg-red-600/20 text-red-600 dark:text-red-300 hover:text-white border border-red-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Sign out of Admin Portal"
-            >
-              <LogOut size={14} />
-              <span className="hidden sm:inline">Sign Out</span>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Body with Navigation Tabs */}
-      <div className="grow max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6">
-        {/* Navigation Tabs Bar */}
-        <div className="flex items-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-white/90 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 shadow-sm dark:shadow-none overflow-x-auto scrollbar-none transition-colors duration-200">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'dashboard'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <BarChart3 size={16} />
-            <span>Overview & Analytics</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('students')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'students'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <Users size={16} />
-            <span>Students Directory</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[11px] font-black">
-              {users.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('courses')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'courses'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <BookOpen size={16} />
-            <span>Curriculum & Subjects</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[11px] font-black">
-              {courses.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('videos')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'videos'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <Video size={16} />
-            <span>Videos, YouTube & Links</span>
-            <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[11px] font-black">
-              {videos.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('bookings')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'bookings'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <Calendar size={16} />
-            <span>Bookings & Inquiries</span>
-            {bookings.length > 0 && (
-              <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 dark:bg-amber-500/30 text-amber-700 dark:text-amber-300 text-[11px] font-black">
-                {bookings.length}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setActiveTab('settings')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'settings'
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-600/25'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60'
-            }`}
-          >
-            <Settings size={16} />
-            <span>Platform Controls</span>
-          </button>
-        </div>
+        {/* Main Body Workspace Content Area */}
+        <div className="grow p-4 sm:p-6 lg:p-8 flex flex-col gap-6 min-w-0 max-w-7xl mx-auto w-full">
 
         {/* ─────────────────────────────────────────────────────────────
             TAB 1: DASHBOARD & OVERVIEW
@@ -4008,6 +3843,7 @@ export default function AdminPage({
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────

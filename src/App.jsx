@@ -218,7 +218,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#EBF0F7] text-slate-900 flex flex-col font-sans selection:bg-indigo-600 selection:text-white">
+    <div className="min-h-screen bg-[#E6F0FA] text-slate-900 flex flex-col font-sans selection:bg-indigo-600 selection:text-white">
       <ScrollToTop />
 
       {/* Shared Navigation Header */}
