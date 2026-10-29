@@ -578,6 +578,7 @@ export default function App() {
             path="/french" 
             element={
               <French 
+                currentUser={currentUser}
                 onOpenBooking={handleOpenBooking}
                 onOpenVideoDemo={() => setVideoDemoOpen(true)}
                 onSelectRoadmap={handleSelectRoadmap}
@@ -588,6 +589,7 @@ export default function App() {
             path="/French" 
             element={
               <French 
+                currentUser={currentUser}
                 onOpenBooking={handleOpenBooking}
                 onOpenVideoDemo={() => setVideoDemoOpen(true)}
                 onSelectRoadmap={handleSelectRoadmap}
@@ -598,6 +600,7 @@ export default function App() {
             path="/fre" 
             element={
               <French 
+                currentUser={currentUser}
                 onOpenBooking={handleOpenBooking}
                 onOpenVideoDemo={() => setVideoDemoOpen(true)}
                 onSelectRoadmap={handleSelectRoadmap}

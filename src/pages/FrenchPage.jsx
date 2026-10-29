@@ -8,7 +8,7 @@ import FrenchStatsBar from '../components/french/FrenchStatsBar';
 import FrenchPricingSection from '../components/french/FrenchPricingSection';
 import FrenchFaqSection from '../components/french/FrenchFaqSection';
 
-export default function FrenchPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
+export default function FrenchPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap, currentUser }) {
   // Handle hash scrolling if navigating with hash
   useEffect(() => {
     if (window.location.hash) {
@@ -36,6 +36,7 @@ export default function FrenchPage({ onOpenBooking, onOpenVideoDemo, onSelectRoa
 
       {/* AP/TS Intermediate French Modules & Curriculum */}
       <FrenchCurriculum 
+        currentUser={currentUser}
         onEnroll={(subjectName) => onOpenBooking(`Enroll in ${subjectName}`)}
       />
 
