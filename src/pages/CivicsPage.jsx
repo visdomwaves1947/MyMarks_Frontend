@@ -5,7 +5,6 @@ import CivicsCurriculum from '../components/civics/CivicsCurriculum';
 import CivicsRoadmapsGrid from '../components/civics/CivicsRoadmapsGrid';
 import CivicsTestimonials from '../components/civics/CivicsTestimonials';
 import CivicsStatsBar from '../components/civics/CivicsStatsBar';
-import CivicsPricingSection from '../components/civics/CivicsPricingSection';
 import CivicsFaqSection from '../components/civics/CivicsFaqSection';
 
 export default function CivicsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -41,9 +40,6 @@ export default function CivicsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoa
         onOpenBooking={onOpenBooking} 
       />
       <CivicsStatsBar />
-      <CivicsPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Civics Plan: ${planName}`)} 
-      />
       <CivicsFaqSection 
         onOpenBooking={onOpenBooking} 
       />

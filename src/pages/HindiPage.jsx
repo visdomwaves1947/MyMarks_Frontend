@@ -5,7 +5,6 @@ import HindiCurriculum from '../components/hindi/HindiCurriculum';
 import HindiRoadmapsGrid from '../components/hindi/HindiRoadmapsGrid';
 import HindiTestimonials from '../components/hindi/HindiTestimonials';
 import HindiStatsBar from '../components/hindi/HindiStatsBar';
-import HindiPricingSection from '../components/hindi/HindiPricingSection';
 import HindiFaqSection from '../components/hindi/HindiFaqSection';
 
 export default function HindiPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -53,11 +52,6 @@ export default function HindiPage({ onOpenBooking, onOpenVideoDemo, onSelectRoad
 
       {/* Stats Bar under Testimonials */}
       <HindiStatsBar />
-
-      {/* Tuition Plans & Pricing for Hindi */}
-      <HindiPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Hindi Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <HindiFaqSection 

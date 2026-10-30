@@ -5,7 +5,6 @@ import TeluguCurriculum from '../components/telugu/TeluguCurriculum';
 import TeluguRoadmapsGrid from '../components/telugu/TeluguRoadmapsGrid';
 import TeluguTestimonials from '../components/telugu/TeluguTestimonials';
 import TeluguStatsBar from '../components/telugu/TeluguStatsBar';
-import TeluguPricingSection from '../components/telugu/TeluguPricingSection';
 import TeluguFaqSection from '../components/telugu/TeluguFaqSection';
 
 export default function TeluguPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -53,11 +52,6 @@ export default function TeluguPage({ onOpenBooking, onOpenVideoDemo, onSelectRoa
 
       {/* Stats Bar under Testimonials */}
       <TeluguStatsBar />
-
-      {/* Tuition Plans & Pricing for Telugu */}
-      <TeluguPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Telugu Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <TeluguFaqSection 

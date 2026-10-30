@@ -5,7 +5,6 @@ import EconomicsCurriculum from '../components/economics/EconomicsCurriculum';
 import EconomicsRoadmapsGrid from '../components/economics/EconomicsRoadmapsGrid';
 import EconomicsTestimonials from '../components/economics/EconomicsTestimonials';
 import EconomicsStatsBar from '../components/economics/EconomicsStatsBar';
-import EconomicsPricingSection from '../components/economics/EconomicsPricingSection';
 import EconomicsFaqSection from '../components/economics/EconomicsFaqSection';
 
 export default function EconomicsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -41,9 +40,6 @@ export default function EconomicsPage({ onOpenBooking, onOpenVideoDemo, onSelect
         onOpenBooking={onOpenBooking} 
       />
       <EconomicsStatsBar />
-      <EconomicsPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Economics Plan: ${planName}`)} 
-      />
       <EconomicsFaqSection 
         onOpenBooking={onOpenBooking} 
       />

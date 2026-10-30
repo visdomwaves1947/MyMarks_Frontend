@@ -5,7 +5,6 @@ import FrenchCurriculum from '../components/french/FrenchCurriculum';
 import FrenchRoadmapsGrid from '../components/french/FrenchRoadmapsGrid';
 import FrenchTestimonials from '../components/french/FrenchTestimonials';
 import FrenchStatsBar from '../components/french/FrenchStatsBar';
-import FrenchPricingSection from '../components/french/FrenchPricingSection';
 import FrenchFaqSection from '../components/french/FrenchFaqSection';
 
 export default function FrenchPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap, currentUser }) {
@@ -54,11 +53,6 @@ export default function FrenchPage({ onOpenBooking, onOpenVideoDemo, onSelectRoa
 
       {/* Stats Bar under Testimonials */}
       <FrenchStatsBar />
-
-      {/* Tuition Plans & Pricing for French */}
-      <FrenchPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`French Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <FrenchFaqSection 

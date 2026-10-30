@@ -5,7 +5,6 @@ import PhysicsCurriculum from '../components/physics/PhysicsCurriculum';
 import PhysicsRoadmapsGrid from '../components/physics/PhysicsRoadmapsGrid';
 import PhysicsTestimonials from '../components/physics/PhysicsTestimonials';
 import PhysicsStatsBar from '../components/physics/PhysicsStatsBar';
-import PhysicsPricingSection from '../components/physics/PhysicsPricingSection';
 import PhysicsFaqSection from '../components/physics/PhysicsFaqSection';
 import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
@@ -53,10 +52,6 @@ export default function PhysicsPage({ onOpenBooking, onOpenVideoDemo, onSelectRo
       />
 
       <PhysicsStatsBar />
-
-      <PhysicsPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Physics Plan: ${planName}`)}
-      />
 
       <PhysicsFaqSection 
         onOpenBooking={onOpenBooking}

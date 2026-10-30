@@ -5,7 +5,6 @@ import ChemistryCurriculum from '../components/chemistry/ChemistryCurriculum';
 import ChemistryRoadmapsGrid from '../components/chemistry/ChemistryRoadmapsGrid';
 import ChemistryTestimonials from '../components/chemistry/ChemistryTestimonials';
 import ChemistryStatsBar from '../components/chemistry/ChemistryStatsBar';
-import ChemistryPricingSection from '../components/chemistry/ChemistryPricingSection';
 import ChemistryFaqSection from '../components/chemistry/ChemistryFaqSection';
 import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
@@ -53,10 +52,6 @@ export default function ChemistryPage({ onOpenBooking, onOpenVideoDemo, onSelect
       />
 
       <ChemistryStatsBar />
-
-      <ChemistryPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Chemistry Plan: ${planName}`)}
-      />
 
       <ChemistryFaqSection 
         onOpenBooking={onOpenBooking}

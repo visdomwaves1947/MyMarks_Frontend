@@ -5,7 +5,6 @@ import ZoologyCurriculum from '../components/zoology/ZoologyCurriculum';
 import ZoologyRoadmapsGrid from '../components/zoology/ZoologyRoadmapsGrid';
 import ZoologyTestimonials from '../components/zoology/ZoologyTestimonials';
 import ZoologyStatsBar from '../components/zoology/ZoologyStatsBar';
-import ZoologyPricingSection from '../components/zoology/ZoologyPricingSection';
 import ZoologyFaqSection from '../components/zoology/ZoologyFaqSection';
 import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
@@ -60,11 +59,6 @@ export default function ZoologyPage({ onOpenBooking, onOpenVideoDemo, onSelectRo
 
       {/* Stats Bar under Testimonials */}
       <ZoologyStatsBar />
-
-      {/* Tuition Plans & Pricing for Zoology */}
-      <ZoologyPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Zoology Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <ZoologyFaqSection 

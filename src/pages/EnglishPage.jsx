@@ -5,7 +5,6 @@ import EnglishCurriculum from '../components/english/EnglishCurriculum';
 import EnglishRoadmapsGrid from '../components/english/EnglishRoadmapsGrid';
 import EnglishTestimonials from '../components/english/EnglishTestimonials';
 import EnglishStatsBar from '../components/english/EnglishStatsBar';
-import EnglishPricingSection from '../components/english/EnglishPricingSection';
 import EnglishFaqSection from '../components/english/EnglishFaqSection';
 
 export default function EnglishPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -53,11 +52,6 @@ export default function EnglishPage({ onOpenBooking, onOpenVideoDemo, onSelectRo
 
       {/* Stats Bar under Testimonials */}
       <EnglishStatsBar />
-
-      {/* Tuition Plans & Pricing for English */}
-      <EnglishPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`English Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <EnglishFaqSection 

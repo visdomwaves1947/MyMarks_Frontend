@@ -5,7 +5,6 @@ import CommerceCurriculum from '../components/commerce/CommerceCurriculum';
 import CommerceRoadmapsGrid from '../components/commerce/CommerceRoadmapsGrid';
 import CommerceTestimonials from '../components/commerce/CommerceTestimonials';
 import CommerceStatsBar from '../components/commerce/CommerceStatsBar';
-import CommercePricingSection from '../components/commerce/CommercePricingSection';
 import CommerceFaqSection from '../components/commerce/CommerceFaqSection';
 
 export default function CommercePage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -41,9 +40,6 @@ export default function CommercePage({ onOpenBooking, onOpenVideoDemo, onSelectR
         onOpenBooking={onOpenBooking} 
       />
       <CommerceStatsBar />
-      <CommercePricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Commerce Plan: ${planName}`)} 
-      />
       <CommerceFaqSection 
         onOpenBooking={onOpenBooking} 
       />

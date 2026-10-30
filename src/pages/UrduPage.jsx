@@ -5,7 +5,6 @@ import UrduCurriculum from '../components/urdu/UrduCurriculum';
 import UrduRoadmapsGrid from '../components/urdu/UrduRoadmapsGrid';
 import UrduTestimonials from '../components/urdu/UrduTestimonials';
 import UrduStatsBar from '../components/urdu/UrduStatsBar';
-import UrduPricingSection from '../components/urdu/UrduPricingSection';
 import UrduFaqSection from '../components/urdu/UrduFaqSection';
 
 export default function UrduPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -53,11 +52,6 @@ export default function UrduPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadm
 
       {/* Stats Bar under Testimonials */}
       <UrduStatsBar />
-
-      {/* Tuition Plans & Pricing for Urdu */}
-      <UrduPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Urdu Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <UrduFaqSection 

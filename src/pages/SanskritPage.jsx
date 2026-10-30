@@ -5,7 +5,6 @@ import SanskritCurriculum from '../components/sanskrit/SanskritCurriculum';
 import SanskritRoadmapsGrid from '../components/sanskrit/SanskritRoadmapsGrid';
 import SanskritTestimonials from '../components/sanskrit/SanskritTestimonials';
 import SanskritStatsBar from '../components/sanskrit/SanskritStatsBar';
-import SanskritPricingSection from '../components/sanskrit/SanskritPricingSection';
 import SanskritFaqSection from '../components/sanskrit/SanskritFaqSection';
 
 export default function SanskritPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -46,10 +45,6 @@ export default function SanskritPage({ onOpenBooking, onOpenVideoDemo, onSelectR
       />
 
       <SanskritStatsBar />
-
-      <SanskritPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Sanskrit Plan: ${planName}`)}
-      />
 
       <SanskritFaqSection 
         onOpenBooking={onOpenBooking}

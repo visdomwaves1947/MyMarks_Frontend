@@ -5,7 +5,6 @@ import MathsCurriculum from '../components/maths/MathsCurriculum';
 import MathsRoadmapsGrid from '../components/maths/MathsRoadmapsGrid';
 import MathsTestimonials from '../components/maths/MathsTestimonials';
 import MathsStatsBar from '../components/maths/MathsStatsBar';
-import MathsPricingSection from '../components/maths/MathsPricingSection';
 import MathsFaqSection from '../components/maths/MathsFaqSection';
 
 export default function MathsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap, currentUser }) {
@@ -54,11 +53,6 @@ export default function MathsPage({ onOpenBooking, onOpenVideoDemo, onSelectRoad
 
       {/* Stats Bar under Testimonials */}
       <MathsStatsBar />
-
-      {/* Tuition Plans & Pricing for Mathematics */}
-      <MathsPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Maths Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <MathsFaqSection 

@@ -5,7 +5,6 @@ import BotanyCurriculum from '../components/botany/BotanyCurriculum';
 import BotanyRoadmapsGrid from '../components/botany/BotanyRoadmapsGrid';
 import BotanyTestimonials from '../components/botany/BotanyTestimonials';
 import BotanyStatsBar from '../components/botany/BotanyStatsBar';
-import BotanyPricingSection from '../components/botany/BotanyPricingSection';
 import BotanyFaqSection from '../components/botany/BotanyFaqSection';
 import SubjectLabPracticalBanner from '../components/lab/SubjectLabPracticalBanner';
 
@@ -60,11 +59,6 @@ export default function BotanyPage({ onOpenBooking, onOpenVideoDemo, onSelectRoa
 
       {/* Stats Bar under Testimonials */}
       <BotanyStatsBar />
-
-      {/* Tuition Plans & Pricing for Botany */}
-      <BotanyPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`Botany Plan: ${planName}`)}
-      />
 
       {/* Frequently Asked Questions */}
       <BotanyFaqSection 

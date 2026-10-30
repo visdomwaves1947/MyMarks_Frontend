@@ -5,7 +5,6 @@ import HistoryCurriculum from '../components/history/HistoryCurriculum';
 import HistoryRoadmapsGrid from '../components/history/HistoryRoadmapsGrid';
 import HistoryTestimonials from '../components/history/HistoryTestimonials';
 import HistoryStatsBar from '../components/history/HistoryStatsBar';
-import HistoryPricingSection from '../components/history/HistoryPricingSection';
 import HistoryFaqSection from '../components/history/HistoryFaqSection';
 
 export default function HistoryPage({ onOpenBooking, onOpenVideoDemo, onSelectRoadmap }) {
@@ -41,9 +40,6 @@ export default function HistoryPage({ onOpenBooking, onOpenVideoDemo, onSelectRo
         onOpenBooking={onOpenBooking} 
       />
       <HistoryStatsBar />
-      <HistoryPricingSection 
-        onOpenBooking={(planName) => onOpenBooking(`History Plan: ${planName}`)} 
-      />
       <HistoryFaqSection 
         onOpenBooking={onOpenBooking} 
       />
