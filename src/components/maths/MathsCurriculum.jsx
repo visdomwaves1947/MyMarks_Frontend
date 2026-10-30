@@ -1748,24 +1748,31 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
 
       let matchedChapter = findChapterForVideo(v);
       if (!matchedChapter) {
-        const newNum = String(chapters.length + 1);
-        const newName = (v.chapterName || v.chapter || `Additional Topics`)
+        const rawName = (v.chapterName || v.chapter || 'Additional Topics')
           .replace(/^Chapter\s*\d+\s*:\s*/i, '')
           .trim();
-        matchedChapter = {
-          id: `custom-ch-${newName.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'extra'}`,
-          number: newNum,
-          name: newName,
-          chapterTitle: v.chapter ? v.chapter : `Additional Lecture: ${newName}`,
-          description: v.description || `Special extra topic lecture on ${newName}.`,
-          color: 'from-purple-600 to-indigo-600',
-          badgeColor:
-            'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-          isCustom: true,
-          videos: [],
-        };
-        // Placed at the VERY LAST of chapters
-        chapters.push(matchedChapter);
+        const customClean = (rawName || 'additional topics').toLowerCase();
+
+        // Check if a custom chapter for this exact name already exists in chapters
+        matchedChapter = chapters.find((c) => c.isCustom && c.name.toLowerCase() === customClean);
+
+        if (!matchedChapter) {
+          const newNum = String(chapters.length + 1);
+          matchedChapter = {
+            id: `custom-ch-${newNum}-${customClean.replace(/[^a-z0-9]/g, '-') || 'extra'}`,
+            number: newNum,
+            name: rawName || 'Additional Topics',
+            chapterTitle: v.chapter ? v.chapter : `Additional Lecture: ${rawName || 'Special Topics'}`,
+            description: v.description || `Special extra topic lecture on ${rawName || 'Additional Topics'}.`,
+            color: 'from-purple-600 to-indigo-600',
+            badgeColor:
+              'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+            isCustom: true,
+            videos: [],
+          };
+          // Placed at the VERY LAST of chapters
+          chapters.push(matchedChapter);
+        }
       }
 
       if (matchedChapter.isCustom) {
