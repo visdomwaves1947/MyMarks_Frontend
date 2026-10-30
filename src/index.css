@@ -126,6 +126,54 @@ html:not(.dark) [class*="to-[#EBF0F7]"] {
   animation-play-state: paused;
 }
 
+/* Animated Thermal Receipt Print Slip */
+@keyframes printSlip {
+  0% {
+    max-height: 0px;
+    opacity: 0;
+    transform: translateY(-50px) scale(0.98);
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    max-height: 900px;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-print-slip {
+  animation: printSlip 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: max-height, transform;
+}
+
+@keyframes stampImpact {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3.5) rotate(-35deg);
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.92) rotate(-10deg);
+    filter: blur(0px);
+  }
+  80% {
+    transform: translate(-50%, -50%) scale(1.05) rotate(-14deg);
+  }
+  100% {
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(1) rotate(-12deg);
+    filter: blur(0px);
+  }
+}
+
+.animate-stamp-impact {
+  animation: stampImpact 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  transform-origin: center center;
+}
+
 /* Dark mode body default */
 html.dark body {
   background-color: #0B0F19;
@@ -741,4 +789,37 @@ html.dark textarea {
   background-size: 200% 100%;
   animation: goldFoilShimmer 4s ease-in-out infinite;
 }
+
+/* Thermal Receipt Printer Paper Feed Animation */
+@keyframes thermalPrintFeed {
+  0% {
+    transform: translateY(-88%);
+    opacity: 0.2;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  }
+  15% {
+    opacity: 1;
+    transform: translateY(-68%);
+  }
+  40% {
+    transform: translateY(-42%);
+  }
+  65% {
+    transform: translateY(-18%);
+  }
+  85% {
+    transform: translateY(1.5%);
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    filter: drop-shadow(0 20px 35px rgba(0,0,0,0.5));
+  }
+}
+
+.animate-print-slip {
+  transform-origin: top center;
+  animation: thermalPrintFeed 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
 

@@ -1092,82 +1092,212 @@ export default function HistoryCurriculum({ onEnroll, currentUser }) {
 
       </div>
 
-      {/* Embedded Video Player Modal */}
-      {activeVideo && activeVideo.videoId && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
-          onClick={() => setActiveVideo(null)}
-        >
-          <div 
-            className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
-            onClick={(e) => e.stopPropagation()}
+      {/* Full Page Lecture Player Theater with Chapter Navigation Sidebar */}
+      {activeVideo && (
+        <HistoryFullPagePlayer
+          initialVideo={activeVideo}
+          allChapters={topicsData}
+          onClose={() => setActiveVideo(null)}
+          onEnroll={onEnroll}
+        />
+      )}
+
+    </section>
+  );
+}
+
+// Full-Page Immersive History Lecture Player with Collapsible Chapters Sidebar
+function HistoryFullPagePlayer({ initialVideo, allChapters, onClose, onEnroll }) {
+  const [currentVideo, setCurrentVideo] = useState(initialVideo);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [chapterSearch, setChapterSearch] = useState('');
+
+  // Flatten all available chapters/videos
+  const flattenedVideos = useMemo(() => {
+    return allChapters.flatMap(topic => 
+      topic.videos.map(v => ({
+        ...v,
+        topicNumber: topic.number,
+        topicName: topic.name,
+        period: topic.period,
+        color: topic.color
+      }))
+    );
+  }, [allChapters]);
+
+  const currentIndex = useMemo(() => {
+    return flattenedVideos.findIndex(v => v.id === currentVideo.id || v.videoId === currentVideo.videoId);
+  }, [flattenedVideos, currentVideo]);
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setCurrentVideo(flattenedVideos[currentIndex - 1]);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex >= 0 && currentIndex < flattenedVideos.length - 1) {
+      setCurrentVideo(flattenedVideos[currentIndex + 1]);
+    }
+  };
+
+  const filteredChapters = useMemo(() => {
+    if (!chapterSearch.trim()) return flattenedVideos;
+    const q = chapterSearch.toLowerCase().trim();
+    return flattenedVideos.filter(v => 
+      v.title.toLowerCase().includes(q) ||
+      (v.code && v.code.toLowerCase().includes(q)) ||
+      (v.topicName && v.topicName.toLowerCase().includes(q)) ||
+      (v.period && v.period.toLowerCase().includes(q)) ||
+      (v.keywords && v.keywords.some(k => k.toLowerCase().includes(q)))
+    );
+  }, [flattenedVideos, chapterSearch]);
+
+  const displayVideoId = currentVideo.videoId;
+  const displayUrl = currentVideo.url;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-950 text-white flex flex-col overflow-hidden animate-fadeIn">
+      {/* Top Classroom Bar */}
+      <div className="px-4 sm:px-6 py-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-4 shrink-0">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-bold transition-colors cursor-pointer shrink-0"
+            title="Return to syllabus"
           >
-            {/* Modal Header */}
-            <div className="px-5 py-4 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-2.5 overflow-hidden">
-                <span className="px-2.5 py-1 rounded-lg bg-amber-600/30 text-amber-300 font-mono text-xs font-bold border border-amber-500/30 shrink-0">
-                  Chapter {activeVideo.code}
-                </span>
-                <h3 className="text-sm sm:text-base font-bold text-white truncate">
-                  {activeVideo.title}
-                </h3>
-              </div>
+            <ChevronLeft size={16} />
+            <span>Back to Syllabus</span>
+          </button>
 
-              <div className="flex items-center gap-2 shrink-0">
-                {activeVideo.url && (
-                  <a
-                    href={activeVideo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  >
-                    <ExternalLink size={14} />
-                    <span className="hidden sm:inline">YouTube</span>
-                  </a>
-                )}
-                <button
-                  onClick={() => setActiveVideo(null)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
-                  aria-label="Close video"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            </div>
+          <span className="text-slate-700 hidden sm:inline">|</span>
 
-            {/* Responsive 16:9 YouTube Player */}
-            <div className="relative aspect-video w-full bg-black shrink-0">
+          {/* Breadcrumb Path */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 overflow-x-auto scrollbar-none whitespace-nowrap">
+            <Landmark size={14} className="text-amber-400 shrink-0" />
+            <span className="text-slate-400">History</span>
+            <span className="text-slate-600">›</span>
+            <span className="text-amber-400 font-bold">Chapter {currentVideo.code}:</span>
+            <span className="font-semibold text-white truncate max-w-[280px] sm:max-w-md">
+              {currentVideo.title}
+            </span>
+          </div>
+        </div>
+
+        {/* Right Navigation Controls */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
+              sidebarOpen 
+                ? 'bg-amber-600/30 text-amber-300 border border-amber-500/30' 
+                : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
+            }`}
+            title={sidebarOpen ? 'Hide Chapters Sidebar' : 'Show Chapters Sidebar'}
+          >
+            <Layers size={14} />
+            <span className="hidden md:inline">{sidebarOpen ? 'Hide Chapters' : 'Show Chapters'}</span>
+          </button>
+
+          {displayUrl && (
+            <a
+              href={displayUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
+            >
+              <ExternalLink size={14} />
+              <span className="hidden sm:inline">YouTube</span>
+            </a>
+          )}
+
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label="Close lecture"
+          >
+            <X size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Full Page Workspace */}
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        {/* Left Side: Video Theater Player & Detailed Lesson Notes */}
+        <div className="flex-1 flex flex-col overflow-y-auto bg-black/40 scrollbar-thin scrollbar-thumb-slate-800">
+          {/* Responsive 16:9 Video Container */}
+          <div className="relative w-full aspect-video max-h-[64vh] bg-black flex items-center justify-center shadow-2xl">
+            {displayVideoId ? (
               <iframe
-                src={`https://www.youtube-nocookie.com/embed/${activeVideo.videoId}?autoplay=1&rel=0`}
-                title={activeVideo.title}
+                src={`https://www.youtube-nocookie.com/embed/${displayVideoId}?autoplay=1&rel=0`}
+                title={currentVideo.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 allowFullScreen
                 className="absolute inset-0 w-full h-full border-0"
               />
-            </div>
+            ) : (
+              <div className="text-slate-400 text-sm">Video media unavailable</div>
+            )}
+          </div>
 
-            {/* Modal Body & Topic Notes */}
-            <div className="p-4 sm:p-5 overflow-y-auto max-h-48 space-y-3 bg-slate-900 border-t border-slate-800">
-              <div>
-                <h4 className="text-xs font-extrabold uppercase tracking-wider text-amber-400 mb-1 flex items-center gap-1.5">
-                  <BookOpen size={13} />
-                  <span>Topic Overview & Key Exam Concepts</span>
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {activeVideo.description}
-                </p>
+          {/* Lesson Details & Interactive Controls */}
+          <div className="p-5 sm:p-8 space-y-5 max-w-5xl mx-auto w-full">
+            {/* Header info */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-lg bg-amber-600 text-white font-mono text-xs font-black shadow-sm shadow-amber-600/30">
+                    Chapter {currentVideo.code}
+                  </span>
+                  <span className="text-xs font-bold text-amber-400">
+                    {currentVideo.period || currentVideo.topicName}
+                  </span>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                  {currentVideo.title}
+                </h1>
               </div>
 
-              {activeVideo.keywords && activeVideo.keywords.length > 0 && (
-                <div>
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400 block mb-1.5">
-                    High-Yield Chapter Keywords:
+              {/* Sequential Navigation Controls */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={handlePrev}
+                  disabled={currentIndex <= 0}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <ChevronLeft size={16} /> Prev Chapter
+                </button>
+                <button
+                  onClick={handleNext}
+                  disabled={currentIndex >= flattenedVideos.length - 1}
+                  className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  Next Chapter <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Description / Lesson Content Box */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-slate-800/80 shadow-md">
+              <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs uppercase tracking-wider mb-2">
+                <Sparkles size={14} className="text-amber-400" />
+                <span>Lecture Notes & Key Historical Concepts</span>
+              </div>
+              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
+                {currentVideo.description}
+              </p>
+
+              {/* Keywords Tag Cloud */}
+              {currentVideo.keywords && currentVideo.keywords.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-slate-800">
+                  <span className="text-[11px] font-extrabold uppercase text-slate-400 block mb-2">
+                    Key Exam Focus Areas & Chronology:
                   </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {activeVideo.keywords.map((kw, idx) => (
+                    {currentVideo.keywords.map((kw, idx) => (
                       <span 
                         key={idx}
-                        className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 text-xs border border-slate-700"
+                        className="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-200 text-xs font-medium border border-slate-700/80 shadow-xs"
                       >
                         {kw}
                       </span>
@@ -1177,44 +1307,137 @@ export default function HistoryCurriculum({ onEnroll, currentUser }) {
               )}
             </div>
 
-            {/* Modal Footer Controls */}
-            <div className="px-5 py-3.5 bg-slate-800/90 border-t border-slate-700/60 flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrevVideo}
-                  disabled={currentVideoIndex <= 0}
-                  className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  <ChevronLeft size={16} /> Prev
-                </button>
-                <button
-                  onClick={handleNextVideo}
-                  disabled={currentVideoIndex >= filteredVideos.length - 1}
-                  className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                >
-                  Next <ChevronRight size={16} />
-                </button>
-                <span className="text-xs text-slate-400 font-medium ml-1">
-                  {currentVideoIndex + 1} of {filteredVideos.length}
-                </span>
+            {/* Ask Doubt Action Card */}
+            <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/70 via-slate-900 to-amber-950/60 border border-amber-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-white mb-0.5">
+                  Have doubts in "Chapter {currentVideo.code}: {currentVideo.title}"?
+                </h3>
+                <p className="text-xs text-amber-200/80">
+                  Connect 1-on-1 with senior AP & TS Intermediate History faculty for personalized essay structure, timeline mnemonics & 100/100 scoring tips.
+                </p>
               </div>
-
               <button
                 onClick={() => {
-                  const current = activeVideo;
-                  setActiveVideo(null);
-                  if (onEnroll) onEnroll(`History Doubt Session: Chapter ${current.code} - ${current.title}`);
+                  onClose();
+                  if (onEnroll) onEnroll(`History Doubt Session: Chapter ${currentVideo.code} - ${currentVideo.title}`);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shrink-0 shadow-lg shadow-amber-500/25"
               >
                 <span>Ask Doubt in this Chapter</span>
-                <ArrowRight size={14} />
+                <ArrowRight size={15} />
               </button>
             </div>
           </div>
         </div>
-      )}
 
-    </section>
+        {/* Right Side: Chapter Syllabus Sidebar */}
+        {sidebarOpen && (
+          <aside className="w-full lg:w-[380px] xl:w-[420px] bg-slate-900 border-l border-slate-800 flex flex-col shrink-0 overflow-hidden shadow-2xl">
+            {/* Sidebar Header */}
+            <div className="p-4 bg-slate-900/95 border-b border-slate-800 space-y-3 shrink-0">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                  <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-amber-400">
+                    Curriculum Chapters
+                  </span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-950 text-amber-300 font-mono text-xs font-bold border border-amber-800/60 shadow-xs">
+                  {flattenedVideos.length} Chapters
+                </span>
+              </div>
+
+              {/* Now Playing pill */}
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300">
+                <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-amber-400 shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>
+                  Playing:
+                </span>
+                <span className="font-mono font-bold text-white shrink-0">{currentVideo.code}</span>
+                <span className="truncate font-medium text-slate-200">{currentVideo.title}</span>
+              </div>
+
+              {/* Search Chapters Filter */}
+              <div className="relative w-full">
+                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter chapters..."
+                  value={chapterSearch}
+                  onChange={(e) => setChapterSearch(e.target.value)}
+                  className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-800/90 text-white text-xs border border-slate-700/70 focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder:text-slate-500 transition-all"
+                />
+                {chapterSearch && (
+                  <button
+                    onClick={() => setChapterSearch('')}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Chapters List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-amber-500/30">
+              {filteredChapters.map((vid) => {
+                const isPlaying = vid.id === currentVideo.id || vid.videoId === currentVideo.videoId;
+                return (
+                  <div
+                    key={vid.id}
+                    onClick={() => setCurrentVideo(vid)}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                      isPlaying
+                        ? 'bg-amber-950/50 border-amber-500/70 shadow-sm'
+                        : 'bg-slate-800/60 border-slate-700/60 hover:bg-slate-800 hover:border-slate-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded-md border shrink-0 ${
+                        isPlaying
+                          ? 'bg-amber-500 text-slate-950 border-amber-400'
+                          : 'bg-slate-900 text-slate-300 border-slate-700'
+                      }`}>
+                        {vid.code}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <h4 className={`text-xs font-bold leading-snug truncate ${
+                          isPlaying ? 'text-amber-300' : 'text-white'
+                        }`}>
+                          {vid.title}
+                        </h4>
+                        <span className="text-[10px] text-slate-400 block truncate">
+                          {vid.period || vid.topicName}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0">
+                      {isPlaying ? (
+                        <span className="flex items-center gap-1 text-[10px] font-extrabold text-amber-400 px-2 py-0.5 rounded-md bg-amber-950/80 border border-amber-800/80">
+                          Playing
+                        </span>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCurrentVideo(vid);
+                          }}
+                          className="p-1.5 rounded-lg bg-slate-700 hover:bg-amber-600 text-slate-200 hover:text-white transition-colors cursor-pointer"
+                          title="Watch Chapter"
+                        >
+                          <Play size={12} className="fill-current" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+        )}
+      </div>
+    </div>
   );
 }

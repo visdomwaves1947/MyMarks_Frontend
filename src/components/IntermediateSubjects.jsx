@@ -24,7 +24,6 @@ export default function IntermediateSubjects({
   onOpenSignIn,
   onOpenSignUp,
 }) {
-  const [activeEnroll, setActiveEnroll] = useState(null);
   const [activeExplore, setActiveExplore] = useState(null);
   const [lockedSubject, setLockedSubject] = useState(null);
   const [selectedStream, setSelectedStream] = useState("all");
@@ -458,7 +457,9 @@ export default function IntermediateSubjects({
       setLockedSubject(subject);
       return;
     }
-    setActiveEnroll(subject.id);
+    if (onEnroll) {
+      onEnroll(subject.name);
+    }
   };
 
   const handleGoToSignIn = () => {
@@ -480,7 +481,6 @@ export default function IntermediateSubjects({
   };
 
   const renderSubjectCard = (subject) => {
-    const isEnrolling = activeEnroll === subject.id;
     const isExploring = activeExplore === subject.id;
 
     return (
@@ -511,7 +511,7 @@ export default function IntermediateSubjects({
           {/* Bottom Overlay: Title & Blue Buttons */}
           <div
             className={`mt-auto pt-2 transition-opacity duration-300 ${
-              isExploring || isEnrolling ? "opacity-0 pointer-events-none" : "opacity-100"
+              isExploring ? "opacity-0 pointer-events-none" : "opacity-100"
             }`}
           >
             <h4 className="text-sm sm:text-base md:text-lg font-semibold text-white leading-tight mb-3 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] truncate">
@@ -557,50 +557,6 @@ export default function IntermediateSubjects({
                 className="w-full mt-auto py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
                 <ChevronLeft size={16} /> Back
-              </button>
-            </div>
-          )}
-
-          {/* Enroll View (when authenticated) */}
-          {isAuthenticated && (
-            <div
-              className={`absolute inset-0 bg-[#0d2238]/95 backdrop-blur-md p-5 flex flex-col z-20 transition-transform duration-300 ${
-                isEnrolling ? "translate-y-0" : "translate-y-full"
-              }`}
-            >
-              <h4 className="text-xs sm:text-sm font-semibold text-white mb-4 text-center">
-                Select Year for {subject.name}
-              </h4>
-              <div className="flex flex-col gap-2 flex-1 justify-center">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveEnroll(null);
-                    if (onEnroll) onEnroll(`${subject.name} (1st Year)`);
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-sm"
-                >
-                  1st Year (Junior)
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setActiveEnroll(null);
-                    if (onEnroll) onEnroll(`${subject.name} (2nd Year)`);
-                  }}
-                  className="w-full py-2.5 rounded-xl bg-blue-700 hover:bg-blue-600 text-white text-xs sm:text-sm font-semibold transition-colors cursor-pointer shadow-sm"
-                >
-                  2nd Year (Senior)
-                </button>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setActiveEnroll(null);
-                }}
-                className="w-full mt-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold flex items-center justify-center transition-colors cursor-pointer"
-              >
-                Cancel
               </button>
             </div>
           )}
