@@ -880,51 +880,102 @@ function fallbackDataUrl(file, resolve, reject) {
 }
 
 
+/**
+ * Submit Contact Us inquiry to MongoDB Atlas via backend API (/api/contact)
+ */
 export async function submitContactMessage(contactData) {
-  const baseUrl = getApiBaseUrl();
+  const payload = {
+    name: contactData.name?.trim(),
+    email: contactData.email?.trim().toLowerCase(),
+    phone: contactData.phone ? String(contactData.phone).replace(/\D/g, '') : '',
+    subject: contactData.subject || 'General Inquiry',
+    message: contactData.message?.trim(),
+    metadata: {
+      submittedAt: new Date().toISOString(),
+      clientPlatform: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+    },
+  };
+
   try {
-    const res = await fetch(`${baseUrl}/api/content`, {
+    const res = await resilientFetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: `Contact Inquiry: ${contactData.name}`,
-        type: 'general',
-        category: 'contact',
-        description: `Subject: ${contactData.subject || 'General Inquiry'}${contactData.rating ? ` | Rating: ${contactData.rating}` : ''}`,
-        metadata: {
-          ...contactData,
-          submittedAt: new Date().toISOString(),
-        },
-      }),
+      body: JSON.stringify(payload),
     });
+
     const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || `Server returned error (${res.status})`);
+    }
+
     return { success: true, data };
   } catch (err) {
-    if (baseUrl !== 'http://localhost:5000') {
-      try {
-        const localRes = await fetch('http://localhost:5000/api/content', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: `Contact Inquiry: ${contactData.name}`,
-            type: 'general',
-            category: 'contact',
-            description: `Subject: ${contactData.subject || 'General Inquiry'}${contactData.rating ? ` | Rating: ${contactData.rating}` : ''}`,
-            metadata: {
-              ...contactData,
-              submittedAt: new Date().toISOString(),
-            },
-          }),
-        });
-        const localData = await localRes.json().catch(() => ({}));
-        return { success: true, data: localData };
-      } catch (localErr) {
-        console.warn('[API] Contact submission local fallback:', localErr.message);
+    // Failover to /api/content if /api/contact is unavailable
+    try {
+      const fallbackRes = await resilientFetch('/api/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Contact Inquiry: ${payload.name}`,
+          type: 'general',
+          category: 'contact',
+          description: `Subject: ${payload.subject} | Phone: ${payload.phone}`,
+          contentBody: payload.message,
+          metadata: payload,
+        }),
+      });
+      if (fallbackRes.ok) {
+        const fallbackData = await fallbackRes.json().catch(() => ({}));
+        return { success: true, data: fallbackData };
       }
+    } catch (fallbackErr) {
+      console.warn('[API] Fallback also failed:', fallbackErr.message);
     }
-    console.warn('[API] Contact submission fallback:', err.message);
-    return { success: true, localOnly: true };
+    throw err;
   }
 }
+
+/**
+ * Fetch all contact inquiries from MongoDB (for Admin dashboard)
+ */
+export async function fetchContactMessages(params = {}) {
+  try {
+    const query = new URLSearchParams(params).toString();
+    const res = await resilientFetch(`/api/contact${query ? `?${query}` : ''}`);
+    if (!res.ok) throw new Error(`Failed to load contact messages (${res.status})`);
+    return await res.json();
+  } catch (err) {
+    console.error('[API] fetchContactMessages error:', err.message);
+    return { success: false, contacts: [], count: 0 };
+  }
+}
+
+/**
+ * Update contact inquiry status in MongoDB
+ */
+export async function updateContactStatusApi(id, status, note = '') {
+  const res = await resilientFetch(`/api/contact/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status, note }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'Failed to update contact status');
+  return data;
+}
+
+/**
+ * Delete a contact message from MongoDB
+ */
+export async function deleteContactMessageApi(id) {
+  const res = await resilientFetch(`/api/contact/${id}`, {
+    method: 'DELETE',
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.message || 'Failed to delete contact inquiry');
+  return data;
+}
+
 
 

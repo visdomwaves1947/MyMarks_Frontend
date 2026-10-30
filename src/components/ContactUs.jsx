@@ -617,40 +617,40 @@ export default function ContactUs() {
                 <div className="rounded-[52px] p-[3px] bg-gradient-to-tr from-slate-400 via-slate-100 to-slate-500 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.65)] dark:shadow-[0_30px_70px_rgba(0,0,0,0.85)] relative">
                   {/* Black Bezel */}
                   <div className="rounded-[49px] p-[10px] bg-black ring-1 ring-slate-800/80">
-                    {/* Screen Container with /phone_wallpaper.png */}
+                    {/* Screen Container with Blue Wallpaper */}
                     <div
-                      className="w-full h-[520px] rounded-[38px] overflow-hidden text-slate-900 relative flex flex-col border border-slate-300 shadow-inner bg-amber-500"
+                      className="w-full h-[520px] rounded-[38px] overflow-hidden text-slate-900 relative flex flex-col border border-sky-400/30 shadow-inner bg-gradient-to-br from-sky-600 via-blue-700 to-slate-950"
                       style={{
-                        backgroundImage: 'url(/phone_wallpaper.png)',
+                        backgroundImage: 'url(/phone_wallpaper_blue.svg)',
                         backgroundSize: 'cover',
                         backgroundPosition: 'center',
                       }}
                     >
                       {/* Glass Sheen Effect */}
                       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-30" />
-                      <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] pointer-events-none z-10" />
+                      <div className="absolute inset-0 bg-blue-950/20 backdrop-blur-[0.5px] pointer-events-none z-10" />
 
                       {/* Ambient screen color accents */}
-                      <div className="absolute top-10 left-10 w-44 h-44 bg-cyan-500/10 rounded-full blur-[80px] pointer-events-none z-0" />
-                      <div className="absolute bottom-10 right-10 w-44 h-44 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none z-0" />
+                      <div className="absolute top-10 left-10 w-44 h-44 bg-cyan-400/20 rounded-full blur-[80px] pointer-events-none z-0" />
+                      <div className="absolute bottom-10 right-10 w-44 h-44 bg-blue-400/20 rounded-full blur-[80px] pointer-events-none z-0" />
 
                       {/* Phone Top Status Bar */}
-                      <div className="w-full h-8 flex items-center justify-between px-6 bg-white/60 backdrop-blur-md border-b border-black/5 text-[10px] font-semibold text-slate-800 z-40 select-none relative shrink-0">
+                      <div className="w-full h-8 flex items-center justify-between px-6 bg-slate-950/40 backdrop-blur-md border-b border-white/10 text-[10px] font-semibold text-white z-40 select-none relative shrink-0">
                         <span className="tracking-wide font-bold">{currentTime.time}</span>
 
                         {/* Speaker Grill & Selfie Camera (Dynamic Island style) */}
                         <div className="absolute left-1/2 -translate-x-1/2 top-2 flex items-center gap-1.5 z-50">
                           <div className="w-10 h-[3px] bg-neutral-800 rounded-full border border-neutral-700/50 shadow-inner" />
                           <div className="w-2.5 h-2.5 rounded-full bg-slate-950 border border-slate-800 flex items-center justify-center">
-                            <span className="w-1 h-1 rounded-full bg-blue-600/80 animate-pulse" />
+                            <span className="w-1 h-1 rounded-full bg-cyan-400 animate-pulse" />
                           </div>
                         </div>
 
                         {/* Status Icons */}
-                        <div className="flex items-center gap-1.5 text-slate-800">
-                          <Signal className="w-3.5 h-3.5" />
-                          <Wifi className="w-3.5 h-3.5" />
-                          <Battery className="w-3.5 h-3.5 text-cyan-800" />
+                        <div className="flex items-center gap-1.5 text-white">
+                          <Signal className="w-3.5 h-3.5 text-sky-200" />
+                          <Wifi className="w-3.5 h-3.5 text-sky-200" />
+                          <Battery className="w-3.5 h-3.5 text-cyan-300" />
                           <span className="text-[8.5px] font-bold">100%</span>
                         </div>
                       </div>
@@ -660,16 +660,16 @@ export default function ContactUs() {
                         
                         {/* Header: Digital Clock & Contact Us */}
                         <div className="text-center select-none pt-0.5">
-                          <div className="text-[20px] sm:text-[22px] font-black text-slate-900 tracking-widest drop-shadow-xs">
+                          <div className="text-[20px] sm:text-[22px] font-black text-white tracking-widest drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
                             {currentTime.time}
                           </div>
-                          <div className="text-[9.5px] font-bold text-cyan-800 uppercase tracking-widest">
+                          <div className="text-[9.5px] font-bold text-cyan-200 uppercase tracking-widest drop-shadow-xs">
                             {currentTime.day}, {currentTime.date}
                           </div>
-                          <h2 className="text-xs sm:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-800 via-blue-900 to-cyan-800 uppercase tracking-widest mt-0.5">
+                          <h2 className="text-xs sm:text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-sky-100 to-white uppercase tracking-widest mt-0.5 drop-shadow-sm">
                             Contact Us
                           </h2>
-                          <p className="text-[10px] text-slate-700 font-bold leading-tight max-w-[420px] mx-auto">
+                          <p className="text-[10px] text-sky-100 font-semibold leading-tight max-w-[420px] mx-auto drop-shadow-xs">
                             We're here to answer your questions. Send us a message and we'll respond as soon as possible.
                           </p>
                         </div>
@@ -679,8 +679,8 @@ export default function ContactUs() {
                           {/* Row 1: Name & Email */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             <div className="relative group">
-                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
-                                Your Name <span className="text-red-500">*</span>
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-sky-100 block mb-0.5 drop-shadow-xs">
+                                Your Name <span className="text-red-400">*</span>
                               </label>
                               <input
                                 type="text"
@@ -693,13 +693,13 @@ export default function ContactUs() {
                                 autoComplete="off"
                                 spellCheck="false"
                                 placeholder="Enter your full name"
-                                className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs"
+                                className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
                               />
                             </div>
 
                             <div className="relative group">
-                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
-                                Email Address <span className="text-red-500">*</span>
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-sky-100 block mb-0.5 drop-shadow-xs">
+                                Email Address <span className="text-red-400">*</span>
                               </label>
                               <input
                                 type="email"
@@ -712,7 +712,7 @@ export default function ContactUs() {
                                 autoComplete="off"
                                 spellCheck="false"
                                 placeholder="name@example.com"
-                                className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs"
+                                className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
                               />
                             </div>
                           </div>
@@ -720,8 +720,8 @@ export default function ContactUs() {
                           {/* Row 2: Phone & Subject */}
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                             <div className="relative group">
-                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
-                                Phone Number <span className="text-red-500">*</span>
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-sky-100 block mb-0.5 drop-shadow-xs">
+                                Phone Number <span className="text-red-400">*</span>
                               </label>
                               <input
                                 type="tel"
@@ -735,16 +735,16 @@ export default function ContactUs() {
                                 autoComplete="off"
                                 spellCheck="false"
                                 placeholder="10-digit mobile number"
-                                className={`w-full text-xs bg-white/85 backdrop-blur-sm border rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs ${
+                                className={`w-full text-xs bg-white/95 backdrop-blur-sm border rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs ${
                                   highlightPhoneInput
-                                    ? 'border-cyan-600 ring-2 ring-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.6)] scale-[1.01]'
-                                    : 'border-slate-300'
+                                    ? 'border-cyan-400 ring-2 ring-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.8)] scale-[1.01]'
+                                    : 'border-white/60'
                                 }`}
                               />
                             </div>
 
                             <div className="relative group">
-                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950 block mb-0.5">
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-sky-100 block mb-0.5 drop-shadow-xs">
                                 Inquiry Subject
                               </label>
                               <select
@@ -753,7 +753,7 @@ export default function ContactUs() {
                                 onChange={handleChange}
                                 onFocus={() => setFocusedField('subject')}
                                 onBlur={() => setFocusedField(null)}
-                                className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold cursor-pointer focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs"
+                                className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold cursor-pointer focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
                               >
                                 <option value="General Inquiry">General Inquiry</option>
                                 <option value="Admissions">Admissions</option>
@@ -767,10 +767,10 @@ export default function ContactUs() {
                           {/* Row 3: Message Textarea */}
                           <div className="relative group">
                             <div className="flex justify-between items-center mb-0.5">
-                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-cyan-950">
-                                Your Message <span className="text-red-500">*</span>
+                              <label className="text-[9.5px] font-bold uppercase tracking-wider text-sky-100 drop-shadow-xs">
+                                Your Message <span className="text-red-400">*</span>
                               </label>
-                              <span className="text-[8.5px] font-bold text-slate-600">
+                              <span className="text-[8.5px] font-bold text-sky-200">
                                 {wordCount} / 300 words
                               </span>
                             </div>
@@ -785,7 +785,7 @@ export default function ContactUs() {
                               autoComplete="off"
                               spellCheck="false"
                               placeholder="Write your message here..."
-                              className="w-full text-xs bg-white/85 backdrop-blur-sm border border-slate-300 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-600 focus:ring-2 focus:ring-cyan-400/40 transition-all shadow-xs resize-none"
+                              className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs resize-none"
                             />
                           </div>
 
@@ -794,7 +794,7 @@ export default function ContactUs() {
                             <button
                               type="submit"
                               disabled={submitting}
-                              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-cyan-500/25 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-black text-xs uppercase tracking-wider shadow-md hover:shadow-cyan-400/30 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
                             >
                               {submitting ? (
                                 <>
