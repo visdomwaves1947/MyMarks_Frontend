@@ -14,7 +14,6 @@ import {
   Tv,
   Tag,
   Sparkles,
-  GitFork,
   ListTree,
   Folder,
   FolderOpen,
@@ -1293,14 +1292,6 @@ function MathsVideoCard({ video, isSearching, onSelectVideo }) {
           )}
         </div>
 
-        {/* Sub-Topics Count Tag on Thumbnail */}
-        {hasChildren && (
-          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-indigo-600/95 text-white font-sans text-[10px] font-extrabold border border-indigo-400/40 flex items-center gap-1 shadow-sm">
-            <GitFork size={11} className="text-amber-300" />
-            <span>{allFlattened.length} Subtopics</span>
-          </div>
-        )}
-
         {/* Center Play Button Overlay */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/40 group-hover:scale-115 transition-transform duration-300 ring-4 ring-white/30">
@@ -1321,11 +1312,6 @@ function MathsVideoCard({ video, isSearching, onSelectVideo }) {
           {/* Main Chapter Badge */}
           <div className="text-[11px] font-extrabold tracking-wider uppercase text-indigo-600 dark:text-indigo-400 mb-2 flex items-center justify-between">
             <span>{video.chapterTitle || `${video.topicNumber} Function`}</span>
-            {hasChildren && (
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 font-extrabold border border-indigo-200/60 dark:border-indigo-800/60">
-                Hierarchical Syllabus
-              </span>
-            )}
           </div>
 
           {/* Title */}
@@ -1656,7 +1642,6 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
     fetchStudentVideos({
       subject: 'Mathematics',
       board: selectedBoard,
-      year: selectedYear,
     })
       .then((data) => {
         if (Array.isArray(data)) {
@@ -1667,7 +1652,7 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
       .finally(() => {
         setIsLoadingDb(false);
       });
-  }, [selectedBoard, selectedYear]);
+  }, [selectedBoard]);
 
   useEffect(() => {
     loadDbVideos();
@@ -1694,16 +1679,11 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
     }
 
     const findChapterForVideo = (v) => {
-      const chNum = v.chapterNumber ? Number(v.chapterNumber) : null;
       const rawChName = (v.chapterName || v.chapter || '').trim();
+      const cleanName = rawChName.replace(/^Chapter\s*\d+\s*:\s*/i, '').trim().toLowerCase();
 
-      if (chNum) {
-        const byNum = chapters.find((c) => Number(c.number) === chNum);
-        if (byNum) return byNum;
-      }
-
-      if (rawChName) {
-        const cleanName = rawChName.replace(/^Chapter\s*\d+\s*:\s*/i, '').trim().toLowerCase();
+      // Only match predefined chapters if cleanName matches an existing chapter's title or name
+      if (cleanName) {
         const byName = chapters.find((c) =>
           c.name.toLowerCase() === cleanName ||
           c.name.toLowerCase().includes(cleanName) ||
@@ -1711,6 +1691,15 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
           (c.chapterTitle && c.chapterTitle.toLowerCase().includes(cleanName))
         );
         if (byName) return byName;
+      }
+
+      // If chNum matches, ONLY match if chapter name is blank or corresponds to this chapter
+      const chNum = v.chapterNumber ? Number(v.chapterNumber) : null;
+      if (chNum) {
+        const byNum = chapters.find((c) => Number(c.number) === chNum);
+        if (byNum && (!cleanName || byNum.name.toLowerCase().includes(cleanName) || cleanName.includes(byNum.name.toLowerCase()))) {
+          return byNum;
+        }
       }
 
       return null;
@@ -1745,30 +1734,6 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
         }
       }
 
-      let matchedChapter = findChapterForVideo(v);
-      if (!matchedChapter) {
-        const newNum = String(v.chapterNumber || chapters.length + 1);
-        const newName = (v.chapterName || v.chapter || `Chapter ${newNum}`)
-          .replace(/^Chapter\s*\d+\s*:\s*/i, '')
-          .trim();
-        matchedChapter = {
-          id: `ch-${newNum}-${newName.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'chapter'}`,
-          number: newNum,
-          name: newName,
-          chapterTitle: v.chapter ? v.chapter : `${newNum} ${newName}`,
-          description: `AP & TS Intermediate Board syllabus lectures for ${newName}.`,
-          color: 'from-blue-600 to-indigo-600',
-          badgeColor:
-            'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
-          videos: [],
-        };
-        chapters.push(matchedChapter);
-      }
-
-      if (!matchedChapter.videos) {
-        matchedChapter.videos = [];
-      }
-
       let safeThumb = v.thumbnailUrl || '';
       let safeYtId = vYtId;
       if (safeThumb.includes('2TzFm9u5e10') || safeYtId === '2TzFm9u5e10') {
@@ -1780,6 +1745,52 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
         safeYtId = 'jQUrfmX0uko';
       }
       const defaultThumb = safeThumb || (safeYtId ? `https://img.youtube.com/vi/${safeYtId}/hqdefault.jpg` : '');
+
+      let matchedChapter = findChapterForVideo(v);
+      if (!matchedChapter) {
+        const newNum = String(chapters.length + 1);
+        const newName = (v.chapterName || v.chapter || `Additional Topics`)
+          .replace(/^Chapter\s*\d+\s*:\s*/i, '')
+          .trim();
+        matchedChapter = {
+          id: `custom-ch-${newName.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'extra'}`,
+          number: newNum,
+          name: newName,
+          chapterTitle: v.chapter ? v.chapter : `Additional Lecture: ${newName}`,
+          description: v.description || `Special extra topic lecture on ${newName}.`,
+          color: 'from-purple-600 to-indigo-600',
+          badgeColor:
+            'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+          isCustom: true,
+          videos: [],
+        };
+        // Placed at the VERY LAST of chapters
+        chapters.push(matchedChapter);
+      }
+
+      if (matchedChapter.isCustom) {
+        const cleanTitle = (v.title || v.chapterName || matchedChapter.name).trim();
+        matchedChapter.videos.push({
+          id: v._id ? `db-${v._id}` : `custom-vid-${idx}`,
+          code: `${matchedChapter.number}.${matchedChapter.videos.length + 1}`,
+          title: cleanTitle,
+          description: v.description || `Special lecture on ${cleanTitle}`,
+          url: v.url,
+          videoId: vYtId,
+          thumbnailUrl: defaultThumb,
+          keywords: parsedKeywords,
+          isDbUploaded: true,
+          isCustom: true,
+          board: v.board || 'Both Boards',
+          year: v.year || 'Both Years',
+          children: [],
+        });
+        return;
+      }
+
+      if (!matchedChapter.videos) {
+        matchedChapter.videos = [];
+      }
 
       if (level === 'subSubTopic') {
         // Hierarchy: Chapter -> Topic -> SubTopic -> SubSubTopic
@@ -2045,9 +2056,9 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
     return chapters.map(assignDynamicCodesToChapter);
   }, [dbVideos]);
 
-  // Flatten all merged videos
+  // Flatten all merged videos (standard videos first, custom/unrelated videos sorted to the VERY LAST)
   const allVideos = useMemo(() => {
-    return topicsData.flatMap((topic) =>
+    const list = topicsData.flatMap((topic) =>
       topic.videos.map((video) => ({
         ...video,
         topicId: topic.id,
@@ -2056,8 +2067,15 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
         topicNumber: topic.number,
         topicColor: topic.color,
         badgeColor: topic.badgeColor,
+        isCustom: Boolean(topic.isCustom || video.isCustom),
       }))
     );
+
+    return list.sort((a, b) => {
+      const aCustom = a.isCustom ? 1 : 0;
+      const bCustom = b.isCustom ? 1 : 0;
+      return aCustom - bCustom;
+    });
   }, [topicsData]);
 
   // Search and filter logic supporting recursive nested hierarchy
