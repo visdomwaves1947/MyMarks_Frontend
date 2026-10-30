@@ -368,22 +368,25 @@ export default function WhyChooseMyMarksSection({ onOpenBooking, showTestimonial
               </div>
 
               <div className="space-y-2 flex-grow w-full">
-                <h3 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white leading-tight">
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                   100% Refund Guarantee
                 </h3>
 
-                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-normal leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 font-medium leading-relaxed">
                   If you complete your course following our recommended plan, attending lessons, taking required mock tests, and adhering to guidelines—but do not see the expected score improvement—we will refund 100% of your course fee.
                 </p>
 
                 <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                   <button
                     onClick={() => onOpenBooking && onOpenBooking("Refund Guarantee Policy")}
-                    className="w-full sm:w-auto px-5 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer"
+                    className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer"
                   >
                     Enroll With Zero Risk
                   </button>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-normal">
+                  <span
+                    className="text-[10px] sm:text-[11px] font-medium text-slate-600 dark:text-slate-400 select-none opacity-75 tracking-wider pointer-events-none"
+                    style={{ filter: 'blur(0.75px)' }}
+                  >
                     *Terms & Conditions Apply
                   </span>
                 </div>
