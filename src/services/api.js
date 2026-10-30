@@ -682,6 +682,19 @@ export async function fetchAdminVideos(params = {}) {
   }
 }
 
+// In-memory cache & in-flight deduplication for student videos
+const studentVideosCache = new Map();
+const inFlightVideoRequests = new Map();
+
+export function clearStudentVideosCache() {
+  studentVideosCache.clear();
+  inFlightVideoRequests.clear();
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('mymarks_video_updated', clearStudentVideosCache);
+}
+
 /**
  * Fetch published videos specifically for student dashboard and curriculum modules
  */
@@ -690,18 +703,37 @@ export async function fetchStudentVideos(params = {}) {
   const query = new URLSearchParams(searchParams).toString();
   const path = `/api/videos${query ? `?${query}` : ''}`;
 
-  try {
-    const res = await resilientFetch(path);
-    if (!res.ok) throw new Error(`Student videos fetch failed (${res.status})`);
-    const data = await res.json();
-    if (data.success && Array.isArray(data.data)) {
-      return data.data;
-    }
-    return fallbackVideos.filter(v => v.status === 'published');
-  } catch (err) {
-    console.warn('[API] Falling back to published local fallback videos:', err.message);
-    return fallbackVideos.filter(v => v.status === 'published');
+  // 30-second cache to prevent repeat API bursts on re-renders
+  const cached = studentVideosCache.get(path);
+  if (cached && Date.now() - cached.timestamp < 30000) {
+    return cached.data;
   }
+
+  // Deduplicate concurrent requests in flight
+  if (inFlightVideoRequests.has(path)) {
+    return inFlightVideoRequests.get(path);
+  }
+
+  const fetchPromise = (async () => {
+    try {
+      const res = await resilientFetch(path);
+      if (!res.ok) throw new Error(`Student videos fetch failed (${res.status})`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        studentVideosCache.set(path, { data: data.data, timestamp: Date.now() });
+        return data.data;
+      }
+      return fallbackVideos.filter(v => v.status === 'published');
+    } catch (err) {
+      console.warn('[API] Falling back to published local fallback videos:', err.message);
+      return fallbackVideos.filter(v => v.status === 'published');
+    } finally {
+      inFlightVideoRequests.delete(path);
+    }
+  })();
+
+  inFlightVideoRequests.set(path, fetchPromise);
+  return fetchPromise;
 }
 
 export async function createAdminVideoApi(videoData) {
@@ -717,6 +749,7 @@ export async function createAdminVideoApi(videoData) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to upload video/link');
+    clearStudentVideosCache();
     return data;
   } catch (err) {
     throw err;
@@ -736,6 +769,7 @@ export async function updateAdminVideoApi(id, videoData) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to update video/link');
+    clearStudentVideosCache();
     return data;
   } catch (err) {
     throw err;
@@ -755,6 +789,7 @@ export async function toggleAdminVideoStatusApi(id, status) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to toggle status');
+    clearStudentVideosCache();
     return data;
   } catch (err) {
     throw err;
@@ -773,6 +808,7 @@ export async function deleteAdminVideoApi(id) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to delete video');
+    clearStudentVideosCache();
     return data;
   } catch (err) {
     throw err;

@@ -36,11 +36,7 @@ export default function StudentVideoDashboard({
     return 'all';
   });
 
-  const [selectedYear, setSelectedYear] = useState(() => {
-    if (studentYear && (studentYear.includes('2nd') || studentYear.includes('Second'))) return '2nd Year';
-    if (studentYear && (studentYear.includes('1st') || studentYear.includes('First'))) return '1st Year';
-    return 'all';
-  });
+  const [selectedYear, setSelectedYear] = useState('all');
 
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,14 +73,43 @@ export default function StudentVideoDashboard({
     return match && match[1] ? match[1] : '';
   };
 
-  // Filter published videos
+  // Known standard syllabus chapters to detect custom / unrelated topics
+  const standardSyllabusChapters = useMemo(() => [
+    'functions', 'mathematical induction', 'matrices', 'complex numbers', 'de moivre',
+    'quadratic', 'theory of equations', 'permutations', 'binomial', 'partial fractions',
+    'measures of dispersion', 'probability', 'random variables', 'trigonometry', 'hyperbolic',
+    'properties of triangles', 'locus', 'transformation of axes', 'straight line', 'pair of straight lines',
+    'three dimensional', 'direction cosines', 'plane', 'limits', 'differentiation',
+    'errors', 'tangents', 'mean value', 'integration', 'definite integrals',
+    'differential equations', 'circles', 'system of circles', 'parabola', 'ellipse', 'hyperbola',
+    'units and measurements', 'motion in a straight line', 'motion in a plane', 'laws of motion',
+    'work, energy and power', 'system of particles', 'gravitation', 'mechanical properties',
+    'thermal properties', 'thermodynamics', 'kinetic theory', 'oscillations', 'waves',
+    'atomic structure', 'classification of elements', 'chemical bonding', 'states of matter',
+    'stoichiometry', 'thermodynamics', 'chemical equilibrium', 'hydrogen', 's-block', 'p-block',
+    'organic chemistry', 'environmental chemistry'
+  ], []);
+
+  // Check if a video has an unrelated/custom topic, chapter, or subject
+  const isUnrelatedVideo = useCallback((v) => {
+    if (!v) return false;
+    if (v.isCustom) return true;
+    const rawCh = (v.chapterName || v.chapter || '').toLowerCase().replace(/^chapter\s*\d+\s*:\s*/i, '').trim();
+    if (!rawCh) return true; // No chapter specified -> extra lecture
+    const matchesStandard = standardSyllabusChapters.some((s) => rawCh.includes(s) || s.includes(rawCh));
+    return !matchesStandard;
+  }, [standardSyllabusChapters]);
+
+  // Filter & sort published videos (unrelated/custom topics always kept at the VERY LAST)
   const filteredVideos = useMemo(() => {
-    return videos.filter((v) => {
+    const list = videos.filter((v) => {
       // Must be published
       if (v.status && v.status !== 'published') return false;
 
-      // Board filter
-      if (selectedBoard !== 'all') {
+      const isCustom = isUnrelatedVideo(v);
+
+      // Board filter (custom videos stay visible unless explicitly filtering other subjects)
+      if (selectedBoard !== 'all' && !isCustom) {
         const isAP = selectedBoard === 'Andhra Pradesh Intermediate';
         const isTS = selectedBoard === 'Telangana Intermediate';
         const vBoard = v.board || 'Both Boards';
@@ -104,8 +129,8 @@ export default function StudentVideoDashboard({
         }
       }
 
-      // Year filter
-      if (selectedYear !== 'all') {
+      // Year filter (custom / unrelated videos stay visible at the end so they are never missed)
+      if (selectedYear !== 'all' && !isCustom) {
         const is1st = selectedYear === '1st Year';
         const is2nd = selectedYear === '2nd Year';
         const vYear = v.year || (v.classLevel && v.classLevel.includes('2nd') ? '2nd Year' : '1st Year');
@@ -165,21 +190,37 @@ export default function StudentVideoDashboard({
 
       return true;
     });
-  }, [videos, selectedBoard, selectedYear, selectedSubject, searchQuery]);
 
-  const subjectOptions = [
-    'all',
-    'Mathematics',
-    'Physics',
-    'Chemistry',
-    'Botany',
-    'Zoology',
-    'English',
-    'Commerce',
-    'Economics',
-    'Civics',
-    'General',
-  ];
+    // Sort: Standard curriculum videos first (0), custom / unrelated videos at the VERY LAST (1)
+    return [...list].sort((a, b) => {
+      const aCustom = isUnrelatedVideo(a) ? 1 : 0;
+      const bCustom = isUnrelatedVideo(b) ? 1 : 0;
+      if (aCustom !== bCustom) {
+        return aCustom - bCustom;
+      }
+      return 0;
+    });
+  }, [videos, selectedBoard, selectedYear, selectedSubject, searchQuery, isUnrelatedVideo]);
+
+  const subjectOptions = useMemo(() => {
+    const base = [
+      'all',
+      'Mathematics',
+      'Physics',
+      'Chemistry',
+      'Botany',
+      'Zoology',
+      'English',
+      'Commerce',
+      'Economics',
+      'Civics',
+      'General',
+    ];
+    const fromVideos = (videos || [])
+      .map((v) => v.subject)
+      .filter((s) => Boolean(s && s.trim()));
+    return Array.from(new Set([...base, ...fromVideos]));
+  }, [videos]);
 
   return (
     <div className="space-y-6">
@@ -448,6 +489,11 @@ export default function StudentVideoDashboard({
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-cyan-400 border border-blue-200 dark:border-blue-500/20 uppercase tracking-wider">
                           {v.subject || 'Subject'}
                         </span>
+                        {isUnrelatedVideo(v) && (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-purple-50 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 border border-purple-200 dark:border-purple-800 uppercase tracking-wider">
+                            Special Topic
+                          </span>
+                        )}
                         {v.chapter && (
                           <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 truncate max-w-[150px]">
                             {v.chapter}
