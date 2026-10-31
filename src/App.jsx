@@ -106,7 +106,7 @@ export default function App() {
     }
 
     const from = location.state?.from || '/demo';
-    navigate(from);
+    navigate(from === '/admin' ? '/portal' : from);
   };
 
   const handleLogout = () => {
@@ -195,10 +195,31 @@ export default function App() {
 
   const isAdminRoute = path === '/admin' || path.startsWith('/admin/') || path === '/mymarks/admin' || path.startsWith('/mymarks/admin/');
 
+  const hasAdminAuth = (currentUser && (currentUser.role === 'admin' || currentUser.email === 'md@visdomwaves.com')) || (() => {
+    try {
+      const savedUser = localStorage.getItem('mla_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.role === 'admin' || parsed.email === 'md@visdomwaves.com') return true;
+      }
+      return (
+        sessionStorage.getItem('mymarks_admin_auth') === 'true' ||
+        localStorage.getItem('mymarks_admin_auth') === 'true'
+      );
+    } catch {
+      return false;
+    }
+  })();
+
+  // If visiting an admin route without admin authentication, directly open the main sign in page
+  if (isAdminRoute && !hasAdminAuth) {
+    return <Navigate to="/signin" state={{ from: '/admin' }} replace />;
+  }
+
   // Dedicated Full-Screen Administrator Workspace
   if (isAdminRoute) {
     return (
-      <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${theme === 'dark' ? 'bg-[#070B14] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+      <div className={`h-screen w-full max-w-full flex flex-col font-sans transition-colors duration-200 overflow-hidden overflow-x-hidden ${theme === 'dark' ? 'bg-[#070B14] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
         <ScrollToTop />
         <Routes>
           <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
