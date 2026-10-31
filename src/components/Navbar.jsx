@@ -221,8 +221,8 @@ export default function Navbar({
 
   return (
     <>
-      {/* Sticky Header Container containing Top Navbar & Main Navbar */}
-      <header className="sticky top-0 z-50 select-none shadow-sm relative transform-gpu">
+      {/* Fixed Header Container containing Top Navbar & Main Navbar */}
+      <header className="fixed top-0 inset-x-0 z-50 select-none shadow-xs">
         {/* Chinmaya Vidyalaya Style Top Bar */}
         <div
           className="h-9 px-3 sm:px-6 flex items-center justify-between text-xs text-blue-100 select-none relative z-50"
@@ -816,6 +816,12 @@ export default function Navbar({
           </div>
         )}
       </header>
+
+      {/* Static Layout Spacer (Preserves exact page height so content never shifts under fixed header) */}
+      <div
+        className="h-[98px] xs:h-[104px] sm:h-[118px] md:h-[122px] w-full shrink-0 pointer-events-none"
+        aria-hidden="true"
+      />
 
       {/* Mobile Menu Backdrop (Tapping or dragging outside automatically closes the menu) */}
       {mobileMenuOpen && (
