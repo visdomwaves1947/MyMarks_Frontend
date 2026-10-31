@@ -80,7 +80,7 @@ export default function EnglishTestimonials({ onOpenBooking }) {
                   </div>
 
                   <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/70">
-                    ★ {review.achievement}
+                    {review.achievement}
                   </span>
                 </div>
 

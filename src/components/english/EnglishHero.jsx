@@ -217,38 +217,11 @@ export default function EnglishHero({ onOpenBooking, onOpenVideoDemo }) {
           {/* =========================================================================
               RIGHT COLUMN: REALISTIC 3D ANIMATED ENGLISH LITERATURE & GRAMMAR BOOK
               ========================================================================= */}
-          <div className="lg:col-span-5 relative flex flex-col items-center justify-center py-2 select-none">
-
-            {/* FLOATING ENGLISH LITERARY & GRAMMATICAL SYMBOLS AROUND THE BOOK */}
-            <div className="absolute -top-3 left-6 px-2.5 py-1 rounded-lg bg-white border border-slate-300 shadow-md font-serif font-black text-base pointer-events-none animate-float-slow z-30" style={{ color: '#000000' }}>
-              ✦ Syntax
-            </div>
-
-            <div className="absolute top-10 right-4 px-2.5 py-1 rounded-lg bg-white border border-slate-300 shadow-md font-mono font-black text-base pointer-events-none animate-float-reverse z-30" style={{ color: '#000000' }}>
-              /ɪŋɡlɪʃ/
-            </div>
-
-            <div className="absolute top-1/4 -left-4 sm:-left-8 px-3 py-1.5 rounded-xl bg-white border border-slate-300 shadow-lg font-mono text-xs font-black pointer-events-none animate-float-slow z-30 backdrop-blur-md hidden sm:flex items-center gap-1.5" style={{ color: '#000000' }}>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span style={{ color: '#000000' }}>Subject + Verb + Object</span>
-            </div>
-
-            <div className="absolute bottom-12 -right-2 sm:-right-6 px-3.5 py-1.5 rounded-xl bg-white border border-slate-300 shadow-lg font-serif text-xs font-black pointer-events-none animate-float-reverse z-30 backdrop-blur-md hidden sm:flex items-center gap-1.5" style={{ color: '#000000' }}>
-              <span className="text-amber-500">📜</span>
-              <span style={{ color: '#000000' }}>Metaphor & Simile</span>
-            </div>
-
-            <div className="absolute bottom-2 left-10 px-2.5 py-1 rounded-lg bg-white border border-slate-300 shadow-md font-mono font-black text-sm pointer-events-none animate-float-slow z-30" style={{ color: '#000000' }}>
-              Passive Voice
-            </div>
-
-            <div className="absolute -top-2 right-1/3 px-2.5 py-1 rounded-lg bg-white border border-slate-300 shadow-md font-serif font-black text-xs pointer-events-none animate-float-reverse z-30" style={{ color: '#000000' }}>
-              IELTS Band 8.5
-            </div>
+          <div className="lg:col-span-5 relative flex flex-col items-center justify-center py-2 select-none w-full">
 
             {/* REALISTIC 3D BOOK STAGE WITH PERSPECTIVE & SMOOTH INERTIAL OPEN/CLOSE */}
             <div
-              className="relative w-full max-w-[480px] sm:max-w-[530px] transition-all duration-700 cursor-pointer group"
+              className="relative w-full max-w-[340px] xs:max-w-[420px] sm:max-w-[500px] transition-all duration-700 cursor-pointer group mx-auto"
               onClick={() => setIsBookOpen(prev => !prev)}
               style={{
                 perspective: '1600px',
@@ -456,9 +429,9 @@ export default function EnglishHero({ onOpenBooking, onOpenVideoDemo }) {
               </div>
 
               {/* SMOOTH INTERACTIVE TOGGLE BUTTON */}
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-indigo-700 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 transition-colors">
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                 <RotateCw size={14} className="group-hover:rotate-180 transition-transform duration-700" />
-                <span>{isBookOpen ? 'Click Book to Close 📖' : 'Click Book to Open 📖'}</span>
+                <span>{isBookOpen ? 'Click Book to Close' : 'Click Book to Open'}</span>
               </div>
 
             </div>

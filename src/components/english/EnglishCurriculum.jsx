@@ -625,10 +625,10 @@ const ACADEMIC_MODULES = [
   },
   {
     id: 'eng-comprehension',
-    name: 'Reading Comprehension & Précis',
+    name: 'Reading Comprehension & Precis',
     category: 'Critical Thinking',
     image: 'https://images.unsplash.com/photo-1471970471555-19d4b113e9ed?q=80&w=600&auto=format&fit=crop',
-    desc: 'Fast reading strategies, skimming & scanning unseen passages, note-making blueprints, précis drafting, and inference-based question solving.'
+    desc: 'Fast reading strategies, skimming & scanning unseen passages, note-making blueprints, precis drafting, and inference-based question solving.'
   },
   {
     id: 'eng-writing',
