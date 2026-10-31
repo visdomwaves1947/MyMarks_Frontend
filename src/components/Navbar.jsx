@@ -532,16 +532,16 @@ export default function Navbar({
               )}
 
 
-              {/* User Account / Professional Profile Navigation Action */}
+              {/* User Account / Profile Navigation Action (Compact Icon Only to keep navbar UI balanced & responsive) */}
               {currentUser ? (
                 <button
                   onClick={() => navigate(isAdminUser ? "/admin" : "/profile")}
-                  className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs hover:shadow transition-all duration-200 cursor-pointer group shrink-0"
-                  title={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
+                  className="relative p-0.5 rounded-full hover:ring-2 hover:ring-blue-500/60 dark:hover:ring-blue-400/60 transition-all duration-200 cursor-pointer shrink-0 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  title={currentUser.name ? `${currentUser.name} • View Profile` : (isAdminUser ? "Admin Panel" : "View Profile")}
                   aria-label={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
                 >
-                  {/* Clean Monogram Avatar with Status Indicator */}
-                  <div className="relative shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-2xs ring-1 ring-white dark:ring-slate-800">
+                  {/* Clean Monogram / Account Avatar with Online Status Indicator */}
+                  <div className="relative shrink-0 flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs sm:text-[13px] font-bold shadow-sm ring-1.5 ring-white dark:ring-slate-800 group-hover:shadow-md transition-shadow">
                     {currentUser.name
                       ? currentUser.name
                           .trim()
@@ -550,25 +550,9 @@ export default function Navbar({
                           .slice(0, 2)
                           .join("")
                           .toUpperCase()
-                      : "ST"}
-                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900"></span>
+                      : <User size={16} className="text-white" />}
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900"></span>
                   </div>
-
-                  {/* Clean Professional Typography */}
-                  <div className="flex flex-col text-left leading-tight hidden sm:flex max-w-[150px] md:max-w-[190px]">
-                    <span className="text-[12.5px] font-bold text-slate-950 dark:text-white truncate tracking-tight group-hover:text-blue-600 transition-colors">
-                      {currentUser.name || "Student"}
-                    </span>
-                    <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400 truncate">
-                      {currentUser.role || (isAdminUser ? "admin" : "Student Scholar")}
-                    </span>
-                  </div>
-
-                  {/* Subtle navigation arrow */}
-                  <ChevronRight
-                    size={13}
-                    className="text-slate-500 group-hover:text-slate-900 dark:group-hover:text-white group-hover:translate-x-0.5 transition-all hidden sm:inline shrink-0"
-                  />
                 </button>
               ) : (
                 /* Clean Simple Sign In / Sign Up Button (Gradient Blue) */
