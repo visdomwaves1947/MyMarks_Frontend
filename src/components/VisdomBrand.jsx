@@ -27,13 +27,16 @@ export function VisdomBrand({ onClick, className = "" }) {
               <stop offset="100%" stopColor="#fafafa" />
             </linearGradient>
 
-            {/* 3. Luminous Light Gold & Silver Rim Gradient (Bright, Clean, HD) */}
-            <linearGradient id="gold3DRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="25%" stopColor="#fef9c3" />
-              <stop offset="50%" stopColor="#fde68a" />
-              <stop offset="75%" stopColor="#fef08a" />
-              <stop offset="100%" stopColor="#e0f2fe" />
+            {/* 3. Footer-Matching Concentric Blue Circle Gradients (from-blue-600 via-sky-500 to-blue-600) */}
+            <linearGradient id="footerBlueCircleGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#2563eb" />
+              <stop offset="50%" stopColor="#0ea5e9" />
+              <stop offset="100%" stopColor="#2563eb" />
+            </linearGradient>
+
+            <linearGradient id="footerBlueRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38bdf8" />
+              <stop offset="100%" stopColor="#60a5fa" />
             </linearGradient>
 
             {/* 9. Vivid Sapphire Royal Blue Gradient for MARKS */}
@@ -77,14 +80,14 @@ export function VisdomBrand({ onClick, className = "" }) {
           />
 
           {/* ======================================================== */}
-          {/* LAYER 2: 3D LUMINOUS LIGHT CIRCULAR MEDALLION            */}
+          {/* LAYER 2: FOOTER-MATCHING CONCENTRIC BLUE CIRCLE MEDALLION */}
           {/* ======================================================== */}
           <g filter="url(#medallionShadow)">
-            {/* Outer Luminous Light Ring */}
-            <circle cx="144" cy="122" r="76" fill="url(#gold3DRimGrad)" stroke="#e2e8f0" strokeWidth="1.2" />
+            {/* Outer Concentric Blue Ring matching Footer (from-blue-600 via-sky-500 to-blue-600) */}
+            <circle cx="144" cy="122" r="76" fill="url(#footerBlueCircleGrad)" stroke="#60a5fa" strokeWidth="1.2" strokeOpacity="0.5" />
 
-            {/* Inner Light Bevel Edge */}
-            <circle cx="144" cy="122" r="64" fill="none" stroke="#fde047" strokeWidth="1.6" strokeOpacity="0.8" />
+            {/* Inner Slender Sky Blue Ring matching Footer ring-1 ring-blue-400/30 */}
+            <circle cx="144" cy="122" r="66" fill="none" stroke="url(#footerBlueRimGrad)" strokeWidth="1.8" strokeOpacity="0.9" />
 
             {/* Pure HD White Center Hub */}
             <circle cx="144" cy="122" r="62" fill="#ffffff" />
