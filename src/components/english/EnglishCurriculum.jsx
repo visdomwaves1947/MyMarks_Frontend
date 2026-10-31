@@ -23,8 +23,8 @@ const TOPICS_DATA = [
     number: '1',
     name: 'Prose',
     description: 'Line-by-line explanation, Lincoln’s inspiring message, Bachendri Pal’s summit, technology impacts, disaster response, and nation building.',
-    color: 'from-amber-600 to-orange-600',
-    badgeColor: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+    color: 'from-blue-600 to-sky-600',
+    badgeColor: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     videos: [
       {
         id: '1-1',
@@ -103,8 +103,8 @@ const TOPICS_DATA = [
     number: '2',
     name: 'Poetry',
     description: 'Poetic devices, central themes, line-by-line stanza analysis, Rabindranath Tagore, Langston Hughes, and philosophical reflections.',
-    color: 'from-rose-600 to-pink-600',
-    badgeColor: 'bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+    color: 'from-blue-600 to-sky-600',
+    badgeColor: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     videos: [
       {
         id: '2-1',
@@ -183,8 +183,8 @@ const TOPICS_DATA = [
     number: '3',
     name: 'Extensive Reading',
     description: 'Engaging short stories & drama by R. K. Narayan, O. Henry, subtle irony, characters, moral dilemmas, and play dialogues.',
-    color: 'from-emerald-600 to-teal-600',
-    badgeColor: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+    color: 'from-blue-600 to-sky-600',
+    badgeColor: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     videos: [
       {
         id: '3-1',
@@ -264,7 +264,7 @@ const TOPICS_DATA = [
     number: '4',
     name: 'Grammar',
     description: 'Comprehensive syntax rules, Parts of Speech, Articles, Prepositions, Voice, Reported Speech, Concord, and Error Correction.',
-    color: 'from-blue-600 to-indigo-600',
+    color: 'from-blue-600 to-sky-600',
     badgeColor: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     videos: [
       {
@@ -460,8 +460,8 @@ const TOPICS_DATA = [
     number: '5',
     name: 'Communication Skills',
     description: 'Phonetics, consonant and vowel charts, syllable stress, silent letters, and visual information transfer for exam excellence.',
-    color: 'from-purple-600 to-indigo-600',
-    badgeColor: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+    color: 'from-blue-600 to-sky-600',
+    badgeColor: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
     videos: [
       {
         id: '5-1-1',
@@ -748,28 +748,28 @@ export default function EnglishCurriculum({ onEnroll }) {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 text-xs sm:text-sm font-bold mb-4 border border-amber-200/80 dark:border-amber-800/80 shadow-xs">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-800 dark:text-blue-300 text-xs sm:text-sm font-semibold mb-3 border border-blue-200/80 dark:border-blue-800/80 shadow-xs">
             <Tv size={15} />
             <span>AP & TS Intermediate English Video Lectures & Curriculum</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-2.5 tracking-tight">
             English Chapter-Wise Video Lectures
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg font-medium">
+          <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base font-normal max-w-2xl mx-auto">
             Explore chapter-by-chapter summaries, line-by-line poem analysis, non-detailed stories, comprehensive grammar rules, and communication skills for a guaranteed 100/100.
           </p>
 
           {/* Sample Demo Notice Banner */}
-          <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600/70 shadow-md text-amber-950 dark:text-amber-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/70 shadow-xs text-blue-950 dark:text-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
             <div className="flex items-center sm:items-start gap-3">
-              <div className="p-2.5 rounded-xl bg-amber-500 text-white shrink-0 shadow-sm">
+              <div className="p-2.5 rounded-xl bg-blue-600 text-white shrink-0 shadow-xs">
                 <Sparkles size={20} className="animate-pulse" />
               </div>
               <div>
-                <h4 className="text-sm sm:text-base font-extrabold text-amber-900 dark:text-amber-200">
+                <h4 className="text-sm sm:text-base font-bold text-blue-900 dark:text-blue-200">
                   Sample Demo Video Lectures
                 </h4>
-                <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300/90 mt-0.5 leading-relaxed">
+                <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-300/90 mt-0.5 leading-relaxed">
                   These are curated sample demo lectures. <strong>Enroll now</strong> to get full access to detailed line-by-line explanations, grammar worksheets, and live 1-on-1 doubt clearing!
                 </p>
               </div>
@@ -777,7 +777,7 @@ export default function EnglishCurriculum({ onEnroll }) {
             
             <button
               onClick={() => onEnroll && onEnroll('English Full Course - Complete 1st Year Access')}
-              className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-amber-500/30 transition-all hover:scale-105 cursor-pointer shrink-0 inline-flex items-center gap-1.5"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer shrink-0 inline-flex items-center gap-1.5"
             >
               <span>Enroll Now</span>
               <ArrowRight size={15} />
@@ -790,7 +790,7 @@ export default function EnglishCurriculum({ onEnroll }) {
               onClick={() => setActiveView('lectures')}
               className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 activeView === 'lectures'
-                  ? 'bg-amber-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -801,7 +801,7 @@ export default function EnglishCurriculum({ onEnroll }) {
               onClick={() => setActiveView('modules')}
               className={`px-4 sm:px-5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
                 activeView === 'modules'
-                  ? 'bg-amber-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -822,7 +822,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                   onClick={() => setSelectedTopicId('all')}
                   className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                     selectedTopicId === 'all' && !isSearching
-                      ? 'bg-amber-600 text-white shadow-md shadow-amber-600/25 scale-[1.02]'
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]'
                       : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`}
                 >
@@ -836,7 +836,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                       onClick={() => setSelectedTopicId(topic.id)}
                       className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                         isActive
-                          ? 'bg-amber-600 text-white shadow-md shadow-amber-600/25 scale-[1.02]'
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 scale-[1.02]'
                           : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
@@ -854,7 +854,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                   placeholder="Search chapter or grammar topic (e.g. Lincoln, Voice, Articles, Tenses...)"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all placeholder:text-slate-400 shadow-xs"
+                  className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400 shadow-xs"
                 />
                 {searchQuery && (
                   <button 
@@ -870,16 +870,16 @@ export default function EnglishCurriculum({ onEnroll }) {
 
             {/* Search Results Notification Banner */}
             {isSearching && (
-              <div className="mb-6 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 flex items-center justify-between text-xs sm:text-sm">
-                <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-medium">
-                  <Search size={14} className="text-amber-600 dark:text-amber-400" />
+              <div className="mb-6 px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 flex items-center justify-between text-xs sm:text-sm">
+                <div className="flex items-center gap-2 text-blue-900 dark:text-blue-200 font-medium">
+                  <Search size={14} className="text-blue-600 dark:text-blue-400" />
                   <span>
-                    Found <strong className="font-bold text-amber-700 dark:text-amber-300">{filteredVideos.length}</strong> related {filteredVideos.length === 1 ? 'lecture' : 'lectures'} for "<em>{searchQuery}</em>"
+                    Found <strong className="font-bold text-blue-700 dark:text-blue-300">{filteredVideos.length}</strong> related {filteredVideos.length === 1 ? 'lecture' : 'lectures'} for "<em>{searchQuery}</em>"
                   </span>
                 </div>
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="text-xs text-amber-600 dark:text-amber-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                  className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
                 >
                   Clear filter <X size={12} />
                 </button>
@@ -896,7 +896,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                 </p>
                 <button
                   onClick={() => { setSearchQuery(''); setSelectedTopicId('all'); }}
-                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-colors cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer"
                 >
                   Reset Search & View All ({ALL_VIDEOS.length})
                 </button>
@@ -933,7 +933,7 @@ export default function EnglishCurriculum({ onEnroll }) {
 
                         {/* Chapter / Topic Code Badge */}
                         <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/60 text-white font-mono text-xs font-bold border border-white/10 flex items-center gap-1.5 shadow-sm">
-                          <Layers size={12} className="text-amber-400" />
+                          <Layers size={12} className="text-blue-400" />
                           <span>Topic {video.code}</span>
                         </div>
 
@@ -955,23 +955,23 @@ export default function EnglishCurriculum({ onEnroll }) {
                       <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between">
                         <div>
                           {/* Topic Name Breadcrumb */}
-                          <div className="text-[11px] font-bold tracking-wider uppercase text-amber-600 dark:text-amber-400 mb-1.5 flex items-center gap-1">
+                          <div className="text-[11px] font-bold tracking-wider uppercase text-blue-600 dark:text-blue-400 mb-1.5 flex items-center gap-1">
                             <span>{video.topicName}</span>
                           </div>
 
                           {/* Video Title */}
                           <h3 
                             onClick={() => setActiveVideo(video)}
-                            className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 hover:text-amber-600 dark:hover:text-amber-400 transition-colors cursor-pointer leading-snug mb-2"
+                            className="text-sm sm:text-base font-semibold text-slate-900 dark:text-white truncate line-clamp-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer leading-snug mb-2"
                             title={video.title}
                           >
-                            <span className="text-amber-600 dark:text-amber-400 font-extrabold mr-1.5">{video.code}</span>
+                            <span className="text-blue-600 dark:text-blue-400 font-bold mr-1.5">{video.code}</span>
                             {video.title}
                           </h3>
 
                           {/* Matching Keyword Indicator tag if matched via search */}
                           {isSearching && video.matchedKeyword && (
-                            <div className="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-[10px] font-semibold border border-amber-200/60 dark:border-amber-800/60 max-w-full truncate">
+                            <div className="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-semibold border border-blue-200/60 dark:border-blue-800/60 max-w-full truncate">
                               <Tag size={10} className="shrink-0" />
                               <span className="truncate">Matches: {video.matchedKeyword}</span>
                             </div>
@@ -982,7 +982,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                         <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2">
                           <button
                             onClick={() => setActiveVideo(video)}
-                            className="flex-1 py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-amber-600/20"
+                            className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm shadow-blue-600/20"
                           >
                             <Play size={14} className="fill-white" /> Watch Now
                           </button>
@@ -1023,7 +1023,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                     <div className="text-[10px] font-extrabold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
                       {mod.category}
                     </div>
-                    <h4 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                    <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2 truncate line-clamp-1">
                       {mod.name}
                     </h4>
                     <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-3">
@@ -1034,7 +1034,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                   <div className="pt-4 flex gap-2">
                     <button
                       onClick={() => onEnroll && onEnroll(`English: ${mod.name}`)}
-                      className="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+                      className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer"
                     >
                       <span>Enroll in Module</span>
                       <ArrowRight size={16} />
@@ -1047,18 +1047,18 @@ export default function EnglishCurriculum({ onEnroll }) {
         )}
 
         {/* Bottom Doubt Clearing & Live Tuition CTA */}
-        <div className="mt-16 bg-gradient-to-r from-amber-950 via-slate-900 to-amber-950 rounded-3xl p-6 sm:p-10 border border-amber-700/30 text-white relative overflow-hidden shadow-xl">
-          <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="mt-16 bg-gradient-to-r from-blue-950 via-slate-900 to-blue-950 rounded-3xl p-6 sm:p-10 border border-blue-700/30 text-white relative overflow-hidden shadow-xl">
+          <div className="absolute -right-16 -bottom-16 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-amber-200 text-xs font-semibold mb-3">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-blue-200 text-xs font-semibold mb-3">
                 <CheckCircle2 size={13} className="text-emerald-400" />
                 <span>Live 1-on-1 Faculty Mentorship</span>
               </div>
-              <h3 className="text-2xl sm:text-3xl font-black mb-2 tracking-tight">
+              <h3 className="text-2xl sm:text-3xl font-bold mb-2 tracking-tight">
                 Need Personal Mentorship or Have Doubts in English Grammar & Literature?
               </h3>
-              <p className="text-amber-200/80 text-sm sm:text-base max-w-2xl">
+              <p className="text-blue-200/80 text-sm sm:text-base max-w-2xl">
                 Get 1-on-1 doubt clarification, answer-script presentation templates, error-free grammar drills, and line-by-line textbook analysis to score a guaranteed 100/100 in Board English.
               </p>
             </div>
@@ -1066,7 +1066,7 @@ export default function EnglishCurriculum({ onEnroll }) {
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto shrink-0">
               <button
                 onClick={() => onEnroll && onEnroll('English 1-on-1 Live Doubt & Board Coaching')}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-amber-500/25 cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 shadow-lg shadow-blue-600/25 cursor-pointer"
               >
                 <span>Book 1-on-1 Doubt Session</span>
                 <ArrowRight size={16} />
@@ -1090,7 +1090,7 @@ export default function EnglishCurriculum({ onEnroll }) {
             {/* Modal Header */}
             <div className="px-5 py-4 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between gap-4">
               <div className="flex items-center gap-2.5 overflow-hidden">
-                <span className="px-2.5 py-1 rounded-lg bg-amber-600/30 text-amber-300 font-mono text-xs font-bold border border-amber-500/30 shrink-0">
+                <span className="px-2.5 py-1 rounded-lg bg-blue-600/30 text-blue-300 font-mono text-xs font-bold border border-blue-500/30 shrink-0">
                   Topic {activeVideo.code}
                 </span>
                 <h3 className="text-sm sm:text-base font-bold text-white truncate">
@@ -1130,7 +1130,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                 />
               ) : (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-gradient-to-b from-slate-900 to-slate-950">
-                  <div className="w-16 h-16 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 mb-4">
+                  <div className="w-16 h-16 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-blue-400 mb-4">
                     <Feather size={28} />
                   </div>
                   <h4 className="text-xl font-bold mb-2">{activeVideo.title}</h4>
@@ -1153,7 +1153,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                         setActiveVideo(null);
                         if (onEnroll) onEnroll(`Request Notes for: ${current.title}`);
                       }}
-                      className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm inline-flex items-center gap-2 transition-colors"
+                      className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm inline-flex items-center gap-2 transition-colors"
                     >
                       <span>Request Faculty Notes</span>
                     </button>
@@ -1190,7 +1190,7 @@ export default function EnglishCurriculum({ onEnroll }) {
                   setActiveVideo(null);
                   if (onEnroll) onEnroll(`English Help: Topic ${current.code} - ${current.title}`);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
+                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
               >
                 <span>Ask Doubt in this Topic</span>
                 <ArrowRight size={14} />

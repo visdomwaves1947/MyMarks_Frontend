@@ -51,104 +51,104 @@ export default function EnglishHero({ onOpenBooking, onOpenVideoDemo }) {
           <div className="lg:col-span-7 text-center lg:text-left flex flex-col justify-center">
 
             {/* Main Heading */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[48px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] mb-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight mb-2.5">
               Master English.{' '}
-              <span className="bg-gradient-to-r from-amber-600 via-indigo-600 to-teal-600 dark:from-amber-400 dark:via-indigo-400 dark:to-teal-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 bg-clip-text text-transparent">
                 Express with Confidence.
               </span>
             </h1>
 
             {/* Supporting Description Text */}
-            <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 font-normal leading-relaxed mb-5 max-w-2xl mx-auto lg:mx-0">
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 font-normal leading-relaxed mb-4 max-w-2xl mx-auto lg:mx-0">
               Learn English literature, grammar, essay writing, comprehension, and communication skills through practice questions, mock tests, and previous-year question papers designed to help students score 100/100.
             </p>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 mb-5">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2.5 mb-4">
               {/* Start Learning Button */}
               <button
                 onClick={handleStartLearning}
-                className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-sm sm:text-base shadow-xl shadow-indigo-600/25 hover:shadow-indigo-600/35 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 group cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-500 hover:to-sky-600 text-white font-semibold text-xs sm:text-sm shadow-md shadow-blue-600/20 hover:scale-[1.01] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Start Learning English</span>
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               {/* Explore Practice Button */}
               <button
                 onClick={handleExplorePractice}
-                className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-[#DFE7F2] dark:bg-[#131927] hover:bg-[#D4E0ED] dark:hover:bg-[#1A2338] text-slate-800 dark:text-slate-200 font-semibold text-sm sm:text-base border border-[#BAC9DC] dark:border-[#243048] shadow-xs flex items-center justify-center gap-2.5 transition-all group cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-blue-50 dark:hover:bg-slate-700 text-blue-700 dark:text-blue-300 font-semibold text-xs sm:text-sm border border-blue-200 dark:border-blue-800 shadow-2xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <BookOpen size={18} className="text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform" />
+                <BookOpen size={15} className="text-blue-600 dark:text-blue-400" />
                 <span>Explore Curriculum</span>
               </button>
             </div>
 
             {/* TELANGANA + ANDHRA PRADESH CURRICULUM SECTION */}
-            <div className="pt-4 border-t border-[#CAD8EA] dark:border-[#1E293B]">
-              <div className="flex items-center justify-between mb-2.5 px-1">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <GraduationCap size={16} className="text-indigo-600 dark:text-indigo-400" />
+            <div className="pt-3 border-t border-blue-200/60 dark:border-slate-800">
+              <div className="flex items-center justify-between mb-2 px-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <GraduationCap size={15} className="text-blue-600 dark:text-blue-400" />
                   State Board English Curriculums
                 </span>
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/80 px-2.5 py-0.5 rounded-full border border-indigo-200/80 dark:border-indigo-800/80 shadow-xs">
+                <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-900 shadow-2xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                   2025–26 Syllabus
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-w-2xl mx-auto lg:mx-0 text-left">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto lg:mx-0 text-left">
 
                 {/* Card 1: Telangana */}
                 <div
                   onClick={handleExplorePractice}
-                  className="relative p-3.5 sm:p-4 rounded-2xl bg-[#DFE7F2] dark:bg-[#111726] border border-[#BAC9DC] dark:border-indigo-900/60 hover:border-indigo-500 dark:hover:border-indigo-400 transition-all duration-300 shadow-sm hover:shadow-xl hover:-translate-y-1 group cursor-pointer flex flex-col justify-between"
+                  className="relative p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-all shadow-xs hover:shadow-md group cursor-pointer flex flex-col justify-between"
                 >
                   <div>
                     {/* Header: Icon, State Name & Board Badge */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center shadow-md shadow-indigo-500/30 group-hover:scale-110 transition-transform duration-300 shrink-0">
-                          <GraduationCap size={16} />
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                          <GraduationCap size={14} />
                         </div>
                         <div>
-                          <span className="text-[10.5px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block leading-none">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block leading-none">
                             Telangana
                           </span>
-                          <h2 className="text-sm font-black text-slate-900 dark:text-white leading-tight mt-0.5 group-hover:text-indigo-600 dark:group-hover:text-indigo-300 transition-colors">
+                          <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">
                             Govt. of Telangana
                           </h2>
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-extrabold text-indigo-800 dark:text-indigo-200 bg-indigo-100 dark:bg-indigo-900/60 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-700/80 shrink-0">
+                      <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-900 shrink-0">
                         TS BIE
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-700 dark:text-slate-300 font-normal leading-relaxed mb-2.5">
+                    <p className="text-[11.5px] text-slate-600 dark:text-slate-400 font-normal leading-relaxed mb-2">
                       Complete TS Intermediate English resources, prose, poetry, letter writing & grammar blueprints.
                     </p>
                   </div>
 
                   {/* Subject Tags & Indicator */}
-                  <div className="pt-2 border-t border-[#CAD8EA]/80 dark:border-slate-800">
-                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                      <span className="px-2 py-0.5 rounded-md bg-indigo-100/90 dark:bg-indigo-900/60 border border-indigo-300/80 dark:border-indigo-600/70 text-[10.5px] font-extrabold text-indigo-800 dark:text-indigo-200 shadow-2xs">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                      <span className="px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
                         Junior Inter English
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-indigo-100/90 dark:bg-indigo-900/60 border border-indigo-300/80 dark:border-indigo-600/70 text-[10.5px] font-extrabold text-indigo-800 dark:text-indigo-200 shadow-2xs">
+                      <span className="px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
                         Senior Inter English
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10.5px] font-bold text-indigo-700 dark:text-indigo-400 pt-0.5">
+                    <div className="flex items-center justify-between text-[10.5px] font-semibold text-blue-700 dark:text-blue-400 pt-0.5">
                       <span className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400"></span>
                         TS Board & CUET Ready
                       </span>
-                      <span className="flex items-center gap-0.5 text-xs text-indigo-600 dark:text-indigo-300 group-hover:translate-x-1 transition-transform">
-                        Explore <ArrowRight size={13} />
+                      <span className="flex items-center gap-0.5 text-xs text-blue-600 dark:text-blue-300 group-hover:translate-x-0.5 transition-transform">
+                        Explore <ArrowRight size={12} />
                       </span>
                     </div>
                   </div>
@@ -157,53 +157,53 @@ export default function EnglishHero({ onOpenBooking, onOpenVideoDemo }) {
                 {/* Card 2: Andhra Pradesh */}
                 <div
                   onClick={handleExplorePractice}
-                  className="relative p-3.5 sm:p-4 rounded-2xl bg-[#DFE7F2] dark:bg-[#111726] border border-[#BAC9DC] dark:border-emerald-900/60 hover:border-emerald-500 dark:hover:border-emerald-400 transition-all duration-300 shadow-sm hover:shadow-xl hover:-translate-y-1 group cursor-pointer flex flex-col justify-between"
+                  className="relative p-3.5 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 transition-all shadow-xs hover:shadow-md group cursor-pointer flex flex-col justify-between"
                 >
                   <div>
                     {/* Header: Icon, State Name & Board Badge */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/30 group-hover:scale-110 transition-transform duration-300 shrink-0">
-                          <GraduationCap size={16} />
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-500 text-white flex items-center justify-center shadow-xs shrink-0">
+                          <GraduationCap size={14} />
                         </div>
                         <div>
-                          <span className="text-[10.5px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block leading-none">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block leading-none">
                             Andhra Pradesh
                           </span>
-                          <h2 className="text-sm font-black text-slate-900 dark:text-white leading-tight mt-0.5 group-hover:text-emerald-600 dark:group-hover:text-emerald-300 transition-colors">
+                          <h2 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-tight mt-0.5">
                             Govt. of Andhra Pradesh
                           </h2>
                         </div>
                       </div>
 
-                      <span className="text-[10px] font-extrabold text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-700/80 shrink-0">
+                      <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-900 shrink-0">
                         BIEAP
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-700 dark:text-slate-300 font-normal leading-relaxed mb-2.5">
+                    <p className="text-[11.5px] text-slate-600 dark:text-slate-400 font-normal leading-relaxed mb-2">
                       Targeted AP syllabus modules, 100/100 scoring templates, phonetics guides & 10-year question banks.
                     </p>
                   </div>
 
                   {/* Subject Tags & Indicator */}
-                  <div className="pt-2 border-t border-[#CAD8EA]/80 dark:border-slate-800">
-                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-100/90 dark:bg-emerald-900/60 border border-emerald-300/80 dark:border-emerald-600/70 text-[10.5px] font-extrabold text-emerald-800 dark:text-emerald-200 shadow-2xs">
+                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex flex-wrap items-center gap-1 mb-1.5">
+                      <span className="px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
                         Junior Inter English
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-emerald-100/90 dark:bg-emerald-900/60 border border-emerald-300/80 dark:border-emerald-600/70 text-[10.5px] font-extrabold text-emerald-800 dark:text-emerald-200 shadow-2xs">
+                      <span className="px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[10px] font-semibold text-blue-700 dark:text-blue-300">
                         Senior Inter English
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400 pt-0.5">
+                    <div className="flex items-center justify-between text-[10.5px] font-semibold text-blue-700 dark:text-blue-400 pt-0.5">
                       <span className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-500 dark:bg-blue-400"></span>
                         AP Board Ready
                       </span>
-                      <span className="flex items-center gap-0.5 text-xs text-emerald-600 dark:text-emerald-300 group-hover:translate-x-1 transition-transform">
-                        Explore <ArrowRight size={13} />
+                      <span className="flex items-center gap-0.5 text-xs text-blue-600 dark:text-blue-300 group-hover:translate-x-0.5 transition-transform">
+                        Explore <ArrowRight size={12} />
                       </span>
                     </div>
                   </div>
