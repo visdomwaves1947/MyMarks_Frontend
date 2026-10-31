@@ -179,10 +179,10 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-3 md:p-5 lg:p-6 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-xl animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-x-hidden p-2 sm:p-3 md:p-5 lg:p-6 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-xl animate-fadeIn font-sans">
       {/* Modal Container */}
       <div 
-        className={`relative w-full ${
+        className={`relative w-full mx-auto ${
           currentStep === 'confirmed' 
             ? 'bg-[#DFE7F2] dark:!bg-[#0A1124]' 
             : 'bg-[#DFE7F2] dark:!bg-[#0B0F19]'
@@ -209,17 +209,17 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
 
         {/* STEP 1 & 2: Main Top Header Bar (Safe Layout with Zero Close Button Overlap) */}
         {currentStep !== 'confirmed' && (
-          <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-[#BAC9DC] dark:!border-slate-800/80 bg-[#DCE7F4]/90 dark:!bg-[#0B0F19]/90 backdrop-blur-md z-30 shrink-0">
+          <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-[#BAC9DC] dark:!border-slate-800/80 bg-[#DCE7F4]/90 dark:!bg-[#0B0F19]/90 backdrop-blur-md z-30 shrink-0 w-full overflow-hidden">
             {/* Header Badges */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100/90 border border-blue-300/80 text-blue-900 dark:!bg-blue-950/80 dark:!border-blue-500/40 dark:!text-blue-300 text-[10.5px] sm:text-xs font-bold shadow-xs">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100/90 border border-blue-300/80 text-blue-900 dark:!bg-blue-950/80 dark:!border-blue-500/40 dark:!text-blue-300 text-[10.5px] sm:text-xs font-bold shadow-xs shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping shrink-0" />
                 <span>Board Offer • ₹299 per Subject</span>
                 <span className="line-through text-slate-500 dark:!text-slate-400 text-[9.5px] hidden xs:inline">₹999</span>
                 <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black shrink-0">70% OFF</span>
               </div>
 
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-100/80 border border-blue-300/80 text-blue-950 dark:!bg-blue-900/50 dark:!border-blue-400/40 dark:!text-white text-[11px] sm:text-xs font-bold shadow-xs">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-100/80 border border-blue-300/80 text-blue-950 dark:!bg-blue-900/50 dark:!border-blue-400/40 dark:!text-white text-[11px] sm:text-xs font-bold shadow-xs shrink-0">
                 <SubjectIcon size={13} className="text-blue-600 dark:!text-blue-400 shrink-0" />
                 <span className="uppercase">{detectedSubject.name}</span>
               </div>
@@ -249,7 +249,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
 
         {/* Mobile Segmented Tab Switcher (Visible ONLY on Mobile < md) */}
         {currentStep !== 'confirmed' && (
-          <div className="md:hidden px-3.5 py-2 bg-[#D2DFEE]/70 dark:!bg-[#0A1124] border-b border-[#BAC9DC] dark:!border-slate-800/80 flex gap-2 shrink-0">
+          <div className="md:hidden px-3.5 py-2 bg-[#D2DFEE]/70 dark:!bg-[#0A1124] border-b border-[#BAC9DC] dark:!border-slate-800/80 flex gap-2 shrink-0 w-full overflow-hidden">
             <button
               type="button"
               onClick={() => setMobileTab('matter')}
@@ -290,14 +290,16 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
 
         {/* STEP 1 & 2: Form & Payment Layout */}
         {currentStep !== 'confirmed' ? (
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-y-auto divide-y md:divide-y-0 md:divide-x divide-[#BAC9DC] dark:!divide-slate-800/80">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-y-auto overflow-x-hidden divide-y md:divide-y-0 md:divide-x divide-[#BAC9DC] dark:!divide-slate-800/80 w-full">
             {/* Left Panel: Hero & Value Proposition (Image 2 Matter) */}
-            <div className={`${mobileTab === 'matter' ? 'block' : 'hidden'} md:block md:col-span-5 bg-gradient-to-br from-[#DCE7F4] via-[#E8F0F9] to-[#DFE7F2] dark:!bg-none dark:!bg-[#0B0F19] dark:bg-gradient-to-br dark:from-[#0B0F19] dark:via-[#0F172A] dark:to-[#0B0F19] p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-start md:justify-between relative overflow-y-auto`}>
-              {/* Animated Floating Gradient Orbs */}
-              <div className="absolute -top-20 -left-20 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
-              <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
+            <div className={`${mobileTab === 'matter' ? 'block' : 'hidden'} md:block md:col-span-5 bg-gradient-to-br from-[#DCE7F4] via-[#E8F0F9] to-[#DFE7F2] dark:!bg-none dark:!bg-[#0B0F19] dark:bg-gradient-to-br dark:from-[#0B0F19] dark:via-[#0F172A] dark:to-[#0B0F19] p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-start md:justify-between relative overflow-y-auto overflow-x-hidden w-full min-w-0`}>
+              {/* Background Decorative Blur Orbs (Strictly clipped to prevent horizontal shift) */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-20 -left-20 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-indigo-600/15 rounded-full blur-3xl animate-pulse" />
+              </div>
 
-              <div className="relative z-10">
+              <div className="relative z-10 w-full min-w-0">
                 {/* Subject Category Pill - Ultra-Responsive Dual Badge */}
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-2.5 max-w-full">
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-100/80 border border-blue-300/80 text-blue-950 dark:!bg-blue-900/50 dark:!border-blue-400/40 dark:!text-white shadow-xs">
@@ -411,8 +413,8 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
             </div>
 
             {/* Right Panel: Interactive Form OR Payment Gateway */}
-            <div className={`${mobileTab === 'form' ? 'block' : 'hidden'} md:block md:col-span-7 bg-[#EBF0F7] dark:!bg-[#0F172A]/90 p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-start md:justify-center relative overflow-y-auto`}>
-              <div className="max-w-xl mx-auto w-full">
+            <div className={`${mobileTab === 'form' ? 'block' : 'hidden'} md:block md:col-span-7 bg-[#EBF0F7] dark:!bg-[#0F172A]/90 p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-start md:justify-center relative overflow-y-auto overflow-x-hidden w-full min-w-0`}>
+              <div className="max-w-xl mx-auto w-full min-w-0">
                 
                 {/* Mobile Quick Course Info Banner inside Form */}
                 <div className="md:hidden mb-3.5 p-2.5 rounded-xl bg-[#D2DFEE]/90 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:!border-slate-800 flex items-center justify-between shadow-xs">
