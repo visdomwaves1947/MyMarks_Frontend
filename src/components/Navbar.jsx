@@ -34,6 +34,9 @@ export default function Navbar({
   toggleTheme,
   onLockSite,
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -64,9 +67,6 @@ export default function Navbar({
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [location.pathname, location.search, location.hash]);
-
-  const navigate = useNavigate();
-  const location = useLocation();
 
   const handleLinkNavigation = (e, href) => {
     e.preventDefault();
