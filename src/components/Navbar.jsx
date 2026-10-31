@@ -52,8 +52,9 @@ export default function Navbar({
       const currentScrollY = window.scrollY;
       setScrolled(currentScrollY > 15);
 
-      // Automatically close mobile menu as soon as the user scrolls the page (up or down)
-      if (mobileMenuOpen) {
+      // Smooth auto-close: only close if mobile menu is open and the page scroll actually moved (> 8px)
+      // This prevents micro-vibrations, 0px ticks, or layout shifts from causing blinking
+      if (mobileMenuOpen && Math.abs(currentScrollY - lastScrollY) > 8) {
         setMobileMenuOpen(false);
       }
       lastScrollY = currentScrollY;
@@ -225,7 +226,7 @@ export default function Navbar({
   return (
     <>
       {/* Sticky Header Container containing Top Navbar & Main Navbar */}
-      <header className="sticky top-0 z-50 select-none shadow-sm">
+      <header className="sticky top-0 z-50 select-none shadow-sm relative">
         {/* Chinmaya Vidyalaya Style Top Bar */}
         <div
           className="h-9 px-3 sm:px-6 flex items-center justify-between text-xs text-blue-100 select-none relative z-50"
@@ -595,7 +596,10 @@ export default function Navbar({
               {/* Mobile Hamburger Toggle Button */}
               <button
                 type="button"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setMobileMenuOpen((prev) => !prev);
+                }}
                 className="lg:hidden p-1.5 rounded-lg text-slate-950 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 aria-label={mobileMenuOpen ? "Close Menu" : "Open Menu"}
               >
@@ -606,9 +610,12 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Mobile Slide-Down Drawer (Connected Directly to Navbar, Zero Gap) */}
+      {/* Mobile Slide-Down Drawer (Seamlessly Connected Directly Under Header, Zero Gap) */}
         {mobileMenuOpen && (
-          <div className="lg:hidden w-full bg-[#dbeafe] dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-b-2 border-blue-400/80 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100dvh-100px)] overscroll-contain py-4 px-4 select-none relative z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+          <div
+            className="lg:hidden absolute top-full left-0 right-0 w-full bg-[#dbeafe] dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-b-2 border-blue-400/80 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100dvh-95px)] overscroll-contain py-4 px-4 select-none z-50 animate-in fade-in slide-in-from-top-2 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Mobile Search */}
             <form
               onSubmit={handleSearchSubmit}
@@ -825,7 +832,6 @@ export default function Navbar({
         <div
           className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
           onClick={() => setMobileMenuOpen(false)}
-          onTouchStart={() => setMobileMenuOpen(false)}
           onTouchMove={() => setMobileMenuOpen(false)}
           aria-hidden="true"
         />
