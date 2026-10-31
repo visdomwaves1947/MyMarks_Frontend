@@ -55,7 +55,7 @@ export function VisdomBrand({ onClick, className = "" }) {
 
             {/* 11. Drop Shadows */}
             <filter id="medallionShadow" x="-25%" y="-25%" width="150%" height="150%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3.5" floodColor="#0284c7" floodOpacity="0.12" />
+              <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" floodColor="#0284c7" floodOpacity="0.15" />
             </filter>
           </defs>
 
@@ -80,25 +80,35 @@ export function VisdomBrand({ onClick, className = "" }) {
           />
 
           {/* ======================================================== */}
-          {/* LAYER 2: FOOTER-MATCHING CONCENTRIC BLUE CIRCLE MEDALLION */}
+          {/* LAYER 2: REFINED SLENDER BLUE CIRCLE (THIN, DECREASED)   */}
           {/* ======================================================== */}
           <g filter="url(#medallionShadow)">
-            {/* Outer Concentric Blue Ring matching Footer (from-blue-600 via-sky-500 to-blue-600) */}
-            <circle cx="144" cy="122" r="76" fill="url(#footerBlueCircleGrad)" stroke="#60a5fa" strokeWidth="1.2" strokeOpacity="0.5" />
+            {/* Outer Slender Blue Ring (from-blue-600 via-sky-500 to-blue-600, thin 2.5px ring) */}
+            <circle 
+              cx="144" 
+              cy="116" 
+              r="48" 
+              fill="url(#footerBlueCircleGrad)" 
+              stroke="#60a5fa" 
+              strokeWidth="0.8" 
+              strokeOpacity="0.6" 
+            />
 
-            {/* Inner Slender Sky Blue Ring matching Footer ring-1 ring-blue-400/30 */}
-            <circle cx="144" cy="122" r="66" fill="none" stroke="url(#footerBlueRimGrad)" strokeWidth="1.8" strokeOpacity="0.9" />
+            {/* Inner Crisp White Hub */}
+            <circle 
+              cx="144" 
+              cy="116" 
+              r="45.5" 
+              fill="#ffffff" 
+            />
 
-            {/* Pure HD White Center Hub */}
-            <circle cx="144" cy="122" r="62" fill="#ffffff" />
-
-            {/* MyMarks Official Logo Emblem Inside */}
+            {/* MyMarks Official Logo Emblem Inside (Clean, Decreased Size) */}
             <image 
               href="/logomymarks.png" 
-              x="87" 
-              y="65" 
-              width="114" 
-              height="114" 
+              x="110" 
+              y="82" 
+              width="68" 
+              height="68" 
               preserveAspectRatio="xMidYMid meet" 
               style={{ imageRendering: 'high-quality' }}
             />
