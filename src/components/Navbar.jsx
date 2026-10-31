@@ -41,13 +41,29 @@ export default function Navbar({
   const [scrolled, setScrolled] = useState(false);
   const dropdownTimeoutRef = useRef(null);
 
+  // Track page scroll: update navbar shadow state & automatically close mobile menu on scroll
   useEffect(() => {
+    let lastScrollY = window.scrollY;
+
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 15);
+
+      // Automatically close mobile menu as soon as the user scrolls the page (up or down)
+      if (mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+      lastScrollY = currentScrollY;
     };
-    window.addEventListener("scroll", handleScroll);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [mobileMenuOpen]);
+
+  // Automatically close mobile menu when route, query, or hash changes
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location.pathname, location.search, location.hash]);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -93,17 +109,7 @@ export default function Navbar({
     }
   };
 
-  // Lock body scroll when mobile menu is open
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [mobileMenuOpen]);
+
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -590,7 +596,7 @@ export default function Navbar({
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-1.5 rounded-lg text-slate-950 hover:bg-black/10 transition-colors cursor-pointer"
+                className="lg:hidden p-1.5 rounded-lg text-slate-950 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer"
                 aria-label={mobileMenuOpen ? "Close Menu" : "Open Menu"}
               >
                 {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -599,196 +605,230 @@ export default function Navbar({
           </div>
         </div>
       </div>
-    </header>
 
-      {/* Mobile Slide-Down Drawer */}
-      {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[98px] xs:top-[104px] sm:top-[118px] md:top-[122px] z-40 bg-[#dbeafe] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 border-b border-blue-300 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100vh-120px)] py-4 px-4 select-none">
-          {/* Mobile Search */}
-          <form
-            onSubmit={handleSearchSubmit}
-            className="relative flex items-center mb-4"
-          >
-            <input
-              type="text"
-              placeholder="Search curriculum, labs, lessons..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-2.5 pl-3.5 pr-9 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium"
-            />
-            <button
-              type="submit"
-              className="absolute right-3 text-slate-400 hover:text-blue-600"
+      {/* Mobile Slide-Down Drawer (Connected Directly to Navbar, Zero Gap) */}
+        {mobileMenuOpen && (
+          <div className="lg:hidden w-full bg-[#dbeafe] dark:bg-slate-900 text-slate-900 dark:text-slate-100 border-b-2 border-blue-400/80 dark:border-slate-800 shadow-2xl overflow-y-auto max-h-[calc(100dvh-100px)] overscroll-contain py-4 px-4 select-none relative z-50 animate-in fade-in slide-in-from-top-1 duration-150">
+            {/* Mobile Search */}
+            <form
+              onSubmit={handleSearchSubmit}
+              className="relative flex items-center mb-3"
             >
-              <Search size={16} />
-            </button>
-          </form>
+              <input
+                type="text"
+                placeholder="Search curriculum, labs, lessons..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl py-2.5 pl-3.5 pr-9 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium shadow-xs"
+              />
+              <button
+                type="submit"
+                className="absolute right-3 text-slate-400 hover:text-blue-600"
+              >
+                <Search size={16} />
+              </button>
+            </form>
 
-          {/* Mobile Navigation List */}
-          <div className="space-y-1">
-            {navLinks.map((link, idx) => {
-              const hasDropdown = Boolean(link.dropdown || link.sections);
-              return (
-                <div
-                  key={idx}
-                  className="border-b border-slate-100 dark:border-slate-800/80 last:border-b-0 pb-1"
-                >
-                  {hasDropdown ? (
-                    <div>
-                      <button
-                        onClick={() => toggleMobileDropdown(idx)}
-                        className="w-full flex items-center justify-between py-2 px-2 text-sm font-medium text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      >
-                        <span>{link.name}</span>
-                        <ChevronDown
-                          size={15}
-                          className={`transition-transform duration-200 text-slate-400 ${mobileDropdowns[idx] ? "rotate-180 text-blue-600" : ""}`}
-                        />
-                      </button>
-                      {mobileDropdowns[idx] && (
-                        <div className="pl-3 pr-2 pb-2 space-y-2.5 bg-blue-50/50 dark:bg-blue-950/30 rounded-xl p-2.5 my-1 border border-blue-100 dark:border-blue-950/50">
-                          {link.sections ? (
-                            <>
-                              {link.sections.map((section, secIdx) => (
-                                <div key={secIdx} className="space-y-1">
-                                  <div className="text-[10px] font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider px-2 pt-1 border-b border-blue-200/50 dark:border-blue-900/40 pb-1">
-                                    {section.title}
+            {/* Mobile Navigation List */}
+            <div className="space-y-1">
+              {navLinks.map((link, idx) => {
+                const hasDropdown = Boolean(link.dropdown || link.sections);
+                return (
+                  <div
+                    key={idx}
+                    className="border-b border-blue-200/50 dark:border-slate-800/80 last:border-b-0 pb-1"
+                  >
+                    {hasDropdown ? (
+                      <div>
+                        <button
+                          onClick={() => toggleMobileDropdown(idx)}
+                          className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl text-sm font-semibold text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/60 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                        >
+                          <span>{link.name}</span>
+                          <ChevronDown
+                            size={16}
+                            className={`transition-transform duration-200 text-slate-500 dark:text-slate-400 ${mobileDropdowns[idx] ? "rotate-180 text-blue-600 dark:text-blue-400" : ""}`}
+                          />
+                        </button>
+                        {mobileDropdowns[idx] && (
+                          <div className="pl-3 pr-2 pb-2 space-y-2.5 bg-blue-100/70 dark:bg-blue-950/40 rounded-xl p-2.5 my-1 border border-blue-200 dark:border-blue-900/50">
+                            {link.sections ? (
+                              <>
+                                {link.sections.map((section, secIdx) => (
+                                  <div key={secIdx} className="space-y-1">
+                                    <div className="text-[10px] font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider px-2 pt-1 border-b border-blue-200/70 dark:border-blue-900/40 pb-1">
+                                      {section.title}
+                                    </div>
+                                    {section.items.map((sub, sIdx) => (
+                                      <a
+                                        key={sIdx}
+                                        href={sub.href}
+                                        onClick={(e) => {
+                                          setMobileMenuOpen(false);
+                                          handleLinkNavigation(e, sub.href);
+                                        }}
+                                        className="block py-1.5 px-2 text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/50 dark:hover:bg-slate-800/50 rounded-lg cursor-pointer"
+                                      >
+                                        <div className="font-semibold">• {sub.name}</div>
+                                        {sub.desc && (
+                                          <div className="text-[10px] text-slate-500 dark:text-slate-400 pl-3">
+                                            {sub.desc}
+                                          </div>
+                                        )}
+                                      </a>
+                                    ))}
                                   </div>
-                                  {section.items.map((sub, sIdx) => (
-                                    <a
-                                      key={sIdx}
-                                      href={sub.href}
-                                      onClick={(e) => {
-                                        setMobileMenuOpen(false);
-                                        handleLinkNavigation(e, sub.href);
-                                      }}
-                                      className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-                                    >
-                                      <div className="font-semibold">• {sub.name}</div>
-                                      {sub.desc && (
-                                        <div className="text-[10px] text-slate-400 dark:text-slate-500 pl-3">
-                                          {sub.desc}
-                                        </div>
-                                      )}
-                                    </a>
-                                  ))}
+                                ))}
+                                <div className="pt-1.5 border-t border-slate-200/80 dark:border-slate-800">
+                                  <a
+                                    href="/demo#courses"
+                                    onClick={(e) => {
+                                      setMobileMenuOpen(false);
+                                      handleLinkNavigation(e, "/demo#courses");
+                                    }}
+                                    className="block py-1 px-2 text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline"
+                                  >
+                                    → Explore All Intermediate Courses
+                                  </a>
                                 </div>
-                              ))}
-                              <div className="pt-1.5 border-t border-slate-200/60 dark:border-slate-800">
+                              </>
+                            ) : (
+                              link.dropdown?.map((sub, sIdx) => (
                                 <a
-                                  href="/demo#courses"
+                                  key={sIdx}
+                                  href={sub.href}
                                   onClick={(e) => {
                                     setMobileMenuOpen(false);
-                                    handleLinkNavigation(e, "/demo#courses");
+                                    handleLinkNavigation(e, sub.href);
                                   }}
-                                  className="block py-1 px-2 text-xs font-bold text-blue-600 dark:text-blue-400"
+                                  className="block py-1.5 px-2 text-xs font-medium text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
                                 >
-                                  → Explore All Intermediate Courses
+                                  • {sub.name}
                                 </a>
-                              </div>
-                            </>
-                          ) : (
-                            link.dropdown?.map((sub, sIdx) => (
-                              <a
-                                key={sIdx}
-                                href={sub.href}
-                                onClick={(e) => {
-                                  setMobileMenuOpen(false);
-                                  handleLinkNavigation(e, sub.href);
-                                }}
-                                className="block py-1.5 px-2 text-xs font-medium text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer"
-                              >
-                                • {sub.name}
-                              </a>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <a
-                      href={link.href}
-                      onClick={(e) => {
-                        setMobileMenuOpen(false);
-                        handleLinkNavigation(e, link.href);
-                      }}
-                      className={`block py-2 px-2 text-sm font-medium transition-colors cursor-pointer ${
-                        isLinkActive(link.href)
-                          ? "text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-950/40 rounded-lg"
-                          : "text-slate-700 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400"
-                      }`}
-                    >
-                      {link.name}
-                    </a>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mobile Action Buttons */}
-          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
-            {!currentUser ? (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  handleSignInClick();
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-500 hover:to-sky-600 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-xs transition-colors"
-              >
-                <User size={14} className="text-white" />
-                <span>Sign In / Sign Up</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  navigate(isAdminUser ? "/admin" : "/profile");
-                }}
-                title={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
-                aria-label={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
-                className="w-full py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between transition-colors shadow-2xs"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="relative flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-xs">
-                    {currentUser.name
-                      ? currentUser.name
-                          .trim()
-                          .split(" ")
-                          .map((n) => n[0])
-                          .slice(0, 2)
-                          .join("")
-                          .toUpperCase()
-                      : "ST"}
-                    <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900"></span>
+                              ))
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <a
+                        href={link.href}
+                        onClick={(e) => {
+                          setMobileMenuOpen(false);
+                          handleLinkNavigation(e, link.href);
+                        }}
+                        className={`block py-2.5 px-3 text-sm font-semibold transition-colors rounded-xl cursor-pointer ${
+                          isLinkActive(link.href)
+                            ? "text-blue-700 dark:text-blue-300 font-bold bg-white/80 dark:bg-blue-950/70 shadow-xs border border-blue-200/80 dark:border-blue-900/60"
+                            : "text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white/60 dark:hover:bg-slate-800/60"
+                        }`}
+                      >
+                        {link.name}
+                      </a>
+                    )}
                   </div>
-                  <div className="text-left">
-                    <div className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">
-                      {currentUser.name}
+                );
+              })}
+            </div>
+
+            {/* Mobile Action Buttons & Theme Controls */}
+            <div className="mt-4 pt-3 border-t border-blue-200/80 dark:border-slate-800 space-y-2">
+              {/* Theme Toggle Pill on mobile */}
+              <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-white/70 dark:bg-slate-800/70 border border-blue-200/60 dark:border-slate-700 shadow-2xs">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Appearance: {theme === "dark" ? "Dark Mode" : "Light Mode"}
+                </span>
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="relative flex items-center w-[50px] h-[26px] rounded-full bg-slate-900 dark:bg-slate-700 transition-colors focus:outline-none shadow-inner cursor-pointer shrink-0"
+                  aria-label="Toggle theme"
+                >
+                  <div
+                    className={`absolute top-[2px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-300 ease-out ${
+                      theme === "dark" ? "translate-x-[25px]" : "translate-x-[2px]"
+                    }`}
+                  />
+                  <div className="relative flex justify-between items-center w-full px-[5px] pointer-events-none">
+                    <Sun className={`w-3 h-3 ${theme === "dark" ? "text-slate-400" : "text-amber-500 font-bold"}`} />
+                    <Moon className={`w-3 h-3 ${theme === "dark" ? "text-indigo-400 font-bold" : "text-slate-400"}`} />
+                  </div>
+                </button>
+              </div>
+
+              {!currentUser ? (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleSignInClick();
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-sky-600 to-blue-700 hover:from-blue-500 hover:to-sky-600 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-98"
+                >
+                  <User size={15} className="text-white" />
+                  <span>Sign In / Sign Up</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate(isAdminUser ? "/admin" : "/profile");
+                  }}
+                  title={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
+                  aria-label={isAdminUser ? "Open Admin Panel" : "View Student Profile"}
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between transition-colors shadow-xs cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-xs">
+                      {currentUser.name
+                        ? currentUser.name
+                            .trim()
+                            .split(" ")
+                            .map((n) => n[0])
+                            .slice(0, 2)
+                            .join("")
+                            .toUpperCase()
+                        : "ST"}
+                      <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900"></span>
                     </div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                      {isAdminUser ? "Administrator • Open Admin Panel" : `${currentUser.role || "Student Scholar"} • View Profile`}
+                    <div className="text-left">
+                      <div className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">
+                        {currentUser.name}
+                      </div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                        {isAdminUser ? "Administrator • Open Admin Panel" : `${currentUser.role || "Student Scholar"} • View Profile`}
+                      </div>
                     </div>
                   </div>
-                </div>
-                <ChevronRight size={15} className="text-slate-400" />
-              </button>
-            )}
+                  <ChevronRight size={15} className="text-slate-400" />
+                </button>
+              )}
 
-            {onLockSite && (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onLockSite();
-                }}
-                className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
-              >
-                <Lock size={13} />
-                <span>Lock Website (Privacy Gate)</span>
-              </button>
-            )}
+              {onLockSite && (
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    onLockSite();
+                  }}
+                  className="w-full py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+                >
+                  <Lock size={13} />
+                  <span>Lock Website (Privacy Gate)</span>
+                </button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+      </header>
+
+      {/* Mobile Menu Backdrop (Tapping or dragging outside automatically closes the menu) */}
+      {mobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] transition-opacity duration-200"
+          onClick={() => setMobileMenuOpen(false)}
+          onTouchStart={() => setMobileMenuOpen(false)}
+          onTouchMove={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
       )}
     </>
   );
