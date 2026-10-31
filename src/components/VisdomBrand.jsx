@@ -9,8 +9,8 @@ export function VisdomBrand({ onClick, className = "" }) {
     >
       <div className="relative h-[50px] xs:h-[58px] sm:h-[72px] md:h-[82px] w-auto flex items-center">
         <svg 
-          viewBox="8 40 660 162" 
-          className="h-full w-auto block select-none overflow-visible filter drop-shadow-[0_3px_10px_rgba(0,0,0,0.10)]"
+          viewBox="8 40 580 162" 
+          className="h-full w-auto block select-none overflow-visible filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
           preserveAspectRatio="xMidYMid meet"
         >
           <defs>
@@ -73,7 +73,7 @@ export function VisdomBrand({ onClick, className = "" }) {
 
           {/* Main Pure White Bar - Right Curve Matches Left Curve Plainly (No Gold/Yellow) */}
           <path 
-            d="M 144 60 L 570 60 A 56 56 0 0 1 570 172 L 144 172 Z" 
+            d="M 144 60 L 515 60 A 56 56 0 0 1 515 172 L 144 172 Z" 
             fill="url(#mainWhiteBarGrad)" 
             stroke="#d4d4d8"
             strokeWidth="1.2"
@@ -115,65 +115,65 @@ export function VisdomBrand({ onClick, className = "" }) {
           </g>
 
           {/* ======================================================== */}
-          {/* LAYER 3: BRAND TYPOGRAPHY (HIGH CONTRAST & VISIBILITY)   */}
+          {/* LAYER 3: BRAND TYPOGRAPHY (NEAR LOGO, REFINED WEIGHT)    */}
           {/* ======================================================== */}
           
           <g className="select-none" style={{ textRendering: 'geometricPrecision' }}>
             {/* LINE 1: MY (Carbon Black) + MARKS (Sapphire Blue) */}
-            <g transform="translate(254, 98)">
-              {/* "MY" in Crisp Carbon Black */}
+            <g transform="translate(204, 98)">
+              {/* "MY" in Crisp Carbon Black (Decreased boldness: 600) */}
               <text 
                 x="0" 
                 y="0" 
                 fill="url(#designerMyBlackGrad)" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="800" 
-                fontSize="38" 
-                letterSpacing="1.2"
+                fontWeight="600" 
+                fontSize="36" 
+                letterSpacing="0.8"
               >
                 MY
               </text>
 
-              {/* "MARKS" in Vivid Sapphire Royal Blue */}
+              {/* "MARKS" in Vivid Sapphire Royal Blue (Decreased boldness: 650) */}
               <text 
-                x="64" 
+                x="58" 
                 y="0" 
                 fill="url(#marksSapphireGrad)" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="800" 
-                fontSize="38" 
-                letterSpacing="1.4"
+                fontWeight="650" 
+                fontSize="36" 
+                letterSpacing="1.0"
               >
                 MARKS
               </text>
             </g>
 
-            {/* LINE 2: Watch MyMarks, gain more marks (Ultra-Visible Subtitle, 100% Clear & Bold) */}
-            <g transform="translate(254, 125)">
+            {/* LINE 2: Watch MyMarks, gain more marks (Clean, Non-Bold font weight: 500) */}
+            <g transform="translate(204, 124)">
               <text 
                 x="0" 
                 y="0" 
-                fill="#09090b" 
+                fill="#334155" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="750" 
-                fontSize="18" 
-                letterSpacing="0.15"
+                fontWeight="500" 
+                fontSize="16.5" 
+                letterSpacing="0.1"
               >
                 Watch MyMarks, gain more marks
               </text>
             </g>
 
-            {/* LINE 3: powered by [icon] Visdom Waves (Large, Bold & Ultra-Crisp Visibility) */}
-            <g transform="translate(254, 153)">
+            {/* LINE 3: powered by [icon] Visdom Waves (Refined, Non-Bold weight: 500 & 600) */}
+            <g transform="translate(204, 151)">
               {/* "powered by" text */}
               <text 
                 x="0" 
                 y="0" 
-                fill="#1e293b" 
+                fill="#64748b" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="700" 
-                fontSize="15.5" 
-                letterSpacing="0.3"
+                fontWeight="500" 
+                fontSize="14.5" 
+                letterSpacing="0.2"
               >
                 powered by
               </text>
@@ -181,22 +181,22 @@ export function VisdomBrand({ onClick, className = "" }) {
               {/* Visdom Waves Cyan/Blue Logo */}
               <image 
                 href="/Visdomlogo.png" 
-                x="92" 
-                y="-15" 
-                width="19" 
-                height="19" 
+                x="80" 
+                y="-14" 
+                width="17" 
+                height="17" 
                 preserveAspectRatio="xMidYMid meet" 
               />
 
               {/* "Visdom Waves" text */}
               <text 
-                x="117" 
+                x="103" 
                 y="0" 
                 fill="#0284c7" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="800" 
-                fontSize="17.5" 
-                letterSpacing="0.3"
+                fontWeight="600" 
+                fontSize="16" 
+                letterSpacing="0.2"
               >
                 Visdom Waves
               </text>
