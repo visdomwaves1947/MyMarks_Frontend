@@ -65,43 +65,48 @@ export default function EnglishWhyChooseUs({ onOpenBooking }) {
   ];
 
   return (
-    <section className="py-20 sm:py-24 bg-white dark:bg-[#0B0F19] relative overflow-hidden border-b border-slate-200/80 dark:border-slate-800">
+    <section className="py-12 sm:py-16 bg-[#E6F0FA]/40 dark:bg-[#0B0F19] relative overflow-hidden border-b border-blue-100 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+        <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-900 text-blue-700 dark:text-blue-300 text-xs font-semibold uppercase tracking-wider mb-2.5">
+            <span>Core Highlights</span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-2">
             Why Thousands Choose English Learning Academy
           </h2>
-          <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 font-medium">
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal">
             The premier platform engineered to build impeccable English grammar, deep literary appreciation, 100/100 board scores, and articulate spoken fluency.
           </p>
         </div>
 
         {/* 12 Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+        <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5 sm:gap-4.5">
           {features.map((feature, idx) => (
             <div 
               key={idx}
-              className="bg-[#F8FAFC] dark:bg-[#131927] rounded-[20px] overflow-hidden border border-[#E2E8F0] dark:border-[#1E293B] shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 flex flex-col cursor-pointer group"
+              className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-blue-100 dark:border-slate-800 shadow-xs hover:shadow-md hover:border-blue-400 dark:hover:border-blue-600 transition-all flex flex-col cursor-pointer group"
               onClick={onOpenBooking}
             >
-              <div className="relative h-44 sm:h-48 overflow-hidden bg-slate-200 dark:bg-slate-800">
+              <div className="relative h-36 sm:h-40 overflow-hidden bg-slate-100 dark:bg-slate-800">
                 <img 
                   src={feature.image} 
                   alt={feature.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
               </div>
               
-              <div className="p-5 sm:p-6 flex-grow flex flex-col justify-center bg-white dark:bg-[#131927]">
-                <h3 className="text-[17px] font-bold text-slate-900 dark:text-white mb-2 leading-tight">
-                  {feature.title}
-                </h3>
-                <p className="text-[13px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                  {feature.subtitle}
-                </p>
+              <div className="p-4 flex-grow flex flex-col justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1 leading-snug line-clamp-1 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" title={feature.title}>
+                    {feature.title}
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed font-normal line-clamp-2">
+                    {feature.subtitle}
+                  </p>
+                </div>
               </div>
             </div>
           ))}

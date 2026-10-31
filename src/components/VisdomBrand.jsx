@@ -9,8 +9,8 @@ export function VisdomBrand({ onClick, className = "" }) {
     >
       <div className="relative h-[50px] xs:h-[58px] sm:h-[72px] md:h-[82px] w-auto flex items-center">
         <svg 
-          viewBox="8 40 660 162" 
-          className="h-full w-auto block select-none overflow-visible filter drop-shadow-[0_3px_10px_rgba(0,0,0,0.10)]"
+          viewBox="8 40 580 162" 
+          className="h-full w-auto block select-none overflow-visible filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.08)]"
           preserveAspectRatio="xMidYMid meet"
         >
           <defs>
@@ -27,13 +27,16 @@ export function VisdomBrand({ onClick, className = "" }) {
               <stop offset="100%" stopColor="#fafafa" />
             </linearGradient>
 
-            {/* 3. Luminous Light Gold & Silver Rim Gradient (Bright, Clean, HD) */}
-            <linearGradient id="gold3DRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="25%" stopColor="#fef9c3" />
-              <stop offset="50%" stopColor="#fde68a" />
-              <stop offset="75%" stopColor="#fef08a" />
-              <stop offset="100%" stopColor="#e0f2fe" />
+            {/* 3. Footer-Matching Concentric Blue Circle Gradients (from-blue-600 via-sky-500 to-blue-600) */}
+            <linearGradient id="footerBlueCircleGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#2563eb" />
+              <stop offset="50%" stopColor="#0ea5e9" />
+              <stop offset="100%" stopColor="#2563eb" />
+            </linearGradient>
+
+            <linearGradient id="footerBlueRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#38bdf8" />
+              <stop offset="100%" stopColor="#60a5fa" />
             </linearGradient>
 
             {/* 9. Vivid Sapphire Royal Blue Gradient for MARKS */}
@@ -52,7 +55,7 @@ export function VisdomBrand({ onClick, className = "" }) {
 
             {/* 11. Drop Shadows */}
             <filter id="medallionShadow" x="-25%" y="-25%" width="150%" height="150%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3.5" floodColor="#0284c7" floodOpacity="0.12" />
+              <feDropShadow dx="0" dy="1.5" stdDeviation="2.5" floodColor="#0284c7" floodOpacity="0.15" />
             </filter>
           </defs>
 
@@ -70,97 +73,107 @@ export function VisdomBrand({ onClick, className = "" }) {
 
           {/* Main Pure White Bar - Right Curve Matches Left Curve Plainly (No Gold/Yellow) */}
           <path 
-            d="M 144 60 L 570 60 A 56 56 0 0 1 570 172 L 144 172 Z" 
+            d="M 144 60 L 515 60 A 56 56 0 0 1 515 172 L 144 172 Z" 
             fill="url(#mainWhiteBarGrad)" 
             stroke="#d4d4d8"
             strokeWidth="1.2"
           />
 
           {/* ======================================================== */}
-          {/* LAYER 2: 3D LUMINOUS LIGHT CIRCULAR MEDALLION            */}
+          {/* LAYER 2: REFINED SLENDER BLUE CIRCLE (THIN, DECREASED)   */}
           {/* ======================================================== */}
           <g filter="url(#medallionShadow)">
-            {/* Outer Luminous Light Ring */}
-            <circle cx="144" cy="122" r="76" fill="url(#gold3DRimGrad)" stroke="#e2e8f0" strokeWidth="1.2" />
+            {/* Outer Slender Blue Ring (from-blue-600 via-sky-500 to-blue-600, thin 2.5px ring) */}
+            <circle 
+              cx="144" 
+              cy="116" 
+              r="48" 
+              fill="url(#footerBlueCircleGrad)" 
+              stroke="#60a5fa" 
+              strokeWidth="0.8" 
+              strokeOpacity="0.6" 
+            />
 
-            {/* Inner Light Bevel Edge */}
-            <circle cx="144" cy="122" r="64" fill="none" stroke="#fde047" strokeWidth="1.6" strokeOpacity="0.8" />
+            {/* Inner Crisp White Hub */}
+            <circle 
+              cx="144" 
+              cy="116" 
+              r="45.5" 
+              fill="#ffffff" 
+            />
 
-            {/* Pure HD White Center Hub */}
-            <circle cx="144" cy="122" r="62" fill="#ffffff" />
-
-            {/* MyMarks Official Logo Emblem Inside */}
+            {/* MyMarks Official Logo Emblem Inside (Clean, Decreased Size) */}
             <image 
               href="/logomymarks.png" 
-              x="87" 
-              y="65" 
-              width="114" 
-              height="114" 
+              x="110" 
+              y="82" 
+              width="68" 
+              height="68" 
               preserveAspectRatio="xMidYMid meet" 
               style={{ imageRendering: 'high-quality' }}
             />
           </g>
 
           {/* ======================================================== */}
-          {/* LAYER 3: BRAND TYPOGRAPHY (HIGH CONTRAST & VISIBILITY)   */}
+          {/* LAYER 3: BRAND TYPOGRAPHY (NEAR LOGO, REFINED WEIGHT)    */}
           {/* ======================================================== */}
           
           <g className="select-none" style={{ textRendering: 'geometricPrecision' }}>
             {/* LINE 1: MY (Carbon Black) + MARKS (Sapphire Blue) */}
-            <g transform="translate(254, 98)">
-              {/* "MY" in Crisp Carbon Black */}
+            <g transform="translate(204, 98)">
+              {/* "MY" in Crisp Carbon Black (Decreased boldness: 600) */}
               <text 
                 x="0" 
                 y="0" 
                 fill="url(#designerMyBlackGrad)" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="800" 
-                fontSize="38" 
-                letterSpacing="1.2"
+                fontWeight="600" 
+                fontSize="36" 
+                letterSpacing="0.8"
               >
                 MY
               </text>
 
-              {/* "MARKS" in Vivid Sapphire Royal Blue */}
+              {/* "MARKS" in Vivid Sapphire Royal Blue (Decreased boldness: 650) */}
               <text 
-                x="64" 
+                x="58" 
                 y="0" 
                 fill="url(#marksSapphireGrad)" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="800" 
-                fontSize="38" 
-                letterSpacing="1.4"
+                fontWeight="650" 
+                fontSize="36" 
+                letterSpacing="1.0"
               >
                 MARKS
               </text>
             </g>
 
-            {/* LINE 2: Watch MyMarks, gain more marks (Ultra-Visible Subtitle, 100% Clear & Bold) */}
-            <g transform="translate(254, 125)">
+            {/* LINE 2: Watch MyMarks, gain more marks (Clean, Non-Bold font weight: 500) */}
+            <g transform="translate(204, 124)">
               <text 
                 x="0" 
                 y="0" 
-                fill="#09090b" 
+                fill="#334155" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="750" 
-                fontSize="18" 
-                letterSpacing="0.15"
+                fontWeight="500" 
+                fontSize="16.5" 
+                letterSpacing="0.1"
               >
                 Watch MyMarks, gain more marks
               </text>
             </g>
 
-            {/* LINE 3: powered by [icon] Visdom Waves (Large, Bold & Ultra-Crisp Visibility) */}
-            <g transform="translate(254, 153)">
+            {/* LINE 3: powered by [icon] Visdom Waves (Refined, Non-Bold weight: 500 & 600) */}
+            <g transform="translate(204, 151)">
               {/* "powered by" text */}
               <text 
                 x="0" 
                 y="0" 
-                fill="#1e293b" 
+                fill="#64748b" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="700" 
-                fontSize="15.5" 
-                letterSpacing="0.3"
+                fontWeight="500" 
+                fontSize="14.5" 
+                letterSpacing="0.2"
               >
                 powered by
               </text>
@@ -168,22 +181,22 @@ export function VisdomBrand({ onClick, className = "" }) {
               {/* Visdom Waves Cyan/Blue Logo */}
               <image 
                 href="/Visdomlogo.png" 
-                x="92" 
-                y="-15" 
-                width="19" 
-                height="19" 
+                x="80" 
+                y="-14" 
+                width="17" 
+                height="17" 
                 preserveAspectRatio="xMidYMid meet" 
               />
 
               {/* "Visdom Waves" text */}
               <text 
-                x="117" 
+                x="103" 
                 y="0" 
                 fill="#0284c7" 
                 fontFamily="'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" 
-                fontWeight="800" 
-                fontSize="17.5" 
-                letterSpacing="0.3"
+                fontWeight="600" 
+                fontSize="16" 
+                letterSpacing="0.2"
               >
                 Visdom Waves
               </text>

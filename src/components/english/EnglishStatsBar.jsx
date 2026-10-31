@@ -17,7 +17,7 @@ export default function EnglishStatsBar() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-4 text-center divide-y lg:divide-y-0 lg:divide-x divide-slate-100 dark:divide-slate-800">
             {stats.map((stat, idx) => (
               <div key={idx} className="flex flex-col items-center justify-center pt-6 lg:pt-0 first:pt-0 lg:first:pt-0">
-                <span className="text-3xl sm:text-4xl font-black text-amber-600 dark:text-amber-400 tracking-tight mb-2">
+                <span className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 tracking-tight mb-1.5">
                   {stat.number}
                 </span>
                 <span className="text-[10px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest px-2">
