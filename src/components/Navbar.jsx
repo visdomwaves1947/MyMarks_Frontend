@@ -41,23 +41,19 @@ export default function Navbar({
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileDropdowns, setMobileDropdowns] = useState({});
-  const [scrolled, setScrolled] = useState(false);
   const dropdownTimeoutRef = useRef(null);
 
-  // Track page scroll: update navbar shadow state & automatically close mobile menu on scroll
+  // Automatically close mobile menu when user actually scrolls the page
   useEffect(() => {
-    let lastScrollY = window.scrollY;
+    if (!mobileMenuOpen) return;
+
+    const initialScrollY = window.scrollY;
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      setScrolled(currentScrollY > 15);
-
-      // Smooth auto-close: only close if mobile menu is open and the page scroll actually moved (> 8px)
-      // This prevents micro-vibrations, 0px ticks, or layout shifts from causing blinking
-      if (mobileMenuOpen && Math.abs(currentScrollY - lastScrollY) > 8) {
+      if (Math.abs(currentScrollY - initialScrollY) > 8) {
         setMobileMenuOpen(false);
       }
-      lastScrollY = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -226,7 +222,7 @@ export default function Navbar({
   return (
     <>
       {/* Sticky Header Container containing Top Navbar & Main Navbar */}
-      <header className="sticky top-0 z-50 select-none shadow-sm relative">
+      <header className="sticky top-0 z-50 select-none shadow-sm relative transform-gpu">
         {/* Chinmaya Vidyalaya Style Top Bar */}
         <div
           className="h-9 px-3 sm:px-6 flex items-center justify-between text-xs text-blue-100 select-none relative z-50"
@@ -312,15 +308,9 @@ export default function Navbar({
           </div>
         </div>
 
-        {/* Main Navbar - Exact Chinmaya Vidyalaya light blue background (#dbeafe / #bfdbfe) */}
+        {/* Main Navbar - Solid Chinmaya Vidyalaya light blue background (#dbeafe), zero scroll movement/color change */}
         <div
-          className={`transition-all duration-300 ${
-            scrolled ? "shadow-xl shadow-blue-900/15" : ""
-          } dark:!bg-slate-900 dark:!border-slate-800`}
-          style={{
-            background: scrolled ? "#bfdbfe" : "#dbeafe",
-            borderBottom: scrolled ? "1px solid #93c5fd" : "1px solid #bfdbfe",
-          }}
+          className="bg-[#dbeafe] dark:!bg-slate-900 border-b border-[#bfdbfe] dark:border-slate-800 shadow-xs"
         >
           <div className="w-full px-2 xs:px-3 sm:px-6 lg:px-8 relative z-10 flex items-center justify-between gap-1.5 sm:gap-4 h-[62px] xs:h-[68px] sm:h-[82px] md:h-[86px]">
           {/* Left: Visdom Waves Brand Logo Badge (Exact Reference Graphic Style) */}
