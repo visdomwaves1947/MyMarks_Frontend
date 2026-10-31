@@ -45,7 +45,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
   const [isPrinting, setIsPrinting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showStamp, setShowStamp] = useState(false);
-  const [showBenefitsMobile, setShowBenefitsMobile] = useState(false);
+  const [mobileTab, setMobileTab] = useState('matter'); // 'matter' (Course Highlights) | 'form' (Student Details / Checkout)
 
   // Subject detection to adapt icon and subject title
   const detectedSubject = React.useMemo(() => {
@@ -89,6 +89,13 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
     }
   }, [preselectedTrack, detectedSubject.name]);
 
+  // Reset tab to matter when opening modal
+  useEffect(() => {
+    if (isOpen) {
+      setMobileTab('matter');
+    }
+  }, [isOpen]);
+
   const transactionId = React.useMemo(() => `MM-PAY-${Math.floor(100000 + Math.random() * 900000)}`, []);
   const SubjectIcon = detectedSubject.icon;
 
@@ -120,6 +127,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
     if (formData.parentPhone.length !== 10) {
       return;
     }
+    setMobileTab('form');
     setCurrentStep('payment');
   };
 
@@ -165,15 +173,20 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
 
   const handleResetAndClose = () => {
     setCurrentStep('form');
+    setMobileTab('matter');
     setShowStamp(false);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-3 md:p-5 lg:p-6 bg-slate-950/80 backdrop-blur-xl animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-3 md:p-5 lg:p-6 bg-slate-950/60 dark:bg-slate-950/80 backdrop-blur-xl animate-fadeIn font-sans">
       {/* Modal Container */}
       <div 
-        className={`relative w-full ${currentStep === 'confirmed' ? 'bg-[#0A1124]' : 'bg-[#0B0F19]'} border-0 sm:border border-slate-800/90 shadow-[0_20px_70px_rgba(0,0,0,0.6)] text-left overflow-hidden flex flex-col transition-all duration-300 font-sans ${
+        className={`relative w-full ${
+          currentStep === 'confirmed' 
+            ? 'bg-[#DFE7F2] dark:!bg-[#0A1124]' 
+            : 'bg-[#DFE7F2] dark:!bg-[#0B0F19]'
+        } border-0 sm:border border-[#BAC9DC] dark:!border-slate-800/90 shadow-[0_20px_70px_rgba(0,0,0,0.18)] dark:shadow-[0_20px_70px_rgba(0,0,0,0.6)] text-left overflow-hidden flex flex-col transition-all duration-300 font-sans ${
           isFullscreen 
             ? 'h-full w-full rounded-none' 
             : currentStep === 'confirmed'
@@ -181,174 +194,252 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
               : 'max-w-5xl xl:max-w-6xl h-full sm:h-auto max-h-[100dvh] sm:max-h-[96vh] lg:max-h-[92vh] rounded-none sm:rounded-2xl lg:rounded-3xl'
         }`}
       >
-        {/* Top Floating Control Bar */}
-        <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30 flex items-center gap-1.5 sm:gap-2">
-          {/* Fullscreen Toggle */}
-          <button
-            onClick={() => setIsFullscreen(!isFullscreen)}
-            className="p-1.5 sm:p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 transition-all cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-semibold backdrop-blur-md shadow-xs"
-            title={isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
-          >
-            {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-            <span className="hidden md:inline">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
-          </button>
+        {/* Receipt Step Close Button (Floating) */}
+        {currentStep === 'confirmed' && (
+          <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-30">
+            <button
+              onClick={handleResetAndClose}
+              className="p-1.5 sm:p-2 rounded-xl bg-[#D2DFEE] hover:bg-[#C5D5E7] text-slate-700 hover:text-slate-950 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:hover:!bg-slate-800 dark:!text-slate-300 dark:hover:!text-white dark:!border-slate-700/60 transition-all cursor-pointer backdrop-blur-md shadow-xs hover:rotate-90 duration-200"
+              aria-label="Close dialog"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
 
-          {/* Close Button */}
-          <button
-            onClick={handleResetAndClose}
-            className="p-1.5 sm:p-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 transition-all cursor-pointer backdrop-blur-md shadow-xs hover:rotate-90 duration-200"
-            aria-label="Close dialog"
-          >
-            <X size={18} />
-          </button>
-        </div>
+        {/* STEP 1 & 2: Main Top Header Bar (Safe Layout with Zero Close Button Overlap) */}
+        {currentStep !== 'confirmed' && (
+          <div className="flex items-center justify-between px-3.5 sm:px-6 py-2.5 sm:py-3.5 border-b border-[#BAC9DC] dark:!border-slate-800/80 bg-[#DCE7F4]/90 dark:!bg-[#0B0F19]/90 backdrop-blur-md z-30 shrink-0">
+            {/* Header Badges */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100/90 border border-blue-300/80 text-blue-900 dark:!bg-blue-950/80 dark:!border-blue-500/40 dark:!text-blue-300 text-[10.5px] sm:text-xs font-bold shadow-xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping shrink-0" />
+                <span>Board Offer • ₹299 per Subject</span>
+                <span className="line-through text-slate-500 dark:!text-slate-400 text-[9.5px] hidden xs:inline">₹999</span>
+                <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black shrink-0">70% OFF</span>
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-100/80 border border-blue-300/80 text-blue-950 dark:!bg-blue-900/50 dark:!border-blue-400/40 dark:!text-white text-[11px] sm:text-xs font-bold shadow-xs">
+                <SubjectIcon size={13} className="text-blue-600 dark:!text-blue-400 shrink-0" />
+                <span className="uppercase">{detectedSubject.name}</span>
+              </div>
+            </div>
+
+            {/* Controls: Fullscreen Toggle & Close Button */}
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="p-1.5 sm:p-2 rounded-xl bg-[#D2DFEE] hover:bg-[#C5D5E7] text-slate-700 hover:text-slate-950 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:hover:!bg-slate-800 dark:!text-slate-300 dark:hover:!text-white dark:!border-slate-700/60 transition-all cursor-pointer hidden sm:flex items-center gap-1.5 text-xs font-semibold backdrop-blur-md shadow-xs"
+                title={isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
+              >
+                {isFullscreen ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                <span className="hidden md:inline">{isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}</span>
+              </button>
+
+              <button
+                onClick={handleResetAndClose}
+                className="p-1.5 sm:p-2 rounded-xl bg-[#D2DFEE] hover:bg-[#C5D5E7] text-slate-700 hover:text-slate-950 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:hover:!bg-slate-800 dark:!text-slate-300 dark:hover:!text-white dark:!border-slate-700/60 transition-all cursor-pointer backdrop-blur-md shadow-xs hover:rotate-90 duration-200"
+                aria-label="Close dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Segmented Tab Switcher (Visible ONLY on Mobile < md) */}
+        {currentStep !== 'confirmed' && (
+          <div className="md:hidden px-3.5 py-2 bg-[#D2DFEE]/70 dark:!bg-[#0A1124] border-b border-[#BAC9DC] dark:!border-slate-800/80 flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setMobileTab('matter')}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                mobileTab === 'matter'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40'
+                  : 'bg-[#EBF0F7] dark:!bg-slate-900/80 text-slate-700 dark:!text-slate-300 border border-[#BAC9DC]/80 dark:!border-slate-700/60 hover:bg-white'
+              }`}
+            >
+              <Sparkles size={14} className={mobileTab === 'matter' ? 'text-amber-300' : 'text-blue-600 dark:!text-blue-400'} />
+              <span>Course Highlights</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                mobileTab === 'matter' ? 'bg-white/20 text-white' : 'bg-blue-100 text-blue-800 dark:!bg-blue-900/60 dark:!text-blue-300'
+              }`}>
+                4 Perks
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setMobileTab('form')}
+              className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                mobileTab === 'form'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-1 ring-blue-400/40'
+                  : 'bg-[#EBF0F7] dark:!bg-slate-900/80 text-slate-700 dark:!text-slate-300 border border-[#BAC9DC]/80 dark:!border-slate-700/60 hover:bg-white'
+              }`}
+            >
+              <GraduationCap size={14} />
+              <span>Enrollment Form</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                mobileTab === 'form' ? 'bg-emerald-400 text-slate-950' : 'bg-emerald-100 text-emerald-800 dark:!bg-emerald-950 dark:!text-emerald-300'
+              }`}>
+                ₹299
+              </span>
+            </button>
+          </div>
+        )}
 
         {/* STEP 1 & 2: Form & Payment Layout */}
         {currentStep !== 'confirmed' ? (
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-y-auto divide-y md:divide-y-0 md:divide-x divide-slate-800/80">
-            {/* Left Panel: Hero & Value Proposition (5 Cols on Tablet & Laptop) */}
-            <div className="md:col-span-5 bg-gradient-to-br from-[#0B0F19] via-[#0F172A] to-[#0B0F19] p-3.5 xs:p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-between relative overflow-hidden">
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-12 overflow-y-auto divide-y md:divide-y-0 md:divide-x divide-[#BAC9DC] dark:!divide-slate-800/80">
+            {/* Left Panel: Hero & Value Proposition (Image 2 Matter) */}
+            <div className={`${mobileTab === 'matter' ? 'block' : 'hidden'} md:block md:col-span-5 bg-gradient-to-br from-[#DCE7F4] via-[#E8F0F9] to-[#DFE7F2] dark:!bg-none dark:!bg-[#0B0F19] dark:bg-gradient-to-br dark:from-[#0B0F19] dark:via-[#0F172A] dark:to-[#0B0F19] p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-start md:justify-between relative overflow-y-auto`}>
               {/* Animated Floating Gradient Orbs */}
               <div className="absolute -top-20 -left-20 w-72 h-72 bg-blue-600/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
               <div className="absolute -bottom-20 -right-20 w-72 h-72 bg-indigo-600/15 rounded-full blur-3xl pointer-events-none animate-pulse" />
 
               <div className="relative z-10">
-                {/* Special Board Offer Badge with Price & Clearance for Close Button */}
-                <div className="flex items-center pr-12 sm:pr-0 mb-2 sm:mb-2.5">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1 rounded-full bg-blue-950/80 border border-blue-500/40 text-blue-300 text-[10px] xs:text-[11px] sm:text-xs font-bold shadow-sm max-w-full">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping shrink-0" />
-                    <span>Board Offer • ₹299 per Subject</span>
-                    <span className="line-through text-slate-400 text-[9.5px] xs:text-[10px] hidden xs:inline">₹999</span>
-                    <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black shrink-0">70% OFF</span>
-                  </div>
-                </div>
-
                 {/* Subject Category Pill - Ultra-Responsive Dual Badge */}
                 <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-2 sm:mb-2.5 max-w-full">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-900/50 border border-blue-400/40 shadow-xs">
-                    <SubjectIcon size={13} className="text-blue-400 shrink-0" />
-                    <span className="text-white font-extrabold text-[11px] sm:text-xs tracking-wider uppercase">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-100/80 border border-blue-300/80 text-blue-950 dark:!bg-blue-900/50 dark:!border-blue-400/40 dark:!text-white shadow-xs">
+                    <SubjectIcon size={13} className="text-blue-600 dark:!text-blue-400 shrink-0" />
+                    <span className="text-blue-950 dark:!text-white font-extrabold text-[11px] sm:text-xs tracking-wider uppercase">
                       {detectedSubject.name}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-blue-950/70 border border-blue-800/40 text-cyan-300 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase">
+                  <span className="px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-blue-800 dark:!bg-blue-950/70 dark:!border-blue-800/40 dark:!text-cyan-300 text-[10px] sm:text-[11px] font-bold tracking-wider uppercase">
                     Board Mastery Pack
                   </span>
                 </div>
 
                 {/* Main Heading in Website Outfit Font */}
-                <h2 className="text-lg xs:text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-black text-white tracking-tight leading-tight sm:leading-snug mb-1.5 sm:mb-2.5 break-words">
+                <h2 className="text-xl sm:text-2xl md:text-xl lg:text-2xl xl:text-3xl font-black text-slate-950 dark:!text-white tracking-tight leading-tight sm:leading-snug mb-2 sm:mb-2.5 break-words">
                   Enroll in {detectedSubject.name} Course & Doubt Portal
                 </h2>
 
-                <p className="text-slate-300 text-[11.5px] sm:text-xs md:text-xs lg:text-sm leading-relaxed mb-3 sm:mb-4 font-medium">
+                <p className="text-slate-700 dark:!text-slate-300 text-xs sm:text-xs md:text-xs lg:text-sm leading-relaxed mb-4 sm:mb-6 font-medium">
                   Get instant, unlimited access to all syllabus chapters, curated study notes, previous 10-year question banks, and dedicated faculty doubt clarifications.
                 </p>
 
-                {/* Mobile Quick Preview Row & Benefits Toggle Button */}
-                <div className="md:hidden mb-4">
-                  <div className="flex flex-wrap gap-1.5 mb-2.5 text-[10px] font-semibold text-slate-300">
-                    <span className="px-2 py-0.5 rounded-md bg-blue-950/70 border border-blue-800/40 text-blue-300">✓ All Chapters</span>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-950/70 border border-blue-800/40 text-blue-300">✓ Dedicated Doubts</span>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-950/70 border border-blue-800/40 text-blue-300">✓ Notes & Q-Bank</span>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-950/70 border border-blue-800/40 text-blue-300">✓ 100/100 Guide</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowBenefitsMobile(!showBenefitsMobile)}
-                    className="w-full py-1.5 px-3 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-slate-700/60 text-slate-300 text-[11px] font-medium flex items-center justify-between cursor-pointer transition-colors"
-                  >
-                    <span className="text-blue-400 font-semibold">
-                      {showBenefitsMobile ? 'Hide Course Inclusions' : 'View What Is Included in Course (4 Perks)'}
-                    </span>
-                    <ChevronDown size={14} className={`transition-transform duration-200 ${showBenefitsMobile ? 'rotate-180' : ''}`} />
-                  </button>
-                </div>
-
-                {/* What You Get Checklist (Always visible on Tablet & Laptop, Collapsible on Mobile) */}
-                <div className={`space-y-2.5 sm:space-y-3.5 mb-4 sm:mb-6 ${showBenefitsMobile ? 'block' : 'hidden md:block'}`}>
+                {/* What You Get Checklist: All 4 Inclusions Fully Detailed */}
+                <div className="space-y-3 sm:space-y-3.5 mb-4 sm:mb-6">
                   <div className="flex items-start gap-2.5 sm:gap-3 group">
-                    <div className="p-1 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-200">
-                      <CheckCircle2 size={13} />
+                    <div className="p-1 rounded-lg bg-blue-100 text-blue-600 border border-blue-300/80 dark:!bg-blue-500/15 dark:!text-blue-400 dark:!border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                      <CheckCircle2 size={14} />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">Full Access to All Chapters & Lessons</h4>
-                      <p className="text-[10.5px] sm:text-[11px] text-slate-400 font-medium">Instant 24/7 access to all chapters, core concept deep-dives & board blueprint lessons.</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-950 dark:!text-white">Full Access to All Chapters & Lessons</h4>
+                      <p className="text-[11px] sm:text-[11.5px] text-slate-600 dark:!text-slate-400 font-medium">Instant 24/7 access to all chapters, core concept deep-dives & board blueprint lessons.</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-2.5 sm:gap-3 group">
-                    <div className="p-1 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-200">
-                      <CheckCircle2 size={13} />
+                    <div className="p-1 rounded-lg bg-blue-100 text-blue-600 border border-blue-300/80 dark:!bg-blue-500/15 dark:!text-blue-400 dark:!border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                      <CheckCircle2 size={14} />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">Dedicated Faculty Doubt Clarifications</h4>
-                      <p className="text-[10.5px] sm:text-[11px] text-slate-400 font-medium">Stuck on tough questions or numericals? Submit doubts anytime for step-by-step faculty guidance.</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-950 dark:!text-white">Dedicated Faculty Doubt Clarifications</h4>
+                      <p className="text-[11px] sm:text-[11.5px] text-slate-600 dark:!text-slate-400 font-medium">Stuck on tough questions or numericals? Submit doubts anytime for step-by-step faculty guidance.</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-2.5 sm:gap-3 group">
-                    <div className="p-1 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-200">
-                      <CheckCircle2 size={13} />
+                    <div className="p-1 rounded-lg bg-blue-100 text-blue-600 border border-blue-300/80 dark:!bg-blue-500/15 dark:!text-blue-400 dark:!border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                      <CheckCircle2 size={14} />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">Full Chapter Notes & 10-Year Question Bank</h4>
-                      <p className="text-[10.5px] sm:text-[11px] text-slate-400 font-medium">Download complete chapter summary sheets, previous 10-year solved questions & model papers.</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-950 dark:!text-white">Full Chapter Notes & 10-Year Question Bank</h4>
+                      <p className="text-[11px] sm:text-[11.5px] text-slate-600 dark:!text-slate-400 font-medium">Download complete chapter summary sheets, previous 10-year solved questions & model papers.</p>
                     </div>
                   </div>
 
                   <div className="flex items-start gap-2.5 sm:gap-3 group">
-                    <div className="p-1 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-200">
-                      <CheckCircle2 size={13} />
+                    <div className="p-1 rounded-lg bg-blue-100 text-blue-600 border border-blue-300/80 dark:!bg-blue-500/15 dark:!text-blue-400 dark:!border-blue-500/30 shrink-0 mt-0.5 group-hover:bg-blue-600 group-hover:text-white transition-colors duration-200">
+                      <CheckCircle2 size={14} />
                     </div>
                     <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">Board Exam 100/100 Presentation Guide</h4>
-                      <p className="text-[10.5px] sm:text-[11px] text-slate-400 font-medium">Learn how top scorers structure and present high-scoring answers to secure maximum marks.</p>
+                      <h4 className="text-xs sm:text-sm font-bold text-slate-950 dark:!text-white">Board Exam 100/100 Presentation Guide</h4>
+                      <p className="text-[11px] sm:text-[11.5px] text-slate-600 dark:!text-slate-400 font-medium">Learn how top scorers structure and present high-scoring answers to secure maximum marks.</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Pricing Breakdown Card */}
-                <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/90 border border-slate-800 shadow-lg relative overflow-hidden">
+                <div className="p-3.5 sm:p-4 rounded-xl sm:rounded-2xl bg-[#D2DFEE]/90 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:!border-slate-800 shadow-md relative overflow-hidden mb-3 sm:mb-0">
                   <div className="absolute right-0 top-0 w-24 h-24 bg-blue-600/10 rounded-full blur-xl pointer-events-none" />
                   <div className="flex items-center justify-between relative z-10">
                     <div>
-                      <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-extrabold text-slate-400 block">Course Fee</span>
+                      <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-extrabold text-slate-600 dark:!text-slate-400 block">Course Fee</span>
                       <div className="flex items-baseline gap-1.5 sm:gap-2 mt-0.5">
-                        <span className="text-2xl sm:text-3xl font-black text-white">₹299</span>
-                        <span className="text-xs text-slate-400 line-through">₹999</span>
-                        <span className="text-[10px] sm:text-[11px] font-bold text-emerald-400">Save ₹700</span>
+                        <span className="text-2xl sm:text-3xl font-black text-slate-950 dark:!text-white">₹299</span>
+                        <span className="text-xs text-slate-500 dark:!text-slate-400 line-through">₹999</span>
+                        <span className="text-[10.5px] sm:text-[11px] font-bold text-emerald-700 dark:!text-emerald-400">Save ₹700</span>
                       </div>
                     </div>
                     <div className="text-right">
-                      <span className="text-[9.5px] sm:text-[10px] font-extrabold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                      <span className="text-[10px] sm:text-[10.5px] font-extrabold px-2.5 py-1 rounded-lg bg-blue-100 border border-blue-300/80 text-blue-800 dark:!bg-blue-500/15 dark:!text-blue-400 dark:!border-blue-500/30">
                         ₹299 Per Subject
                       </span>
-                      <span className="text-[10px] sm:text-[11px] text-slate-400 block mt-1 font-medium">All Chapters + Doubt Access</span>
+                      <span className="text-[10px] sm:text-[11px] text-slate-600 dark:!text-slate-400 block mt-1 font-medium">All Chapters + Doubt Access</span>
                     </div>
                   </div>
                 </div>
+
+                {/* Mobile CTA to proceed directly to enrollment form */}
+                <div className="md:hidden pt-3 pb-1">
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('form')}
+                    className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
+                  >
+                    <span>Proceed to Student Enrollment (₹299)</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
               </div>
 
-              {/* Bottom Social Proof */}
-              <div className="hidden sm:flex relative z-10 pt-3 sm:pt-4 mt-4 sm:mt-6 border-t border-slate-800/80 items-center justify-between text-xs text-slate-400">
+              {/* Bottom Social Proof - Always Visible */}
+              <div className="flex relative z-10 pt-3 sm:pt-4 mt-3 sm:mt-6 border-t border-[#BAC9DC]/80 dark:!border-slate-800/80 items-center justify-between text-xs text-slate-600 dark:!text-slate-400">
                 <div className="flex items-center gap-1.5">
-                  <Users size={14} className="text-blue-400" />
-                  <span><strong className="text-white">15,000+</strong> students enrolled</span>
+                  <Users size={14} className="text-blue-600 dark:!text-blue-400" />
+                  <span><strong className="text-slate-950 dark:!text-white">15,000+</strong> students enrolled</span>
                 </div>
-                <div className="flex items-center gap-1 text-amber-400 font-bold">
-                  <Star size={13} className="fill-amber-400" />
+                <div className="flex items-center gap-1 text-amber-600 dark:!text-amber-400 font-bold">
+                  <Star size={13} className="fill-amber-500 text-amber-500" />
                   <span>4.9/5 Rating</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Panel: Interactive Form OR Payment Gateway (7 Cols on Tablet & Laptop) */}
-            <div className="md:col-span-7 bg-[#0F172A]/90 p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-center relative">
+            {/* Right Panel: Interactive Form OR Payment Gateway */}
+            <div className={`${mobileTab === 'form' ? 'block' : 'hidden'} md:block md:col-span-7 bg-[#EBF0F7] dark:!bg-[#0F172A]/90 p-4 sm:p-6 md:p-5 lg:p-7 xl:p-8 flex flex-col justify-start md:justify-center relative overflow-y-auto`}>
               <div className="max-w-xl mx-auto w-full">
                 
+                {/* Mobile Quick Course Info Banner inside Form */}
+                <div className="md:hidden mb-3.5 p-2.5 rounded-xl bg-[#D2DFEE]/90 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:!border-slate-800 flex items-center justify-between shadow-xs">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-blue-100 dark:!bg-blue-900/50 text-blue-600 dark:!text-blue-400 shrink-0">
+                      <SubjectIcon size={15} />
+                    </div>
+                    <div>
+                      <span className="text-xs font-black text-slate-950 dark:!text-white leading-tight block">
+                        {detectedSubject.name} Board Mastery Pack
+                      </span>
+                      <span className="text-[10px] text-emerald-700 dark:!text-emerald-400 font-extrabold">
+                        ₹299 All-Inclusive • Save ₹700
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('matter')}
+                    className="px-2.5 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-bold shadow-xs hover:bg-blue-500 cursor-pointer shrink-0 transition-colors"
+                  >
+                    View 4 Perks
+                  </button>
+                </div>
+
                 {/* Visual Step Progress Bar */}
-                <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800 pr-12 sm:pr-0">
+                <div className="mb-4 sm:mb-6 flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#BAC9DC] dark:!border-slate-800">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold transition-colors ${
                       currentStep === 'form' 
@@ -357,25 +448,25 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                     }`}>
                       {currentStep === 'form' ? '1' : <Check size={13} />}
                     </div>
-                    <span className={`text-[11px] sm:text-xs font-bold ${currentStep === 'form' ? 'text-white' : 'text-slate-400'}`}>
+                    <span className={`text-[11px] sm:text-xs font-bold ${currentStep === 'form' ? 'text-slate-950 dark:!text-white' : 'text-slate-500 dark:!text-slate-400'}`}>
                       Student Details
                     </span>
 
-                    <span className="w-5 sm:w-8 h-[2px] bg-slate-700 mx-0.5 sm:mx-1" />
+                    <span className="w-5 sm:w-8 h-[2px] bg-[#BAC9DC] dark:!bg-slate-700 mx-0.5 sm:mx-1" />
 
                     <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-bold transition-colors ${
                       currentStep === 'payment' 
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 ring-2 ring-blue-400/40' 
-                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                        : 'bg-[#D2DFEE] text-slate-600 border border-[#BAC9DC] dark:!bg-slate-800 dark:!text-slate-400 dark:!border-slate-700'
                     }`}>
                       2
                     </div>
-                    <span className={`text-[11px] sm:text-xs font-bold ${currentStep === 'payment' ? 'text-white' : 'text-slate-400'}`}>
+                    <span className={`text-[11px] sm:text-xs font-bold ${currentStep === 'payment' ? 'text-slate-950 dark:!text-white' : 'text-slate-500 dark:!text-slate-400'}`}>
                       Payment (₹299)
                     </span>
                   </div>
 
-                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-blue-500/10 text-blue-400 font-mono text-[10.5px] sm:text-xs font-bold border border-blue-500/20 shrink-0">
+                  <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-blue-100 text-blue-800 dark:!bg-blue-500/10 dark:!text-blue-400 font-mono text-[10.5px] sm:text-xs font-bold border border-blue-300 dark:!border-blue-500/20 shrink-0">
                     ₹299 / Subject
                   </span>
                 </div>
@@ -384,10 +475,10 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                 {currentStep === 'form' && (
                   <div className="animate-fadeIn">
                     <div className="mb-4 sm:mb-5">
-                      <h3 className="text-base sm:text-lg md:text-xl font-bold text-white mb-0.5 sm:mb-1">
+                      <h3 className="text-base sm:text-lg md:text-xl font-bold text-slate-950 dark:!text-white mb-0.5 sm:mb-1">
                         Student Details & Course Enrollment
                       </h3>
-                      <p className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                      <p className="text-[11px] sm:text-xs text-slate-600 dark:!text-slate-400 font-medium">
                         Fill in student info to activate instant access to all {detectedSubject.name} chapters & doubt portal for ₹299.
                       </p>
                     </div>
@@ -395,8 +486,8 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                     <form onSubmit={handleProceedToPayment} className="space-y-3 sm:space-y-4 text-xs sm:text-sm">
                       {/* Student Name */}
                       <div>
-                        <label className="block text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
-                          <User size={13} className="text-blue-400" />
+                        <label className="block text-slate-800 dark:!text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
+                          <User size={13} className="text-blue-600 dark:!text-blue-400" />
                           <span>Student Full Name</span>
                         </label>
                         <input
@@ -405,16 +496,15 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                           placeholder="e.g. Rahul Sharma"
                           value={formData.studentName}
                           onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                          className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-xs sm:text-sm shadow-inner"
+                          className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:placeholder:text-slate-500 dark:focus:!bg-slate-900 dark:focus:ring-blue-500/50 dark:focus:border-blue-500 transition-all text-xs sm:text-sm shadow-2xs"
                         />
                       </div>
 
                       {/* Email & Phone Dual Inputs */}
-                      {/* Email & Phone Dual Inputs */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5">
                         <div>
-                          <label className="block text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
-                            <Mail size={13} className="text-blue-400" />
+                          <label className="block text-slate-800 dark:!text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
+                            <Mail size={13} className="text-blue-600 dark:!text-blue-400" />
                             <span>Student / Parent Email</span>
                           </label>
                           <input
@@ -423,17 +513,17 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                             placeholder="parent@example.com"
                             value={formData.parentEmail}
                             onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-                            className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-xs sm:text-sm shadow-inner"
+                            className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:placeholder:text-slate-500 dark:focus:!bg-slate-900 dark:focus:ring-blue-500/50 dark:focus:border-blue-500 transition-all text-xs sm:text-sm shadow-2xs"
                           />
                         </div>
 
                         <div>
-                          <label className="block text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center justify-between text-xs sm:text-sm">
+                          <label className="block text-slate-800 dark:!text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center justify-between text-xs sm:text-sm">
                             <span className="flex items-center gap-1.5">
-                              <Phone size={13} className="text-blue-400" />
+                              <Phone size={13} className="text-blue-600 dark:!text-blue-400" />
                               <span>Phone / WhatsApp</span>
                             </span>
-                            <span className="text-[10px] text-slate-400 font-normal">
+                            <span className="text-[10px] text-slate-500 dark:!text-slate-400 font-normal">
                               {formData.parentPhone ? `${formData.parentPhone.length}/10` : '10 digits'}
                             </span>
                           </label>
@@ -448,7 +538,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                             placeholder="10-digit mobile number"
                             value={formData.parentPhone}
                             onChange={handlePhoneChange}
-                            className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-xs sm:text-sm shadow-inner"
+                            className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:placeholder:text-slate-500 dark:focus:!bg-slate-900 dark:focus:ring-blue-500/50 dark:focus:border-blue-500 transition-all text-xs sm:text-sm shadow-2xs"
                           />
                         </div>
                       </div>
@@ -456,42 +546,42 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                       {/* Grade & Target Study Goal Dual Selects */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3.5">
                         <div>
-                          <label className="block text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
-                            <GraduationCap size={13} className="text-blue-400" />
+                          <label className="block text-slate-800 dark:!text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
+                            <GraduationCap size={13} className="text-blue-600 dark:!text-blue-400" />
                             <span>Current Grade / Year</span>
                           </label>
                           <select
                             value={formData.gradeLevel}
                             onChange={(e) => setFormData({ ...formData, gradeLevel: e.target.value })}
-                            className="w-full px-3 sm:px-3.5 py-2 sm:py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-xs sm:text-sm cursor-pointer"
+                            className="w-full px-3 sm:px-3.5 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:focus:!bg-slate-900 transition-all text-xs sm:text-sm cursor-pointer"
                           >
-                            <option>Intermediate 1st Year (Junior Inter)</option>
-                            <option>Intermediate 2nd Year (Senior Inter)</option>
+                            <option className="bg-white text-slate-900 dark:!bg-slate-900 dark:!text-white">Intermediate 1st Year (Junior Inter)</option>
+                            <option className="bg-white text-slate-900 dark:!bg-slate-900 dark:!text-white">Intermediate 2nd Year (Senior Inter)</option>
                           </select>
                         </div>
 
                         <div>
-                          <label className="block text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
-                            <Sparkles size={13} className="text-blue-400" />
+                          <label className="block text-slate-800 dark:!text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
+                            <Sparkles size={13} className="text-blue-600 dark:!text-blue-400" />
                             <span>Access Mode & Study Goal</span>
                           </label>
                           <select
                             value={formData.studyGoal}
                             onChange={(e) => setFormData({ ...formData, studyGoal: e.target.value })}
-                            className="w-full px-3 sm:px-3.5 py-2 sm:py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-xs sm:text-sm cursor-pointer"
+                            className="w-full px-3 sm:px-3.5 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:focus:!bg-slate-900 transition-all text-xs sm:text-sm cursor-pointer"
                           >
-                            <option>Full Syllabus Access & Doubt Support</option>
-                            <option>Target 100/100 Board Exam Score Booster</option>
-                            <option>Concept Clarity & Chapter Revisions</option>
-                            <option>Important Questions & Doubt Solving</option>
+                            <option className="bg-white text-slate-900 dark:!bg-slate-900 dark:!text-white">Full Syllabus Access & Doubt Support</option>
+                            <option className="bg-white text-slate-900 dark:!bg-slate-900 dark:!text-white">Target 100/100 Board Exam Score Booster</option>
+                            <option className="bg-white text-slate-900 dark:!bg-slate-900 dark:!text-white">Concept Clarity & Chapter Revisions</option>
+                            <option className="bg-white text-slate-900 dark:!bg-slate-900 dark:!text-white">Important Questions & Doubt Solving</option>
                           </select>
                         </div>
                       </div>
 
                       {/* Primary Focus Area / Challenge */}
                       <div>
-                        <label className="block text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
-                          <BookOpen size={13} className="text-blue-400" />
+                        <label className="block text-slate-800 dark:!text-slate-200 font-semibold mb-1 sm:mb-1.5 flex items-center gap-1.5 text-xs sm:text-sm">
+                          <BookOpen size={13} className="text-blue-600 dark:!text-blue-400" />
                           <span>Primary Chapter Focus or Current Doubts</span>
                         </label>
                         <input
@@ -499,16 +589,16 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                           placeholder="e.g. Chapter Doubts, Numerical Problems, Board Blueprint..."
                           value={formData.goalArea}
                           onChange={(e) => setFormData({ ...formData, goalArea: e.target.value })}
-                          className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-white placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-xs sm:text-sm shadow-inner"
+                          className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:placeholder:text-slate-500 dark:focus:!bg-slate-900 dark:focus:ring-blue-500/50 dark:focus:border-blue-500 transition-all text-xs sm:text-sm shadow-2xs"
                         />
                       </div>
 
                       {/* Price Summary Pill */}
-                      <div className="p-2.5 sm:p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1 text-[11.5px] sm:text-xs">
-                        <span className="text-blue-200 font-medium">
-                          Enrollment Fee: <strong className="text-white font-bold">₹299 per Subject</strong> (All Inclusive)
+                      <div className="p-2.5 sm:p-3 rounded-xl bg-blue-100/70 border border-blue-300/80 dark:!bg-blue-950/40 dark:!border-blue-500/30 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1 text-[11.5px] sm:text-xs">
+                        <span className="text-blue-900 dark:!text-blue-200 font-medium">
+                          Enrollment Fee: <strong className="text-slate-950 dark:!text-white font-bold">₹299 per Subject</strong> (All Inclusive)
                         </span>
-                        <span className="text-emerald-400 text-[10.5px] sm:text-[11px] font-semibold">Instant Access & Doubt Portal</span>
+                        <span className="text-emerald-700 dark:!text-emerald-400 text-[10.5px] sm:text-[11px] font-semibold">Instant Access & Doubt Portal</span>
                       </div>
 
                       {/* Proceed to Payment Button with Website Signature Blue Gradient */}
@@ -524,8 +614,8 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                         </button>
                       </div>
 
-                      <div className="flex items-center justify-center gap-1.5 text-[10.5px] sm:text-[11px] text-slate-400 text-center font-medium pt-0.5">
-                        <Lock size={12} className="text-emerald-400" />
+                      <div className="flex items-center justify-center gap-1.5 text-[10.5px] sm:text-[11px] text-slate-600 dark:!text-slate-400 text-center font-medium pt-0.5">
+                        <Lock size={12} className="text-emerald-600 dark:!text-emerald-400" />
                         <span>Secure 256-bit encrypted checkout • Zero hidden charges</span>
                       </div>
                     </form>
@@ -535,43 +625,43 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                 {/* STEP 2: Payment Gateway Screen */}
                 {currentStep === 'payment' && (
                   <div className="space-y-5 animate-fadeIn">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#BAC9DC] dark:!border-slate-800">
                       <button
                         onClick={() => setCurrentStep('form')}
-                        className="text-slate-400 hover:text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+                        className="text-slate-600 hover:text-slate-950 dark:!text-slate-400 dark:hover:!text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
                       >
                         <ArrowLeft size={14} /> Back to details
                       </button>
-                      <span className="text-xs text-blue-400 font-bold">
+                      <span className="text-xs text-blue-700 dark:!text-blue-400 font-bold">
                         Step 2: Pay ₹299
                       </span>
                     </div>
 
                     {/* Order Summary Box */}
-                    <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-slate-900/90 border border-slate-800 shadow-md">
-                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-slate-800">
+                    <div className="p-3 sm:p-4 rounded-xl sm:rounded-2xl bg-[#D2DFEE]/90 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:!border-slate-800 shadow-sm">
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#BAC9DC] dark:!border-slate-800">
                         <div>
-                          <h4 className="text-xs sm:text-sm font-bold text-white">
+                          <h4 className="text-xs sm:text-sm font-bold text-slate-950 dark:!text-white">
                             Complete {detectedSubject.name} Course & Doubt Access Pack
                           </h4>
-                          <span className="text-[11px] sm:text-xs text-slate-400 font-medium">
+                          <span className="text-[11px] sm:text-xs text-slate-600 dark:!text-slate-400 font-medium">
                             Student: {formData.studentName} • {formData.gradeLevel}
                           </span>
                         </div>
                         <div className="text-right">
-                          <span className="text-lg sm:text-xl font-black text-white">₹299</span>
-                          <span className="block text-[9.5px] sm:text-[10px] text-emerald-400 font-semibold">Incl. all taxes</span>
+                          <span className="text-lg sm:text-xl font-black text-slate-950 dark:!text-white">₹299</span>
+                          <span className="block text-[9.5px] sm:text-[10px] text-emerald-700 dark:!text-emerald-400 font-semibold">Incl. all taxes</span>
                         </div>
                       </div>
-                      <div className="text-[10.5px] sm:text-[11px] text-slate-400 flex items-center justify-between font-medium">
+                      <div className="text-[10.5px] sm:text-[11px] text-slate-600 dark:!text-slate-400 flex items-center justify-between font-medium">
                         <span>Includes: All Chapters Access + Doubt Clarifications + Notes & Q-Bank</span>
-                        <span className="text-emerald-400 font-bold shrink-0">100% Guaranteed</span>
+                        <span className="text-emerald-700 dark:!text-emerald-400 font-bold shrink-0">100% Guaranteed</span>
                       </div>
                     </div>
 
                     {/* Payment Method Selector */}
                     <div>
-                      <label className="block text-[11px] sm:text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 sm:mb-2.5">
+                      <label className="block text-[11px] sm:text-xs font-bold text-slate-700 dark:!text-slate-300 uppercase tracking-wider mb-2 sm:mb-2.5">
                         Select Payment Method:
                       </label>
                       <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -580,11 +670,11 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                           onClick={() => setPaymentMethod('upi_qr')}
                           className={`p-2.5 sm:p-3 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
                             paymentMethod === 'upi_qr'
-                              ? 'bg-blue-600/20 border-blue-500 text-white shadow-md shadow-blue-500/20 ring-1 ring-blue-500'
-                              : 'bg-slate-900/80 border-slate-700/80 text-slate-400 hover:text-white hover:bg-slate-800'
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30 ring-1 ring-blue-500'
+                              : 'bg-[#D2DFEE] border-[#BAC9DC] text-slate-700 hover:text-slate-950 hover:bg-[#C5D5E7] dark:!bg-slate-900/80 dark:!border-slate-700/80 dark:!text-slate-400 dark:hover:!text-white dark:hover:!bg-slate-800'
                           }`}
                         >
-                          <QrCode size={15} className={paymentMethod === 'upi_qr' ? 'text-blue-400' : ''} />
+                          <QrCode size={15} className={paymentMethod === 'upi_qr' ? 'text-white' : 'text-blue-600 dark:!text-blue-400'} />
                           <span>UPI / QR Scan</span>
                         </button>
 
@@ -593,11 +683,11 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                           onClick={() => setPaymentMethod('upi_id')}
                           className={`p-2.5 sm:p-3 rounded-xl border text-[11px] sm:text-xs font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
                             paymentMethod === 'upi_id'
-                              ? 'bg-blue-600/20 border-blue-500 text-white shadow-md shadow-blue-500/20 ring-1 ring-blue-500'
-                              : 'bg-slate-900/80 border-slate-700/80 text-slate-400 hover:text-white hover:bg-slate-800'
+                              ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-600/30 ring-1 ring-blue-500'
+                              : 'bg-[#D2DFEE] border-[#BAC9DC] text-slate-700 hover:text-slate-950 hover:bg-[#C5D5E7] dark:!bg-slate-900/80 dark:!border-slate-700/80 dark:!text-slate-400 dark:hover:!text-white dark:hover:!bg-slate-800'
                           }`}
                         >
-                          <Smartphone size={15} className={paymentMethod === 'upi_id' ? 'text-blue-400' : ''} />
+                          <Smartphone size={15} className={paymentMethod === 'upi_id' ? 'text-white' : 'text-blue-600 dark:!text-blue-400'} />
                           <span>UPI ID / VPA</span>
                         </button>
                       </div>
@@ -605,7 +695,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
 
                     {/* UPI QR Code Display View */}
                     {paymentMethod === 'upi_qr' && (
-                      <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-800 text-center space-y-2.5 sm:space-y-3 relative overflow-hidden">
+                      <div className="p-3.5 sm:p-5 rounded-xl sm:rounded-2xl bg-[#D2DFEE]/70 border border-[#BAC9DC] dark:!bg-slate-950/80 dark:!border-slate-800 text-center space-y-2.5 sm:space-y-3 relative overflow-hidden">
                         <div className="inline-block p-2.5 sm:p-3 rounded-2xl bg-white shadow-xl relative">
                           <div className="w-28 h-28 xs:w-32 xs:h-32 sm:w-36 sm:h-36 bg-white flex flex-col items-center justify-center border-2 border-slate-900 rounded-xl relative p-1">
                             <QrCode size={105} className="text-slate-950 w-full h-full" />
@@ -618,10 +708,10 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                         </div>
 
                         <div>
-                          <span className="text-[11.5px] sm:text-xs font-bold text-white block">
+                          <span className="text-[11.5px] sm:text-xs font-bold text-slate-950 dark:!text-white block">
                             Scan with any UPI App to pay ₹299
                           </span>
-                          <span className="text-[10px] sm:text-[11px] text-slate-400 block mt-0.5 font-medium">
+                          <span className="text-[10px] sm:text-[11px] text-slate-600 dark:!text-slate-400 block mt-0.5 font-medium">
                             Google Pay • PhonePe • Paytm • BHIM • Amazon Pay
                           </span>
                         </div>
@@ -631,7 +721,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                     {/* UPI ID Input View */}
                     {paymentMethod === 'upi_id' && (
                       <div className="space-y-2">
-                        <label className="block text-xs text-slate-300 font-semibold">
+                        <label className="block text-xs text-slate-700 dark:!text-slate-300 font-semibold">
                           Enter your UPI ID (VPA):
                         </label>
                         <div className="flex gap-2">
@@ -640,7 +730,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                             placeholder="e.g. mobile@upi or name@okaxis"
                             value={upiIdInput}
                             onChange={(e) => setUpiIdInput(e.target.value)}
-                            className="flex-1 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-white text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 font-medium"
+                            className="flex-1 px-3 sm:px-3.5 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 text-xs placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900 dark:!border-slate-700 dark:!text-white dark:placeholder:text-slate-500 font-medium"
                           />
                           <button
                             type="button"
@@ -650,7 +740,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                             Verify & Pay
                           </button>
                         </div>
-                        <span className="text-[10.5px] sm:text-[11px] text-slate-500 block font-medium">
+                        <span className="text-[10.5px] sm:text-[11px] text-slate-600 dark:!text-slate-500 block font-medium">
                           You will receive a payment request notification on your UPI App.
                         </span>
                       </div>
@@ -676,8 +766,8 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                       )}
                     </button>
 
-                    <div className="text-[10.5px] sm:text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5 font-medium">
-                      <ShieldCheck size={13} className="text-blue-400" />
+                    <div className="text-[10.5px] sm:text-[11px] text-center text-slate-600 dark:!text-slate-400 flex items-center justify-center gap-1.5 font-medium">
+                      <ShieldCheck size={13} className="text-blue-600 dark:!text-blue-400" />
                       <span>Payment protected by 100% Satisfaction Guarantee</span>
                     </div>
                   </div>
@@ -688,7 +778,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
           </div>
         ) : (
           /* STEP 3: Animated Thermal UI Printer & Printing Receipt Slip */
-          <div className="relative w-full flex-1 flex flex-col items-center justify-center p-2.5 sm:p-5 text-center animate-fadeIn font-sans overflow-hidden bg-gradient-to-br from-[#0c1427] via-[#0f1b36] to-[#070b18]">
+          <div className="relative w-full flex-1 flex flex-col items-center justify-center p-2.5 sm:p-5 text-center animate-fadeIn font-sans overflow-hidden bg-gradient-to-br from-[#DFE7F2] via-[#E8EFF8] to-[#D5E1EE] dark:!bg-gradient-to-br dark:!from-[#0c1427] dark:!via-[#0f1b36] dark:!to-[#070b18]">
             {/* Ambient Lighting Orbs */}
             <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[520px] h-[300px] bg-blue-600/15 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-80 h-80 bg-indigo-500/10 rounded-full blur-[90px] pointer-events-none" />
@@ -704,14 +794,14 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
             <div className="relative z-10 w-full max-w-xl mx-auto space-y-2.5 my-auto">
             {/* Status Header */}
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-xs font-bold mb-1.5 shadow-xs">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 dark:!bg-emerald-950/80 dark:!border-emerald-500/40 dark:!text-emerald-400 text-xs font-bold mb-1.5 shadow-xs">
                 <CheckCircle2 size={13} />
                 <span>Payment of ₹299 Verified • Course Activated</span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-black text-slate-950 dark:!text-white tracking-tight">
                 Enrollment Confirmed, {formData.studentName || 'Student'}!
               </h3>
-              <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 max-w-sm mx-auto font-medium">
+              <p className="text-[11px] sm:text-xs text-slate-600 dark:!text-slate-400 mt-0.5 max-w-sm mx-auto font-medium">
                 Official enrollment receipt printed below. Course access link and doubt support portal details sent to {formData.parentEmail || formData.parentPhone}.
               </p>
             </div>

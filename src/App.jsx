@@ -223,7 +223,6 @@ export default function App() {
 
       {/* Shared Navigation Header */}
       <Navbar 
-        onOpenBooking={() => handleOpenBooking()} 
         onOpenPortal={handleOpenSignIn}
         onOpenSignIn={handleOpenSignIn}
         onOpenSignUp={handleOpenSignUp}
@@ -795,9 +794,7 @@ export default function App() {
       </main>
 
       {/* Shared Footer */}
-      <Footer 
-        onOpenBooking={() => handleOpenBooking()} 
-      />
+      <Footer />
 
       {/* Shared Interactive Modals */}
       <BookingModal 
@@ -817,7 +814,6 @@ export default function App() {
       <VideoDemoModal 
         isOpen={videoDemoOpen} 
         onClose={() => setVideoDemoOpen(false)}
-        onOpenBooking={() => handleOpenBooking('Classroom Experience')}
       /> 
 
       <ExamPlannerModal 

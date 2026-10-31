@@ -41,8 +41,9 @@ export default function NewsScroller({ onOpenBooking }) {
   ];
 
   const handleClick = (item) => {
-    if (onOpenBooking) {
-      onOpenBooking(item.action || item.label);
+    const el = document.getElementById('courses');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
