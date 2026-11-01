@@ -206,15 +206,7 @@ export default function Navbar({
   const handleSignInClick = onOpenSignIn || onOpenPortal;
   const handleSignUpClick = onOpenSignUp || onOpenPortal;
 
-  const isAdminUser = Boolean(
-    currentUser &&
-      (currentUser.role === 'admin' ||
-        currentUser.email === 'md@visdomwaves.com' ||
-        currentUser.name === 'MyMarks Administrator' ||
-        (typeof currentUser.name === 'string' && currentUser.name.toLowerCase().includes('administrator')) ||
-        (typeof currentUser.role === 'string' && currentUser.role.toLowerCase() === 'admin')
-    )
-  );
+  const isAdminUser = Boolean(currentUser && currentUser.role === 'admin');
 
   return (
     <>

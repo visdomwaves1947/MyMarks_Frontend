@@ -45,7 +45,7 @@ export default function AdminNavbar({
   }, [mobileMenuOpen]);
 
   const adminName = currentUser?.name || 'MyMarks Administrator';
-  const adminEmail = currentUser?.email || 'md@visdomwaves.com';
+  const adminEmail = currentUser?.email || '';
   const adminRole = currentUser?.role || 'Administrator';
 
   const userInitials = adminName

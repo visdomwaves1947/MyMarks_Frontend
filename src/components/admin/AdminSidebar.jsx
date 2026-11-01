@@ -4,6 +4,7 @@ import {
   Users,
   BookOpen,
   Video,
+  Inbox,
   Settings,
   Database,
   RefreshCw,
@@ -40,6 +41,11 @@ export default function AdminSidebar({
       id: 'videos',
       label: 'Videos, YouTube & Links',
       icon: Video,
+    },
+    {
+      id: 'bookings',
+      label: 'Bookings & Inquiries',
+      icon: Inbox,
     },
     {
       id: 'settings',

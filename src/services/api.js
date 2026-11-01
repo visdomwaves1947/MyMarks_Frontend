@@ -44,7 +44,8 @@ export async function resilientFetch(path, options = {}) {
   );
 
   const primaryBase = isLocalHost ? LOCAL_API_URL : getApiBaseUrl();
-  const secondaryBase = primaryBase === LOCAL_API_URL ? CLOUD_API_URL : LOCAL_API_URL;
+  // A live site never retries against localhost
+  const secondaryBase = primaryBase === LOCAL_API_URL ? CLOUD_API_URL : null;
 
   const url1 = `${primaryBase}${path}`;
   const url2 = `${secondaryBase}${path}`;
@@ -56,7 +57,7 @@ export async function resilientFetch(path, options = {}) {
       return res;
     }
     // Only failover to secondary if primary gave a server 500 error AND we are not local
-    if (res.status >= 500 && !isLocalHost && primaryBase !== secondaryBase) {
+    if (res.status >= 500 && !isLocalHost && secondaryBase) {
       try {
         const altRes = await fetch(url2, options);
         if (altRes.ok) {
@@ -68,7 +69,7 @@ export async function resilientFetch(path, options = {}) {
     return res;
   } catch (err) {
     // Network / connection refused error on primary, try secondary if not on local dev server
-    if (!isLocalHost && !path.includes('/upload')) {
+    if (!isLocalHost && secondaryBase && !path.includes('/upload')) {
       try {
         const altRes = await fetch(url2, options);
         if (altRes.ok) {
@@ -80,6 +81,30 @@ export async function resilientFetch(path, options = {}) {
     }
     throw err;
   }
+}
+
+const getAdminToken = () => {
+  try {
+    return localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
+  } catch {
+    return null;
+  }
+};
+
+const adminHeaders = (headers = {}) => {
+  const token = getAdminToken();
+  return token ? { ...headers, Authorization: `Bearer ${token}` } : headers;
+};
+
+/**
+ * Fetch for admin-only routes. Tells the admin panel when the session has ended.
+ */
+async function adminFetch(path, options = {}) {
+  const res = await resilientFetch(path, { ...options, headers: adminHeaders(options.headers) });
+  if (res.status === 401 || res.status === 403) {
+    window.dispatchEvent(new Event('mymarks_admin_session_expired'));
+  }
+  return res;
 }
 
 /**
@@ -105,7 +130,7 @@ export async function fetchCourses(category = 'all') {
   try {
     const query = category && category !== 'all' ? `?type=course&category=${category}` : '?type=course';
     const res = await resilientFetch(`/api/content${query}`, {
-      headers: { 'Content-Type': 'application/json' },
+      headers: adminHeaders({ 'Content-Type': 'application/json' }),
     });
 
     if (!res.ok) {
@@ -136,9 +161,6 @@ export async function fetchCourses(category = 'all') {
         isLive: true,
       };
     }
-
-    // If backend collection is empty, trigger seed in background
-    triggerSeed().catch(() => {});
 
     return {
       courses: category === 'all' ? fallbackCourses : fallbackCourses.filter((c) => c.category === category),
@@ -196,47 +218,16 @@ export async function fetchChallenges() {
 }
 
 /**
- * Submit booking / diagnostic assessment to backend
- */
-export async function submitBooking(bookingData) {
-  try {
-    const res = await resilientFetch('/api/content', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title: `Assessment Booking: ${bookingData.studentName}`,
-        type: 'general',
-        category: 'booking',
-        description: `Booking request for ${bookingData.gradeLevel} - ${bookingData.goalArea}`,
-        metadata: {
-          ...bookingData,
-          submittedAt: new Date().toISOString(),
-        },
-      }),
-    });
-
-    const data = await res.json();
-    return { success: res.ok, data };
-  } catch (error) {
-    console.warn('[API] Booking submission fallback:', error.message);
-    return { success: true, localOnly: true };
-  }
-}
-
-/**
- * Auto-seed backend with initial academy content if needed
+ * Seed the backend with initial academy content (admin only)
  */
 export async function triggerSeed() {
-  try {
-    const res = await resilientFetch('/api/content/seed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return await res.json();
-  } catch (err) {
-    console.warn('[API] Seed request failed:', err.message);
-    return null;
-  }
+  const res = await adminFetch('/api/content/seed', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Seed failed');
+  return data;
 }
 
 /**
@@ -301,7 +292,7 @@ export async function loginAdminApi(credentials) {
 
 export async function fetchAdminStats() {
   try {
-    const res = await resilientFetch('/api/admin/stats');
+    const res = await adminFetch('/api/admin/stats');
     if (!res.ok) throw new Error(`Stats fetch failed (${res.status})`);
     return await res.json();
   } catch (err) {
@@ -328,7 +319,7 @@ export async function fetchAdminUsers(params = {}) {
   const query = new URLSearchParams(params).toString();
   const path = `/api/admin/users${query ? `?${query}` : ''}`;
   try {
-    const res = await resilientFetch(path);
+    const res = await adminFetch(path);
     if (!res.ok) throw new Error(`Users fetch failed (${res.status})`);
     return await res.json();
   } catch (err) {
@@ -338,7 +329,7 @@ export async function fetchAdminUsers(params = {}) {
 
 export async function createAdminUserApi(userData) {
   try {
-    const res = await resilientFetch('/api/admin/users', {
+    const res = await adminFetch('/api/admin/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
@@ -353,7 +344,7 @@ export async function createAdminUserApi(userData) {
 
 export async function updateAdminUserApi(id, userData) {
   try {
-    const res = await resilientFetch(`/api/admin/users/${id}`, {
+    const res = await adminFetch(`/api/admin/users/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
@@ -368,7 +359,7 @@ export async function updateAdminUserApi(id, userData) {
 
 export async function deleteAdminUserApi(id) {
   try {
-    const res = await resilientFetch(`/api/admin/users/${id}`, {
+    const res = await adminFetch(`/api/admin/users/${id}`, {
       method: 'DELETE',
     });
     const data = await res.json();
@@ -381,7 +372,7 @@ export async function deleteAdminUserApi(id) {
 
 export async function fetchAdminBookings() {
   try {
-    const res = await resilientFetch('/api/admin/bookings');
+    const res = await adminFetch('/api/admin/bookings');
     if (!res.ok) throw new Error('Bookings fetch failed');
     return await res.json();
   } catch (err) {
@@ -391,7 +382,7 @@ export async function fetchAdminBookings() {
 
 export async function updateAdminBookingApi(id, updateData) {
   try {
-    const res = await resilientFetch(`/api/admin/bookings/${id}`, {
+    const res = await adminFetch(`/api/admin/bookings/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updateData),
@@ -404,7 +395,7 @@ export async function updateAdminBookingApi(id, updateData) {
 
 export async function deleteAdminBookingApi(id) {
   try {
-    const res = await resilientFetch(`/api/admin/bookings/${id}`, {
+    const res = await adminFetch(`/api/admin/bookings/${id}`, {
       method: 'DELETE',
     });
     return await res.json();
@@ -415,7 +406,7 @@ export async function deleteAdminBookingApi(id) {
 
 export async function createContentApi(contentData) {
   try {
-    const res = await resilientFetch('/api/content', {
+    const res = await adminFetch('/api/content', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(contentData),
@@ -430,7 +421,7 @@ export async function createContentApi(contentData) {
 
 export async function updateContentApi(id, contentData) {
   try {
-    const res = await resilientFetch(`/api/content/${id}`, {
+    const res = await adminFetch(`/api/content/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(contentData),
@@ -445,7 +436,7 @@ export async function updateContentApi(id, contentData) {
 
 export async function deleteContentApi(id) {
   try {
-    const res = await resilientFetch(`/api/content/${id}`, {
+    const res = await adminFetch(`/api/content/${id}`, {
       method: 'DELETE',
     });
     const data = await res.json();
@@ -654,14 +645,12 @@ export async function fetchAdminVideos(params = {}) {
   const query = new URLSearchParams(params).toString();
   const path = `/api/videos${query ? `?${query}` : ''}`;
   try {
-    const res = await resilientFetch(path);
+    const res = await adminFetch(path);
     if (!res.ok) throw new Error(`Videos fetch failed (${res.status})`);
     const data = await res.json();
     if (data.success && Array.isArray(data.data) && data.data.length > 0) {
       return data;
     }
-    // If backend collection is empty, try seeding in background
-    seedAdminVideosApi().catch(() => {});
     return {
       success: true,
       data: fallbackVideos,
@@ -698,7 +687,15 @@ if (typeof window !== 'undefined') {
 /**
  * Fetch published videos specifically for student dashboard and curriculum modules
  */
-export async function fetchStudentVideos(params = {}) {
+export async function fetchStudentVideos({ includeLocked = false, ...params } = {}) {
+  const videos = await loadStudentVideos(params);
+  return includeLocked ? videos : videos.filter((v) => !v.isLocked);
+}
+
+const publicFallbackVideos = () =>
+  fallbackVideos.filter((v) => v.status === 'published' && !v.isPremium);
+
+async function loadStudentVideos(params) {
   const searchParams = { ...params, publishedOnly: 'true', studentView: 'true' };
   const query = new URLSearchParams(searchParams).toString();
   const path = `/api/videos${query ? `?${query}` : ''}`;
@@ -723,10 +720,10 @@ export async function fetchStudentVideos(params = {}) {
         studentVideosCache.set(path, { data: data.data, timestamp: Date.now() });
         return data.data;
       }
-      return fallbackVideos.filter(v => v.status === 'published');
+      return publicFallbackVideos();
     } catch (err) {
       console.warn('[API] Falling back to published local fallback videos:', err.message);
-      return fallbackVideos.filter(v => v.status === 'published');
+      return publicFallbackVideos();
     } finally {
       inFlightVideoRequests.delete(path);
     }
@@ -738,13 +735,9 @@ export async function fetchStudentVideos(params = {}) {
 
 export async function createAdminVideoApi(videoData) {
   try {
-    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await resilientFetch('/api/videos', {
+    const res = await adminFetch('/api/videos', {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(videoData),
     });
     const data = await res.json();
@@ -758,13 +751,9 @@ export async function createAdminVideoApi(videoData) {
 
 export async function updateAdminVideoApi(id, videoData) {
   try {
-    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await resilientFetch(`/api/videos/${id}`, {
+    const res = await adminFetch(`/api/videos/${id}`, {
       method: 'PUT',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(videoData),
     });
     const data = await res.json();
@@ -778,13 +767,9 @@ export async function updateAdminVideoApi(id, videoData) {
 
 export async function toggleAdminVideoStatusApi(id, status) {
   try {
-    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await resilientFetch(`/api/videos/${id}/status`, {
+    const res = await adminFetch(`/api/videos/${id}/status`, {
       method: 'PATCH',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     });
     const data = await res.json();
@@ -798,13 +783,8 @@ export async function toggleAdminVideoStatusApi(id, status) {
 
 export async function deleteAdminVideoApi(id) {
   try {
-    const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
-    const headers = {};
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-
-    const res = await resilientFetch(`/api/videos/${id}`, {
+    const res = await adminFetch(`/api/videos/${id}`, {
       method: 'DELETE',
-      headers,
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || 'Failed to delete video');
@@ -816,31 +796,19 @@ export async function deleteAdminVideoApi(id) {
 }
 
 export async function seedAdminVideosApi() {
-  try {
-    const res = await resilientFetch('/api/videos/seed', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ videos: fallbackVideos }),
-    });
-    const data = await res.json();
-    return data;
-  } catch (err) {
-    console.warn('[API] Video seed fallback:', err.message);
-    return { success: true, seeded: true, isLocalFallback: true };
-  }
+  const res = await adminFetch('/api/videos/seed', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Seed failed');
+  return data;
 }
 
-export async function uploadMediaFileApi(file, onProgress) {
-  const baseUrl = getApiBaseUrl();
-  const formData = new FormData();
-  formData.append('file', file);
-
-  const token = localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
-
+function sendUpload(url, formData, { token, onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    // Use /api/videos/upload with fallback to /api/upload
-    xhr.open('POST', `${baseUrl}/api/videos/upload`);
+    xhr.open('POST', url);
 
     if (token) {
       xhr.setRequestHeader('Authorization', `Bearer ${token}`);
@@ -849,70 +817,77 @@ export async function uploadMediaFileApi(file, onProgress) {
     if (xhr.upload && typeof onProgress === 'function') {
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
-          const percent = Math.round((event.loaded / event.total) * 100);
-          onProgress(percent);
+          onProgress(Math.round((event.loaded / event.total) * 100));
         }
       };
     }
 
     xhr.onload = () => {
+      let data = {};
       try {
-        const data = JSON.parse(xhr.responseText || '{}');
-        if (xhr.status >= 200 && xhr.status < 300 && data.success) {
-          resolve(data);
-        } else if (xhr.status === 404) {
-          // Retry with /api/upload alias
-          const retryXhr = new XMLHttpRequest();
-          retryXhr.open('POST', `${baseUrl}/api/upload`);
-          if (token) retryXhr.setRequestHeader('Authorization', `Bearer ${token}`);
-          retryXhr.onload = () => {
-            try {
-              const retryData = JSON.parse(retryXhr.responseText || '{}');
-              if (retryXhr.status >= 200 && retryXhr.status < 300) {
-                resolve(retryData);
-              } else {
-                throw new Error(retryData.message || 'Upload failed');
-              }
-            } catch (err) {
-              fallbackDataUrl(file, resolve, reject);
-            }
-          };
-          retryXhr.onerror = () => fallbackDataUrl(file, resolve, reject);
-          retryXhr.send(formData);
-        } else {
-          // If server upload failed, fallback to local data URL for preview
-          fallbackDataUrl(file, resolve, reject);
-        }
-      } catch (e) {
-        fallbackDataUrl(file, resolve, reject);
+        data = JSON.parse(xhr.responseText || '{}');
+      } catch {
+        data = {};
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data);
+      } else {
+        reject(new Error(data.message || data.error?.message || `Upload failed (${xhr.status})`));
       }
     };
 
-    xhr.onerror = () => {
-      fallbackDataUrl(file, resolve, reject);
-    };
-
+    xhr.onerror = () => reject(new Error('Upload failed. Check your connection and try again.'));
     xhr.send(formData);
   });
 }
 
-function fallbackDataUrl(file, resolve, reject) {
-  const reader = new FileReader();
-  reader.onload = () => {
-    resolve({
+/**
+ * Upload a video or image. Production files go straight from the browser to Cloudinary,
+ * because large files cannot pass through a Vercel function.
+ */
+export async function uploadMediaFileApi(file, onProgress) {
+  const permission = await adminFetch('/api/videos/upload-signature', { method: 'POST' });
+  const permissionData = await permission.json().catch(() => ({}));
+  if (!permission.ok) {
+    throw new Error(permissionData.message || 'Could not start the upload');
+  }
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const { directUpload, cloudName, apiKey, timestamp, folder, signature } = permissionData.data || {};
+
+  if (directUpload) {
+    formData.append('api_key', apiKey);
+    formData.append('timestamp', timestamp);
+    formData.append('folder', folder);
+    formData.append('signature', signature);
+
+    const uploaded = await sendUpload(
+      `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+      formData,
+      { onProgress }
+    );
+
+    return {
       success: true,
       data: {
-        url: reader.result,
-        relativeUrl: reader.result,
-        name: file.name,
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
         originalName: file.name,
         mimetype: file.type,
         size: file.size,
+        type: file.type.startsWith('image/') ? 'image' : 'video',
       },
-    });
-  };
-  reader.onerror = (err) => reject(err);
-  reader.readAsDataURL(file);
+    };
+  }
+
+  // Local development keeps files on the API server
+  return sendUpload(`${getApiBaseUrl()}/api/videos/upload`, formData, {
+    token: getAdminToken(),
+    onProgress,
+  });
 }
 
 
@@ -927,49 +902,48 @@ export async function submitContactMessage(contactData) {
     subject: contactData.subject || 'General Inquiry',
     message: contactData.message?.trim(),
     metadata: {
+      ...contactData.metadata,
       submittedAt: new Date().toISOString(),
       clientPlatform: typeof navigator !== 'undefined' ? navigator.userAgent : '',
     },
   };
 
-  try {
-    const res = await resilientFetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+  const res = await resilientFetch('/api/contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-    const data = await res.json().catch(() => ({}));
+  const data = await res.json().catch(() => ({}));
 
-    if (!res.ok) {
-      throw new Error(data.message || `Server returned error (${res.status})`);
-    }
-
-    return { success: true, data };
-  } catch (err) {
-    // Failover to /api/content if /api/contact is unavailable
-    try {
-      const fallbackRes = await resilientFetch('/api/content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: `Contact Inquiry: ${payload.name}`,
-          type: 'general',
-          category: 'contact',
-          description: `Subject: ${payload.subject} | Phone: ${payload.phone}`,
-          contentBody: payload.message,
-          metadata: payload,
-        }),
-      });
-      if (fallbackRes.ok) {
-        const fallbackData = await fallbackRes.json().catch(() => ({}));
-        return { success: true, data: fallbackData };
-      }
-    } catch (fallbackErr) {
-      console.warn('[API] Fallback also failed:', fallbackErr.message);
-    }
-    throw err;
+  if (!res.ok) {
+    throw new Error(data.message || `Server returned error (${res.status})`);
   }
+
+  return { success: true, data };
+}
+
+/**
+ * Send an enrollment request. It appears in the admin panel under Bookings & Inquiries.
+ * No payment is taken; the team follows up with the student or parent.
+ */
+export async function submitEnrollmentRequest({
+  studentName,
+  parentEmail,
+  parentPhone,
+  subjectName,
+  gradeLevel,
+  goalArea,
+  studyGoal,
+}) {
+  return submitContactMessage({
+    name: studentName,
+    email: parentEmail,
+    phone: parentPhone,
+    subject: 'Admissions',
+    message: `Enrollment request for ${subjectName}. Year: ${gradeLevel}. Goal: ${studyGoal}. Focus: ${goalArea}`,
+    metadata: { goalArea, gradeLevel, studyGoal, subjectName },
+  });
 }
 
 /**
@@ -978,7 +952,7 @@ export async function submitContactMessage(contactData) {
 export async function fetchContactMessages(params = {}) {
   try {
     const query = new URLSearchParams(params).toString();
-    const res = await resilientFetch(`/api/contact${query ? `?${query}` : ''}`);
+    const res = await adminFetch(`/api/contact${query ? `?${query}` : ''}`);
     if (!res.ok) throw new Error(`Failed to load contact messages (${res.status})`);
     return await res.json();
   } catch (err) {
@@ -991,7 +965,7 @@ export async function fetchContactMessages(params = {}) {
  * Update contact inquiry status in MongoDB
  */
 export async function updateContactStatusApi(id, status, note = '') {
-  const res = await resilientFetch(`/api/contact/${id}`, {
+  const res = await adminFetch(`/api/contact/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status, note }),
@@ -1005,7 +979,7 @@ export async function updateContactStatusApi(id, status, note = '') {
  * Delete a contact message from MongoDB
  */
 export async function deleteContactMessageApi(id) {
-  const res = await resilientFetch(`/api/contact/${id}`, {
+  const res = await adminFetch(`/api/contact/${id}`, {
     method: 'DELETE',
   });
   const data = await res.json().catch(() => ({}));

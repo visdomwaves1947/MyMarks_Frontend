@@ -85,7 +85,7 @@ export default function App() {
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
-    const isAdmin = user && (user.role === 'admin' || user.email === 'md@visdomwaves.com');
+    const isAdmin = user && user.role === 'admin';
     try {
       localStorage.setItem('mla_user', JSON.stringify(user));
       if (isAdmin) {
@@ -125,7 +125,7 @@ export default function App() {
   };
 
   const handleOpenSignIn = () => {
-    if (currentUser && (currentUser.role === 'admin' || currentUser.email === 'md@visdomwaves.com')) {
+    if (currentUser && currentUser.role === 'admin') {
       navigate('/admin');
       return;
     }
@@ -212,7 +212,7 @@ export default function App() {
     );
   }
 
-  // Block the entire website until authenticated with md@visdomwaves.com / md@1947
+  // Preview lock only. The API protects the data, not this screen.
   if (!isSiteAccessGranted) {
     return <SitePrivacyGate onUnlock={() => setIsSiteAccessGranted(true)} />;
   }

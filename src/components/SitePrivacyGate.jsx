@@ -11,8 +11,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
-const REQUIRED_USER = 'md@visdomwaves.com';
-const REQUIRED_PASS = 'Md@1947';
+import { loginAdminApi } from '../services/api';
 
 export default function SitePrivacyGate({ onUnlock }) {
   const [username, setUsername] = useState('');
@@ -24,7 +23,7 @@ export default function SitePrivacyGate({ onUnlock }) {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -39,36 +38,32 @@ export default function SitePrivacyGate({ onUnlock }) {
 
     setIsLoading(true);
 
-    // Validate credentials
-    setTimeout(() => {
-      if (
-        cleanUser === REQUIRED_USER.toLowerCase() &&
-        (cleanPass === REQUIRED_PASS || cleanPass === 'md@1947')
-      ) {
-        setIsSuccess(true);
-        setIsLoading(false);
+    // Credentials are checked by the server, so no password lives in this page
+    try {
+      await loginAdminApi({ email: cleanUser, password: cleanPass });
+      setIsSuccess(true);
 
-        // Store access
-        try {
-          if (rememberMe) {
-            localStorage.setItem('site_privacy_access', 'granted');
-          } else {
-            sessionStorage.setItem('site_privacy_access', 'granted');
-          }
-        } catch (err) {
-          console.warn('Storage not available', err);
+      // Store access
+      try {
+        if (rememberMe) {
+          localStorage.setItem('site_privacy_access', 'granted');
+        } else {
+          sessionStorage.setItem('site_privacy_access', 'granted');
         }
-
-        // Brief delay for success animation
-        setTimeout(() => {
-          onUnlock();
-        }, 500);
-      } else {
-        setIsLoading(false);
-        setError('Access denied: Invalid username or password.');
-        triggerShake();
+      } catch (err) {
+        console.warn('Storage not available', err);
       }
-    }, 350);
+
+      // Brief delay for success animation
+      setTimeout(() => {
+        onUnlock();
+      }, 500);
+    } catch (err) {
+      setError(err.message || 'Access denied: Invalid username or password.');
+      triggerShake();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const triggerShake = () => {
@@ -227,7 +222,7 @@ export default function SitePrivacyGate({ onUnlock }) {
                   setUsername(e.target.value);
                   if (error) setError('');
                 }}
-                placeholder="md@visdomwaves.com"
+                placeholder="Enter your email"
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950/70 border border-slate-800 text-white placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>

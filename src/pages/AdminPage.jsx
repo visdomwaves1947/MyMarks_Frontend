@@ -93,8 +93,6 @@ import { TOPICS_DATA } from '../components/maths/MathsCurriculum';
 import AdminNavbar from '../components/admin/AdminNavbar';
 import AdminSidebar from '../components/admin/AdminSidebar';
 
-const MASTER_EMAIL = 'md@visdomwaves.com';
-const MASTER_PASS = 'Md@1947';
 
 export default function AdminPage({
   currentUser = null,
@@ -144,7 +142,7 @@ export default function AdminPage({
       const savedUser = localStorage.getItem('mla_user');
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
-        if (parsed.role === 'admin' || parsed.email === 'md@visdomwaves.com') {
+        if (parsed.role === 'admin') {
           return true;
         }
       }
@@ -158,7 +156,7 @@ export default function AdminPage({
   });
 
   useEffect(() => {
-    if (currentUser && (currentUser.role === 'admin' || currentUser.email === 'md@visdomwaves.com')) {
+    if (currentUser && currentUser.role === 'admin') {
       setIsAdminAuthed(true);
     }
   }, [currentUser]);
@@ -427,7 +425,6 @@ export default function AdminPage({
     fatherMobile: '',
     relationship: 'Father',
     dob: '',
-    aadhaarNumber: '',
     studyMonthYear: 'June, 2026',
     role: 'student',
   };
@@ -837,29 +834,31 @@ export default function AdminPage({
         setLoginError('Access denied: Invalid administrator credentials.');
       }
     } catch (err) {
-      // Local fallback verification for offline mode
-      if (
-        cleanEmail === MASTER_EMAIL.toLowerCase() &&
-        (cleanPass === MASTER_PASS || cleanPass === 'Md@1947' || cleanPass === 'md@1947')
-      ) {
-        setIsAdminAuthed(true);
-        try {
-          if (rememberAdmin) {
-            localStorage.setItem('mymarks_admin_auth', 'true');
-          } else {
-            sessionStorage.setItem('mymarks_admin_auth', 'true');
-          }
-        } catch (storageErr) {
-          console.warn(storageErr);
-        }
-        showToast('Welcome to MyMarks Administrator Dashboard!');
-      } else {
-        setLoginError(err.message || 'Access denied: Invalid administrator credentials.');
-      }
+      setLoginError(err.message || 'Access denied: Invalid administrator credentials.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // The API refused the saved token, so return to the login form
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      try {
+        localStorage.removeItem('mymarks_admin_auth');
+        sessionStorage.removeItem('mymarks_admin_auth');
+        localStorage.removeItem('mymarks_admin_token');
+        sessionStorage.removeItem('mymarks_admin_token');
+        localStorage.removeItem('mla_user');
+      } catch (e) {
+        console.warn(e);
+      }
+      setIsAdminAuthed(false);
+      setLoginError('Your admin session has ended. Please sign in again.');
+    };
+
+    window.addEventListener('mymarks_admin_session_expired', handleSessionExpired);
+    return () => window.removeEventListener('mymarks_admin_session_expired', handleSessionExpired);
+  }, []);
 
   const handleAdminLogout = () => {
     try {
@@ -1103,7 +1102,6 @@ export default function AdminPage({
       fatherMobile: user.fatherMobile || '',
       relationship: user.relationship || 'Father',
       dob: user.dob || '',
-      aadhaarNumber: user.aadhaarNumber || '',
       studyMonthYear: user.studyMonthYear || 'June, 2026',
       role: user.role || 'student',
     });
@@ -2083,7 +2081,7 @@ export default function AdminPage({
                   autoFocus
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="md@visdomwaves.com"
+                  placeholder="Enter admin email"
                   className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium focus:bg-white dark:focus:bg-slate-950"
                 />
               </div>
@@ -2115,16 +2113,6 @@ export default function AdminPage({
                 />
                 <span>Keep me signed in</span>
               </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setLoginEmail('md@visdomwaves.com');
-                  setLoginPass('Md@1947');
-                }}
-                className="text-amber-600 dark:text-amber-400 hover:text-amber-500 dark:hover:text-amber-300 text-[11px] font-semibold underline underline-offset-2"
-              >
-                Auto-fill Master Credentials (Md@1947)
-              </button>
             </div>
 
             <button
@@ -3759,25 +3747,9 @@ export default function AdminPage({
                 </div>
 
                 <div className="space-y-3 text-xs text-slate-700 dark:text-slate-300">
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">Authorized Master User</span>
-                      <p className="text-[11px] text-slate-500">Master user authorized to unlock site</p>
-                    </div>
-                    <code className="text-red-600 dark:text-red-400 font-mono text-[11px] bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded border border-red-200 dark:border-red-500/20">
-                      md@visdomwaves.com
-                    </code>
-                  </div>
-
-                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">Master Passcode</span>
-                      <p className="text-[11px] text-slate-500">Confidential password for site preview</p>
-                    </div>
-                    <code className="text-amber-600 dark:text-amber-400 font-mono text-[11px] bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded border border-amber-200 dark:border-amber-500/20">
-                      Md@1947
-                    </code>
-                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    The site lock uses the administrator login. Change it with the ADMIN_EMAIL and ADMIN_PASSWORD server settings.
+                  </p>
 
                   <div className="pt-2">
                     <button
@@ -3919,6 +3891,7 @@ export default function AdminPage({
                   <input
                     type="password"
                     required={userModalMode === 'create'}
+                    minLength={6}
                     value={userForm.password}
                     onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
                     placeholder="••••••••"
