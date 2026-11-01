@@ -10,6 +10,12 @@ import {
   ExternalLink,
   LogOut,
   Shield,
+  BarChart3,
+  Users,
+  BookOpen,
+  Video,
+  Settings,
+  Database,
 } from 'lucide-react';
 import { VisdomBrand } from '../VisdomBrand';
 
@@ -18,6 +24,9 @@ export default function AdminNavbar({
   theme = 'light',
   toggleTheme,
   onLogout,
+  activeTab = 'dashboard',
+  setActiveTab,
+  apiStatus = { online: true, latency: 45 },
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -60,15 +69,15 @@ export default function AdminNavbar({
 
   return (
     <>
-      {/* Sticky Header Container containing Top Navbar & Main Navbar */}
-      <header className="sticky top-0 z-50 select-none shadow-sm">
+      {/* Fixed Header Container containing Top Navbar & Main Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 select-none shadow-sm w-full max-w-full overflow-hidden">
         {/* Chinmaya Vidyalaya Style Top Bar */}
         <div
-          className="h-9 px-3 sm:px-6 flex items-center justify-between text-xs text-blue-100 select-none relative z-50"
+          className="h-9 px-3 sm:px-6 flex items-center justify-between text-xs text-blue-100 select-none relative z-50 w-full max-w-full overflow-hidden"
           style={{ background: 'linear-gradient(90deg, #1e3a8a, #1d4ed8)' }}
         >
           {/* Left: Contact Info */}
-          <div className="flex items-center gap-2 sm:gap-5">
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
             <span className="flex items-center gap-1.5 whitespace-nowrap">
               <PhoneCall size={11} className="text-amber-300 shrink-0" />
               <a
@@ -90,9 +99,9 @@ export default function AdminNavbar({
           </div>
 
           {/* Right: Social Links + Board Accreditation Badge */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Social Links */}
-            <div className="hidden lg:flex items-center gap-2 text-blue-200">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* Social Links - visible only on large desktop */}
+            <div className="hidden xl:flex items-center gap-2 text-blue-200">
               <a
                 href="https://facebook.com"
                 target="_blank"
@@ -139,7 +148,7 @@ export default function AdminNavbar({
               </a>
             </div>
 
-            {/* Curriculum Accreditation Badge - Visible on Mobile and Desktop */}
+            {/* Curriculum Accreditation Badge */}
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[8.5px] xs:text-[9.5px] sm:text-[10px] font-bold text-white border border-white/30 bg-white/10 whitespace-nowrap">
               <GraduationCap size={10} className="text-amber-300 shrink-0" />
               <span>AP & TS Board</span>
@@ -147,9 +156,9 @@ export default function AdminNavbar({
           </div>
         </div>
 
-        {/* Main Navbar - Exact Chinmaya Vidyalaya light blue background (#dbeafe / #bfdbfe) */}
+        {/* Main Navbar */}
         <div
-          className={`transition-all duration-300 ${
+          className={`transition-all duration-300 w-full max-w-full overflow-hidden ${
             scrolled ? 'shadow-xl shadow-blue-900/15' : ''
           } dark:!bg-slate-900 dark:!border-slate-800`}
           style={{
@@ -157,38 +166,40 @@ export default function AdminNavbar({
             borderBottom: scrolled ? '1px solid #93c5fd' : '1px solid #bfdbfe',
           }}
         >
-          <div className="w-full px-2 xs:px-3 sm:px-6 lg:px-8 relative z-10 flex items-center justify-between gap-1.5 sm:gap-4 h-[62px] xs:h-[68px] sm:h-[82px] md:h-[86px]">
+          <div className="w-full max-w-full px-2.5 xs:px-3 sm:px-6 lg:px-8 relative z-10 flex items-center justify-between gap-1.5 sm:gap-3 h-[60px] xs:h-[66px] sm:h-[80px] md:h-[84px]">
             {/* Left: Visdom Waves Brand Logo Badge + Admin Hub Badge */}
-            <div className="flex items-center gap-3 shrink-0">
-              <VisdomBrand
-                onClick={() => {
-                  navigate('/demo');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-              />
-              <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/10 dark:bg-blue-500/15 border border-blue-500/30 text-blue-700 dark:text-blue-400">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+              <div className="scale-90 xs:scale-95 sm:scale-100 origin-left">
+                <VisdomBrand
+                  onClick={() => {
+                    navigate('/demo');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                />
+              </div>
+              <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-600/10 dark:bg-blue-500/15 border border-blue-500/30 text-blue-700 dark:text-blue-400">
                 <Shield size={13} className="text-blue-600 dark:text-blue-400" />
                 <span className="text-[11px] font-black uppercase tracking-wider">Admin Panel</span>
               </div>
             </div>
 
             {/* Right: Controls & Actions */}
-            <div className="flex items-center gap-2 sm:gap-3 lg:gap-3.5 ml-auto">
-              {/* Return to Student Website Action Button */}
+            <div className="flex items-center gap-1.5 sm:gap-2.5 lg:gap-3 shrink-0">
+              {/* Return to Student Website Action Button - visible on xl screens */}
               <button
                 onClick={() => navigate('/demo')}
-                className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer shrink-0"
+                className="hidden xl:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/80 hover:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold transition-all shadow-2xs hover:shadow-xs cursor-pointer shrink-0"
                 title="View Main Student Website"
               >
                 <span>View Website</span>
                 <ExternalLink size={13} className="text-blue-600 dark:text-blue-400" />
               </button>
 
-              {/* Dark / Light Mode Toggle Pill Switch - Authentic Light/Dark Slider */}
+              {/* Dark / Light Mode Toggle Pill Switch */}
               <button
                 type="button"
                 onClick={toggleTheme}
-                className={`relative flex items-center w-[54px] h-[30px] rounded-full p-[3px] transition-colors duration-300 border focus:outline-none cursor-pointer shrink-0 ${
+                className={`relative flex items-center w-[48px] sm:w-[54px] h-[26px] sm:h-[30px] rounded-full p-[2px] transition-colors duration-300 border focus:outline-none cursor-pointer shrink-0 ${
                   theme === 'dark'
                     ? 'bg-slate-800 border-slate-700'
                     : 'bg-slate-200/90 border-slate-300/80 shadow-inner'
@@ -202,18 +213,18 @@ export default function AdminNavbar({
               >
                 {/* Sliding White Circular Knob */}
                 <div
-                  className={`absolute top-[2px] w-[24px] h-[24px] bg-white rounded-full shadow-md transition-transform duration-300 ease-out z-0 ${
-                    theme === 'dark' ? 'translate-x-[24px]' : 'translate-x-[1px]'
+                  className={`absolute top-[2px] w-[20px] sm:w-[24px] h-[20px] sm:h-[24px] bg-white rounded-full shadow-md transition-transform duration-300 ease-out z-0 ${
+                    theme === 'dark' ? 'translate-x-[22px] sm:translate-x-[24px]' : 'translate-x-[1px]'
                   }`}
                 />
-                <div className="relative flex justify-between items-center w-full px-[5px] z-10 pointer-events-none">
+                <div className="relative flex justify-between items-center w-full px-[4px] sm:px-[5px] z-10 pointer-events-none">
                   <Sun
-                    className={`w-3.5 h-3.5 transition-colors duration-300 ${
+                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-colors duration-300 ${
                       theme === 'dark' ? 'text-slate-400' : 'text-amber-500 font-bold'
                     }`}
                   />
                   <Moon
-                    className={`w-3.5 h-3.5 transition-colors duration-300 ${
+                    className={`w-3 h-3 sm:w-3.5 sm:h-3.5 transition-colors duration-300 ${
                       theme === 'dark' ? 'text-indigo-400 font-bold' : 'text-slate-400'
                     }`}
                   />
@@ -222,18 +233,18 @@ export default function AdminNavbar({
 
               {/* Admin Profile Monogram Badge */}
               <div
-                className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-200 shrink-0 cursor-default"
+                className="flex items-center gap-2 p-1 xl:pl-1.5 xl:pr-3 xl:py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-200 shrink-0 cursor-default"
                 title={`Signed in as ${adminName} (${adminEmail})`}
               >
                 {/* Monogram Avatar with Status Indicator */}
-                <div className="relative shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-2xs ring-1 ring-white dark:ring-slate-800">
+                <div className="relative shrink-0 flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-bold shadow-2xs ring-1 ring-white dark:ring-slate-800">
                   {userInitials}
                   <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900"></span>
                 </div>
 
-                {/* Clean Professional Typography */}
-                <div className="flex flex-col text-left leading-tight hidden sm:flex max-w-[140px] md:max-w-[180px]">
-                  <span className="text-[12.5px] font-bold text-slate-950 dark:text-white truncate tracking-tight">
+                {/* Typography visible only on large screens */}
+                <div className="flex-col text-left leading-tight hidden xl:flex max-w-[130px]">
+                  <span className="text-[12px] font-bold text-slate-950 dark:text-white truncate tracking-tight">
                     {adminName}
                   </span>
                   <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-400 truncate">
@@ -242,24 +253,24 @@ export default function AdminNavbar({
                 </div>
               </div>
 
-              {/* Sign Out Button */}
+              {/* Sign Out Button - visible on tablet & desktop */}
               {onLogout && (
                 <button
                   onClick={onLogout}
-                  className="p-2 sm:px-3 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs tracking-tight shadow-md shadow-red-950/20 hover:shadow-lg transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-1.5 shrink-0"
+                  className="hidden md:flex p-2 sm:px-3 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs tracking-tight shadow-md transition-all cursor-pointer active:scale-95 items-center justify-center gap-1.5 shrink-0"
                   title="Sign Out of Admin Portal"
                 >
-                  <LogOut size={15} />
-                  <span className="hidden sm:inline">Sign Out</span>
+                  <LogOut size={14} />
+                  <span className="hidden xl:inline">Sign Out</span>
                 </button>
               )}
 
-              {/* Mobile Hamburger Toggle Button */}
+              {/* Mobile & Tablet Hamburger Toggle Button - ALWAYS visible on < lg */}
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="sm:hidden p-1.5 rounded-lg text-slate-950 hover:bg-black/10 transition-colors cursor-pointer"
-                aria-label={mobileMenuOpen ? 'Close Menu' : 'Open Menu'}
+                className="lg:hidden p-1.5 sm:p-2 rounded-xl text-slate-800 dark:text-white hover:bg-black/10 dark:hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                aria-label={mobileMenuOpen ? 'Close Navigation Menu' : 'Open Navigation Menu'}
               >
                 {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
               </button>
@@ -268,25 +279,127 @@ export default function AdminNavbar({
         </div>
       </header>
 
-      {/* Mobile Slide-Down Drawer */}
+      {/* Mobile & Tablet Off-Canvas Drawer Backdrop */}
       {mobileMenuOpen && (
-        <div className="sm:hidden fixed inset-x-0 top-[98px] xs:top-[104px] sm:top-[118px] md:top-[122px] z-40 bg-[#dbeafe] dark:bg-[#070a12] text-slate-900 dark:text-slate-100 border-b border-blue-300 dark:border-slate-800 shadow-2xl py-4 px-4 select-none space-y-3">
-          {/* Admin Profile Row */}
-          <div className="w-full py-2.5 px-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between shadow-2xs">
-            <div className="flex items-center gap-2.5">
-              <div className="relative flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-xs">
-                {userInitials}
-                <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900"></span>
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile & Tablet Slide-Over Menu Bar (Drawer) */}
+      <div
+        className={`lg:hidden fixed inset-y-0 right-0 z-50 w-full sm:w-[350px] max-w-[88vw] bg-[#E6F0FA] dark:bg-[#070B14] border-l border-blue-200 dark:border-slate-800 shadow-2xl flex flex-col p-4 sm:p-5 select-none overflow-y-auto transition-transform duration-300 ease-in-out ${
+          mobileMenuOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+        }`}
+      >
+        {/* Drawer Header with Title and Close (X) button */}
+        <div className="flex items-center justify-between pb-3.5 mb-2 border-b border-blue-200/80 dark:border-slate-800">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm">
+              <Shield size={16} />
+            </div>
+            <div>
+              <div className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                Admin Panel Menu
               </div>
-              <div className="text-left">
-                <div className="text-xs font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">
-                  {adminName}
-                </div>
-                <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {adminRole}
-                </div>
+              <div className="text-[10px] text-slate-500 font-medium">
+                Workspace Navigation
               </div>
             </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(false)}
+            className="p-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer transition-colors shadow-2xs"
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Admin Profile Row */}
+        <div className="w-full py-2.5 px-3 rounded-2xl bg-white/95 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between shadow-2xs mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="relative flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-xs">
+              {userInitials}
+              <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-emerald-500 ring-1.5 ring-white dark:ring-slate-900"></span>
+            </div>
+            <div className="text-left">
+              <div className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[170px]">
+                {adminName}
+              </div>
+              <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                {adminRole}
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Live</span>
+          </div>
+        </div>
+
+        {/* Admin Navigation Tabs */}
+        <div className="space-y-1.5 mb-3 flex-1">
+          <div className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
+            Navigation Sections
+          </div>
+          {[
+            { id: 'dashboard', label: 'Overview & Analytics', icon: BarChart3 },
+            { id: 'students', label: 'Students Directory', icon: Users },
+            { id: 'courses', label: 'Curriculum & Subjects', icon: BookOpen },
+            { id: 'videos', label: 'Videos, YouTube & Links', icon: Video },
+            { id: 'settings', label: 'Platform Controls', icon: Settings },
+          ].map((item) => {
+            const isActive = activeTab === item.id;
+            const ItemIcon = item.icon;
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  if (setActiveTab) setActiveTab(item.id);
+                  setMobileMenuOpen(false);
+                  const workspace = document.querySelector("#admin-workspace-scroll");
+                  if (workspace) workspace.scrollTo({ top: 0, behavior: "smooth" });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 ring-1 ring-blue-500'
+                    : 'bg-white/90 dark:bg-slate-900/90 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800'
+                }`}
+              >
+                <span className="flex items-center gap-2.5">
+                  <ItemIcon
+                    size={16}
+                    className={isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'}
+                  />
+                  <span>{item.label}</span>
+                </span>
+                {isActive && (
+                  <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                    Active
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Status & Settings Cards */}
+        <div className="space-y-2 pt-2 border-t border-blue-200/80 dark:border-slate-800 mt-auto">
+          {/* Database Live Status Row */}
+          <div className="p-2.5 rounded-xl bg-white/90 dark:bg-slate-900/90 border border-blue-200/90 dark:border-slate-800 flex items-center justify-between text-xs shadow-2xs">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <Database size={14} className="text-emerald-500" />
+              <span>MongoDB Database</span>
+            </span>
+            <span className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {apiStatus?.online ? `${apiStatus?.latency || 45}ms` : 'Offline'}
+            </span>
           </div>
 
           {/* View Website Button */}
@@ -295,29 +408,29 @@ export default function AdminNavbar({
               setMobileMenuOpen(false);
               navigate('/demo');
             }}
-            className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 shadow-2xs"
+            className="w-full py-2.5 px-4 rounded-xl bg-white/90 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 shadow-2xs cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-colors"
           >
-            <span>Visit Main Website</span>
-            <ExternalLink size={14} className="text-blue-600" />
+            <span>Visit Main Student Website</span>
+            <ExternalLink size={14} className="text-blue-600 dark:text-blue-400" />
           </button>
 
           {/* Mobile Dark/Light Toggle */}
-          <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-white/70 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between py-2 px-3 rounded-xl bg-white/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
             <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
               Appearance Mode
             </span>
             <button
               type="button"
               onClick={toggleTheme}
-              className={`relative flex items-center w-[54px] h-[30px] rounded-full p-[3px] transition-colors duration-300 border focus:outline-none cursor-pointer shrink-0 ${
+              className={`relative flex items-center w-[50px] h-[28px] rounded-full p-[2px] transition-colors duration-300 border focus:outline-none cursor-pointer shrink-0 ${
                 theme === 'dark'
                   ? 'bg-slate-800 border-slate-700'
                   : 'bg-slate-200/90 border-slate-300/80 shadow-inner'
               }`}
             >
               <div
-                className={`absolute top-[2px] w-[24px] h-[24px] bg-white rounded-full shadow-md transition-transform duration-300 ease-out z-0 ${
-                  theme === 'dark' ? 'translate-x-[24px]' : 'translate-x-[1px]'
+                className={`absolute top-[2px] w-[22px] h-[22px] bg-white rounded-full shadow-md transition-transform duration-300 ease-out z-0 ${
+                  theme === 'dark' ? 'translate-x-[22px]' : 'translate-x-[1px]'
                 }`}
               />
               <div className="relative flex justify-between items-center w-full px-[5px] z-10 pointer-events-none">
@@ -342,14 +455,14 @@ export default function AdminNavbar({
                 setMobileMenuOpen(false);
                 onLogout();
               }}
-              className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+              className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
             >
               <LogOut size={14} className="text-white" />
-              <span>Sign Out</span>
+              <span>Sign Out of Admin Portal</span>
             </button>
           )}
         </div>
-      )}
+      </div>
     </>
   );
 }

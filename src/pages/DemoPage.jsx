@@ -40,23 +40,21 @@ export default function DemoPage({
         <div className="w-full relative z-10 flex items-center justify-center py-4 xs:py-6 sm:py-10 md:py-16">
           <HeroContinuousOverlay
             onOpenVideoDemo={onOpenVideoDemo}
-            onOpenBooking={onOpenBooking}
             onSceneChange={setActiveHeroScene}
           />
         </div>
       </section>
 
       {/* News & Events Section Placed Below Hero Section */}
-      <NewsScroller onOpenBooking={onOpenBooking} />
+      <NewsScroller />
 
       {/* How To Use Section */}
       <HowToUse
-        onOpenSignUp={() => onOpenBooking && onOpenBooking("Sign Up")}
+        onOpenSignUp={onOpenSignUp || onOpenSignIn}
       />
 
       {/* Why Thousands Choose MyMarks, Score Simulator & 100% Refund Guarantee (Placed Below How to Use MyMarks) */}
       <WhyChooseMyMarksSection
-        onOpenBooking={onOpenBooking}
         showTestimonials={false}
       />
 

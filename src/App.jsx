@@ -67,6 +67,7 @@ export default function App() {
   const [videoDemoOpen, setVideoDemoOpen] = useState(false);
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
   const [selectedRoadmap, setSelectedRoadmap] = useState(null);
+  const [authNotice, setAuthNotice] = useState('');
 
   const location = useLocation();
   const path = location.pathname.toLowerCase();
@@ -84,6 +85,7 @@ export default function App() {
   });
 
   const handleLoginSuccess = (user) => {
+    setAuthNotice('');
     setCurrentUser(user);
     const isAdmin = user && user.role === 'admin';
     try {
@@ -106,10 +108,10 @@ export default function App() {
     }
 
     const from = location.state?.from || '/demo';
-    navigate(from);
+    navigate(from === '/admin' ? '/portal' : from);
   };
 
-  const handleLogout = () => {
+  const clearSignIn = () => {
     setCurrentUser(null);
     try {
       localStorage.removeItem('mla_user');
@@ -120,8 +122,19 @@ export default function App() {
     } catch (e) {
       console.warn(e);
     }
+  };
+
+  const handleLogout = () => {
+    clearSignIn();
     const from = location.state?.from || '/demo';
     navigate(from);
+  };
+
+  // The admin panel calls this when the server rejects the session.
+  // The admin route check below then opens the sign-in page.
+  const handleAdminSessionExpired = () => {
+    clearSignIn();
+    setAuthNotice('Your admin session has ended. Please sign in again.');
   };
 
   const handleOpenSignIn = () => {
@@ -137,8 +150,9 @@ export default function App() {
   };
   
   const handleCloseAuth = () => {
+    setAuthNotice('');
     const from = location.state?.from || '/demo';
-    navigate(from);
+    navigate(from === '/admin' ? '/demo' : from);
   };
 
   useEffect(() => {
@@ -195,14 +209,35 @@ export default function App() {
 
   const isAdminRoute = path === '/admin' || path.startsWith('/admin/') || path === '/mymarks/admin' || path.startsWith('/mymarks/admin/');
 
+  const hasAdminAuth = (currentUser && currentUser.role === 'admin') || (() => {
+    try {
+      const savedUser = localStorage.getItem('mla_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.role === 'admin') return true;
+      }
+      return (
+        sessionStorage.getItem('mymarks_admin_auth') === 'true' ||
+        localStorage.getItem('mymarks_admin_auth') === 'true'
+      );
+    } catch {
+      return false;
+    }
+  })();
+
+  // If visiting an admin route without admin authentication, directly open the main sign in page
+  if (isAdminRoute && !hasAdminAuth) {
+    return <Navigate to="/signin" state={{ from: '/admin' }} replace />;
+  }
+
   // Dedicated Full-Screen Administrator Workspace
   if (isAdminRoute) {
     return (
-      <div className={`min-h-screen flex flex-col font-sans transition-colors duration-200 ${theme === 'dark' ? 'bg-[#070B14] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+      <div className={`h-screen w-full max-w-full flex flex-col font-sans transition-colors duration-200 overflow-hidden overflow-x-hidden ${theme === 'dark' ? 'bg-[#070B14] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
         <ScrollToTop />
         <Routes>
-          <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
-          <Route path="/admin/*" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onSessionExpired={handleAdminSessionExpired} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/admin/*" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onSessionExpired={handleAdminSessionExpired} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/Admin" element={<Navigate to="/admin" replace />} />
           <Route path="/mymarks/admin" element={<Navigate to="/admin" replace />} />
           <Route path="/mymarks/admin/*" element={<Navigate to="/admin" replace />} />
@@ -223,7 +258,6 @@ export default function App() {
 
       {/* Shared Navigation Header */}
       <Navbar 
-        onOpenBooking={() => handleOpenBooking()} 
         onOpenPortal={handleOpenSignIn}
         onOpenSignIn={handleOpenSignIn}
         onOpenSignUp={handleOpenSignUp}
@@ -783,8 +817,8 @@ export default function App() {
           <Route path="/contact-us" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
 
           {/* Admin Routes */}
-          <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
-          <Route path="/admin/*" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onSessionExpired={handleAdminSessionExpired} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
+          <Route path="/admin/*" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onSessionExpired={handleAdminSessionExpired} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
           <Route path="/Admin" element={<Navigate to="/admin" replace />} />
           <Route path="/mymarks/admin" element={<Navigate to="/admin" replace />} />
 
@@ -795,9 +829,7 @@ export default function App() {
       </main>
 
       {/* Shared Footer */}
-      <Footer 
-        onOpenBooking={() => handleOpenBooking()} 
-      />
+      <Footer />
 
       {/* Shared Interactive Modals */}
       <BookingModal 
@@ -812,12 +844,12 @@ export default function App() {
         initialMode={authMode}
         currentUser={currentUser}
         onLoginSuccess={handleLoginSuccess}
+        notice={authNotice}
       />
 
       <VideoDemoModal 
         isOpen={videoDemoOpen} 
         onClose={() => setVideoDemoOpen(false)}
-        onOpenBooking={() => handleOpenBooking('Classroom Experience')}
       /> 
 
       <ExamPlannerModal 

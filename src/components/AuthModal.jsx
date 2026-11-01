@@ -40,7 +40,8 @@ export default function AuthModal({
   onClose, 
   initialMode = 'signin',
   currentUser = null,
-  onLoginSuccess
+  onLoginSuccess,
+  notice = ''
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -535,10 +536,10 @@ export default function AuthModal({
                       <span>{signUpSuccessMsg}</span>
                     </div>
                   )}
-                  {signInErrors.server && (
+                  {(signInErrors.server || notice) && (
                     <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
                       <AlertCircle size={16} className="shrink-0 text-rose-400" />
-                      <span>{signInErrors.server}</span>
+                      <span>{signInErrors.server || notice}</span>
                     </div>
                   )}
                   {/* MOBILE NUMBER/EMAIL FIELD */}

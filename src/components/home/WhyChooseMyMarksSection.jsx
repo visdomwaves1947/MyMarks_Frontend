@@ -235,8 +235,7 @@ export default function WhyChooseMyMarksSection({ onOpenBooking, showTestimonial
             {whyChooseCards.map((card, idx) => (
               <div
                 key={idx}
-                className="bg-[#c8e1fd] dark:bg-[#0f2a4a] rounded-2xl shadow-xs border-2 border-[#93c5fd] dark:border-[#1e4b7a] overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 group cursor-pointer"
-                onClick={() => onOpenBooking && onOpenBooking(`Feature: ${card.title}`)}
+                className="bg-[#c8e1fd] dark:bg-[#0f2a4a] rounded-2xl shadow-xs border-2 border-[#93c5fd] dark:border-[#1e4b7a] overflow-hidden flex flex-col justify-between hover:shadow-md hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 group"
               >
                 <div className="flex flex-col h-full">
                   <div className="h-24 xs:h-28 sm:h-36 w-full overflow-hidden relative bg-slate-200 dark:bg-slate-800">
@@ -378,7 +377,10 @@ export default function WhyChooseMyMarksSection({ onOpenBooking, showTestimonial
 
                 <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                   <button
-                    onClick={() => onOpenBooking && onOpenBooking("Refund Guarantee Policy")}
+                    onClick={() => {
+                      const el = document.getElementById("courses");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
                     className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white text-xs sm:text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer"
                   >
                     Enroll With Zero Risk

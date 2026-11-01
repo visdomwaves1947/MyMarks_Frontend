@@ -25,6 +25,20 @@
   }
 }
 
+/* Hide scrollbar universally for clean horizontal swipe containers */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
 /* Light Theme Universal Background (#E6F0FA) for Home & All Pages */
 html:not(.dark) body,
 html:not(.dark) [class*="bg-[#EBF0F7]"],
