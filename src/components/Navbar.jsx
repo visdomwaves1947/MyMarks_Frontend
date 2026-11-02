@@ -35,6 +35,8 @@ export default function Navbar({
   toggleTheme,
   onLockSite,
 }) {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { courses, streams } = useCatalog();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
