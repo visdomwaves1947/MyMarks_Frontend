@@ -6,6 +6,7 @@ import {
   setAdminCourseStatus,
   updateAdminCourse,
 } from '../../../services/courseApi';
+import { SkeletonForm } from '../AdminSkeleton';
 import CourseCard from '../../course/CourseCard';
 import CoursePageStep from './CoursePageStep';
 import CurriculumStep from './CurriculumStep';
@@ -150,7 +151,7 @@ export default function CourseEditor({ courseId, streams, showToast, onChanged, 
   };
 
   if (isLoading) {
-    return <p className="py-16 text-center text-sm text-slate-500">Loading course...</p>;
+    return <SkeletonForm fields={6} label="Loading course" />;
   }
 
   const checks = publishChecks(form);

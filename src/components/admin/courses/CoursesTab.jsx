@@ -8,6 +8,7 @@ import {
 } from '../../../services/courseApi';
 import { refreshCatalog } from '../../../hooks/useCatalog';
 import { courseImage, showDefaultImage } from '../../../utils/courseImage';
+import { SkeletonRows } from '../AdminSkeleton';
 import CourseEditor from './CourseEditor';
 import CourseFlags from '../../course/CourseFlags';
 import StreamsPanel from './StreamsPanel';
@@ -177,6 +178,9 @@ export default function CoursesTab({ showToast, onChanged }) {
           </div>
 
           {/* Course List */}
+          {isLoading ? (
+            <SkeletonRows rows={7} label="Loading courses" />
+          ) : (
           <div className={`${PANEL_STYLE} !p-0 overflow-hidden`}>
             {visibleCourses.map((course, index) => (
               <div
@@ -257,12 +261,13 @@ export default function CoursesTab({ showToast, onChanged }) {
               </div>
             ))}
 
-            {!isLoading && visibleCourses.length === 0 && (
+            {visibleCourses.length === 0 && (
               <p className="py-14 text-center text-slate-400 dark:text-slate-500 text-sm">
                 No courses found. Click Add Course to create one.
               </p>
             )}
           </div>
+          )}
         </>
       )}
     </div>

@@ -345,6 +345,25 @@ test.describe.serial('admin manages a course from start to finish', () => {
     await expect(page.getByTestId('admin-course-row').first()).toContainText('Mathematics');
   });
 
+  test('admin screens show skeletons while their data loads', async ({ page, request }) => {
+    const slowly = async (route) => {
+      await new Promise((done) => setTimeout(done, 1200));
+      await route.continue();
+    };
+    await page.route('**/api/admin/stats', slowly);
+    await page.route('**/api/admin/courses', slowly);
+
+    await openAsAdmin(page, request);
+    await page.goto('/admin');
+    await expect(page.getByRole('status', { name: 'Loading admin data' })).toBeVisible();
+    await expect(page.getByRole('status', { name: 'Loading admin data' })).toHaveCount(0, { timeout: 15000 });
+
+    await page.getByRole('button', { name: 'Courses & Streams' }).first().click();
+    await expect(page.getByRole('status', { name: 'Loading courses' })).toBeVisible();
+    await expect(page.getByTestId('admin-course-row').first()).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole('status', { name: 'Loading courses' })).toHaveCount(0);
+  });
+
   test('archiving hides a course and keeps it in the admin panel', async ({ page, request }) => {
     await openAsAdmin(page, request);
     await goToCoursesTab(page);

@@ -92,6 +92,7 @@ import { fetchAdminCourses, fetchNewBookingCount } from "../services/courseApi";
 import { TOPICS_DATA } from "../components/maths/MathsCurriculum";
 import AdminNavbar from "../components/admin/AdminNavbar";
 import AdminSidebar from "../components/admin/AdminSidebar";
+import AdminTabSkeleton from "../components/admin/AdminSkeleton";
 import CoursesTab from "../components/admin/courses/CoursesTab";
 
 // Used for videos until the courses are in the database
@@ -196,6 +197,7 @@ export default function AdminPage({
   // Loading & Refresh State
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [apiStatus, setApiStatus] = useState({ online: true, latency: 45 });
 
   // Data States
@@ -215,9 +217,12 @@ export default function AdminPage({
 
   // Toast Notifications
   const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
   const showToast = useCallback((message, type = "success") => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3800);
+    // An earlier message must not clear this one when its own time runs out
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3800);
   }, []);
 
   // Filter & Search States
@@ -909,6 +914,7 @@ export default function AdminPage({
       setApiStatus({ online: false, latency: 0 });
     } finally {
       setIsRefreshing(false);
+      setIsFirstLoad(false);
     }
   }, [loadCourses]);
 
@@ -2367,7 +2373,9 @@ export default function AdminPage({
           {/* ─────────────────────────────────────────────────────────────
             TAB 1: DASHBOARD & OVERVIEW
            ───────────────────────────────────────────────────────────── */}
-          {activeTab === "dashboard" && (
+          {isFirstLoad && <AdminTabSkeleton tab={activeTab} />}
+
+          {!isFirstLoad && activeTab === "dashboard" && (
             <div className="space-y-6">
               {/* Top KPI Metric Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
@@ -2714,7 +2722,7 @@ export default function AdminPage({
           {/* ─────────────────────────────────────────────────────────────
             TAB 2: STUDENTS DIRECTORY
            ───────────────────────────────────────────────────────────── */}
-          {activeTab === "students" && (
+          {!isFirstLoad && activeTab === "students" && (
             <div className="space-y-4">
               {/* Action & Filter Bar */}
               <div className="p-4 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 transition-colors duration-200">
@@ -2940,7 +2948,7 @@ export default function AdminPage({
           {/* ─────────────────────────────────────────────────────────────
             TAB 4: VIDEOS, YOUTUBE & CURRICULUM MANAGEMENT
            ───────────────────────────────────────────────────────────── */}
-          {activeTab === "videos" && (
+          {!isFirstLoad && activeTab === "videos" && (
             <div className="space-y-5">
               {/* KPI Metric Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
@@ -3923,7 +3931,7 @@ export default function AdminPage({
           {/* ─────────────────────────────────────────────────────────────
             TAB 4: BOOKINGS & INQUIRIES
            ───────────────────────────────────────────────────────────── */}
-          {activeTab === "bookings" && (
+          {!isFirstLoad && activeTab === "bookings" && (
             <div className="space-y-4">
               <div className="p-5 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex items-center justify-between transition-colors duration-200">
                 <div>

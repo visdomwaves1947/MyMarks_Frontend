@@ -7,6 +7,7 @@ import {
   updateAdminStream,
 } from '../../../services/courseApi';
 import { refreshCatalog } from '../../../hooks/useCatalog';
+import { SkeletonRows } from '../AdminSkeleton';
 import { ICON_BUTTON, PANEL_STYLE, PRIMARY_BUTTON, SECONDARY_BUTTON, TextArea, TextInput, moveItem } from './fields';
 
 const BLANK_STREAM = {
@@ -125,6 +126,9 @@ export default function StreamsPanel({ showToast, onChanged }) {
         </form>
       )}
 
+      {isLoading ? (
+        <SkeletonRows rows={6} label="Loading streams" />
+      ) : (
       <div className={`${PANEL_STYLE} !p-0 overflow-hidden`}>
         {streams.map((stream, index) => (
           <div
@@ -174,12 +178,13 @@ export default function StreamsPanel({ showToast, onChanged }) {
           </div>
         ))}
 
-        {!isLoading && streams.length === 0 && (
+        {streams.length === 0 && (
           <p className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm">
             No streams yet. Click Add Stream to create the first one.
           </p>
         )}
       </div>
+      )}
     </div>
   );
 }

@@ -83,6 +83,18 @@ export const courseCard = (page, name) =>
 export async function goToHome(page) {
   await page.goto('/demo#courses');
   await expect(page.getByTestId('course-card').first()).toBeVisible();
+  await waitForScrollToStop(page);
+}
+
+// The page scrolls smoothly to the courses, and scrolling closes the phone menu
+export async function waitForScrollToStop(page) {
+  let last = -1;
+  await expect(async () => {
+    const position = await page.evaluate(() => window.scrollY);
+    const stopped = position === last;
+    last = position;
+    expect(stopped).toBe(true);
+  }).toPass({ intervals: [300] });
 }
 
 export async function expectNoSideScroll(page) {

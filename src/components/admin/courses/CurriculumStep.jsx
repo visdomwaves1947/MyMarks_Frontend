@@ -17,6 +17,7 @@ import {
   importAdminCurriculum,
   saveAdminCurriculum,
 } from '../../../services/courseApi';
+import { SkeletonRows } from '../AdminSkeleton';
 import {
   Field,
   ICON_BUTTON,
@@ -370,7 +371,7 @@ export default function CurriculumStep({ courseId, showToast, onSaveDraft }) {
   }
 
   if (isLoading) {
-    return <p className="py-12 text-center text-sm text-slate-500">Loading chapters...</p>;
+    return <SkeletonRows rows={6} label="Loading chapters" />;
   }
 
   return (
