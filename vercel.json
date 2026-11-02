@@ -24,7 +24,7 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "https://mymarks-backend.vercel.app/sitemap.xml"
+      "destination": "https://mymarks-backend-six.vercel.app/sitemap.xml"
     },
     {
       "source": "/courses/:slug",
@@ -35,7 +35,7 @@
           "value": "(?i).*(whatsapp|facebookexternalhit|facebot|twitterbot|linkedinbot|telegrambot|slackbot|discordbot|skypeuripreview|pinterest).*"
         }
       ],
-      "destination": "https://mymarks-backend.vercel.app/share/courses/:slug"
+      "destination": "https://mymarks-backend-six.vercel.app/share/courses/:slug"
     },
     {
       "source": "/(.*)",
