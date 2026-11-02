@@ -60,8 +60,8 @@ export default function DemoPage({
 
       {/* AP/TS Intermediate Subjects Grid */}
       <IntermediateSubjects
-        onEnroll={(subjectName) =>
-          onOpenBooking && onOpenBooking(`Enroll in ${subjectName}`)
+        onEnroll={(subjectName, course) =>
+          onOpenBooking && onOpenBooking(`Enroll in ${subjectName}`, course)
         }
         currentUser={currentUser}
         onOpenSignIn={onOpenSignIn}

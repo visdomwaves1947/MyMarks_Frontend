@@ -23,6 +23,7 @@ import {
   FlaskConical,
 } from "lucide-react";
 import { VisdomBrand } from "./VisdomBrand";
+import useCatalog from "../hooks/useCatalog";
 
 export default function Navbar({
   onOpenBooking,
@@ -34,6 +35,7 @@ export default function Navbar({
   toggleTheme,
   onLockSite,
 }) {
+  const { courses, streams } = useCatalog();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -54,6 +56,10 @@ export default function Navbar({
 
   const handleLinkNavigation = (e, href) => {
     e.preventDefault();
+    if (/^https:\/\//i.test(href)) {
+      window.open(href, "_blank", "noopener,noreferrer");
+      return;
+    }
     if (!href || href === "#") {
       if (location.pathname.toLowerCase().includes("demo") || location.pathname === "/") {
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -64,7 +70,7 @@ export default function Navbar({
     }
 
     // Handle group navigation e.g. /demo?group=mpc#courses
-    const groupMatch = href.match(/[?&]group=([a-z0-9]+)/i);
+    const groupMatch = href.match(/[?&]group=([a-z0-9-]+)/i);
     if (groupMatch) {
       const group = groupMatch[1].toLowerCase();
       window.dispatchEvent(new CustomEvent("selectIntermediateGroup", { detail: group }));
@@ -139,6 +145,21 @@ export default function Navbar({
     }));
   };
 
+  const academicGroups = streams
+    .filter((stream) => stream.slug !== "languages")
+    .map((stream) => ({
+      name: stream.code,
+      desc: stream.shortName,
+      href: `/demo?group=${stream.slug}#courses`,
+    }));
+
+  const languageCourses = courses
+    .filter((course) => course.streams.some((stream) => stream.slug === "languages"))
+    .map((course) => ({
+      name: course.name,
+      href: course.ownLink || `/courses/${course.slug}`,
+    }));
+
   const navLinks = [
     {
       name: "Home",
@@ -152,28 +173,8 @@ export default function Navbar({
       name: "Intermediate",
       href: "/demo#courses",
       sections: [
-        {
-          title: "Academic Groups",
-          icon: Layers,
-          items: [
-            { name: "MPC", desc: "Maths, Physics, Chem", href: "/demo?group=mpc#courses" },
-            { name: "BiPC", desc: "Botany, Zoology, Phy, Chem", href: "/demo?group=bipc#courses" },
-            { name: "CEC", desc: "Commerce, Econ, Civics", href: "/demo?group=cec#courses" },
-            { name: "MEC", desc: "Maths, Econ, Commerce", href: "/demo?group=mec#courses" },
-            { name: "HEC", desc: "History, Econ, Civics", href: "/demo?group=hec#courses" },
-          ],
-        },
-        {
-          title: "Languages",
-          icon: Globe,
-          items: [
-            { name: "English", href: "/english" },
-            { name: "Sanskrit", href: "/sanskrit" },
-            { name: "Telugu", href: "/telugu" },
-            { name: "Hindi", href: "/hindi" },
-            { name: "Urdu", href: "/urdu" },
-          ],
-        },
+        { title: "Academic Groups", icon: Layers, items: academicGroups },
+        { title: "Languages", icon: Globe, items: languageCourses },
         {
           title: "Lab / Practicals",
           icon: FlaskConical,
@@ -187,7 +188,7 @@ export default function Navbar({
             { name: "View All Practical Handbooks", href: "/practicals" },
           ],
         },
-      ],
+      ].filter((section) => section.items.length > 0),
     },
     {
       name: "Contact Us",

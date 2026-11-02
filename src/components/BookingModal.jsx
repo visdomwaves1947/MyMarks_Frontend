@@ -19,8 +19,15 @@ import {
   Zap
 } from 'lucide-react';
 import { submitEnrollmentRequest } from '../services/api';
+import useCatalog from '../hooks/useCatalog';
+import { formatPrice } from '../utils/courseImage';
 
-export default function BookingModal({ isOpen, onClose, preselectedTrack = '' }) {
+// Used only when the form opens from an old subject page with no course behind it
+const DEFAULT_PRICE = 299;
+const DEFAULT_OLD_PRICE = 999;
+
+export default function BookingModal({ isOpen, onClose, preselectedTrack = '', course = null }) {
+  const { courses } = useCatalog();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentStep, setCurrentStep] = useState('form'); // 'form' | 'confirmed'
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -28,7 +35,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
   const [mobileTab, setMobileTab] = useState('matter'); // 'matter' (Course Highlights) | 'form' (Student Details)
 
   // Subject detection to adapt icon and subject title
-  const detectedSubject = React.useMemo(() => {
+  const guessedSubject = React.useMemo(() => {
     const text = (preselectedTrack || window.location.pathname).toLowerCase();
     if (text.includes('history')) return { name: 'History', icon: Landmark };
     if (text.includes('math')) return { name: 'Mathematics', icon: Compass };
@@ -44,6 +51,23 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
     if (text.includes('sanskrit')) return { name: 'Sanskrit', icon: BookOpen };
     return { name: 'Academic', icon: GraduationCap };
   }, [preselectedTrack]);
+
+  const selectedCourse =
+    course ||
+    courses.find((item) => item.name === guessedSubject.name || item.subject === guessedSubject.name) ||
+    null;
+
+  const detectedSubject = selectedCourse
+    ? { name: selectedCourse.name, icon: guessedSubject.name === 'Academic' ? BookOpen : guessedSubject.icon }
+    : guessedSubject;
+
+  const price = selectedCourse ? selectedCourse.price : DEFAULT_PRICE;
+  const oldPrice = selectedCourse ? selectedCourse.oldPrice : DEFAULT_OLD_PRICE;
+  const hasDiscount = oldPrice > price;
+  const priceText = formatPrice(price ?? 0);
+  const oldPriceText = formatPrice(oldPrice ?? 0);
+  const savingText = formatPrice((oldPrice ?? 0) - (price ?? 0));
+  const percentOff = hasDiscount ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0;
 
   const [formData, setFormData] = useState({
     studentName: '',
@@ -89,7 +113,11 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
     setSubmitError('');
     setIsSubmitting(true);
     try {
-      await submitEnrollmentRequest({ ...formData, subjectName: detectedSubject.name });
+      await submitEnrollmentRequest({
+        ...formData,
+        subjectName: detectedSubject.name,
+        courseSlug: selectedCourse?.slug,
+      });
       setCurrentStep('confirmed');
     } catch (err) {
       setSubmitError(err.message || 'We could not send your request. Please try again.');
@@ -152,9 +180,13 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
             <div className="flex items-center gap-2 flex-wrap min-w-0">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100/90 border border-blue-300/80 text-blue-900 dark:!bg-blue-950/80 dark:!border-blue-500/40 dark:!text-blue-300 text-[10.5px] sm:text-xs font-bold shadow-xs shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping shrink-0" />
-                <span>Board Offer • ₹299 per Subject</span>
-                <span className="line-through text-slate-500 dark:!text-slate-400 text-[9.5px] hidden xs:inline">₹999</span>
-                <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black shrink-0">70% OFF</span>
+                <span>Board Offer • {priceText} per Subject</span>
+                {hasDiscount && (
+                  <>
+                    <span className="line-through text-slate-500 dark:!text-slate-400 text-[9.5px] hidden xs:inline">{oldPriceText}</span>
+                    <span className="px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-black shrink-0">{percentOff}% OFF</span>
+                  </>
+                )}
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-100/80 border border-blue-300/80 text-blue-950 dark:!bg-blue-900/50 dark:!border-blue-400/40 dark:!text-white text-[11px] sm:text-xs font-bold shadow-xs shrink-0">
@@ -220,7 +252,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
               <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
                 mobileTab === 'form' ? 'bg-emerald-400 text-slate-950' : 'bg-emerald-100 text-emerald-800 dark:!bg-emerald-950 dark:!text-emerald-300'
               }`}>
-                ₹299
+                {priceText}
               </span>
             </button>
           </div>
@@ -310,14 +342,18 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                     <div>
                       <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-extrabold text-slate-600 dark:!text-slate-400 block">Course Fee</span>
                       <div className="flex items-baseline gap-1.5 sm:gap-2 mt-0.5">
-                        <span className="text-2xl sm:text-3xl font-black text-slate-950 dark:!text-white">₹299</span>
-                        <span className="text-xs text-slate-500 dark:!text-slate-400 line-through">₹999</span>
-                        <span className="text-[10.5px] sm:text-[11px] font-bold text-emerald-700 dark:!text-emerald-400">Save ₹700</span>
+                        <span data-testid="enrollment-price" className="text-2xl sm:text-3xl font-black text-slate-950 dark:!text-white">{priceText}</span>
+                        {hasDiscount && (
+                          <>
+                            <span className="text-xs text-slate-500 dark:!text-slate-400 line-through">{oldPriceText}</span>
+                            <span className="text-[10.5px] sm:text-[11px] font-bold text-emerald-700 dark:!text-emerald-400">Save {savingText}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] sm:text-[10.5px] font-extrabold px-2.5 py-1 rounded-lg bg-blue-100 border border-blue-300/80 text-blue-800 dark:!bg-blue-500/15 dark:!text-blue-400 dark:!border-blue-500/30">
-                        ₹299 Per Subject
+                        {priceText} Per Subject
                       </span>
                       <span className="text-[10px] sm:text-[11px] text-slate-600 dark:!text-slate-400 block mt-1 font-medium">All Chapters + Doubt Access</span>
                     </div>
@@ -331,7 +367,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                     onClick={() => setMobileTab('form')}
                     className="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-sm shadow-lg shadow-blue-600/30 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
                   >
-                    <span>Continue to Enrollment Form (₹299)</span>
+                    <span>Continue to Enrollment Form ({priceText})</span>
                     <ArrowRight size={16} />
                   </button>
                 </div>
@@ -365,7 +401,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                         {detectedSubject.name} Board Mastery Pack
                       </span>
                       <span className="text-[10px] text-emerald-700 dark:!text-emerald-400 font-extrabold">
-                        ₹299 All-Inclusive • Save ₹700
+                        {priceText} All-Inclusive{hasDiscount ? ` • Save ${savingText}` : ''}
                       </span>
                     </div>
                   </div>
@@ -385,7 +421,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                       Student Details & Course Enrollment
                     </h3>
                     <p className="text-[11px] sm:text-xs text-slate-600 dark:!text-slate-400 font-medium">
-                      Send your details and our team will contact you to complete your {detectedSubject.name} enrollment for ₹299. No payment is taken on this form.
+                      Send your details and our team will contact you to complete your {detectedSubject.name} enrollment for {priceText}. No payment is taken on this form.
                     </p>
                   </div>
 
@@ -502,7 +538,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '' })
                     {/* Price Summary Pill */}
                     <div className="p-2.5 sm:p-3 rounded-xl bg-blue-100/70 border border-blue-300/80 dark:!bg-blue-950/40 dark:!border-blue-500/30 flex flex-col xs:flex-row items-start xs:items-center justify-between gap-1 text-[11.5px] sm:text-xs">
                       <span className="text-blue-900 dark:!text-blue-200 font-medium">
-                        Enrollment Fee: <strong className="text-slate-950 dark:!text-white font-bold">₹299 per Subject</strong> (All Inclusive)
+                        Enrollment Fee: <strong className="text-slate-950 dark:!text-white font-bold">{priceText} per Subject</strong> (All Inclusive)
                       </span>
                       <span className="text-emerald-700 dark:!text-emerald-400 text-[10.5px] sm:text-[11px] font-semibold">Pay after our team contacts you</span>
                     </div>

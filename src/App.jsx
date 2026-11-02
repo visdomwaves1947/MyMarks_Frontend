@@ -28,6 +28,8 @@ import ContactUsPage from './pages/ContactUs';
 import LabPracticalsPage from './pages/LabPracticalsPage';
 import SitePrivacyGate from './components/SitePrivacyGate';
 import AdminPage from './pages/AdminPage';
+import CoursePage from './pages/CoursePage';
+import LegacyCourse from './components/course/LegacyCourse';
 
 // Automatic scroll-to-top on route changes unless an anchor hash exists
 function ScrollToTop() {
@@ -64,6 +66,7 @@ export default function App() {
 
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedTrack, setSelectedTrack] = useState('');
+  const [bookingCourse, setBookingCourse] = useState(null);
   const [videoDemoOpen, setVideoDemoOpen] = useState(false);
   const [isPlannerOpen, setIsPlannerOpen] = useState(false);
   const [selectedRoadmap, setSelectedRoadmap] = useState(null);
@@ -175,8 +178,9 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  const handleOpenBooking = (track = '') => {
+  const handleOpenBooking = (track = '', course = null) => {
     setSelectedTrack(typeof track === 'string' ? track : '');
+    setBookingCourse(course);
     setBookingOpen(true);
   };
 
@@ -270,38 +274,58 @@ export default function App() {
       {/* Routed Main Content */}
       <main className="grow">
         <Routes>
+          {/* Dynamic course pages, filled from the admin panel */}
+          <Route 
+            path="/courses/:slug" 
+            element={
+              <CoursePage 
+                currentUser={currentUser}
+                onOpenBooking={handleOpenBooking}
+                onSelectRoadmap={handleSelectRoadmap}
+                onOpenSignIn={handleOpenSignIn}
+              />
+            } 
+          />
+
+          {/* Old subject pages stay until each course is published */}
           {/* Main Maths Academy Curriculum */}
           <Route 
             path="/maths" 
             element={
-              <MathsPage 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-                currentUser={currentUser}
-              />
+              <LegacyCourse slug="maths">
+                <MathsPage 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                  currentUser={currentUser}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Maths" 
             element={
-              <MathsPage 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-                currentUser={currentUser}
-              />
+              <LegacyCourse slug="maths">
+                <MathsPage 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                  currentUser={currentUser}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/math" 
             element={
-              <MathsPage 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-                currentUser={currentUser}
-              />
+              <LegacyCourse slug="maths">
+                <MathsPage 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                  currentUser={currentUser}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -323,31 +347,37 @@ export default function App() {
           <Route 
             path="/english" 
             element={
-              <English 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="english">
+                <English 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/English" 
             element={
-              <English 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="english">
+                <English 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/eng" 
             element={
-              <English 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="english">
+                <English 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -355,31 +385,37 @@ export default function App() {
           <Route 
             path="/botany" 
             element={
-              <Botany 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="botany">
+                <Botany 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Botany" 
             element={
-              <Botany 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="botany">
+                <Botany 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/bot" 
             element={
-              <Botany 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="botany">
+                <Botany 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -387,31 +423,37 @@ export default function App() {
           <Route 
             path="/zoology" 
             element={
-              <Zoology 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="zoology">
+                <Zoology 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Zoology" 
             element={
-              <Zoology 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="zoology">
+                <Zoology 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/zoo" 
             element={
-              <Zoology 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="zoology">
+                <Zoology 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -419,31 +461,37 @@ export default function App() {
           <Route 
             path="/physics" 
             element={
-              <Physics 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="physics">
+                <Physics 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Physics" 
             element={
-              <Physics 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="physics">
+                <Physics 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/phy" 
             element={
-              <Physics 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="physics">
+                <Physics 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -451,31 +499,37 @@ export default function App() {
           <Route 
             path="/chemistry" 
             element={
-              <Chemistry 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="chemistry">
+                <Chemistry 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Chemistry" 
             element={
-              <Chemistry 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="chemistry">
+                <Chemistry 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/chem" 
             element={
-              <Chemistry 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="chemistry">
+                <Chemistry 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -483,31 +537,37 @@ export default function App() {
           <Route 
             path="/sanskrit" 
             element={
-              <Sanskrit 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="sanskrit">
+                <Sanskrit 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Sanskrit" 
             element={
-              <Sanskrit 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="sanskrit">
+                <Sanskrit 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/san" 
             element={
-              <Sanskrit 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="sanskrit">
+                <Sanskrit 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -515,31 +575,37 @@ export default function App() {
           <Route 
             path="/telugu" 
             element={
-              <Telugu 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="telugu">
+                <Telugu 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Telugu" 
             element={
-              <Telugu 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="telugu">
+                <Telugu 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/tel" 
             element={
-              <Telugu 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="telugu">
+                <Telugu 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -547,31 +613,37 @@ export default function App() {
           <Route 
             path="/hindi" 
             element={
-              <Hindi 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="hindi">
+                <Hindi 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Hindi" 
             element={
-              <Hindi 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="hindi">
+                <Hindi 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/hin" 
             element={
-              <Hindi 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="hindi">
+                <Hindi 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -579,31 +651,37 @@ export default function App() {
           <Route 
             path="/urdu" 
             element={
-              <Urdu 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="urdu">
+                <Urdu 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/Urdu" 
             element={
-              <Urdu 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="urdu">
+                <Urdu 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/urd" 
             element={
-              <Urdu 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="urdu">
+                <Urdu 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -611,34 +689,40 @@ export default function App() {
           <Route 
             path="/french" 
             element={
-              <French 
-                currentUser={currentUser}
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="french">
+                <French 
+                  currentUser={currentUser}
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/French" 
             element={
-              <French 
-                currentUser={currentUser}
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="french">
+                <French 
+                  currentUser={currentUser}
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route 
             path="/fre" 
             element={
-              <French 
-                currentUser={currentUser}
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="french">
+                <French 
+                  currentUser={currentUser}
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
 
@@ -646,11 +730,13 @@ export default function App() {
           <Route 
             path="/commerce" 
             element={
-              <Commerce 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="commerce">
+                <Commerce 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route path="/Commerce" element={<Navigate to="/commerce" replace />} />
@@ -661,11 +747,13 @@ export default function App() {
           <Route 
             path="/economics" 
             element={
-              <Economics 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="economics">
+                <Economics 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route path="/Economics" element={<Navigate to="/economics" replace />} />
@@ -675,11 +763,13 @@ export default function App() {
           <Route 
             path="/civics" 
             element={
-              <Civics 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="civics">
+                <Civics 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route path="/Civics" element={<Navigate to="/civics" replace />} />
@@ -690,11 +780,13 @@ export default function App() {
           <Route 
             path="/history" 
             element={
-              <History 
-                onOpenBooking={handleOpenBooking}
-                onOpenVideoDemo={() => setVideoDemoOpen(true)}
-                onSelectRoadmap={handleSelectRoadmap}
-              />
+              <LegacyCourse slug="history">
+                <History 
+                  onOpenBooking={handleOpenBooking}
+                  onOpenVideoDemo={() => setVideoDemoOpen(true)}
+                  onSelectRoadmap={handleSelectRoadmap}
+                />
+              </LegacyCourse>
             } 
           />
           <Route path="/History" element={<Navigate to="/history" replace />} />
@@ -836,6 +928,7 @@ export default function App() {
         isOpen={bookingOpen} 
         onClose={() => setBookingOpen(false)}
         preselectedTrack={selectedTrack}
+        course={bookingCourse}
       />
 
       <AuthModal 

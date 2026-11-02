@@ -13,6 +13,7 @@ export default function AdminSidebar({
   activeTab = "dashboard",
   setActiveTab,
   apiStatus = { online: true, latency: 45 },
+  newBookingCount = 0,
 }) {
   const menuItems = [
     {
@@ -27,7 +28,7 @@ export default function AdminSidebar({
     },
     {
       id: "courses",
-      label: "Curriculum & Subjects",
+      label: "Courses & Streams",
       icon: BookOpen,
     },
     {
@@ -111,6 +112,14 @@ export default function AdminSidebar({
                   >
                     {item.label}
                   </span>
+                  {item.id === "bookings" && newBookingCount > 0 && (
+                    <span
+                      data-testid="new-booking-count"
+                      className="ml-auto px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold"
+                    >
+                      {newBookingCount}
+                    </span>
+                  )}
                 </button>
               );
             })}

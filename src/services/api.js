@@ -83,7 +83,7 @@ export async function resilientFetch(path, options = {}) {
   }
 }
 
-const getAdminToken = () => {
+export const getAdminToken = () => {
   try {
     return localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
   } catch {
@@ -99,7 +99,7 @@ const adminHeaders = (headers = {}) => {
 /**
  * Fetch for admin-only routes. Tells the admin panel when the session has ended.
  */
-async function adminFetch(path, options = {}) {
+export async function adminFetch(path, options = {}) {
   const res = await resilientFetch(path, { ...options, headers: adminHeaders(options.headers) });
   if (res.status === 401 || res.status === 403) {
     window.dispatchEvent(new Event('mymarks_admin_session_expired'));
@@ -901,6 +901,7 @@ export async function submitContactMessage(contactData) {
     phone: contactData.phone ? String(contactData.phone).replace(/\D/g, '') : '',
     subject: contactData.subject || 'General Inquiry',
     message: contactData.message?.trim(),
+    courseSlug: contactData.courseSlug,
     metadata: {
       ...contactData.metadata,
       submittedAt: new Date().toISOString(),
@@ -932,6 +933,7 @@ export async function submitEnrollmentRequest({
   parentEmail,
   parentPhone,
   subjectName,
+  courseSlug,
   gradeLevel,
   goalArea,
   studyGoal,
@@ -941,6 +943,7 @@ export async function submitEnrollmentRequest({
     email: parentEmail,
     phone: parentPhone,
     subject: 'Admissions',
+    courseSlug,
     message: `Enrollment request for ${subjectName}. Year: ${gradeLevel}. Goal: ${studyGoal}. Focus: ${goalArea}`,
     metadata: { goalArea, gradeLevel, studyGoal, subjectName },
   });

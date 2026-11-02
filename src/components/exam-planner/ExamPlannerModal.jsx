@@ -17,7 +17,7 @@ export default function ExamPlannerModal({ isOpen, onClose, selectedRoadmap }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">Smart Exam Planner</h2>
-              <p className="text-xs text-slate-500 font-medium">Mathematics Academic Coach</p>
+              <p className="text-xs text-slate-500 font-medium">{selectedRoadmap.courseName || 'Mathematics'} Academic Coach</p>
             </div>
           </div>
           

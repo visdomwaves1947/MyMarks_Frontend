@@ -20,12 +20,14 @@ import {
   Maximize2
 } from 'lucide-react';
 import { fetchStudentVideos } from '../../services/api';
+import useCatalog from '../../hooks/useCatalog';
 
 export default function StudentVideoDashboard({
   studentBoard = 'Both Boards',
   studentYear = '1st Year',
   onOpenBooking = null,
 }) {
+  const { courses } = useCatalog();
   const [videos, setVideos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -203,24 +205,12 @@ export default function StudentVideoDashboard({
   }, [videos, selectedBoard, selectedYear, selectedSubject, searchQuery, isUnrelatedVideo]);
 
   const subjectOptions = useMemo(() => {
-    const base = [
-      'all',
-      'Mathematics',
-      'Physics',
-      'Chemistry',
-      'Botany',
-      'Zoology',
-      'English',
-      'Commerce',
-      'Economics',
-      'Civics',
-      'General',
-    ];
+    const fromCourses = courses.map((course) => course.subject);
     const fromVideos = (videos || [])
       .map((v) => v.subject)
       .filter((s) => Boolean(s && s.trim()));
-    return Array.from(new Set([...base, ...fromVideos]));
-  }, [videos]);
+    return Array.from(new Set(['all', ...fromCourses, 'General', ...fromVideos]));
+  }, [courses, videos]);
 
   return (
     <div className="space-y-6">

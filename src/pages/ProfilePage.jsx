@@ -17,15 +17,20 @@ import {
   Video,
   Copy,
   Check,
-  Calculator,
-  Atom,
-  FlaskConical,
-  Sprout,
-  HeartPulse,
-  Languages,
-  Lock
+  Lock,
 } from 'lucide-react';
 import StudentVideoDashboard from '../components/dashboard/StudentVideoDashboard';
+import useCatalog from '../hooks/useCatalog';
+import { courseImage, courseTag, isOutsideLink } from '../utils/courseImage';
+
+const CARD_ACCENTS = [
+  'border-blue-400',
+  'border-purple-400',
+  'border-emerald-400',
+  'border-green-400',
+  'border-cyan-400',
+  'border-amber-400',
+];
 
 export default function ProfilePage({
   currentUser,
@@ -35,6 +40,7 @@ export default function ProfilePage({
   onOpenSignUp
 }) {
   const navigate = useNavigate();
+  const { courses } = useCatalog();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [copiedRoll, setCopiedRoll] = useState(false);
 
@@ -57,6 +63,14 @@ export default function ProfilePage({
     relationship: currentUser?.relationship || 'Guardian',
     status: 'Active Student',
     avatarUrl: currentUser?.avatarUrl || ''
+  };
+
+  const handleOpenCourse = (course) => {
+    if (isOutsideLink(course.ownLink)) {
+      window.open(course.ownLink, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(course.ownLink || `/courses/${course.slug}`);
+    }
   };
 
   const handleCopyRoll = () => {
@@ -373,64 +387,15 @@ export default function ProfilePage({
                 </h2>
               </div>
 
-              {/* 6 Subject Picture Cards - Ultra Bright, Crisp, Completely Visible */}
+              {/* First 6 published courses, in the order set in the admin panel */}
               <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-                {[
-                  { 
-                    name: 'Mathematics', 
-                    desc: '1A, 1B, 2A, 2B', 
-                    route: '/maths',
-                    icon: <Calculator size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-blue-400'
-                  },
-                  { 
-                    name: 'Physics', 
-                    desc: 'Theory & Labs', 
-                    route: '/physics',
-                    icon: <Atom size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-purple-400'
-                  },
-                  { 
-                    name: 'Chemistry', 
-                    desc: 'Organic & Inorganic', 
-                    route: '/chemistry',
-                    icon: <FlaskConical size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-emerald-400'
-                  },
-                  { 
-                    name: 'Botany', 
-                    desc: 'Plant Anatomy & Cell', 
-                    route: '/botany',
-                    icon: <Sprout size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-green-400'
-                  },
-                  { 
-                    name: 'Zoology', 
-                    desc: 'Human Physiology', 
-                    route: '/zoology',
-                    icon: <HeartPulse size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-cyan-400'
-                  },
-                  { 
-                    name: 'Sanskrit', 
-                    desc: 'Poetry & Grammar', 
-                    route: '/sanskrit',
-                    icon: <Languages size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-amber-400'
-                  },
-                ].map((subject, idx) => (
+                {courses.slice(0, 6).map((course, idx) => (
                   <button
-                    key={idx}
-                    onClick={() => navigate(subject.route)}
-                    className={`relative overflow-hidden h-36 sm:h-40 rounded-2xl border ${subject.accentColor} transition-all duration-300 text-left group cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 text-white flex flex-col justify-between p-3.5`}
+                    key={course._id}
+                    onClick={() => handleOpenCourse(course)}
+                    className={`relative overflow-hidden h-36 sm:h-40 rounded-2xl border ${CARD_ACCENTS[idx % CARD_ACCENTS.length]} transition-all duration-300 text-left group cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 text-white flex flex-col justify-between p-3.5`}
                     style={{
-                      backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.40) 50%, rgba(15, 23, 42, 0.05) 100%), url('${subject.bgImage}')`,
+                      backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.40) 50%, rgba(15, 23, 42, 0.05) 100%), url('${courseImage(course.thumbnail, 480)}')`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center'
                     }}
@@ -438,7 +403,7 @@ export default function ProfilePage({
                     {/* Top Bar with Icon & Arrow */}
                     <div className="flex items-center justify-between w-full relative z-10">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black/50 backdrop-blur-md text-white shadow-xs group-hover:scale-110 transition-transform border border-white/20">
-                        {subject.icon}
+                        <BookOpen size={15} />
                       </div>
                       <div className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:bg-cyan-500 transition-colors">
                         <ChevronRight size={13} className="text-white transition-all" />
@@ -448,10 +413,10 @@ export default function ProfilePage({
                     {/* Bottom Label with High Contrast Readability */}
                     <div className="relative z-10 pt-2">
                       <div className="text-sm sm:text-base font-extrabold text-white group-hover:text-cyan-200 transition-colors drop-shadow-md">
-                        {subject.name}
+                        {course.name}
                       </div>
                       <p className="text-[10.5px] text-slate-200 mt-0.5 leading-tight font-medium drop-shadow-sm">
-                        {subject.desc}
+                        {courseTag(course)}
                       </p>
                     </div>
                   </button>

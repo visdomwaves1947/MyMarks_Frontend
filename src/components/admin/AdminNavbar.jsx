@@ -14,6 +14,7 @@ import {
   Users,
   BookOpen,
   Video,
+  Inbox,
   Settings,
   Database,
 } from 'lucide-react';
@@ -27,6 +28,7 @@ export default function AdminNavbar({
   activeTab = 'dashboard',
   setActiveTab,
   apiStatus = { online: true, latency: 45 },
+  newBookingCount = 0,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -349,8 +351,9 @@ export default function AdminNavbar({
           {[
             { id: 'dashboard', label: 'Overview & Analytics', icon: BarChart3 },
             { id: 'students', label: 'Students Directory', icon: Users },
-            { id: 'courses', label: 'Curriculum & Subjects', icon: BookOpen },
+            { id: 'courses', label: 'Courses & Streams', icon: BookOpen },
             { id: 'videos', label: 'Videos, YouTube & Links', icon: Video },
+            { id: 'bookings', label: 'Bookings & Inquiries', icon: Inbox },
             { id: 'settings', label: 'Platform Controls', icon: Settings },
           ].map((item) => {
             const isActive = activeTab === item.id;
@@ -377,6 +380,11 @@ export default function AdminNavbar({
                     className={isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'}
                   />
                   <span>{item.label}</span>
+                  {item.id === 'bookings' && newBookingCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-bold">
+                      {newBookingCount}
+                    </span>
+                  )}
                 </span>
                 {isActive && (
                   <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
