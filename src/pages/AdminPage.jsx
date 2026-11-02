@@ -79,11 +79,6 @@ import {
   fetchAdminBookings,
   updateAdminBookingApi,
   deleteAdminBookingApi,
-  fetchCourses,
-  createContentApi,
-  updateContentApi,
-  deleteContentApi,
-  triggerSeed,
   checkApiHealth,
   fetchAdminVideos,
   createAdminVideoApi,
@@ -93,9 +88,25 @@ import {
   seedAdminVideosApi,
   uploadMediaFileApi,
 } from "../services/api";
+import { fetchAdminCourses, fetchNewBookingCount } from "../services/courseApi";
 import { TOPICS_DATA } from "../components/maths/MathsCurriculum";
 import AdminNavbar from "../components/admin/AdminNavbar";
 import AdminSidebar from "../components/admin/AdminSidebar";
+import CoursesTab from "../components/admin/courses/CoursesTab";
+
+// Used for videos until the courses are in the database
+const DEFAULT_VIDEO_SUBJECTS = [
+  "Mathematics",
+  "Physics",
+  "Chemistry",
+  "Botany",
+  "Zoology",
+  "English",
+  "Commerce",
+  "Economics",
+  "Civics",
+  "History",
+];
 
 export default function AdminPage({
   currentUser = null,
@@ -103,6 +114,7 @@ export default function AdminPage({
   onOpenSignIn,
   theme: propTheme,
   toggleTheme: propToggleTheme,
+  onSessionExpired,
 }) {
   const navigate = useNavigate();
 
@@ -148,7 +160,7 @@ export default function AdminPage({
       const savedUser = localStorage.getItem("mla_user");
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
-        if (parsed.role === "admin" || parsed.email === "md@visdomwaves.com") {
+        if (parsed.role === "admin") {
           return true;
         }
       }
@@ -162,14 +174,21 @@ export default function AdminPage({
   });
 
   useEffect(() => {
-    if (
-      currentUser &&
-      (currentUser.role === "admin" ||
-        currentUser.email === "md@visdomwaves.com")
-    ) {
+    if (currentUser && currentUser.role === "admin") {
       setIsAdminAuthed(true);
     }
   }, [currentUser]);
+
+  // api.js raises this event when the server rejects the admin session
+  useEffect(() => {
+    if (!onSessionExpired) return undefined;
+    window.addEventListener("mymarks_admin_session_expired", onSessionExpired);
+    return () =>
+      window.removeEventListener(
+        "mymarks_admin_session_expired",
+        onSessionExpired,
+      );
+  }, [onSessionExpired]);
 
   // Active Tab: 'dashboard' | 'students' | 'courses' | 'bookings' | 'settings'
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -191,6 +210,7 @@ export default function AdminPage({
   const [users, setUsers] = useState([]);
   const [courses, setCourses] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [newBookingCount, setNewBookingCount] = useState(0);
   const [videos, setVideos] = useState([]);
 
   // Toast Notifications
@@ -204,9 +224,6 @@ export default function AdminPage({
   const [userSearch, setUserSearch] = useState("");
   const [boardFilter, setBoardFilter] = useState("all");
   const [yearFilter, setYearFilter] = useState("all");
-
-  const [courseSearch, setCourseSearch] = useState("");
-  const [courseCategory, setCourseCategory] = useState("all");
 
   const [bookingFilter, setBookingFilter] = useState("all");
 
@@ -223,10 +240,6 @@ export default function AdminPage({
   const [userModalMode, setUserModalMode] = useState("create"); // 'create' | 'edit'
   const [selectedUser, setSelectedUser] = useState(null);
   const [viewUserDetail, setViewUserDetail] = useState(null);
-
-  const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
-  const [courseModalMode, setCourseModalMode] = useState("create");
-  const [selectedCourse, setSelectedCourse] = useState(null);
 
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [videoModalMode, setVideoModalMode] = useState("create");
@@ -454,31 +467,10 @@ export default function AdminPage({
     fatherMobile: "",
     relationship: "Father",
     dob: "",
-    aadhaarNumber: "",
     studyMonthYear: "June, 2026",
     role: "student",
   };
   const [userForm, setUserForm] = useState(initialUserForm);
-
-  // Course Form Data
-  const initialCourseForm = {
-    title: "",
-    type: "course",
-    category: "mpc",
-    level: "Intermediate 1st Year",
-    description: "",
-    lessonsCount: 36,
-    durationWeeks: 12,
-    rating: 4.9,
-    tag: "Core Track",
-    instructor: {
-      name: "Faculty Lead",
-      title: "Senior Subject Educator",
-    },
-    popular: true,
-    status: "published",
-  };
-  const [courseForm, setCourseForm] = useState(initialCourseForm);
 
   // Video & Resource Form Data with Step 4 Lesson Settings
   const initialVideoForm = {
@@ -845,6 +837,14 @@ export default function AdminPage({
   );
 
   // Load all data
+  const loadCourses = useCallback(async () => {
+    try {
+      setCourses(await fetchAdminCourses());
+    } catch (err) {
+      console.warn("Failed to load courses:", err);
+    }
+  }, []);
+
   const loadAdminData = useCallback(async () => {
     setIsRefreshing(true);
     const start = performance.now();
@@ -862,16 +862,14 @@ export default function AdminPage({
       }
 
       // 3. Courses
-      const coursesRes = await fetchCourses("all");
-      if (Array.isArray(coursesRes.courses)) {
-        setCourses(coursesRes.courses);
-      }
+      await loadCourses();
 
       // 4. Bookings
       const bookingsRes = await fetchAdminBookings();
       if (bookingsRes.success && Array.isArray(bookingsRes.bookings)) {
         setBookings(bookingsRes.bookings);
       }
+      setNewBookingCount(await fetchNewBookingCount());
 
       // 5. Videos & Links
       const videosRes = await fetchAdminVideos({ limit: 100 });
@@ -912,7 +910,7 @@ export default function AdminPage({
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [loadCourses]);
 
   useEffect(() => {
     if (isAdminAuthed) {
@@ -966,23 +964,16 @@ export default function AdminPage({
     });
   }, [users, userSearch, boardFilter, yearFilter]);
 
-  // Filtered Courses
-  const filteredCourses = useMemo(() => {
-    return courses.filter((c) => {
-      const matchSearch =
-        !courseSearch ||
-        (c.title || "").toLowerCase().includes(courseSearch.toLowerCase()) ||
-        (c.description || "")
-          .toLowerCase()
-          .includes(courseSearch.toLowerCase());
-
-      const matchCategory =
-        courseCategory === "all" ||
-        (c.category || "").toLowerCase() === courseCategory.toLowerCase();
-
-      return matchSearch && matchCategory;
-    });
-  }, [courses, courseSearch, courseCategory]);
+  // Subjects for the video form come from the courses, so a new course can get videos
+  const videoSubjects = useMemo(() => {
+    const fromCourses = courses
+      .filter((course) => course.status !== "archived")
+      .map((course) => course.subject)
+      .filter(Boolean);
+    return [
+      ...new Set(fromCourses.length > 0 ? fromCourses : DEFAULT_VIDEO_SUBJECTS),
+    ];
+  }, [courses]);
 
   // Filtered Videos & Resources
   const filteredVideos = useMemo(() => {
@@ -1233,7 +1224,6 @@ export default function AdminPage({
       fatherMobile: user.fatherMobile || "",
       relationship: user.relationship || "Father",
       dob: user.dob || "",
-      aadhaarNumber: user.aadhaarNumber || "",
       studyMonthYear: user.studyMonthYear || "June, 2026",
       role: user.role || "student",
     });
@@ -1266,77 +1256,6 @@ export default function AdminPage({
     try {
       await deleteAdminUserApi(id);
       showToast("Student deleted successfully");
-      setDeleteConfirm(null);
-      await loadAdminData();
-    } catch (err) {
-      showToast(err.message || "Delete failed", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Course Actions
-  const handleOpenAddCourse = () => {
-    setCourseModalMode("create");
-    setCourseForm(initialCourseForm);
-    setIsCourseModalOpen(true);
-  };
-
-  const handleOpenEditCourse = (course) => {
-    setCourseModalMode("edit");
-    setSelectedCourse(course);
-    setCourseForm({
-      title: course.title || "",
-      type: course.type || "course",
-      category: course.category || "mpc",
-      level: course.level || "Intermediate 1st Year",
-      description: course.description || "",
-      lessonsCount: course.lessonsCount || 36,
-      durationWeeks: course.durationWeeks || 12,
-      rating: course.rating || 4.9,
-      tag: course.tag || "Core Track",
-      instructor: {
-        name: course.instructor?.name || course.instructor || "Faculty Lead",
-        title:
-          course.instructor?.title ||
-          course.instructorTitle ||
-          "Senior Subject Educator",
-      },
-      popular: !!course.popular,
-      status: course.status || "published",
-    });
-    setIsCourseModalOpen(true);
-  };
-
-  const handleSaveCourse = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      if (courseModalMode === "create") {
-        await createContentApi(courseForm);
-        showToast("New course curriculum added successfully!");
-      } else {
-        await updateContentApi(
-          selectedCourse.id || selectedCourse._id,
-          courseForm,
-        );
-        showToast("Course updated successfully!");
-      }
-      setIsCourseModalOpen(false);
-      await loadAdminData();
-    } catch (err) {
-      showToast(err.message || "Failed to save course", "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteCourse = async (id) => {
-    setIsLoading(true);
-    try {
-      await deleteContentApi(id);
-      showToast("Course removed successfully");
       setDeleteConfirm(null);
       await loadAdminData();
     } catch (err) {
@@ -2325,24 +2244,6 @@ export default function AdminPage({
     setTimeout(() => setCopiedVideoId(null), 2500);
   };
 
-  // Seed Initial Content
-  const handleSeedContent = async () => {
-    if (
-      !window.confirm("Seed standard curriculum content into MongoDB database?")
-    )
-      return;
-    setIsLoading(true);
-    try {
-      const res = await triggerSeed();
-      showToast("Curriculum seeded successfully!");
-      await loadAdminData();
-    } catch (err) {
-      showToast("Seed failed: " + err.message, "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Export Users to CSV
   const handleExportCSV = () => {
     if (!users.length) {
@@ -2442,6 +2343,7 @@ export default function AdminPage({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         apiStatus={apiStatus}
+        newBookingCount={newBookingCount}
       />
 
       {/* Left Vertical Navigation Sidebar - Fixed at left-0 top-[122px] (desktop) / top bar (mobile/tablet) */}
@@ -2452,6 +2354,7 @@ export default function AdminPage({
         coursesCount={courses.length}
         videosCount={videos.length}
         bookingsCount={bookings.length}
+        newBookingCount={newBookingCount}
         apiStatus={apiStatus}
       />
 
@@ -2504,14 +2407,15 @@ export default function AdminPage({
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black text-slate-900 dark:text-white">
-                      {courses.length}
+                      {courses.filter((c) => c.status === "published").length}
                     </span>
                     <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
-                      16+ Subjects
+                      Published
                     </span>
                   </div>
                   <p className="text-xs text-slate-500 mt-2">
-                    MPC, BiPC, CEC, MEC, HEC, Languages & Practicals
+                    {courses.filter((c) => c.status === "draft").length} in
+                    draft
                   </p>
                 </div>
 
@@ -2606,7 +2510,7 @@ export default function AdminPage({
                   </button>
 
                   <button
-                    onClick={handleOpenAddCourse}
+                    onClick={() => setActiveTab("courses")}
                     className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs flex items-center gap-1.5 border border-slate-300 dark:border-slate-700 transition-all cursor-pointer shadow-xs dark:shadow-none"
                   >
                     <Plus size={15} />
@@ -2621,13 +2525,6 @@ export default function AdminPage({
                     <span>Export Students CSV</span>
                   </button>
 
-                  <button
-                    onClick={handleSeedContent}
-                    className="px-4 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-500/30 transition-all cursor-pointer"
-                  >
-                    <Sparkles size={15} />
-                    <span>Seed Demo Curriculum</span>
-                  </button>
                 </div>
               </div>
 
@@ -3037,130 +2934,7 @@ export default function AdminPage({
             TAB 3: CURRICULUM & COURSES
            ───────────────────────────────────────────────────────────── */}
           {activeTab === "courses" && (
-            <div className="space-y-4">
-              {/* Filter Bar */}
-              <div className="p-4 rounded-3xl bg-white dark:bg-slate-900/90 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 transition-colors duration-200">
-                <div className="relative grow max-w-md">
-                  <Search
-                    size={16}
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Search subject or course module..."
-                    value={courseSearch}
-                    onChange={(e) => setCourseSearch(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/80 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 transition-all font-medium focus:bg-white dark:focus:bg-slate-950"
-                  />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <select
-                    value={courseCategory}
-                    onChange={(e) => setCourseCategory(e.target.value)}
-                    className="px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
-                  >
-                    <option value="all">All Academic Categories</option>
-                    <option value="mpc">MPC Track</option>
-                    <option value="bipc">BiPC Track</option>
-                    <option value="cec">CEC Track</option>
-                    <option value="mec">MEC Track</option>
-                    <option value="hec">HEC Track</option>
-                    <option value="languages">Languages</option>
-                    <option value="practicals">Lab Practicals</option>
-                    <option value="elementary">Foundational</option>
-                    <option value="middle">Middle Track</option>
-                    <option value="high">High School</option>
-                    <option value="competitive">Competitive / Olympiad</option>
-                  </select>
-
-                  <button
-                    onClick={handleSeedContent}
-                    className="px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-700 dark:text-amber-300 border border-amber-500/30 text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
-                  >
-                    <Sparkles size={14} />
-                    <span>Seed Standard Content</span>
-                  </button>
-
-                  <button
-                    onClick={handleOpenAddCourse}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-blue-600/30 transition-all cursor-pointer"
-                  >
-                    <Plus size={15} />
-                    <span>Add Course</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Courses Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredCourses.map((c) => (
-                  <div
-                    key={c.id || c._id}
-                    className="p-5 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none flex flex-col justify-between hover:border-red-400/50 dark:hover:border-slate-700 transition-all group"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-2.5">
-                        <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 uppercase tracking-wider">
-                          {c.category || "Curriculum"}
-                        </span>
-                        <span className="text-xs text-amber-500 dark:text-amber-400 font-bold">
-                          ★ {c.rating || 4.9}
-                        </span>
-                      </div>
-
-                      <h4 className="font-bold text-slate-900 dark:text-white text-base group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors">
-                        {c.title}
-                      </h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 line-clamp-2">
-                        {c.description ||
-                          "Comprehensive curriculum modules designed for exam mastery."}
-                      </p>
-
-                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                        <span>{c.level || "Intermediate"}</span>
-                        <span>{c.lessonsCount || 36} Lessons</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold truncate max-w-[150px]">
-                        {c.instructor?.name || c.instructor || "Faculty Lead"}
-                      </span>
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => handleOpenEditCourse(c)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-amber-500 dark:hover:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Edit Course"
-                        >
-                          <Edit size={15} />
-                        </button>
-                        <button
-                          onClick={() =>
-                            setDeleteConfirm({
-                              type: "course",
-                              id: c.id || c._id,
-                              title: c.title,
-                            })
-                          }
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title="Delete Course"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                {filteredCourses.length === 0 && (
-                  <div className="col-span-full py-16 text-center text-slate-400 dark:text-slate-500 text-sm">
-                    No courses found in this category. Click &quot;Seed Standard
-                    Content&quot; or &quot;Add Course&quot; to populate.
-                  </div>
-                )}
-              </div>
-            </div>
+            <CoursesTab showToast={showToast} onChanged={loadCourses} />
           )}
 
           {/* ─────────────────────────────────────────────────────────────
@@ -3408,16 +3182,11 @@ export default function AdminPage({
                       className="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs"
                     >
                       <option value="all">All Subjects</option>
-                      <option value="Mathematics">Mathematics</option>
-                      <option value="Physics">Physics</option>
-                      <option value="Chemistry">Chemistry</option>
-                      <option value="Botany">Botany</option>
-                      <option value="Zoology">Zoology</option>
-                      <option value="English">English</option>
-                      <option value="Commerce">Commerce</option>
-                      <option value="Economics">Economics</option>
-                      <option value="Civics">Civics</option>
-                      <option value="History">History</option>
+                      {videoSubjects.map((subject) => (
+                        <option key={subject} value={subject}>
+                          {subject}
+                        </option>
+                      ))}
                       <option value="General">General</option>
                     </select>
 
@@ -4181,7 +3950,7 @@ export default function AdminPage({
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 uppercase text-[11px] font-bold tracking-wider">
                         <th className="py-3.5 px-4">Inquiry Title / Student</th>
-                        <th className="py-3.5 px-4">Subject Track</th>
+                        <th className="py-3.5 px-4">Course / Subject</th>
                         <th className="py-3.5 px-4">Grade / Board</th>
                         <th className="py-3.5 px-4">Status</th>
                         <th className="py-3.5 px-4">Submitted Date</th>
@@ -4206,9 +3975,16 @@ export default function AdminPage({
                           </td>
 
                           <td className="py-3.5 px-4 text-slate-700 dark:text-slate-300">
-                            {b.metadata?.goalArea ||
+                            {b.metadata?.courseName ||
+                              b.metadata?.goalArea ||
                               b.metadata?.subject ||
-                              "Diagnostic Math"}
+                              "General"}
+                            {b.metadata?.coursePrice !== undefined &&
+                              b.metadata?.coursePrice !== null && (
+                                <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                  ₹{b.metadata.coursePrice} at request
+                                </div>
+                              )}
                           </td>
 
                           <td className="py-3.5 px-4 text-slate-500 dark:text-slate-400">
@@ -4304,33 +4080,10 @@ export default function AdminPage({
                   </div>
 
                   <div className="space-y-3 text-xs text-slate-700 dark:text-slate-300">
-                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                      <div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">
-                          Authorized Master User
-                        </span>
-                        <p className="text-[11px] text-slate-500">
-                          Master user authorized to unlock site
-                        </p>
-                      </div>
-                      <code className="text-red-600 dark:text-red-400 font-mono text-[11px] bg-red-50 dark:bg-red-500/10 px-2 py-1 rounded border border-red-200 dark:border-red-500/20">
-                        md@visdomwaves.com
-                      </code>
-                    </div>
-
-                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                      <div>
-                        <span className="font-bold text-slate-800 dark:text-slate-200">
-                          Master Passcode
-                        </span>
-                        <p className="text-[11px] text-slate-500">
-                          Confidential password for site preview
-                        </p>
-                      </div>
-                      <code className="text-amber-600 dark:text-amber-400 font-mono text-[11px] bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded border border-amber-200 dark:border-amber-500/20">
-                        Md@1947
-                      </code>
-                    </div>
+                    <p className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 dark:text-slate-400">
+                      The site lock uses the administrator login. Change it with
+                      the ADMIN_EMAIL and ADMIN_PASSWORD server settings.
+                    </p>
 
                     <div className="pt-2">
                       <button
@@ -4500,6 +4253,7 @@ export default function AdminPage({
                   <input
                     type="password"
                     required={userModalMode === "create"}
+                    minLength={6}
                     value={userForm.password}
                     onChange={(e) =>
                       setUserForm({ ...userForm, password: e.target.value })
@@ -4632,166 +4386,6 @@ export default function AdminPage({
                     ? "Saving..."
                     : userModalMode === "create"
                       ? "Register Student"
-                      : "Save Changes"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ─────────────────────────────────────────────────────────────
-          MODAL: ADD / EDIT COURSE
-         ───────────────────────────────────────────────────────────── */}
-      {isCourseModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 transition-colors duration-200">
-            <button
-              onClick={() => setIsCourseModalOpen(false)}
-              className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="mb-6">
-              <h3 className="text-xl font-black text-slate-900 dark:text-white">
-                {courseModalMode === "create"
-                  ? "Add Curriculum Topic / Course"
-                  : "Edit Course"}
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Configure curriculum details, grade level and faculty
-              </p>
-            </div>
-
-            <form onSubmit={handleSaveCourse} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  Course / Subject Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={courseForm.title}
-                  onChange={(e) =>
-                    setCourseForm({ ...courseForm, title: e.target.value })
-                  }
-                  placeholder="e.g. Mathematics 2A - Calculus & Complex Numbers"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    Category Stream
-                  </label>
-                  <select
-                    value={courseForm.category}
-                    onChange={(e) =>
-                      setCourseForm({ ...courseForm, category: e.target.value })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 cursor-pointer shadow-xs dark:shadow-none"
-                  >
-                    <option value="mpc">MPC (Maths, Physics, Chem)</option>
-                    <option value="bipc">BiPC (Botany, Zoology)</option>
-                    <option value="cec">CEC (Commerce, Eco, Civics)</option>
-                    <option value="mec">MEC (Maths, Eco, Commerce)</option>
-                    <option value="hec">HEC (History, Eco, Civics)</option>
-                    <option value="languages">Languages</option>
-                    <option value="practicals">Lab Practicals</option>
-                    <option value="elementary">Elementary Foundation</option>
-                    <option value="competitive">Competitive / Olympiad</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    Target Level / Grade
-                  </label>
-                  <input
-                    type="text"
-                    value={courseForm.level}
-                    onChange={(e) =>
-                      setCourseForm({ ...courseForm, level: e.target.value })
-                    }
-                    placeholder="e.g. Intermediate 2nd Year"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                  Curriculum Description
-                </label>
-                <textarea
-                  rows={3}
-                  value={courseForm.description}
-                  onChange={(e) =>
-                    setCourseForm({
-                      ...courseForm,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="Comprehensive breakdown of syllabus concepts, problem-solving, and Board questions."
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    Lessons Count
-                  </label>
-                  <input
-                    type="number"
-                    value={courseForm.lessonsCount}
-                    onChange={(e) =>
-                      setCourseForm({
-                        ...courseForm,
-                        lessonsCount: Number(e.target.value),
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
-                    Duration (Weeks)
-                  </label>
-                  <input
-                    type="number"
-                    value={courseForm.durationWeeks}
-                    onChange={(e) =>
-                      setCourseForm({
-                        ...courseForm,
-                        durationWeeks: Number(e.target.value),
-                      })
-                    }
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsCourseModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs border border-slate-300 dark:border-slate-700 transition-colors cursor-pointer shadow-xs dark:shadow-none"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-lg shadow-blue-600/30 transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {isLoading
-                    ? "Saving..."
-                    : courseModalMode === "create"
-                      ? "Publish Course"
                       : "Save Changes"}
                 </button>
               </div>
@@ -5031,16 +4625,17 @@ export default function AdminPage({
                             }
                             className="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-xs font-medium"
                           >
-                            <option value="Mathematics">Mathematics</option>
-                            <option value="Physics">Physics</option>
-                            <option value="Chemistry">Chemistry</option>
-                            <option value="Botany">Botany</option>
-                            <option value="Zoology">Zoology</option>
-                            <option value="English">English</option>
-                            <option value="Commerce">Commerce</option>
-                            <option value="Economics">Economics</option>
-                            <option value="Civics">Civics</option>
-                            <option value="History">History</option>
+                            {[
+                              ...new Set([...videoSubjects, videoForm.subject]),
+                            ]
+                              .filter(
+                                (subject) => subject && subject !== "General",
+                              )
+                              .map((subject) => (
+                                <option key={subject} value={subject}>
+                                  {subject}
+                                </option>
+                              ))}
                             <option value="General">
                               General / Platform Demo
                             </option>
@@ -8464,8 +8059,6 @@ export default function AdminPage({
                 onClick={() => {
                   if (deleteConfirm.type === "user") {
                     handleDeleteUser(deleteConfirm.id);
-                  } else if (deleteConfirm.type === "course") {
-                    handleDeleteCourse(deleteConfirm.id);
                   } else if (deleteConfirm.type === "video") {
                     handleDeleteVideo(deleteConfirm.id);
                   }

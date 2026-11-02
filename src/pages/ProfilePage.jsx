@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User,
   Mail,
   Phone,
   GraduationCap,
@@ -9,29 +8,29 @@ import {
   Calendar,
   Award,
   BookOpen,
-  Clock,
   Sparkles,
   LogOut,
   ArrowLeft,
   CheckCircle2,
-  TrendingUp,
   Shield,
   ChevronRight,
   Video,
   Copy,
   Check,
-  Calculator,
-  Atom,
-  FlaskConical,
-  Sprout,
-  HeartPulse,
-  Languages,
-  Radio,
   Lock,
-  FileCheck2,
-  Target
 } from 'lucide-react';
 import StudentVideoDashboard from '../components/dashboard/StudentVideoDashboard';
+import useCatalog from '../hooks/useCatalog';
+import { courseImage, courseTag, isOutsideLink } from '../utils/courseImage';
+
+const CARD_ACCENTS = [
+  'border-blue-400',
+  'border-purple-400',
+  'border-emerald-400',
+  'border-green-400',
+  'border-cyan-400',
+  'border-amber-400',
+];
 
 export default function ProfilePage({
   currentUser,
@@ -41,26 +40,37 @@ export default function ProfilePage({
   onOpenSignUp
 }) {
   const navigate = useNavigate();
+  const { courses } = useCatalog();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [copiedRoll, setCopiedRoll] = useState(false);
 
-  // Exact student credentials & profile data
+  // Student profile data from the signed-in account
+  const notProvided = 'Not provided';
+  const displayName = currentUser?.name || currentUser?.fullName || 'Student';
   const studentData = {
-    initials: 'RV',
-    name: currentUser?.name || currentUser?.fullName || 'Rangineni Varun Bhargav',
-    email: currentUser?.email || 'varun@gmail.com',
-    mobile: currentUser?.mobile || currentUser?.mobileNumber || '+91 98765 43210',
-    role: currentUser?.role || 'MATH SCHOLAR',
-    board: currentUser?.board || 'Andhra Pradesh Intermediate',
-    year: currentUser?.year || 'First Year',
-    collegeName: currentUser?.collegeName || 'Narayana Junior College, Vijayawada',
-    hallTicketNumber: currentUser?.hallTicketNumber || '2604819230',
-    studyMonthYear: currentUser?.studyMonthYear || 'June, 2025 - March, 2026',
-    fatherName: currentUser?.fatherName || 'C. Venkateswara Rao',
-    fatherMobile: currentUser?.fatherMobile || '+91 98765 43211',
-    relationship: currentUser?.relationship || 'Father',
+    initials: displayName.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(),
+    name: displayName,
+    email: currentUser?.email || notProvided,
+    mobile: currentUser?.mobile || currentUser?.mobileNumber || notProvided,
+    role: currentUser?.role || 'student',
+    board: currentUser?.board || notProvided,
+    year: currentUser?.year || notProvided,
+    collegeName: currentUser?.collegeName || notProvided,
+    hallTicketNumber: currentUser?.hallTicketNumber || notProvided,
+    studyMonthYear: currentUser?.studyMonthYear || notProvided,
+    fatherName: currentUser?.fatherName || notProvided,
+    fatherMobile: currentUser?.fatherMobile || notProvided,
+    relationship: currentUser?.relationship || 'Guardian',
     status: 'Active Student',
     avatarUrl: currentUser?.avatarUrl || ''
+  };
+
+  const handleOpenCourse = (course) => {
+    if (isOutsideLink(course.ownLink)) {
+      window.open(course.ownLink, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(course.ownLink || `/courses/${course.slug}`);
+    }
   };
 
   const handleCopyRoll = () => {
@@ -77,6 +87,26 @@ export default function ProfilePage({
     }
     navigate('/demo');
   };
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-[calc(100vh-86px)] bg-[#EBF0F7] dark:bg-[#070B14] flex items-center justify-center px-4 py-10">
+        <div className="max-w-sm w-full bg-white dark:bg-[#111827] rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm text-center space-y-3">
+          <h1 className="text-lg font-bold text-slate-950 dark:text-white">Sign in to see your profile</h1>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Your student details appear here once you sign in.
+          </p>
+          <button
+            type="button"
+            onClick={onOpenSignIn}
+            className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm cursor-pointer"
+          >
+            Sign In
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-86px)] bg-[#EBF0F7] dark:bg-[#070B14] text-slate-900 dark:text-slate-100 transition-colors duration-300 py-6 sm:py-10 px-3 sm:px-6 lg:px-8">
@@ -237,135 +267,9 @@ export default function ProfilePage({
 
         </div>
 
-        {/* ======================================================== */}
-        {/* STATS & METRICS GRID (BRIGHT, CRISP, VISIBLE PICTURES)   */}
-        {/* ======================================================== */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 sm:gap-4">
-          
-          {/* 1. Target Score Card (Mathematics Geometry Blueprint - Clearly Visible) */}
-          <div 
-            className="relative overflow-hidden p-4 sm:p-5 rounded-2xl text-white shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group border border-blue-400/40"
-            style={{
-              backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.90) 0%, rgba(30, 58, 138, 0.50) 55%, rgba(30, 58, 138, 0.15) 100%), url('https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=600&auto=format&fit=crop')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
-            <div className="flex items-center gap-3.5 relative z-10">
-              <div className="w-11 h-11 rounded-xl bg-black/40 backdrop-blur-md text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-xs border border-white/20">
-                <Target size={22} className="text-cyan-300" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-blue-100 drop-shadow-xs">
-                  Target Score
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">
-                  75 / 75
-                </p>
-              </div>
-            </div>
-            {/* Visual Mini Progress Bar */}
-            <div className="w-full h-1.5 bg-black/40 rounded-full mt-3 overflow-hidden relative z-10 border border-white/10">
-              <div className="h-full bg-cyan-300 rounded-full w-full"></div>
-            </div>
-            <p className="text-[10px] text-blue-100 mt-1 font-semibold relative z-10 drop-shadow-xs">
-              {currentUser?.stream ? `100% Target Mastery (${currentUser.stream})` : "100% Target Mastery (MPC / BiPC / CEC / MEC / HEC)"}
-            </p>
-          </div>
-
-          {/* 2. Practice Score Card (Exam Testing - Clearly Visible) */}
-          <div 
-            className="relative overflow-hidden p-4 sm:p-5 rounded-2xl text-white shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group border border-emerald-400/40"
-            style={{
-              backgroundImage: `linear-gradient(to top, rgba(6, 78, 59, 0.90) 0%, rgba(5, 150, 105, 0.50) 55%, rgba(5, 150, 105, 0.15) 100%), url('https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
-            <div className="flex items-center gap-3.5 relative z-10">
-              <div className="w-11 h-11 rounded-xl bg-black/40 backdrop-blur-md text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-xs border border-white/20">
-                <TrendingUp size={22} className="text-emerald-300" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-100 drop-shadow-xs">
-                  Practice Score
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">
-                  98% <span className="text-xs font-bold text-emerald-200">(A+)</span>
-                </p>
-              </div>
-            </div>
-            {/* Visual Mini Progress Bar */}
-            <div className="w-full h-1.5 bg-black/40 rounded-full mt-3 overflow-hidden relative z-10 border border-white/10">
-              <div className="h-full bg-emerald-300 rounded-full w-[98%]"></div>
-            </div>
-            <p className="text-[10px] text-emerald-100 mt-1 font-semibold relative z-10 drop-shadow-xs">
-              Top 2% Board Rank Tier
-            </p>
-          </div>
-
-          {/* 3. Class Attendance Card (Lecture Academy - Clearly Visible) */}
-          <div 
-            className="relative overflow-hidden p-4 sm:p-5 rounded-2xl text-white shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group border border-purple-400/40"
-            style={{
-              backgroundImage: `linear-gradient(to top, rgba(88, 28, 135, 0.90) 0%, rgba(126, 34, 206, 0.50) 55%, rgba(126, 34, 206, 0.15) 100%), url('https://images.unsplash.com/photo-1524178232363-1fb2b075b655?q=80&w=600&auto=format&fit=crop')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
-            <div className="flex items-center gap-3.5 relative z-10">
-              <div className="w-11 h-11 rounded-xl bg-black/40 backdrop-blur-md text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-xs border border-white/20">
-                <Clock size={22} className="text-purple-300" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-purple-100 drop-shadow-xs">
-                  Class Attendance
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">
-                  96% <span className="text-xs font-semibold text-purple-200">Completed</span>
-                </p>
-              </div>
-            </div>
-            {/* Visual Mini Progress Bar */}
-            <div className="w-full h-1.5 bg-black/40 rounded-full mt-3 overflow-hidden relative z-10 border border-white/10">
-              <div className="h-full bg-purple-300 rounded-full w-[96%]"></div>
-            </div>
-            <p className="text-[10px] text-purple-100 mt-1 font-semibold relative z-10 drop-shadow-xs">
-              48 of 50 Live Labs Attended
-            </p>
-          </div>
-
-          {/* 4. Chapters Covered Card (Syllabus & Books - Clearly Visible) */}
-          <div 
-            className="relative overflow-hidden p-4 sm:p-5 rounded-2xl text-white shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group border border-amber-400/40"
-            style={{
-              backgroundImage: `linear-gradient(to top, rgba(146, 64, 14, 0.90) 0%, rgba(217, 119, 6, 0.50) 55%, rgba(217, 119, 6, 0.15) 100%), url('https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=600&auto=format&fit=crop')`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center'
-            }}
-          >
-            <div className="flex items-center gap-3.5 relative z-10">
-              <div className="w-11 h-11 rounded-xl bg-black/40 backdrop-blur-md text-white flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-xs border border-white/20">
-                <BookOpen size={22} className="text-amber-300" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-100 drop-shadow-xs">
-                  Chapters Covered
-                </p>
-                <p className="text-xl sm:text-2xl font-black text-white tracking-tight drop-shadow-sm">
-                  14 / 16 <span className="text-xs font-semibold text-amber-200">Units</span>
-                </p>
-              </div>
-            </div>
-            {/* Visual Mini Progress Bar */}
-            <div className="w-full h-1.5 bg-black/40 rounded-full mt-3 overflow-hidden relative z-10 border border-white/10">
-              <div className="h-full bg-amber-300 rounded-full w-[87.5%]"></div>
-            </div>
-            <p className="text-[10px] text-amber-100 mt-1 font-semibold relative z-10 drop-shadow-xs">
-              87.5% Complete (2 Units Left)
-            </p>
-          </div>
-
+        {/* Real scores come here once progress tracking is built */}
+        <div className="rounded-2xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm p-4 sm:p-5 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+          Your scores, attendance and chapter progress will appear here once progress tracking is live.
         </div>
 
         {/* ======================================================== */}
@@ -392,9 +296,6 @@ export default function ProfilePage({
                   </div>
                   <span>Academic & College Credentials</span>
                 </h2>
-                <span className="text-[11px] font-semibold text-blue-600 dark:text-cyan-400 bg-blue-50 dark:bg-blue-950/50 px-2.5 py-1 rounded-full border border-blue-200 dark:border-blue-800/80">
-                  Verified Records
-                </span>
               </div>
 
               <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -475,78 +376,26 @@ export default function ProfilePage({
               </div>
             </div>
 
-            {/* Enrolled Intermediate Curriculum Card */}
+            {/* Intermediate Subjects Card */}
             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-7 transition-all hover:shadow-md">
               <div className="relative z-10 flex items-center justify-between pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                     <BookOpen size={18} />
                   </div>
-                  <span>Enrolled Intermediate Curriculum</span>
+                  <span>Intermediate Subjects</span>
                 </h2>
-                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-800/80">
-                  6 Subjects Active
-                </span>
               </div>
 
-              {/* 6 Subject Picture Cards - Ultra Bright, Crisp, Completely Visible */}
+              {/* First 6 published courses, in the order set in the admin panel */}
               <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-                {[
-                  { 
-                    name: 'Mathematics', 
-                    desc: '1A, 1B, 2A, 2B', 
-                    route: '/maths',
-                    icon: <Calculator size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-blue-400'
-                  },
-                  { 
-                    name: 'Physics', 
-                    desc: 'Theory & Labs', 
-                    route: '/physics',
-                    icon: <Atom size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-purple-400'
-                  },
-                  { 
-                    name: 'Chemistry', 
-                    desc: 'Organic & Inorganic', 
-                    route: '/chemistry',
-                    icon: <FlaskConical size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-emerald-400'
-                  },
-                  { 
-                    name: 'Botany', 
-                    desc: 'Plant Anatomy & Cell', 
-                    route: '/botany',
-                    icon: <Sprout size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-green-400'
-                  },
-                  { 
-                    name: 'Zoology', 
-                    desc: 'Human Physiology', 
-                    route: '/zoology',
-                    icon: <HeartPulse size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-cyan-400'
-                  },
-                  { 
-                    name: 'Sanskrit', 
-                    desc: 'Poetry & Grammar', 
-                    route: '/sanskrit',
-                    icon: <Languages size={15} />,
-                    bgImage: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600&auto=format&fit=crop',
-                    accentColor: 'border-amber-400'
-                  },
-                ].map((subject, idx) => (
+                {courses.slice(0, 6).map((course, idx) => (
                   <button
-                    key={idx}
-                    onClick={() => navigate(subject.route)}
-                    className={`relative overflow-hidden h-36 sm:h-40 rounded-2xl border ${subject.accentColor} transition-all duration-300 text-left group cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 text-white flex flex-col justify-between p-3.5`}
+                    key={course._id}
+                    onClick={() => handleOpenCourse(course)}
+                    className={`relative overflow-hidden h-36 sm:h-40 rounded-2xl border ${CARD_ACCENTS[idx % CARD_ACCENTS.length]} transition-all duration-300 text-left group cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 text-white flex flex-col justify-between p-3.5`}
                     style={{
-                      backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.40) 50%, rgba(15, 23, 42, 0.05) 100%), url('${subject.bgImage}')`,
+                      backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.40) 50%, rgba(15, 23, 42, 0.05) 100%), url('${courseImage(course.thumbnail, 480)}')`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'center'
                     }}
@@ -554,7 +403,7 @@ export default function ProfilePage({
                     {/* Top Bar with Icon & Arrow */}
                     <div className="flex items-center justify-between w-full relative z-10">
                       <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black/50 backdrop-blur-md text-white shadow-xs group-hover:scale-110 transition-transform border border-white/20">
-                        {subject.icon}
+                        <BookOpen size={15} />
                       </div>
                       <div className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:bg-cyan-500 transition-colors">
                         <ChevronRight size={13} className="text-white transition-all" />
@@ -564,10 +413,10 @@ export default function ProfilePage({
                     {/* Bottom Label with High Contrast Readability */}
                     <div className="relative z-10 pt-2">
                       <div className="text-sm sm:text-base font-extrabold text-white group-hover:text-cyan-200 transition-colors drop-shadow-md">
-                        {subject.name}
+                        {course.name}
                       </div>
                       <p className="text-[10.5px] text-slate-200 mt-0.5 leading-tight font-medium drop-shadow-sm">
-                        {subject.desc}
+                        {courseTag(course)}
                       </p>
                     </div>
                   </button>
@@ -577,111 +426,9 @@ export default function ProfilePage({
 
           </div>
 
-          {/* Right Column (5 cols): Live Class, Practice, and Account Management */}
+          {/* Right Column (5 cols): Account Management */}
           <div className="lg:col-span-5 space-y-6">
             
-            {/* Live Class & Problem Sets Card */}
-            <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-7 transition-all hover:shadow-md">
-              <div className="relative z-10 flex items-center justify-between pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-cyan-400 flex items-center justify-center">
-                    <Clock size={18} />
-                  </div>
-                  <span>Live Class & Problem Sets</span>
-                </h2>
-                <span className="flex items-center gap-1.5 text-[11px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-2.5 py-0.5 rounded-full border border-rose-200 dark:border-rose-900">
-                  <Radio size={11} className="animate-pulse" />
-                  <span>Live Soon</span>
-                </span>
-              </div>
-
-              <div className="relative z-10 space-y-3.5 text-xs">
-                
-                {/* 1. Next Live Class with Broadcast Studio Background - Clearly Visible */}
-                <div 
-                  className="relative overflow-hidden p-4 sm:p-5 rounded-2xl text-white shadow-md border border-blue-400/50 group hover:shadow-lg transition-all"
-                  style={{
-                    backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.94) 0%, rgba(30, 58, 138, 0.50) 55%, rgba(30, 58, 138, 0.15) 100%), url('https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-2 relative z-10">
-                    <span className="text-[10.5px] font-bold text-cyan-200 uppercase tracking-wider flex items-center gap-1.5 drop-shadow-xs">
-                      <Sparkles size={12} className="text-cyan-300" />
-                      <span>Upcoming Live Class</span>
-                    </span>
-                    <span className="px-2.5 py-0.5 rounded-full bg-blue-500 text-white font-bold text-[10px] shadow-xs animate-pulse">
-                      Join in 35m
-                    </span>
-                  </div>
-                  
-                  <h3 className="font-bold text-white text-xs sm:text-sm mb-1 leading-snug relative z-10 drop-shadow-sm">
-                    Math 1A: Calculus & Functions (Limits & Continuity)
-                  </h3>
-                  
-                  <p className="text-[11px] text-blue-100 leading-relaxed mb-3 relative z-10 drop-shadow-xs">
-                    Live with Senior Board Faculty • Direct 1-on-1 doubt clearing
-                  </p>
-
-                  <button
-                    onClick={() => onOpenBooking ? onOpenBooking('Math 1A Live Class') : navigate('/maths')}
-                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-95 relative z-10"
-                  >
-                    <Video size={14} />
-                    <span>Enter Live Classroom</span>
-                  </button>
-                </div>
-
-                {/* 2. Practice Homework Set #4 - Clear Visible Wallpaper */}
-                <div 
-                  className="relative overflow-hidden p-4 rounded-2xl border border-emerald-400/40 text-white shadow-xs group hover:shadow-md transition-all"
-                  style={{
-                    backgroundImage: `linear-gradient(to top, rgba(6, 78, 59, 0.92) 0%, rgba(6, 78, 59, 0.45) 55%, rgba(6, 78, 59, 0.15) 100%), url('https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?q=80&w=600&auto=format&fit=crop')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1.5 relative z-10">
-                    <span className="text-[10px] font-bold text-emerald-200 uppercase tracking-wider flex items-center gap-1 drop-shadow-xs">
-                      <FileCheck2 size={12} />
-                      <span>Practice Problem Set #4</span>
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-500/90 text-white font-extrabold font-mono text-xs border border-emerald-300">
-                      A+ (98%)
-                    </span>
-                  </div>
-                  <p className="text-[11.5px] text-white font-medium leading-relaxed relative z-10 drop-shadow-xs">
-                    AP Intermediate 7-Mark & 4-Mark Solved Blueprint Set
-                  </p>
-                </div>
-
-                {/* 3. State Mock Test #2 - Clear Visible Wallpaper */}
-                <div 
-                  className="relative overflow-hidden p-4 rounded-2xl border border-blue-400/40 text-white shadow-xs group hover:shadow-md transition-all"
-                  style={{
-                    backgroundImage: `linear-gradient(to top, rgba(30, 58, 138, 0.92) 0%, rgba(30, 58, 138, 0.45) 55%, rgba(30, 58, 138, 0.15) 100%), url('https://images.unsplash.com/photo-1509228468518-180dd4864904?q=80&w=600&auto=format&fit=crop')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1.5 relative z-10">
-                    <span className="text-[10px] font-bold text-cyan-200 uppercase tracking-wider flex items-center gap-1 drop-shadow-xs">
-                      <Award size={12} />
-                      <span>State Mock Test #2</span>
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-500/90 text-white font-extrabold font-mono text-xs border border-blue-300">
-                      72 / 75
-                    </span>
-                  </div>
-                  <p className="text-[11.5px] text-white font-medium leading-relaxed relative z-10 drop-shadow-xs">
-                    Top 2% Percentile in AP & TS Board benchmark
-                  </p>
-                </div>
-
-              </div>
-            </div>
-
             {/* Account Management Card */}
             <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-7 transition-all hover:shadow-md">
               {/* Security Shield Grid Background - Clearly Visible */}

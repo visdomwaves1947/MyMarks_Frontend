@@ -20,12 +20,14 @@ import {
   Maximize2
 } from 'lucide-react';
 import { fetchStudentVideos } from '../../services/api';
+import useCatalog from '../../hooks/useCatalog';
 
 export default function StudentVideoDashboard({
   studentBoard = 'Both Boards',
   studentYear = '1st Year',
   onOpenBooking = null,
 }) {
+  const { courses } = useCatalog();
   const [videos, setVideos] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -47,7 +49,7 @@ export default function StudentVideoDashboard({
     let isMounted = true;
     setIsLoading(true);
 
-    fetchStudentVideos()
+    fetchStudentVideos({ includeLocked: true })
       .then((data) => {
         if (isMounted && Array.isArray(data)) {
           setVideos(data);
@@ -203,24 +205,12 @@ export default function StudentVideoDashboard({
   }, [videos, selectedBoard, selectedYear, selectedSubject, searchQuery, isUnrelatedVideo]);
 
   const subjectOptions = useMemo(() => {
-    const base = [
-      'all',
-      'Mathematics',
-      'Physics',
-      'Chemistry',
-      'Botany',
-      'Zoology',
-      'English',
-      'Commerce',
-      'Economics',
-      'Civics',
-      'General',
-    ];
+    const fromCourses = courses.map((course) => course.subject);
     const fromVideos = (videos || [])
       .map((v) => v.subject)
       .filter((s) => Boolean(s && s.trim()));
-    return Array.from(new Set([...base, ...fromVideos]));
-  }, [videos]);
+    return Array.from(new Set(['all', ...fromCourses, 'General', ...fromVideos]));
+  }, [courses, videos]);
 
   return (
     <div className="space-y-6">
@@ -569,8 +559,8 @@ export default function StudentVideoDashboard({
                       onClick={() => setActiveVideoModal(v)}
                       className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-blue-600/25 transition-all cursor-pointer active:scale-95 shrink-0"
                     >
-                      <Play size={13} fill="currentColor" />
-                      <span>Watch Video</span>
+                      {v.isLocked ? <Lock size={13} /> : <Play size={13} fill="currentColor" />}
+                      <span>{v.isLocked ? 'View Details' : 'Watch Video'}</span>
                     </button>
                   </div>
                 </div>
@@ -651,7 +641,27 @@ export default function StudentVideoDashboard({
                     </div>
                   )}
 
-                  {isYT && ytId ? (
+                  {activeVideoModal.isLocked ? (
+                    <div className="text-center p-8 text-white space-y-3">
+                      <Lock size={36} className="mx-auto text-amber-400" />
+                      <h4 className="font-bold text-base">This is a Premium Class</h4>
+                      <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                        Enroll in {activeVideoModal.subject || 'this subject'} to watch this lesson.
+                      </p>
+                      {onOpenBooking && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveVideoModal(null);
+                            onOpenBooking(`Enroll in ${activeVideoModal.subject || 'Academic'}`);
+                          }}
+                          className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                        >
+                          Enroll Now
+                        </button>
+                      )}
+                    </div>
+                  ) : isYT && ytId ? (
                     <iframe
                       src={`https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`}
                       title={activeVideoModal.title}

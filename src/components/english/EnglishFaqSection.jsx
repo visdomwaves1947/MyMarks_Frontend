@@ -91,8 +91,8 @@ export default function EnglishFaqSection({ onOpenBooking }) {
               Speak with English Academic Counselor
             </button>
             <a
-              href="mailto:support@mathslearningacademy.com"
-              className="px-5 py-2.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-semibold text-xs border border-slate-200 dark:border-slate-700 transition-colors"
+              href="mailto:info@visdomwaves.com"
+              className="px-5 py-2.5 rounded-xl bg-[#DFE7F2] hover:bg-[#D5E1EE] text-slate-900 font-bold text-xs border border-[#BAC9DC] transition-colors"
             >
               Email Support Team
             </a>

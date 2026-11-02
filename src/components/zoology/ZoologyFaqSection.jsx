@@ -91,7 +91,7 @@ export default function ZoologyFaqSection({ onOpenBooking }) {
               Speak with Zoology Academic Counselor
             </button>
             <a
-              href="mailto:support@mathslearningacademy.com"
+              href="mailto:info@visdomwaves.com"
               className="px-5 py-2.5 rounded-xl bg-[#DFE7F2] hover:bg-[#D5E1EE] text-slate-900 font-bold text-xs border border-[#BAC9DC] transition-colors"
             >
               Email Support Team

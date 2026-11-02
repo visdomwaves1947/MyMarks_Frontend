@@ -8,6 +8,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import LegalTermsModal from './LegalTermsModal';
+import useCatalog from '../hooks/useCatalog';
 
 // Social Icon SVGs
 function FacebookIcon({ className = "h-3 w-3" }) {
@@ -43,6 +44,7 @@ function YouTubeIcon({ className = "h-3 w-3" }) {
 }
 
 export default function Footer({ onOpenBooking }) {
+  const { streams } = useCatalog();
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [legalModalOpen, setLegalModalOpen] = useState(false);
   const [legalModalTab, setLegalModalTab] = useState('terms');
@@ -74,7 +76,7 @@ export default function Footer({ onOpenBooking }) {
     }
 
     // Handle group navigation e.g. /demo?group=mpc#courses
-    const groupMatch = href.match(/[?&]group=([a-z0-9]+)/i);
+    const groupMatch = href.match(/[?&]group=([a-z0-9-]+)/i);
     if (groupMatch) {
       const group = groupMatch[1].toLowerCase();
       window.dispatchEvent(new CustomEvent("selectIntermediateGroup", { detail: group }));
@@ -266,66 +268,18 @@ export default function Footer({ onOpenBooking }) {
                 <span>Academic Groups</span>
               </h3>
               <ul className="space-y-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
-                <li>
-                  <a 
-                    href="/demo?group=mpc#courses" 
-                    onClick={(e) => handleNavigation(e, '/demo?group=mpc#courses')}
-                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
-                  >
-                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>MPC (Maths, Physics, Chem)</span>
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/demo?group=bipc#courses" 
-                    onClick={(e) => handleNavigation(e, '/demo?group=bipc#courses')}
-                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
-                  >
-                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>BiPC (Biology, Physics, Chem)</span>
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/demo?group=cec#courses" 
-                    onClick={(e) => handleNavigation(e, '/demo?group=cec#courses')}
-                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
-                  >
-                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>CEC (Commerce, Econ, Civics)</span>
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/demo?group=mec#courses" 
-                    onClick={(e) => handleNavigation(e, '/demo?group=mec#courses')}
-                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
-                  >
-                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>MEC (Maths, Econ, Commerce)</span>
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/demo?group=hec#courses" 
-                    onClick={(e) => handleNavigation(e, '/demo?group=hec#courses')}
-                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
-                  >
-                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>HEC (History, Econ, Civics)</span>
-                  </a>
-                </li>
-                <li>
-                  <a 
-                    href="/demo?group=languages#courses" 
-                    onClick={(e) => handleNavigation(e, '/demo?group=languages#courses')}
-                    className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
-                  >
-                    <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
-                    <span>Languages (English, Sanskrit, etc.)</span>
-                  </a>
-                </li>
+                {streams.map((stream) => (
+                  <li key={stream.slug}>
+                    <a 
+                      href={`/demo?group=${stream.slug}#courses`} 
+                      onClick={(e) => handleNavigation(e, `/demo?group=${stream.slug}#courses`)}
+                      className="group flex items-center gap-1 hover:text-blue-600 transition-colors"
+                    >
+                      <ChevronRight size={12} className="text-blue-500/80 transform-gpu group-hover:translate-x-0.5 transition-transform shrink-0" />
+                      <span>{stream.code}{stream.shortName ? ` (${stream.shortName})` : ''}</span>
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
 

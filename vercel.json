@@ -23,6 +23,21 @@
   ],
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "https://mymarks-backend.vercel.app/sitemap.xml"
+    },
+    {
+      "source": "/courses/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(whatsapp|facebookexternalhit|facebot|twitterbot|linkedinbot|telegrambot|slackbot|discordbot|skypeuripreview|pinterest).*"
+        }
+      ],
+      "destination": "https://mymarks-backend.vercel.app/share/courses/:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

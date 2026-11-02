@@ -1,12 +1,25 @@
 import React from 'react';
 import { Bookmark, X, Check, Video, FileText, CheckSquare, Tag, ArrowRight } from 'lucide-react';
 
+const RESOURCE_STYLES = {
+  video: { icon: Video, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800' },
+  notes: { icon: FileText, color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800' },
+  quiz: { icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800' },
+  tag: { icon: Tag, color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
+};
+
 export default function PlannerDashboard({ planData, onRestart }) {
   // Use plan data or default fallbacks
-  const durationText = planData?.planTitle ? planData.planTitle.toUpperCase() : (planData?.duration === 1 ? '1 DAY' : planData?.duration ? `${planData.duration} DAYS` : '15 DAYS');
+  const durationText = planData?.steps ? planData.title.toUpperCase() : planData?.planTitle ? planData.planTitle.toUpperCase() : (planData?.duration === 1 ? '1 DAY' : planData?.duration ? `${planData.duration} DAYS` : '15 DAYS');
   const planSubtitle = planData?.expectedScore ? `Target Score: ${planData.expectedScore}` : 'Perfect for students with almost no preparation. Secures minimum passing marks.';
-  // Mathematics specific mockup content structured exactly like the screenshot
-  const planSteps = [
+  // A course page brings its own plan. The old subject pages still show this Mathematics plan.
+  const planSteps = planData?.steps ? planData.steps.map((step, index) => ({
+    id: index + 1,
+    time: step.time,
+    title: step.title,
+    desc: step.desc,
+    tags: (step.resources || []).map((resource) => ({ ...RESOURCE_STYLES[resource.kind], text: resource.text }))
+  })) : [
     {
       id: 1,
       time: '00-15 MINUTES',

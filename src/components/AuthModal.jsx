@@ -3,31 +3,26 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, registerUser } from '../redux/thunks/authThunks';
 import LegalTermsModal from './LegalTermsModal';
-import { 
-  X, 
-  Lock, 
-  Mail, 
-  User, 
-  Phone, 
-  Calendar, 
-  CreditCard, 
-  GraduationCap, 
-  Building2, 
-  Eye, 
-  EyeOff, 
-  Camera, 
-  Check, 
-  ChevronRight, 
-  ChevronLeft, 
-  Users, 
-  Sparkles, 
-  BookOpen, 
-  Clock, 
-  Award, 
+import {
+  X,
+  Lock,
+  Mail,
+  User,
+  Phone,
+  Calendar,
+  GraduationCap,
+  Building2,
+  Eye,
+  EyeOff,
+  Camera,
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  Users,
+  Sparkles,
   AlertCircle,
   LogIn,
   UserPlus,
-  ArrowLeft,
   Smartphone,
   CheckCircle2
 } from 'lucide-react';
@@ -45,7 +40,8 @@ export default function AuthModal({
   onClose, 
   initialMode = 'signin',
   currentUser = null,
-  onLoginSuccess
+  onLoginSuccess,
+  notice = ''
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -80,7 +76,6 @@ export default function AuthModal({
     mobileNumber: '',
     email: '',
     dob: '',
-    aadhaarNumber: '',
     relationship: 'Father',
     fatherName: '',
     fatherMobile: '',
@@ -218,14 +213,6 @@ export default function AuthModal({
         errors.dob = 'Date of Birth is required';
       }
 
-      // Aadhaar Number (optional, but if entered must be 12 digits)
-      if (formData.aadhaarNumber.trim()) {
-        const cleanAadhaar = formData.aadhaarNumber.replace(/\D/g, '');
-        if (cleanAadhaar.length !== 12) {
-          errors.aadhaarNumber = 'Aadhaar Number must be exactly 12 digits';
-        }
-      }
-
       // Parent Details validation
       if (!formData.fatherName.trim()) {
         errors.fatherName = `${formData.relationship} Name is required`;
@@ -334,7 +321,7 @@ export default function AuthModal({
       const resultAction = await dispatch(loginUser({ signInInput, signInPassword }));
       if (loginUser.fulfilled.match(resultAction)) {
         const user = resultAction.payload;
-        if (user && (user.role === 'admin' || user.email === 'md@visdomwaves.com')) {
+        if (user && user.role === 'admin') {
           try {
             localStorage.setItem('mymarks_admin_auth', 'true');
             sessionStorage.setItem('mymarks_admin_auth', 'true');
@@ -362,14 +349,6 @@ export default function AuthModal({
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Quick Demo Student Fill
-  const handleQuickDemo = () => {
-    setSignInInput('jordan.student@mathslearningacademy.com');
-    setSignInPassword('MasterMaths2026!');
-    setSignInErrors({});
-    setSignUpSuccessMsg('');
   };
 
   // Sign Up Final Submission
@@ -557,10 +536,10 @@ export default function AuthModal({
                       <span>{signUpSuccessMsg}</span>
                     </div>
                   )}
-                  {signInErrors.server && (
+                  {(signInErrors.server || notice) && (
                     <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
                       <AlertCircle size={16} className="shrink-0 text-rose-400" />
-                      <span>{signInErrors.server}</span>
+                      <span>{signInErrors.server || notice}</span>
                     </div>
                   )}
                   {/* MOBILE NUMBER/EMAIL FIELD */}
@@ -641,7 +620,7 @@ export default function AuthModal({
                     </label>
                     <button 
                       type="button"
-                      onClick={() => alert("A secure password reset link has been dispatched to your registered email/phone.")} 
+                      onClick={() => alert("Online password reset is not available yet. Please contact info@visdomwaves.com for help.")} 
                       className="text-sky-400 hover:text-sky-300 font-bold hover:underline cursor-pointer"
                     >
                       Forgot password?
@@ -681,13 +660,6 @@ export default function AuthModal({
                         Sign Up/Register
                       </button>
                     </span>
-                    <button
-                      type="button"
-                      onClick={handleQuickDemo}
-                      className="text-[11px] text-amber-400 hover:underline font-bold"
-                    >
-                      Demo Fill
-                    </button>
                   </div>
                 </form>
               </div>
@@ -844,7 +816,7 @@ export default function AuthModal({
                         </div>
                       </div>
 
-                      {/* Row 3: Date of Birth * & Aadhaar Number */}
+                      {/* Row 3: Date of Birth * */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
@@ -864,25 +836,6 @@ export default function AuthModal({
                           )}
                         </div>
 
-                        <div>
-                          <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                            Aadhaar Number <span className="text-slate-400 font-normal text-[10px]">(Optional)</span>
-                          </label>
-                          <div className="relative">
-                            <CreditCard size={14} className="absolute left-3 top-2.5 text-sky-400" />
-                            <input
-                              type="text"
-                              maxLength={12}
-                              placeholder="12-digit Aadhaar"
-                              value={formData.aadhaarNumber}
-                              onChange={(e) => handleInputChange('aadhaarNumber', e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
-                            />
-                          </div>
-                          {formErrors.aadhaarNumber && (
-                            <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.aadhaarNumber}</p>
-                          )}
-                        </div>
                       </div>
 
                       {/* Row 4: Parent / Guardian Details Card */}
