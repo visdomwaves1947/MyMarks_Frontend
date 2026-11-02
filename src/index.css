@@ -9,6 +9,9 @@
     max-width: 100vw;
     overflow-x: hidden;
   }
+  html {
+    scroll-padding-top: 105px;
+  }
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     background-color: #E6F0FA;
