@@ -7,6 +7,7 @@ import {
   updateAdminCourse,
 } from '../../../services/courseApi';
 import { SkeletonForm } from '../AdminSkeleton';
+import useDialog from '../../../hooks/useDialog';
 import CourseCard from '../../course/CourseCard';
 import CoursePageStep from './CoursePageStep';
 import CurriculumStep from './CurriculumStep';
@@ -23,16 +24,28 @@ import {
 
 const STEPS = ['Basics', 'Card', 'Page', 'Curriculum', 'Publish'];
 
-const BOARD_OPTIONS = ['Andhra Pradesh', 'Telangana'].map((value) => ({ value, label: value }));
-const YEAR_OPTIONS = ['1st Year', '2nd Year'].map((value) => ({ value, label: value }));
+const activeNames = (list) => list.filter((option) => option.status !== 'hidden').map((option) => option.name);
+
+// The boards or years to tick: the active ones, plus any this course already has that is hidden or not in the list
+const choicesFor = (list, selected) => {
+  const active = activeNames(list);
+  const kept = selected.filter((name) => !active.includes(name));
+  return [
+    ...active.map((name) => ({ value: name, label: name })),
+    ...kept.map((name) => ({
+      value: name,
+      label: `${name} (${list.some((option) => option.name === name) ? 'hidden' : 'not in the list'})`,
+    })),
+  ];
+};
 
 const BLANK_COURSE = {
   name: '',
   slug: '',
   subject: '',
   streams: [],
-  boards: ['Andhra Pradesh', 'Telangana'],
-  years: ['1st Year', '2nd Year'],
+  boards: [],
+  years: [],
   shortDescription: '',
   thumbnail: { url: '', publicId: '', sourceUrl: '' },
   tagLabel: '',
@@ -57,10 +70,22 @@ const publishChecks = (form) => [
   { label: 'Short description', done: Boolean(form.shortDescription.trim()) },
 ];
 
-export default function CourseEditor({ courseId, streams, showToast, onChanged, onClose }) {
+export default function CourseEditor({
+  courseId,
+  streams,
+  boards = [],
+  years = [],
+  showToast,
+  onChanged,
+  onClose,
+  initialStep = 0,
+  focusNodeId = null,
+}) {
+  const { confirm } = useDialog();
   const [id, setId] = useState(courseId);
-  const [form, setForm] = useState(BLANK_COURSE);
-  const [step, setStep] = useState(0);
+  // A new course starts with every active board and year ticked
+  const [form, setForm] = useState(() => ({ ...BLANK_COURSE, boards: activeNames(boards), years: activeNames(years) }));
+  const [step, setStep] = useState(initialStep);
   const [isLoading, setIsLoading] = useState(Boolean(courseId));
   const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
@@ -146,8 +171,19 @@ export default function CourseEditor({ courseId, streams, showToast, onChanged, 
     }
   };
 
-  const handleClose = () => {
-    if (!isDirty || window.confirm('Leave without saving your changes?')) onClose();
+  const handleClose = async () => {
+    if (
+      !isDirty ||
+      (await confirm({
+        title: 'Leave without saving?',
+        message: 'Your changes to this course will be lost.',
+        confirmLabel: 'Leave',
+        cancelLabel: 'Keep Editing',
+        tone: 'danger',
+      }))
+    ) {
+      onClose();
+    }
   };
 
   if (isLoading) {
@@ -234,8 +270,20 @@ export default function CourseEditor({ courseId, streams, showToast, onChanged, 
             selected={form.streams}
             onChange={setField('streams')}
           />
-          <CheckboxGroup label="Boards" options={BOARD_OPTIONS} selected={form.boards} onChange={setField('boards')} />
-          <CheckboxGroup label="Years" options={YEAR_OPTIONS} selected={form.years} onChange={setField('years')} />
+          <CheckboxGroup
+            label="Boards"
+            hint={boards.length === 0 ? 'No boards yet. Add them under the Boards view.' : ''}
+            options={choicesFor(boards, form.boards)}
+            selected={form.boards}
+            onChange={setField('boards')}
+          />
+          <CheckboxGroup
+            label="Years"
+            hint={years.length === 0 ? 'No years yet. Add them under the Years view.' : ''}
+            options={choicesFor(years, form.years)}
+            selected={form.years}
+            onChange={setField('years')}
+          />
 
           <TextArea
             label="Short description"
@@ -315,7 +363,7 @@ export default function CourseEditor({ courseId, streams, showToast, onChanged, 
 
       {step === 2 && <CoursePageStep form={form} update={update} />}
 
-      {step === 3 && <CurriculumStep courseId={id} showToast={showToast} onSaveDraft={handleSave} />}
+      {step === 3 && <CurriculumStep courseId={id} showToast={showToast} onSaveDraft={handleSave} focusNodeId={focusNodeId} />}
 
       {step === 4 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

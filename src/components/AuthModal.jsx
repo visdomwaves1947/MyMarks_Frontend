@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, registerUser } from '../redux/thunks/authThunks';
+import useDialog from '../hooks/useDialog';
 import LegalTermsModal from './LegalTermsModal';
 import {
   X,
@@ -45,6 +46,7 @@ export default function AuthModal({
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { alert: showMessage } = useDialog();
   const [mode, setMode] = useState(initialMode); // 'signin' | 'signup' | 'portal'
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState('forward');
@@ -397,7 +399,7 @@ export default function AuthModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 min-h-screen w-screen overflow-y-auto bg-slate-950 flex flex-col justify-between animate-fadeIn">
+    <div className="fixed inset-0 z-50 min-h-screen w-screen overflow-y-auto bg-slate-50 dark:bg-slate-950 flex flex-col justify-between animate-fadeIn">
       
       {/* Full Page Artistic Watercolor Background */}
       <div 
@@ -406,7 +408,7 @@ export default function AuthModal({
           backgroundImage: "url('/auth-bg.jpg')"
         }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#15100B]/90 via-[#18120E]/75 to-[#0A0705]/85 backdrop-blur-[3px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-white/85 via-sky-50/75 to-white/85 dark:from-[#15100B]/90 dark:via-[#18120E]/75 dark:to-[#0A0705]/85 backdrop-blur-[3px]"></div>
         <div className="absolute inset-0 bg-radial-glow opacity-80"></div>
       </div>
 
@@ -416,7 +418,7 @@ export default function AuthModal({
 
         {/* Mode Toggle Pills (Sign In / Sign Up) */}
         {mode !== 'portal' && !regSuccess && (
-          <div className="flex items-center p-1 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/15 text-xs font-bold shadow-lg">
+          <div className="flex items-center p-1 rounded-2xl bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-slate-200 dark:border-white/15 text-xs font-bold shadow-lg">
             <button
               type="button"
               onClick={() => {
@@ -428,7 +430,7 @@ export default function AuthModal({
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all cursor-pointer ${
                 mode === 'signin'
                   ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30'
-                  : 'text-slate-300 hover:text-white'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
               }`}
             >
               <LogIn size={13} />
@@ -446,7 +448,7 @@ export default function AuthModal({
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl transition-all cursor-pointer ${
                 mode === 'signup'
                   ? 'bg-sky-500 text-white shadow-md shadow-sky-500/30'
-                  : 'text-slate-300 hover:text-white'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
               }`}
             >
               <UserPlus size={13} />
@@ -458,7 +460,7 @@ export default function AuthModal({
         <button
           onClick={onClose}
           aria-label="Close"
-          className="w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center backdrop-blur-md border border-white/15 transition-all cursor-pointer shadow-sm active:scale-90"
+          className="w-10 h-10 rounded-2xl bg-white/80 hover:bg-white text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white flex items-center justify-center backdrop-blur-md border border-slate-200 dark:border-white/15 transition-all cursor-pointer shadow-sm active:scale-90"
         >
           <X size={18} />
         </button>
@@ -467,7 +469,7 @@ export default function AuthModal({
       {/* Main Full Page Central Card */}
       <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 my-auto py-3 sm:py-6 flex items-center justify-center">
         <div 
-          className={`w-full rounded-[36px] bg-[#1E1611]/85 backdrop-blur-2xl border border-amber-400/30 shadow-[0_30px_90px_-15px_rgba(0,0,0,0.7)] overflow-hidden transition-all grid grid-cols-1 lg:grid-cols-12 ${
+          className={`w-full rounded-[36px] bg-white/90 dark:bg-[#1E1611]/85 backdrop-blur-2xl border border-amber-300/60 dark:border-amber-400/30 shadow-[0_30px_90px_-15px_rgba(15,23,42,0.18)] dark:shadow-[0_30px_90px_-15px_rgba(0,0,0,0.7)] overflow-hidden transition-all grid grid-cols-1 lg:grid-cols-12 ${
             isShaking ? 'animate-shake' : 'animate-scaleUp'
           }`}
         >
@@ -475,7 +477,7 @@ export default function AuthModal({
           {/* ======================================================== */}
           {/* LEFT COLUMN: ILLUSTRATION & INSPIRATIONAL BANNER */}
           {/* ======================================================== */}
-          <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col items-center justify-center text-center relative border-b lg:border-b-0 lg:border-r border-amber-400/20 bg-gradient-to-b from-amber-500/[0.04] to-transparent">
+          <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col items-center justify-center text-center relative border-b lg:border-b-0 lg:border-r border-amber-300/70 dark:border-amber-400/20 bg-gradient-to-b from-amber-50/80 dark:from-amber-500/[0.04] to-transparent">
             
             <div className="absolute w-64 h-64 rounded-full bg-sky-500/10 blur-3xl pointer-events-none"></div>
 
@@ -490,16 +492,16 @@ export default function AuthModal({
               </div>
             </div>
 
-            <h2 className="text-xl sm:text-2xl font-black text-sky-400 tracking-tight mb-1.5 drop-shadow-sm">
+            <h2 className="text-xl sm:text-2xl font-black text-sky-600 dark:text-sky-400 tracking-tight mb-1.5 drop-shadow-sm">
               Build Your Legacy
             </h2>
 
-            <p className="text-xs sm:text-sm text-amber-100/80 italic font-medium leading-relaxed max-w-xs">
+            <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-100/80 italic font-medium leading-relaxed max-w-xs">
               "Every formula solved creates a whole new world of understanding!"
             </p>
 
-            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-amber-400/20 text-[11px] text-amber-200/90 font-medium">
-              <Sparkles size={12} className="text-amber-400" />
+            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 dark:bg-white/5 border border-amber-300/70 dark:border-amber-400/20 text-[11px] text-amber-800 dark:text-amber-200/90 font-medium">
+              <Sparkles size={12} className="text-amber-600 dark:text-amber-400" />
               <span>AP & TS Intermediate Excellence</span>
             </div>
           </div>
@@ -512,14 +514,14 @@ export default function AuthModal({
             {/* Header branding */}
             <div className="mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                   My
                 </span>
-                <span className="text-2xl sm:text-3xl font-black text-sky-400 tracking-tight">
+                <span className="text-2xl sm:text-3xl font-black text-sky-600 dark:text-sky-400 tracking-tight">
                   Marks
                 </span>
               </div>
-              <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-sky-300/80 mt-1">
+              <div className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-sky-700/80 dark:text-sky-300/80 mt-1">
                 SECURE LOGIN PORTAL
               </div>
             </div>
@@ -531,21 +533,21 @@ export default function AuthModal({
               <div className="animate-fadeIn">
                 <form onSubmit={handleSignInSubmit} className="space-y-3.5">
                   {signUpSuccessMsg && (
-                    <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn mb-2">
-                      <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
+                    <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn mb-2">
+                      <CheckCircle2 size={18} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
                       <span>{signUpSuccessMsg}</span>
                     </div>
                   )}
                   {(signInErrors.server || notice) && (
-                    <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
-                      <AlertCircle size={16} className="shrink-0 text-rose-400" />
+                    <div className="p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
+                      <AlertCircle size={16} className="shrink-0 text-rose-500 dark:text-rose-400" />
                       <span>{signInErrors.server || notice}</span>
                     </div>
                   )}
                   {/* MOBILE NUMBER/EMAIL FIELD */}
                   <div>
-                    <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                      <Smartphone size={13} className="text-sky-400" />
+                    <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                      <Smartphone size={13} className="text-sky-600 dark:text-sky-400" />
                       <span>MOBILE NUMBER / EMAIL *</span>
                     </label>
                     <div className="relative">
@@ -559,13 +561,13 @@ export default function AuthModal({
                             setSignInErrors(prev => ({ ...prev, signInInput: '' }));
                           }
                         }}
-                        className={`w-full px-4 py-3 bg-white text-slate-900 rounded-2xl text-xs sm:text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-sky-400/40 border-2 transition-all shadow-md ${
-                          signInErrors.signInInput ? 'border-rose-500 bg-rose-50/10' : 'border-transparent focus:border-sky-400'
+                        className={`w-full px-4 py-3 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white rounded-2xl text-xs sm:text-sm font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-4 focus:ring-sky-400/40 border-2 transition-all shadow-md ${
+                          signInErrors.signInInput ? 'border-rose-500 bg-rose-50/10' : 'border-slate-300 focus:border-sky-400 dark:border-slate-700'
                         }`}
                       />
                     </div>
                     {signInErrors.signInInput && (
-                      <p className="text-rose-400 text-[11px] font-semibold mt-1 flex items-center gap-1">
+                      <p className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1 flex items-center gap-1">
                         <AlertCircle size={12} /> {signInErrors.signInInput}
                       </p>
                     )}
@@ -573,8 +575,8 @@ export default function AuthModal({
 
                   {/* PASSWORD FIELD */}
                   <div>
-                    <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                      <Lock size={13} className="text-sky-400" />
+                    <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                      <Lock size={13} className="text-sky-600 dark:text-sky-400" />
                       <span>PASSWORD *</span>
                     </label>
                     <div className="relative">
@@ -588,40 +590,45 @@ export default function AuthModal({
                             setSignInErrors(prev => ({ ...prev, signInPassword: '' }));
                           }
                         }}
-                        className={`w-full px-4 pr-12 py-3 bg-white text-slate-900 rounded-2xl text-xs sm:text-sm font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-sky-400/40 border-2 transition-all shadow-md ${
-                          signInErrors.signInPassword ? 'border-rose-500 bg-rose-50/10' : 'border-transparent focus:border-sky-400'
+                        className={`w-full px-4 pr-12 py-3 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white rounded-2xl text-xs sm:text-sm font-semibold placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-4 focus:ring-sky-400/40 border-2 transition-all shadow-md ${
+                          signInErrors.signInPassword ? 'border-rose-500 bg-rose-50/10' : 'border-slate-300 focus:border-sky-400 dark:border-slate-700'
                         }`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowSignInPassword(!showSignInPassword)}
-                        className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-800 cursor-pointer p-1"
+                        className="absolute right-3.5 top-3 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer p-1"
                       >
                         {showSignInPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
                     {signInErrors.signInPassword && (
-                      <p className="text-rose-400 text-[11px] font-semibold mt-1 flex items-center gap-1">
+                      <p className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1 flex items-center gap-1">
                         <AlertCircle size={12} /> {signInErrors.signInPassword}
                       </p>
                     )}
                   </div>
 
                   {/* Options row */}
-                  <div className="flex items-center justify-between text-xs text-slate-300 font-medium pt-0.5">
+                  <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 font-medium pt-0.5">
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input 
                         type="checkbox" 
                         checked={rememberMe}
                         onChange={(e) => setRememberMe(e.target.checked)}
-                        className="rounded border-slate-600 accent-sky-500 w-4 h-4 cursor-pointer" 
+                        className="rounded border-slate-300 dark:border-slate-600 accent-sky-500 w-4 h-4 cursor-pointer" 
                       />
                       <span>Remember me</span>
                     </label>
                     <button 
                       type="button"
-                      onClick={() => alert("Online password reset is not available yet. Please contact info@visdomwaves.com for help.")} 
-                      className="text-sky-400 hover:text-sky-300 font-bold hover:underline cursor-pointer"
+                      onClick={() =>
+                        showMessage({
+                          title: 'Forgot your password?',
+                          message: 'Online password reset is not available yet. Please contact info@visdomwaves.com for help.',
+                        })
+                      }
+                      className="text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 font-bold hover:underline cursor-pointer"
                     >
                       Forgot password?
                     </button>
@@ -631,20 +638,20 @@ export default function AuthModal({
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full mt-2 py-3.5 px-6 rounded-2xl bg-[#322822]/90 hover:bg-[#3D312A] border border-amber-400/30 text-amber-200/90 hover:text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] group"
+                    className="w-full mt-2 py-3.5 px-6 rounded-2xl bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 dark:bg-[#322822]/90 dark:hover:bg-[#3D312A] dark:border-amber-400/30 dark:text-amber-200/90 dark:hover:text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] group"
                   >
                     {isSubmitting ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="w-5 h-5 border-2 border-amber-900/30 border-t-amber-900 dark:border-white/30 dark:border-t-white rounded-full animate-spin"></div>
                     ) : (
                       <>
-                        <Lock size={15} className="text-amber-400 group-hover:scale-110 transition-transform" />
+                        <Lock size={15} className="text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform" />
                         <span>CONTINUE WITH PASSWORD</span>
                       </>
                     )}
                   </button>
 
                   {/* Bottom Divider & Switcher */}
-                  <div className="pt-3 border-t border-white/10 text-xs text-slate-300 font-medium flex items-center justify-between">
+                  <div className="pt-3 border-t border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-300 font-medium flex items-center justify-between">
                     <span>
                       Don't have an Account?{' '}
                       <button
@@ -655,7 +662,7 @@ export default function AuthModal({
                           setStep(1);
                           setFormErrors({});
                         }}
-                        className="text-sky-400 hover:text-sky-300 font-bold underline cursor-pointer ml-1"
+                        className="text-sky-600 hover:text-sky-700 dark:text-sky-400 dark:hover:text-sky-300 font-bold underline cursor-pointer ml-1"
                       >
                         Sign Up/Register
                       </button>
@@ -672,7 +679,7 @@ export default function AuthModal({
               <div className="animate-fadeIn">
                 
                 {/* 4 Indicator Progress Dots */}
-                <div className="flex items-center justify-between mb-3 pb-1.5 border-b border-white/10">
+                <div className="flex items-center justify-between mb-3 pb-1.5 border-b border-slate-200 dark:border-white/10">
                   <div className="flex items-center gap-1.5">
                     {[1, 2, 3, 4].map((s) => (
                       <div
@@ -682,13 +689,13 @@ export default function AuthModal({
                             ? 'w-8 bg-sky-400 shadow-md shadow-sky-400/50'
                             : s < step
                             ? 'w-2.5 bg-sky-300/60'
-                            : 'w-1.5 bg-white/20'
+                            : 'w-1.5 bg-slate-300 dark:bg-white/20'
                         }`}
                       />
                     ))}
                   </div>
 
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-400">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
                     Step {step} of 4: {STEP_TITLES[step - 1]}
                   </span>
                 </div>
@@ -717,7 +724,7 @@ export default function AuthModal({
                             className="w-12 h-12 rounded-full p-[2px] bg-gradient-to-tr from-cyan-400 via-indigo-500 to-fuchsia-500 shadow-md group-hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center overflow-hidden"
                             title="Upload Photo (Optional)"
                           >
-                            <div className="w-full h-full rounded-full bg-[#18120E] flex flex-col items-center justify-center text-center p-0.5">
+                            <div className="w-full h-full rounded-full bg-white dark:bg-[#18120E] flex flex-col items-center justify-center text-center p-0.5">
                               {formData.avatarUrl ? (
                                 <img 
                                   src={formData.avatarUrl} 
@@ -726,8 +733,8 @@ export default function AuthModal({
                                 />
                               ) : (
                                 <>
-                                  <Camera size={14} className="text-sky-400" />
-                                  <span className="text-[7.5px] font-black tracking-wider text-sky-400 leading-none mt-0.5">
+                                  <Camera size={14} className="text-sky-600 dark:text-sky-400" />
+                                  <span className="text-[7.5px] font-black tracking-wider text-sky-600 dark:text-sky-400 leading-none mt-0.5">
                                     UPLOAD
                                   </span>
                                 </>
@@ -753,23 +760,23 @@ export default function AuthModal({
                         {/* Full Name * */}
                         <div className="grow">
                           <div className="flex items-center justify-between mb-0.5">
-                            <label className="block text-slate-200 font-bold text-[11px]">
-                              Full Name <span className="text-rose-400">*</span>
+                            <label className="block text-slate-700 dark:text-slate-200 font-bold text-[11px]">
+                              Full Name <span className="text-rose-500 dark:text-rose-400">*</span>
                             </label>
-                            <span className="text-[9.5px] text-slate-400 font-medium">Photo optional (max 5MB)</span>
+                            <span className="text-[9.5px] text-slate-500 dark:text-slate-400 font-medium">Photo optional (max 5MB)</span>
                           </div>
                           <div className="relative">
-                            <User size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                            <User size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                             <input
                               type="text"
                               placeholder="Student full name"
                               value={formData.fullName}
                               onChange={(e) => handleInputChange('fullName', e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                             />
                           </div>
                           {formErrors.fullName && (
-                            <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.fullName}</p>
+                            <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.fullName}</p>
                           )}
                         </div>
                       </div>
@@ -777,41 +784,41 @@ export default function AuthModal({
                       {/* Row 2: Mobile Number * & Email Address * */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                            Mobile Number <span className="text-rose-400">*</span>
+                          <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
+                            Mobile Number <span className="text-rose-500 dark:text-rose-400">*</span>
                           </label>
                           <div className="relative">
-                            <Phone size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                            <Phone size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                             <input
                               type="tel"
                               maxLength={10}
                               placeholder="10-digit phone"
                               value={formData.mobileNumber}
                               onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                             />
                           </div>
                           {formErrors.mobileNumber && (
-                            <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.mobileNumber}</p>
+                            <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.mobileNumber}</p>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                            Email Address <span className="text-rose-400">*</span>
+                          <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
+                            Email Address <span className="text-rose-500 dark:text-rose-400">*</span>
                           </label>
                           <div className="relative">
-                            <Mail size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                            <Mail size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                             <input
                               type="email"
                               placeholder="student@example.com"
                               value={formData.email}
                               onChange={(e) => handleInputChange('email', e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                             />
                           </div>
                           {formErrors.email && (
-                            <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.email}</p>
+                            <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.email}</p>
                           )}
                         </div>
                       </div>
@@ -819,41 +826,41 @@ export default function AuthModal({
                       {/* Row 3: Date of Birth * */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                            Date of Birth <span className="text-rose-400">*</span>
+                          <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
+                            Date of Birth <span className="text-rose-500 dark:text-rose-400">*</span>
                           </label>
                           <div className="relative">
-                            <Calendar size={14} className="absolute left-3 top-2.5 text-sky-400 pointer-events-none" />
+                            <Calendar size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400 pointer-events-none" />
                             <input
                               type="date"
                               value={formData.dob}
                               onChange={(e) => handleInputChange('dob', e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:[color-scheme:dark] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                             />
                           </div>
                           {formErrors.dob && (
-                            <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.dob}</p>
+                            <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.dob}</p>
                           )}
                         </div>
 
                       </div>
 
                       {/* Row 4: Parent / Guardian Details Card */}
-                      <div className="p-2.5 rounded-xl bg-white/5 border border-white/10">
-                        <div className="flex items-center gap-1.5 mb-1.5 text-white font-bold text-[11px]">
-                          <Users size={13} className="text-sky-400" />
+                      <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                        <div className="flex items-center gap-1.5 mb-1.5 text-slate-900 dark:text-white font-bold text-[11px]">
+                          <Users size={13} className="text-sky-600 dark:text-sky-400" />
                           <span>Parent / Guardian Details</span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                           <div>
-                            <label className="block text-slate-300 font-bold mb-0.5 text-[10px]">
-                              Relationship <span className="text-rose-400">*</span>
+                            <label className="block text-slate-600 dark:text-slate-300 font-bold mb-0.5 text-[10px]">
+                              Relationship <span className="text-rose-500 dark:text-rose-400">*</span>
                             </label>
                             <select
                               value={formData.relationship}
                               onChange={(e) => handleInputChange('relationship', e.target.value)}
-                              className="w-full px-2 py-1.5 bg-white text-slate-900 rounded-lg font-medium text-xs focus:outline-none"
+                              className="w-full px-2 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:[color-scheme:dark] border border-slate-300 dark:border-slate-700 rounded-lg font-medium text-xs focus:outline-none"
                             >
                               <option value="Father">Father</option>
                               <option value="Mother">Mother</option>
@@ -862,24 +869,24 @@ export default function AuthModal({
                           </div>
 
                           <div>
-                            <label className="block text-slate-300 font-bold mb-0.5 text-[10px]">
-                              {formData.relationship} Name <span className="text-rose-400">*</span>
+                            <label className="block text-slate-600 dark:text-slate-300 font-bold mb-0.5 text-[10px]">
+                              {formData.relationship} Name <span className="text-rose-500 dark:text-rose-400">*</span>
                             </label>
                             <input
                               type="text"
                               placeholder="Full name"
                               value={formData.fatherName}
                               onChange={(e) => handleInputChange('fatherName', e.target.value)}
-                              className="w-full px-2 py-1.5 bg-white text-slate-900 rounded-lg font-medium text-xs focus:outline-none"
+                              className="w-full px-2 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-lg font-medium text-xs focus:outline-none"
                             />
                             {formErrors.fatherName && (
-                              <p className="text-rose-400 text-[9.5px] font-semibold mt-0.5">{formErrors.fatherName}</p>
+                              <p className="text-rose-600 dark:text-rose-400 text-[9.5px] font-semibold mt-0.5">{formErrors.fatherName}</p>
                             )}
                           </div>
 
                           <div>
-                            <label className="block text-slate-300 font-bold mb-0.5 text-[10px]">
-                              {formData.relationship} Mobile <span className="text-rose-400">*</span>
+                            <label className="block text-slate-600 dark:text-slate-300 font-bold mb-0.5 text-[10px]">
+                              {formData.relationship} Mobile <span className="text-rose-500 dark:text-rose-400">*</span>
                             </label>
                             <input
                               type="tel"
@@ -887,10 +894,10 @@ export default function AuthModal({
                               placeholder="10-digit mobile"
                               value={formData.fatherMobile}
                               onChange={(e) => handleInputChange('fatherMobile', e.target.value)}
-                              className="w-full px-2 py-1.5 bg-white text-slate-900 rounded-lg font-medium text-xs focus:outline-none"
+                              className="w-full px-2 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-lg font-medium text-xs focus:outline-none"
                             />
                             {formErrors.fatherMobile && (
-                              <p className="text-rose-400 text-[9.5px] font-semibold mt-0.5">{formErrors.fatherMobile}</p>
+                              <p className="text-rose-600 dark:text-rose-400 text-[9.5px] font-semibold mt-0.5">{formErrors.fatherMobile}</p>
                             )}
                           </div>
                         </div>
@@ -899,76 +906,76 @@ export default function AuthModal({
                       {/* Row 5: Intermediate Hall Ticket Number */}
                       <div>
                         <div className="flex items-center justify-between mb-0.5">
-                          <label className="block text-slate-200 font-bold text-[11px]">
-                            Intermediate Hall Ticket Number {formData.year === 'Second Year' ? <span className="text-rose-400">* (Mandatory for 2nd Year)</span> : <span className="text-slate-400 font-normal">(Optional)</span>}
+                          <label className="block text-slate-700 dark:text-slate-200 font-bold text-[11px]">
+                            Intermediate Hall Ticket Number {formData.year === 'Second Year' ? <span className="text-rose-500 dark:text-rose-400">* (Mandatory for 2nd Year)</span> : <span className="text-slate-500 dark:text-slate-400 font-normal">(Optional)</span>}
                           </label>
                         </div>
                         <div className="relative">
-                          <GraduationCap size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                          <GraduationCap size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                           <input
                             type="text"
                             placeholder="Enter Hall Ticket Number (digits only)"
                             value={formData.hallTicketNumber}
                             onChange={(e) => handleInputChange('hallTicketNumber', e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                            className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                           />
                         </div>
                         {formErrors.hallTicketNumber && (
-                          <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.hallTicketNumber}</p>
+                          <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.hallTicketNumber}</p>
                         )}
                       </div>
 
                       {/* Row 6: Password * & Re-enter Password * in 2 columns */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                            Password <span className="text-rose-400">*</span>
+                          <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
+                            Password <span className="text-rose-500 dark:text-rose-400">*</span>
                           </label>
                           <div className="relative">
-                            <Lock size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                            <Lock size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                             <input
                               type={showPassword ? 'text' : 'password'}
                               placeholder="Create password"
                               value={formData.password}
                               onChange={(e) => handleInputChange('password', e.target.value)}
-                              className="w-full pl-8 pr-8 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                              className="w-full pl-8 pr-8 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                             />
                             <button
                               type="button"
                               onClick={() => setShowPassword(!showPassword)}
-                              className="absolute right-2.5 top-2 text-slate-500 hover:text-slate-800"
+                              className="absolute right-2.5 top-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                             >
                               {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                             </button>
                           </div>
                           {formErrors.password && (
-                            <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.password}</p>
+                            <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.password}</p>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                            Re-enter Password <span className="text-rose-400">*</span>
+                          <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
+                            Re-enter Password <span className="text-rose-500 dark:text-rose-400">*</span>
                           </label>
                           <div className="relative">
-                            <Lock size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                            <Lock size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                             <input
                               type={showConfirmPassword ? 'text' : 'password'}
                               placeholder="Re-enter password"
                               value={formData.confirmPassword}
                               onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                              className="w-full pl-8 pr-8 py-1.5 bg-white text-slate-900 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                              className="w-full pl-8 pr-8 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                             />
                             <button
                               type="button"
                               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              className="absolute right-2.5 top-2 text-slate-500 hover:text-slate-800"
+                              className="absolute right-2.5 top-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                             >
                               {showConfirmPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                             </button>
                           </div>
                           {formErrors.confirmPassword && (
-                            <p className="text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.confirmPassword}</p>
+                            <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.confirmPassword}</p>
                           )}
                         </div>
                       </div>
@@ -985,18 +992,18 @@ export default function AuthModal({
                         </button>
                       </div>
 
-                      <div className="text-center text-[11px] text-slate-300 font-medium pt-1">
+                      <div className="text-center text-[11px] text-slate-600 dark:text-slate-300 font-medium pt-1">
                         Already have an account?{' '}
                         <button
                           type="button"
                           onClick={() => { navigate('/signin'); setMode('signin'); }}
-                          className="text-sky-400 font-bold hover:underline cursor-pointer ml-1"
+                          className="text-sky-600 dark:text-sky-400 font-bold hover:underline cursor-pointer ml-1"
                         >
                           Sign In
                         </button>
                       </div>
 
-                      <div className="text-center text-[10.5px] text-slate-400 pt-0.5">
+                      <div className="text-center text-[10.5px] text-slate-500 dark:text-slate-400 pt-0.5">
                         By continuing, you agree to our{' '}
                         <button
                           type="button"
@@ -1030,8 +1037,8 @@ export default function AuthModal({
                 {step === 2 && (
                   <div className={direction === 'forward' ? 'animate-slideInRight' : 'animate-slideInLeft'}>
                     <div className="text-center mb-3">
-                      <h3 className="text-lg sm:text-xl font-black text-white">Select Board</h3>
-                      <p className="text-[11px] text-slate-300 mt-0.5">Choose your academic intermediate board.</p>
+                      <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Select Board</h3>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">Choose your academic intermediate board.</p>
                     </div>
 
                     <div className="space-y-2.5 mb-4">
@@ -1040,13 +1047,13 @@ export default function AuthModal({
                         onClick={() => handleInputChange('board', 'Andhra Pradesh Intermediate')}
                         className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                           formData.board === 'Andhra Pradesh Intermediate'
-                            ? 'border-2 border-sky-400 bg-sky-500/20 text-white shadow-md'
-                            : 'border-white/15 bg-white/5 text-slate-200 hover:border-white/30 hover:bg-white/10'
+                            ? 'border-2 border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-500/20 dark:text-white shadow-md'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:border-white/30 dark:hover:bg-white/10'
                         }`}
                       >
                         <div>
                           <span className="font-extrabold text-xs sm:text-sm block">Andhra Pradesh Intermediate</span>
-                          <span className="text-[10px] text-sky-300 font-medium">BIEAP Syllabus • MPC, BiPC, CEC, MEC & HEC</span>
+                          <span className="text-[10px] text-sky-700 dark:text-sky-300 font-medium">BIEAP Syllabus • MPC, BiPC, CEC, MEC & HEC</span>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           formData.board === 'Andhra Pradesh Intermediate' ? 'border-sky-400 bg-sky-400' : 'border-slate-500'
@@ -1060,13 +1067,13 @@ export default function AuthModal({
                         onClick={() => handleInputChange('board', 'Telangana Intermediate')}
                         className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                           formData.board === 'Telangana Intermediate'
-                            ? 'border-2 border-sky-400 bg-sky-500/20 text-white shadow-md'
-                            : 'border-white/15 bg-white/5 text-slate-200 hover:border-white/30 hover:bg-white/10'
+                            ? 'border-2 border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-500/20 dark:text-white shadow-md'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:border-white/30 dark:hover:bg-white/10'
                         }`}
                       >
                         <div>
                           <span className="font-extrabold text-xs sm:text-sm block">Telangana Intermediate</span>
-                          <span className="text-[10px] text-sky-300 font-medium">TSBIE Syllabus • MPC, BiPC, CEC, MEC & HEC</span>
+                          <span className="text-[10px] text-sky-700 dark:text-sky-300 font-medium">TSBIE Syllabus • MPC, BiPC, CEC, MEC & HEC</span>
                         </div>
                         <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
                           formData.board === 'Telangana Intermediate' ? 'border-sky-400 bg-sky-400' : 'border-slate-500'
@@ -1080,7 +1087,7 @@ export default function AuthModal({
                       <button
                         type="button"
                         onClick={handlePrevStep}
-                        className="py-2.5 px-3.5 rounded-xl border border-white/20 text-white font-bold text-xs flex items-center gap-1 cursor-pointer hover:bg-white/10"
+                        className="py-2.5 px-3.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10 font-bold text-xs flex items-center gap-1 cursor-pointer"
                       >
                         <ChevronLeft size={15} /> Back
                       </button>
@@ -1102,8 +1109,8 @@ export default function AuthModal({
                 {step === 3 && (
                   <div className={direction === 'forward' ? 'animate-slideInRight' : 'animate-slideInLeft'}>
                     <div className="text-center mb-2.5">
-                      <h3 className="text-lg sm:text-xl font-black text-white">Select Year & College</h3>
-                      <p className="text-[11px] text-slate-300 mt-0.5">Select year and enter college information.</p>
+                      <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Select Year & College</h3>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">Select year and enter college information.</p>
                     </div>
 
                     {/* Year Selection */}
@@ -1112,8 +1119,8 @@ export default function AuthModal({
                         onClick={() => handleInputChange('year', 'First Year')}
                         className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                           formData.year === 'First Year'
-                            ? 'border-2 border-sky-400 bg-sky-500/20 text-white shadow-sm'
-                            : 'border-white/15 bg-white/5 text-slate-200 hover:bg-white/10'
+                            ? 'border-2 border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-500/20 dark:text-white shadow-sm'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10'
                         }`}
                       >
                         <span className="font-extrabold text-xs sm:text-sm">First Year</span>
@@ -1128,8 +1135,8 @@ export default function AuthModal({
                         onClick={() => handleInputChange('year', 'Second Year')}
                         className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                           formData.year === 'Second Year'
-                            ? 'border-2 border-sky-400 bg-sky-500/20 text-white shadow-sm'
-                            : 'border-white/15 bg-white/5 text-slate-200 hover:bg-white/10'
+                            ? 'border-2 border-sky-400 bg-sky-50 text-sky-900 dark:bg-sky-500/20 dark:text-white shadow-sm'
+                            : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10'
                         }`}
                       >
                         <span className="font-extrabold text-xs sm:text-sm">Second Year</span>
@@ -1145,34 +1152,34 @@ export default function AuthModal({
                     <div className={`p-2.5 rounded-xl mb-3 border transition-all ${
                       formData.year === 'Second Year'
                         ? 'bg-amber-500/10 border-amber-400/40'
-                        : 'bg-white/5 border-white/10'
+                        : 'bg-slate-50 border-slate-200 dark:bg-white/5 dark:border-white/10'
                     }`}>
                       <div className="flex items-center justify-between mb-1">
-                        <label className="block text-slate-200 font-bold text-[11px]">
+                        <label className="block text-slate-700 dark:text-slate-200 font-bold text-[11px]">
                           Intermediate Hall Ticket Number{' '}
                           {formData.year === 'Second Year' ? (
-                            <span className="text-amber-400 font-bold text-[10.5px] bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-500/40">
+                            <span className="text-amber-700 dark:text-amber-400 font-bold text-[10.5px] bg-amber-100 dark:bg-amber-950/60 px-1.5 py-0.2 rounded border border-amber-500/40">
                               * MANDATORY FOR 2ND YEAR
                             </span>
                           ) : (
-                            <span className="text-slate-400 font-normal text-[10px]">(Optional for 1st Year)</span>
+                            <span className="text-slate-500 dark:text-slate-400 font-normal text-[10px]">(Optional for 1st Year)</span>
                           )}
                         </label>
                       </div>
                       <div className="relative">
-                        <GraduationCap size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                        <GraduationCap size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                         <input
                           type="text"
                           placeholder="Enter Hall Ticket Number (digits only)"
                           value={formData.hallTicketNumber}
                           onChange={(e) => handleInputChange('hallTicketNumber', e.target.value)}
-                          className={`w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl font-medium text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm ${
-                            formErrors.hallTicketNumber ? 'border-2 border-rose-500' : ''
+                          className={`w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 rounded-xl font-medium text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm ${
+                            formErrors.hallTicketNumber ? 'border-2 border-rose-500' : 'border border-slate-300 dark:border-slate-700'
                           }`}
                         />
                       </div>
                       {formErrors.hallTicketNumber && (
-                        <p className="text-rose-400 text-[10px] font-bold mt-1 flex items-center gap-1">
+                        <p className="text-rose-600 dark:text-rose-400 text-[10px] font-bold mt-1 flex items-center gap-1">
                           <AlertCircle size={11} /> {formErrors.hallTicketNumber}
                         </p>
                       )}
@@ -1180,40 +1187,40 @@ export default function AuthModal({
 
                     <div className="space-y-2 mb-3.5">
                       <div>
-                        <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                          Junior College Name & Location <span className="text-rose-400">*</span>
+                        <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
+                          Junior College Name & Location <span className="text-rose-500 dark:text-rose-400">*</span>
                         </label>
                         <div className="relative">
-                          <Building2 size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                          <Building2 size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                           <input
                             type="text"
                             placeholder="e.g. Sri Chaitanya Junior College, Vijayawada"
                             value={formData.collegeName}
                             onChange={(e) => handleInputChange('collegeName', e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl font-medium text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                            className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl font-medium text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                           />
                         </div>
                         {formErrors.collegeName && (
-                          <p className="text-rose-400 text-[10px] font-bold mt-0.5">{formErrors.collegeName}</p>
+                          <p className="text-rose-600 dark:text-rose-400 text-[10px] font-bold mt-0.5">{formErrors.collegeName}</p>
                         )}
                       </div>
 
                       <div>
-                        <label className="block text-slate-200 font-bold mb-0.5 text-[11px]">
-                          Month & Year of Study <span className="text-rose-400">*</span>
+                        <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
+                          Month & Year of Study <span className="text-rose-500 dark:text-rose-400">*</span>
                         </label>
                         <div className="relative">
-                          <Calendar size={14} className="absolute left-3 top-2.5 text-sky-400" />
+                          <Calendar size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
                           <input
                             type="text"
                             placeholder="June, 2025"
                             value={formData.studyMonthYear}
                             onChange={(e) => handleInputChange('studyMonthYear', e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 rounded-xl font-medium text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                            className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl font-medium text-xs focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
                           />
                         </div>
                         {formErrors.studyMonthYear && (
-                          <p className="text-rose-400 text-[10px] font-bold mt-0.5">{formErrors.studyMonthYear}</p>
+                          <p className="text-rose-600 dark:text-rose-400 text-[10px] font-bold mt-0.5">{formErrors.studyMonthYear}</p>
                         )}
                       </div>
                     </div>
@@ -1222,7 +1229,7 @@ export default function AuthModal({
                       <button
                         type="button"
                         onClick={handlePrevStep}
-                        className="py-2.5 px-3.5 rounded-xl border border-white/20 text-white font-bold text-xs flex items-center gap-1 cursor-pointer hover:bg-white/10"
+                        className="py-2.5 px-3.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10 font-bold text-xs flex items-center gap-1 cursor-pointer"
                       >
                         <ChevronLeft size={15} /> Back
                       </button>
@@ -1244,12 +1251,12 @@ export default function AuthModal({
                 {step === 4 && (
                   <div className={direction === 'forward' ? 'animate-slideInRight' : 'animate-slideInLeft'}>
                     <div className="text-center mb-2.5">
-                      <h3 className="text-lg sm:text-xl font-black text-white">Review & Confirm</h3>
-                      <p className="text-[11px] text-slate-300 mt-0.5">Confirm your student profile to complete registration.</p>
+                      <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white">Review & Confirm</h3>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5">Confirm your student profile to complete registration.</p>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-white/5 border border-white/15 space-y-2 mb-3 text-xs">
-                      <div className="flex items-center gap-2.5 pb-2 border-b border-white/10">
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/15 space-y-2 mb-3 text-xs">
+                      <div className="flex items-center gap-2.5 pb-2 border-b border-slate-200 dark:border-white/10">
                         <div className="w-9 h-9 rounded-lg bg-sky-500 text-white font-bold flex items-center justify-center text-xs shrink-0 overflow-hidden">
                           {formData.avatarUrl ? (
                             <img src={formData.avatarUrl} alt="Avatar" className="w-full h-full object-cover rounded-lg" />
@@ -1258,34 +1265,34 @@ export default function AuthModal({
                           )}
                         </div>
                         <div className="min-w-0">
-                          <strong className="text-white text-xs block truncate">{formData.fullName}</strong>
-                          <span className="text-slate-400 text-[10px] truncate block">{formData.email} • {formData.mobileNumber}</span>
+                          <strong className="text-slate-900 dark:text-white text-xs block truncate">{formData.fullName}</strong>
+                          <span className="text-slate-500 dark:text-slate-400 text-[10px] truncate block">{formData.email} • {formData.mobileNumber}</span>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-slate-300 text-[11px]">
-                        <div><span className="text-slate-400">Board:</span> <strong className="text-white block">{formData.board}</strong></div>
-                        <div><span className="text-slate-400">Year:</span> <strong className="text-white block">{formData.year}</strong></div>
-                        <div className="col-span-2"><span className="text-slate-400">Junior College:</span> <strong className="text-white block">{formData.collegeName || 'N/A'}</strong></div>
-                        <div><span className="text-slate-400">Month & Year:</span> <strong className="text-white block">{formData.studyMonthYear}</strong></div>
+                      <div className="grid grid-cols-2 gap-2 text-slate-600 dark:text-slate-300 text-[11px]">
+                        <div><span className="text-slate-500 dark:text-slate-400">Board:</span> <strong className="text-slate-900 dark:text-white block">{formData.board}</strong></div>
+                        <div><span className="text-slate-500 dark:text-slate-400">Year:</span> <strong className="text-slate-900 dark:text-white block">{formData.year}</strong></div>
+                        <div className="col-span-2"><span className="text-slate-500 dark:text-slate-400">Junior College:</span> <strong className="text-slate-900 dark:text-white block">{formData.collegeName || 'N/A'}</strong></div>
+                        <div><span className="text-slate-500 dark:text-slate-400">Month & Year:</span> <strong className="text-slate-900 dark:text-white block">{formData.studyMonthYear}</strong></div>
                         <div>
-                          <span className="text-slate-400">Hall Ticket No:</span>{' '}
-                          <strong className="text-white block">
+                          <span className="text-slate-500 dark:text-slate-400">Hall Ticket No:</span>{' '}
+                          <strong className="text-slate-900 dark:text-white block">
                             {formData.hallTicketNumber || (formData.year === 'Second Year' ? 'Required' : 'Not Provided')}
                           </strong>
                         </div>
-                        <div className="col-span-2 pt-1 border-t border-white/10">
-                          <span className="text-slate-400">Guardian ({formData.relationship}):</span>{' '}
-                          <strong className="text-white">{formData.fatherName}</strong> ({formData.fatherMobile})
+                        <div className="col-span-2 pt-1 border-t border-slate-200 dark:border-white/10">
+                          <span className="text-slate-500 dark:text-slate-400">Guardian ({formData.relationship}):</span>{' '}
+                          <strong className="text-slate-900 dark:text-white">{formData.fatherName}</strong> ({formData.fatherMobile})
                         </div>
                       </div>
                     </div>
 
                     {/* Terms of Service & Privacy Policy Agreement Checkbox */}
-                    <div className="pt-2.5 pb-1 border-t border-white/10 my-2.5">
+                    <div className="pt-2.5 pb-1 border-t border-slate-200 dark:border-white/10 my-2.5">
                       <label 
                         htmlFor="terms-checkbox"
-                        className="flex items-center gap-2.5 text-xs text-slate-200 cursor-pointer select-none group"
+                        className="flex items-center gap-2.5 text-xs text-slate-700 dark:text-slate-200 cursor-pointer select-none group"
                       >
                         <input
                           id="terms-checkbox"
@@ -1296,7 +1303,7 @@ export default function AuthModal({
                             formErrors.terms ? 'border-rose-400 ring-2 ring-rose-400/50' : 'border-slate-400/70'
                           } bg-white dark:bg-slate-900 text-indigo-600 focus:ring-2 focus:ring-indigo-400 cursor-pointer accent-indigo-600 transition-all shrink-0`}
                         />
-                        <span className="font-semibold text-slate-200 text-xs sm:text-[13px] leading-snug">
+                        <span className="font-semibold text-slate-700 dark:text-slate-200 text-xs sm:text-[13px] leading-snug">
                           I agree to the{' '}
                           <button
                             type="button"
@@ -1326,15 +1333,15 @@ export default function AuthModal({
                         </span>
                       </label>
                       {formErrors.terms && (
-                        <div className="flex items-center gap-1.5 text-rose-400 text-[11px] font-bold mt-2 animate-fadeIn">
+                        <div className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 text-[11px] font-bold mt-2 animate-fadeIn">
                           <AlertCircle size={14} className="shrink-0" />
                           <span>{formErrors.terms}</span>
                         </div>
                       )}
                     </div>
                     {formErrors.submit && (
-                      <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2 mb-2 animate-fadeIn">
-                        <AlertCircle size={16} className="shrink-0 text-rose-400" />
+                      <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2 mb-2 animate-fadeIn">
+                        <AlertCircle size={16} className="shrink-0 text-rose-500 dark:text-rose-400" />
                         <span>{formErrors.submit}</span>
                       </div>
                     )}
@@ -1343,7 +1350,7 @@ export default function AuthModal({
                       <button
                         type="button"
                         onClick={handlePrevStep}
-                        className="py-2.5 px-3.5 rounded-xl border border-white/20 text-white font-bold text-xs flex items-center gap-1 cursor-pointer hover:bg-white/10"
+                        className="py-2.5 px-3.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10 font-bold text-xs flex items-center gap-1 cursor-pointer"
                       >
                         <ChevronLeft size={15} /> Back
                       </button>
@@ -1373,12 +1380,12 @@ export default function AuthModal({
             {/* ======================================================== */}
             {regSuccess && (
               <div className="text-center animate-scaleUp py-6">
-                <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/40 mx-auto flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-400/40 mx-auto flex items-center justify-center mb-4">
                   <Check size={36} strokeWidth={3} />
                 </div>
-                <h3 className="text-2xl font-black text-white mb-2">Registration Successful!</h3>
-                <p className="text-sm text-slate-300 mb-6">
-                  Welcome, <strong className="text-sky-400">{formData.fullName}</strong>! Your academy account is active.
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Registration Successful!</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
+                  Welcome, <strong className="text-sky-600 dark:text-sky-400">{formData.fullName}</strong>! Your academy account is active.
                 </p>
                 <button
                   type="button"
@@ -1400,7 +1407,7 @@ export default function AuthModal({
       </main>
 
       {/* Footer copyright */}
-      <footer className="relative z-20 w-full text-center py-3 text-xs text-slate-400 font-medium">
+      <footer className="relative z-20 w-full text-center py-3 text-xs text-slate-500 dark:text-slate-400 font-medium">
         © 2026 Maths Learning Academy • Empowering Future Scholars
       </footer>
 

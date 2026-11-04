@@ -47,6 +47,18 @@ export async function fetchAdminCourses() {
   return data.courses;
 }
 
+// Lessons on each course page, and how many are YouTube links typed into the syllabus
+export async function fetchAdminCourseLessonCounts() {
+  const data = await readJson(await adminFetch('/api/admin/courses/lesson-counts'), 'Could not count the lessons');
+  return data.counts;
+}
+
+// A course page as students see it. The admin also gets drafts and premium lessons.
+export async function fetchAdminCoursePage(slug) {
+  const data = await readJson(await adminFetch(`/api/courses/${slug}`), 'Could not load this course page');
+  return data.curriculum;
+}
+
 export async function fetchAdminCourse(id) {
   return readJson(await adminFetch(`/api/admin/courses/${id}`), 'Could not load this course');
 }
@@ -122,8 +134,36 @@ export async function updateAdminStream(id, stream) {
   return data.stream;
 }
 
+export async function deleteAdminStream(id) {
+  return readJson(await adminFetch(`/api/admin/streams/${id}`, { method: 'DELETE' }), 'Could not delete this stream');
+}
+
 export async function saveAdminStreamOrder(ids) {
   return readJson(await sendJson('/api/admin/streams/order', 'PATCH', { ids }), 'Could not save the order');
+}
+
+// ── Admin: boards and years ──────────────────────────────────────
+
+export async function fetchAdminCourseOptions() {
+  const data = await readJson(await adminFetch('/api/admin/course-options'), 'Could not load boards and years');
+  return { boards: data.boards, years: data.years };
+}
+
+export async function createAdminCourseOption(kind, name) {
+  const data = await readJson(await sendJson('/api/admin/course-options', 'POST', { kind, name }), 'Could not add it');
+  return data.option;
+}
+
+export async function updateAdminCourseOption(id, changes) {
+  return readJson(await sendJson(`/api/admin/course-options/${id}`, 'PUT', changes), 'Could not save it');
+}
+
+export async function deleteAdminCourseOption(id) {
+  return readJson(await adminFetch(`/api/admin/course-options/${id}`, { method: 'DELETE' }), 'Could not delete it');
+}
+
+export async function saveAdminCourseOptionOrder(ids) {
+  return readJson(await sendJson('/api/admin/course-options/order', 'PATCH', { ids }), 'Could not save the order');
 }
 
 export async function fetchNewBookingCount() {

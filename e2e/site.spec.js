@@ -104,10 +104,11 @@ test('the topic search finds subtopics deep in a chapter', async ({ page }) => {
   await expect(page.getByTestId('course-topic').filter({ hasText: 'Meaning and Notation' }).first()).toBeVisible();
 });
 
-test('subtopics open from a topic card', async ({ page }) => {
+test('a topic card previews its subtopics', async ({ page }) => {
   await page.goto('/courses/maths');
-  await page.getByTestId('course-topic').filter({ hasText: 'Ordered Pairs' }).getByRole('button', { name: /Subtopics/ }).first().click();
-  await expect(page.getByRole('dialog', { name: 'Ordered Pairs' })).toContainText('Definition & Equality of Ordered Pairs');
+  const card = page.getByTestId('course-topic').filter({ hasText: 'Interactive Syllabus' }).first();
+  await expect(card).toContainText('Definition & Equality of Ordered Pairs');
+  await expect(card).toContainText(/\d+ Subtopics/);
 });
 
 test('11. a roadmap opens the plan of its own course, and one with no plan hides its button', async ({ page }) => {
@@ -230,14 +231,40 @@ test('a signed-in student plays a free lesson', async ({ page, request, browser,
   await openAsStudent(studentPage, request);
 
   await studentPage.goto('/courses/physics');
-  await studentPage.getByTestId('course-topic').first().getByRole('button', { name: 'Watch Now' }).click();
+  await studentPage.getByTestId('course-topic').first().getByRole('button', { name: /Watch Lecture/ }).click();
 
   const player = studentPage.getByTestId('lesson-player');
   await expect(player).toBeVisible();
   await expect(player.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\//);
 
-  await player.getByRole('button', { name: 'Next' }).click();
-  await expect(player).toContainText('2 of');
+  const title = player.getByRole('heading', { level: 1 });
+  const first = await title.textContent();
+  await player.getByRole('button', { name: /Next Lesson/ }).click();
+  await expect(title).not.toHaveText(first);
+  await expect(player.locator('[data-playing="true"]')).toContainText(await title.textContent());
+
+  await studentPage.keyboard.press('Escape');
+  await expect(player).toHaveCount(0);
+  await context.close();
+});
+
+test('the lecture player lists the subtopics of the opened topic', async ({ request, browser, isMobile }) => {
+  const context = await browser.newContext(isMobile ? { viewport: { width: 412, height: 839 } } : {});
+  const studentPage = await context.newPage();
+  await openAsStudent(studentPage, request);
+
+  await studentPage.goto('/courses/maths');
+  await studentPage.getByTestId('course-topic').filter({ hasText: 'Interactive Syllabus' }).first()
+    .getByRole('button', { name: /Watch Lecture/ }).click();
+
+  const hierarchy = studentPage.getByRole('complementary', { name: 'Topic hierarchy' });
+  await expect(hierarchy).toContainText('14 Lessons');
+  await expect(hierarchy).toContainText('Definition & Equality of Ordered Pairs');
+
+  await hierarchy.getByTestId('syllabus-node').filter({ hasText: 'Cartesian Product' }).first().click();
+  await expect(studentPage.getByTestId('lesson-player').getByRole('heading', { level: 1 })).toHaveText('Cartesian Product');
+  await expect(hierarchy.locator('[data-playing="true"]')).toContainText('Cartesian Product');
+  await expectNoSideScroll(studentPage);
   await context.close();
 });
 

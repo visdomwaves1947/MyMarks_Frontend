@@ -264,7 +264,7 @@ test.describe.serial('admin manages a course from start to finish', () => {
     await expect(visitor.getByRole('heading', { name: 'Gears and Motors' })).toBeVisible();
 
     // A visitor is asked to sign in before watching
-    await visitor.getByTestId('course-topic').filter({ hasText: 'Gears and Motors' }).getByRole('button', { name: 'Watch Now' }).click();
+    await visitor.getByTestId('course-topic').filter({ hasText: 'Gears and Motors' }).getByRole('button', { name: /Watch Lecture/ }).click();
     await expect(visitor.getByRole('dialog', { name: 'Sign in required' })).toBeVisible();
 
     const student = await page.context().browser().newContext({ viewport: { width: 1366, height: 800 } });
@@ -273,7 +273,7 @@ test.describe.serial('admin manages a course from start to finish', () => {
     await studentPage.goto('/courses/robotics');
 
     await studentPage.getByRole('button', { name: /More Lessons/ }).click();
-    await studentPage.getByTestId('course-topic').filter({ hasText: 'Welcome to Robotics' }).getByRole('button', { name: 'Watch Now' }).click();
+    await studentPage.getByTestId('course-topic').filter({ hasText: 'Welcome to Robotics' }).getByRole('button', { name: /Watch Lecture/ }).click();
     const player = studentPage.getByTestId('lesson-player');
     await expect(player).toBeVisible();
     await expect(player.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ/);

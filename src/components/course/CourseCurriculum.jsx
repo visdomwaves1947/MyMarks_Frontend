@@ -1,9 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ArrowRight,
   BookOpen,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   Layers,
   ListTree,
@@ -17,6 +15,8 @@ import {
   X,
 } from 'lucide-react';
 import { courseImage, showDefaultImage } from '../../utils/courseImage';
+import CourseLecturePlayer from './CourseLecturePlayer';
+import { firstLessonIn, flattenChapters, isVideoLesson } from './curriculumTree';
 
 const normalize = (value) =>
   (value || '')
@@ -24,19 +24,6 @@ const normalize = (value) =>
     .replace(/[^a-z0-9]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-
-// Every topic at every depth, in reading order
-const flattenTopics = (chapters) => {
-  const list = [];
-
-  const visit = (node, chapter, trail) => {
-    list.push({ ...node, chapterId: chapter.chapterId, chapterName: chapter.name, trail });
-    (node.children || []).forEach((child) => visit(child, chapter, [...trail, node.title]));
-  };
-
-  chapters.forEach((chapter) => (chapter.topics || []).forEach((node) => visit(node, chapter, [])));
-  return list;
-};
 
 const matchesSearch = (topic, query) => {
   const raw = query.toLowerCase();
@@ -51,105 +38,15 @@ const matchesSearch = (topic, query) => {
   );
 };
 
-function LessonPlayer({ topic, position, total, onClose, onPrev, onNext, onAsk }) {
-  const { lesson } = topic;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
-    >
-      <div
-        data-testid="lesson-player"
-        className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="px-5 py-4 bg-slate-800/80 border-b border-slate-700/60 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            {topic.code && (
-              <span className="px-2.5 py-1 rounded-lg bg-blue-600/30 text-blue-300 font-mono text-xs font-bold border border-blue-500/30 shrink-0">
-                {topic.code}
-              </span>
-            )}
-            <h3 className="text-sm sm:text-base font-bold text-white truncate">{topic.title}</h3>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {lesson.url && (
-              <a
-                href={lesson.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors"
-              >
-                <ExternalLink size={14} />
-                <span className="hidden sm:inline">Open</span>
-              </a>
-            )}
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
-              aria-label="Close video"
-            >
-              <X size={20} />
-            </button>
-          </div>
-        </div>
-
-        <div className="relative aspect-video w-full bg-black">
-          {lesson.youtubeId ? (
-            <iframe
-              src={`https://www.youtube-nocookie.com/embed/${lesson.youtubeId}?autoplay=1&rel=0`}
-              title={topic.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              className="absolute inset-0 w-full h-full border-0"
-            />
-          ) : (
-            <video src={lesson.url} controls autoPlay className="absolute inset-0 w-full h-full" />
-          )}
-        </div>
-
-        <div className="px-5 py-3.5 bg-slate-800/90 border-t border-slate-700/60 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onPrev}
-              disabled={position <= 0}
-              className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              <ChevronLeft size={16} /> Prev
-            </button>
-            <button
-              onClick={onNext}
-              disabled={position >= total - 1}
-              className="px-3 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 disabled:opacity-40 text-white text-xs font-bold flex items-center gap-1 transition-colors cursor-pointer"
-            >
-              Next <ChevronRight size={16} />
-            </button>
-            <span className="text-xs text-slate-400 font-medium ml-1">
-              {position + 1} of {total}
-            </span>
-          </div>
-
-          <button
-            onClick={onAsk}
-            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
-          >
-            <span>Ask Doubt in this Topic</span>
-            <ArrowRight size={14} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+// Every subtopic below a topic, for the card's syllabus preview
+const subtopicsOf = (topic) => flattenChapters([{ chapterId: '', name: '', topics: topic.children || [] }]);
 
 function LessonPrompt({ prompt, course, onClose, onSignIn, onEnroll }) {
   const isSignIn = prompt === 'sign-in';
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
       onClick={onClose}
     >
       <div
@@ -191,64 +88,29 @@ function LessonPrompt({ prompt, course, onClose, onSignIn, onEnroll }) {
   );
 }
 
-function TopicTree({ topic, onSelect, onClose }) {
-  const renderNode = (node, depth) => (
-    <li key={node.nodeId}>
-      <button
-        type="button"
-        disabled={!node.lesson}
-        onClick={() => onSelect(node)}
-        style={{ paddingLeft: `${depth * 14 + 10}px` }}
-        className="w-full py-2 pr-3 flex items-center gap-2 text-left rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default"
-      >
-        {node.lesson && (node.lesson.isLocked ? <Lock size={13} className="text-amber-500 shrink-0" /> : <Play size={13} className="text-blue-600 dark:text-blue-400 shrink-0" />)}
-        <span className="text-xs font-mono text-blue-600 dark:text-blue-400 shrink-0">{node.code}</span>
-        <span className="text-xs sm:text-sm text-slate-800 dark:text-slate-200">{node.title}</span>
-      </button>
-      {node.children?.length > 0 && <ul>{node.children.map((child) => renderNode(child, depth + 1))}</ul>}
-    </li>
-  );
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn"
-      onClick={onClose}
-    >
-      <div
-        role="dialog"
-        aria-label={topic.title}
-        className="w-full max-w-2xl max-h-[85vh] flex flex-col bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
-          <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base truncate">{topic.title}</h3>
-          <button onClick={onClose} aria-label="Close" className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white cursor-pointer">
-            <X size={20} />
-          </button>
-        </div>
-        <ul className="p-3 overflow-y-auto">{renderNode(topic, 0)}</ul>
-      </div>
-    </div>
-  );
-}
-
-function TopicCard({ topic, isSearching, onPlay, onOpenTree }) {
+// Lesson card for the curriculum grid, with a preview of its subtopics
+function TopicCard({ topic, theme, isSearching, onOpen }) {
   const { lesson } = topic;
-  const hasChildren = topic.children?.length > 0;
-  const thumbnail = lesson?.thumbnailUrl || '';
+  const subtopics = useMemo(() => subtopicsOf(topic), [topic]);
+  const hasChildren = subtopics.length > 0;
+  const startsLesson = lesson || firstLessonIn(topic);
+  const isLocked = Boolean(lesson?.isLocked);
+  const thumbnail =
+    lesson?.thumbnailUrl || (lesson?.youtubeId ? `https://img.youtube.com/vi/${lesson.youtubeId}/hqdefault.jpg` : '');
 
-  const handleOpen = () => {
-    if (lesson) onPlay(topic);
-    else if (hasChildren) onOpenTree(topic);
+  const open = () => {
+    if (startsLesson) onOpen(topic);
   };
 
   return (
     <div
       data-testid="course-topic"
-      className="group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200/80 dark:border-slate-800 hover:-translate-y-1"
+      className={`group flex flex-col bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border ${
+        hasChildren ? theme.edge : 'border-slate-200/80 dark:border-slate-800'
+      } hover:-translate-y-1`}
     >
-      <div onClick={handleOpen} className="relative aspect-video w-full overflow-hidden bg-slate-900 cursor-pointer">
-        {thumbnail && (
+      <div onClick={open} className={`relative aspect-video w-full overflow-hidden bg-slate-900 ${startsLesson ? 'cursor-pointer' : ''}`}>
+        {thumbnail ? (
           <img
             src={courseImage(thumbnail, 480)}
             alt={topic.title}
@@ -256,66 +118,109 @@ function TopicCard({ topic, isSearching, onPlay, onOpenTree }) {
             onError={showDefaultImage}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 flex items-center justify-center">
+            <BookOpen size={34} className="text-slate-600" />
+          </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent opacity-85 group-hover:opacity-65 transition-opacity" />
 
         {topic.code && (
-          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/60 text-white font-mono text-xs font-bold border border-white/10 flex items-center gap-1.5">
-            <Layers size={12} className="text-blue-400" />
-            <span>Topic {topic.code}</span>
+          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg backdrop-blur-md bg-black/65 text-white font-mono text-xs font-bold border border-white/15 flex items-center gap-1.5 shadow-sm">
+            <Layers size={12} className="text-white/80" />
+            <span>Lesson {topic.code}</span>
+          </div>
+        )}
+
+        {startsLesson && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div
+              className={`w-12 h-12 rounded-full text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 ring-4 ring-white/30 ${
+                isLocked ? 'bg-slate-700' : 'bg-red-600 shadow-red-600/40'
+              }`}
+            >
+              {isLocked ? <Lock size={20} /> : <Play size={20} className="ml-0.5 fill-white" />}
+            </div>
           </div>
         )}
 
         {lesson && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className={`w-13 h-13 rounded-full text-white flex items-center justify-center shadow-lg ring-4 ring-white/30 ${lesson.isLocked ? 'bg-slate-700' : 'bg-red-600'}`}>
-              {lesson.isLocked ? <Lock size={20} /> : <Play size={22} className="ml-0.5 fill-white" />}
-            </div>
+          <div className="absolute bottom-2.5 right-3 text-[11px] font-bold text-white/90 drop-shadow flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500 inline-block animate-pulse"></span>
+            <span>{lesson.youtubeId ? 'YouTube Lecture' : isVideoLesson(lesson) ? 'Video Lecture' : 'Lesson Link'}</span>
           </div>
         )}
       </div>
 
       <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between">
         <div>
-          <div className="text-[11px] font-bold tracking-wider uppercase text-blue-600 dark:text-blue-400 mb-1.5 truncate">
+          <div className={`text-[11px] font-extrabold tracking-wider uppercase ${theme.accent} mb-2 truncate`}>
             {topic.chapterName}
           </div>
+
           <h3
-            onClick={handleOpen}
+            onClick={open}
             title={topic.title}
-            className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer leading-snug mb-2"
+            className={`text-base font-bold text-slate-900 dark:text-white line-clamp-2 transition-colors leading-snug mb-2 ${
+              startsLesson ? 'cursor-pointer hover:opacity-80' : ''
+            }`}
           >
+            {topic.code && <span className={`${theme.accent} font-extrabold mr-1.5`}>{topic.code}:</span>}
             {topic.title}
           </h3>
+
+          {topic.description && (
+            <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-3">{topic.description}</p>
+          )}
+
+          {hasChildren && (
+            <div className={`mb-3 p-2.5 rounded-xl ${theme.soft}`}>
+              <div className="flex items-center justify-between text-[11px] font-bold mb-1">
+                <span className="flex items-center gap-1.5">
+                  <ListTree size={12} />
+                  <span>Interactive Syllabus</span>
+                </span>
+                <span className="text-[10px] font-mono font-bold">{subtopics.length} Subtopics</span>
+              </div>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
+                Includes {subtopics.slice(0, 3).map((item) => `${item.code ? `${item.code} ` : ''}${item.title}`).join(' • ')}
+                {subtopics.length > 3 ? ' with complete collapsible navigation inside the lecture.' : '.'}
+              </p>
+            </div>
+          )}
+
           {isSearching && topic.trail?.length > 0 && (
-            <div className="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] font-semibold max-w-full truncate">
+            <div className="mb-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[10px] font-semibold max-w-full truncate">
               <Tag size={10} className="shrink-0" />
-              <span className="truncate">{topic.trail.join(' / ')}</span>
+              <span className="truncate">{topic.trail.map((step) => step.title).join(' / ')}</span>
             </div>
           )}
         </div>
 
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center gap-2">
-          {lesson && (
+          {startsLesson ? (
             <button
-              onClick={() => onPlay(topic)}
-              className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-sm"
+              onClick={open}
+              className={`flex-1 py-2.5 px-3 rounded-xl ${theme.solid} text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm`}
             >
-              {lesson.isLocked ? <Lock size={14} /> : <Play size={14} className="fill-white" />}
-              <span>{lesson.isLocked ? 'Locked' : 'Watch Now'}</span>
+              {isLocked ? <Lock size={14} /> : <Play size={14} className="fill-white" />}
+              <span>{isLocked ? 'Locked' : `Watch Lecture${topic.code ? ` (${topic.code})` : ''}`}</span>
             </button>
-          )}
-          {hasChildren && (
-            <button
-              onClick={() => onOpenTree(topic)}
-              className="flex-1 py-2 px-3 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-            >
-              <ListTree size={14} />
-              <span>{topic.children.length} Subtopics</span>
-            </button>
-          )}
-          {!lesson && !hasChildren && (
+          ) : (
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">Lesson coming soon</span>
+          )}
+
+          {lesson?.url && !isLocked && (
+            <a
+              href={lesson.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors cursor-pointer"
+              title={`Open ${topic.title}`}
+              aria-label={`Open ${topic.title} in a new tab`}
+            >
+              <ExternalLink size={16} />
+            </a>
           )}
         </div>
       </div>
@@ -333,8 +238,7 @@ export default function CourseCurriculum({ course, curriculum, theme, isSignedIn
   );
   const [selectedChapter, setSelectedChapter] = useState('all');
   const [search, setSearch] = useState('');
-  const [activeTopic, setActiveTopic] = useState(null);
-  const [treeTopic, setTreeTopic] = useState(null);
+  const [playingId, setPlayingId] = useState(null);
   const [prompt, setPrompt] = useState(null); // 'sign-in' | 'enroll'
 
   const extraChapter = useMemo(() => {
@@ -358,8 +262,7 @@ export default function CourseCurriculum({ course, curriculum, theme, isSignedIn
   }, [curriculum.extraLessons]);
 
   const chapters = useMemo(() => [...curriculum.chapters, ...extraChapter], [curriculum.chapters, extraChapter]);
-  const allTopics = useMemo(() => flattenTopics(chapters), [chapters]);
-  const playable = useMemo(() => allTopics.filter((topic) => topic.lesson && !topic.lesson.isLocked), [allTopics]);
+  const allTopics = useMemo(() => flattenChapters(chapters), [chapters]);
   const topLevelCount = useMemo(() => chapters.reduce((sum, chapter) => sum + chapter.topics.length, 0), [chapters]);
 
   const query = search.trim();
@@ -375,20 +278,20 @@ export default function CourseCurriculum({ course, curriculum, theme, isSignedIn
     );
   }, [allTopics, isSearching, query, selectedChapter]);
 
-  const handlePlay = (topic) => {
-    setTreeTopic(null);
+  // Opens the full-page player at this topic, or at the first lesson inside it
+  const openLecture = (topic) => {
+    const start = topic.lesson ? topic : firstLessonIn(topic);
+    if (!start) return;
     if (!isSignedIn) {
       setPrompt('sign-in');
-    } else if (topic.lesson.isLocked) {
+    } else if (start.lesson.isLocked) {
       setPrompt('enroll');
-    } else if (topic.lesson.youtubeId || /\.(mp4|webm|mov|ogv?|m4v)(\?|$)/i.test(topic.lesson.url) || /\/video\/upload\//.test(topic.lesson.url)) {
-      setActiveTopic(topic);
-    } else if (topic.lesson.url) {
-      window.open(topic.lesson.url, '_blank', 'noopener,noreferrer');
+    } else {
+      setPlayingId(start.nodeId);
     }
   };
 
-  const position = activeTopic ? playable.findIndex((topic) => topic.nodeId === activeTopic.nodeId) : -1;
+  const closePlayer = useCallback(() => setPlayingId(null), []);
 
   return (
     <section id="course-curriculum" className="py-16 sm:py-24 bg-[#EBF0F7] dark:bg-[#0B0F19] border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
@@ -557,13 +460,7 @@ export default function CourseCurriculum({ course, curriculum, theme, isSignedIn
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                 {visibleTopics.map((topic) => (
-                  <TopicCard
-                    key={topic.nodeId}
-                    topic={topic}
-                    isSearching={isSearching}
-                    onPlay={handlePlay}
-                    onOpenTree={setTreeTopic}
-                  />
+                  <TopicCard key={topic.nodeId} topic={topic} theme={theme} isSearching={isSearching} onOpen={openLecture} />
                 ))}
               </div>
             )}
@@ -587,19 +484,16 @@ export default function CourseCurriculum({ course, curriculum, theme, isSignedIn
         </div>
       </div>
 
-      {treeTopic && <TopicTree topic={treeTopic} onSelect={handlePlay} onClose={() => setTreeTopic(null)} />}
-
-      {activeTopic && (
-        <LessonPlayer
-          topic={activeTopic}
-          position={position}
-          total={playable.length}
-          onClose={() => setActiveTopic(null)}
-          onPrev={() => setActiveTopic(playable[position - 1])}
-          onNext={() => setActiveTopic(playable[position + 1])}
-          onAsk={() => {
-            const topic = activeTopic;
-            setActiveTopic(null);
+      {playingId && (
+        <CourseLecturePlayer
+          course={course}
+          chapters={chapters}
+          theme={theme}
+          startId={playingId}
+          onClose={closePlayer}
+          onLocked={() => setPrompt('enroll')}
+          onAsk={(topic) => {
+            setPlayingId(null);
             onEnroll(`${course.name} help: ${topic.title}`);
           }}
         />
@@ -616,6 +510,7 @@ export default function CourseCurriculum({ course, curriculum, theme, isSignedIn
           }}
           onEnroll={() => {
             setPrompt(null);
+            setPlayingId(null);
             onEnroll(course.name);
           }}
         />

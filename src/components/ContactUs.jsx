@@ -693,7 +693,7 @@ export default function ContactUs() {
                                 autoComplete="off"
                                 spellCheck="false"
                                 placeholder="Enter your full name"
-                                className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
+                                className="w-full text-xs bg-white/95 dark:bg-slate-900/80 backdrop-blur-sm border border-white/60 dark:border-slate-600 rounded-xl px-3 py-2 text-slate-900 dark:text-white dark:placeholder:text-slate-500 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
                               />
                             </div>
 
@@ -712,7 +712,7 @@ export default function ContactUs() {
                                 autoComplete="off"
                                 spellCheck="false"
                                 placeholder="name@example.com"
-                                className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
+                                className="w-full text-xs bg-white/95 dark:bg-slate-900/80 backdrop-blur-sm border border-white/60 dark:border-slate-600 rounded-xl px-3 py-2 text-slate-900 dark:text-white dark:placeholder:text-slate-500 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
                               />
                             </div>
                           </div>
@@ -735,10 +735,10 @@ export default function ContactUs() {
                                 autoComplete="off"
                                 spellCheck="false"
                                 placeholder="10-digit mobile number"
-                                className={`w-full text-xs bg-white/95 backdrop-blur-sm border rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs ${
+                                className={`w-full text-xs bg-white/95 dark:bg-slate-900/80 backdrop-blur-sm border rounded-xl px-3 py-2 text-slate-900 dark:text-white dark:placeholder:text-slate-500 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs ${
                                   highlightPhoneInput
                                     ? 'border-cyan-400 ring-2 ring-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.8)] scale-[1.01]'
-                                    : 'border-white/60'
+                                    : 'border-white/60 dark:border-slate-600'
                                 }`}
                               />
                             </div>
@@ -753,7 +753,7 @@ export default function ContactUs() {
                                 onChange={handleChange}
                                 onFocus={() => setFocusedField('subject')}
                                 onBlur={() => setFocusedField(null)}
-                                className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold cursor-pointer focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
+                                className="w-full text-xs bg-white/95 dark:bg-slate-900/80 backdrop-blur-sm border border-white/60 dark:border-slate-600 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-semibold cursor-pointer focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs"
                               >
                                 <option value="General Inquiry">General Inquiry</option>
                                 <option value="Admissions">Admissions</option>
@@ -785,7 +785,7 @@ export default function ContactUs() {
                               autoComplete="off"
                               spellCheck="false"
                               placeholder="Write your message here..."
-                              className="w-full text-xs bg-white/95 backdrop-blur-sm border border-white/60 rounded-xl px-3 py-2 text-slate-900 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs resize-none"
+                              className="w-full text-xs bg-white/95 dark:bg-slate-900/80 backdrop-blur-sm border border-white/60 dark:border-slate-600 rounded-xl px-3 py-2 text-slate-900 dark:text-white dark:placeholder:text-slate-500 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs resize-none"
                             />
                           </div>
 

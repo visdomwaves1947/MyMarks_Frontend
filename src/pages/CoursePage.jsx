@@ -6,6 +6,7 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 import { getCourseTheme } from '../components/course/courseTheme';
 import { isOutsideLink } from '../utils/courseImage';
 import CourseHero from '../components/course/CourseHero';
+import CourseSkeleton from '../components/course/CourseSkeleton';
 import CourseCurriculum from '../components/course/CourseCurriculum';
 import {
   CourseFaqs,
@@ -63,11 +64,7 @@ export default function CoursePage({ currentUser, onOpenBooking, onSelectRoadmap
   }, [state.status, hash]);
 
   if (state.status === 'loading') {
-    return (
-      <section className="min-h-[60vh] flex items-center justify-center bg-[#EBF0F7] dark:bg-[#0B0F19]">
-        <p role="status" className="text-sm font-medium text-slate-600 dark:text-slate-300">Loading course...</p>
-      </section>
-    );
+    return <CourseSkeleton />;
   }
 
   if (state.status === 'error') {
