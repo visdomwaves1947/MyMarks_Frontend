@@ -14,6 +14,7 @@ import CourseCard from "./course/CourseCard";
 import { LAB_SUBJECTS } from "../data/labPracticalsData";
 import useCatalog from "../hooks/useCatalog";
 import { isOutsideLink } from "../utils/courseImage";
+import { jumpToTop } from "../utils/scroll";
 
 
 export default function IntermediateSubjects({
@@ -90,8 +91,9 @@ export default function IntermediateSubjects({
       window.open(course.ownLink, "_blank", "noopener,noreferrer");
       return;
     }
+    // Jump first, so the next page opens at its top with its loading skeleton in view
+    jumpToTop();
     navigate(course.ownLink || `/courses/${course.slug}`);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleEnroll = (course) => {
@@ -135,8 +137,8 @@ export default function IntermediateSubjects({
             });
             return;
           }
+          jumpToTop();
           navigate(`/practicals?subject=${lab.id}`);
-          window.scrollTo({ top: 0, behavior: "smooth" });
         }}
       >
         {/* Full-Cover Background Image */}
@@ -180,8 +182,8 @@ export default function IntermediateSubjects({
                     });
                     return;
                   }
+                  jumpToTop();
                   navigate(`/practicals?subject=${lab.id}`);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className="flex-1 py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white border border-blue-400/40 cursor-pointer"
               >

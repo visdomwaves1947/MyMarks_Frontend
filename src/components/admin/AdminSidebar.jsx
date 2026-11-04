@@ -7,6 +7,7 @@ import {
   Inbox,
   Settings,
   Database,
+  Menu,
 } from "lucide-react";
 
 export default function AdminSidebar({
@@ -42,6 +43,11 @@ export default function AdminSidebar({
       icon: Inbox,
     },
     {
+      id: "navigation",
+      label: "Navigation Menu",
+      icon: Menu,
+    },
+    {
       id: "settings",
       label: "Platform Controls",
       icon: Settings,
@@ -52,14 +58,10 @@ export default function AdminSidebar({
     <>
       {/* ─────────────────────────────────────────────────────────────
           DESKTOP VERTICAL SIDEBAR
-          Light blue background (#dbeafe), clear text, spaced items
+          Light blue background (#dbeafe), dark slate in dark mode
          ───────────────────────────────────────────────────────────── */}
       <aside
-        className="hidden lg:flex flex-col justify-between w-60 xl:w-64 fixed left-0 top-[122px] h-[calc(100vh-122px)] z-40 select-none shadow-xs overflow-hidden"
-        style={{
-          background: "#dbeafe",
-          borderRight: "1px solid #bfdbfe",
-        }}
+        className="hidden lg:flex flex-col justify-between w-60 xl:w-64 fixed left-0 top-[122px] h-[calc(100vh-122px)] z-40 select-none shadow-xs overflow-hidden bg-[#dbeafe] dark:bg-slate-900 border-r border-[#bfdbfe] dark:border-slate-800"
       >
         {/* Top: Navigation Header and Links */}
         <div className="flex flex-col min-h-0">

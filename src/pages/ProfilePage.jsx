@@ -162,7 +162,7 @@ export default function ProfilePage({
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
               
               {/* Left Section: Avatar (Overlapping) + Identity Details */}
-              <div className="flex flex-col sm:flex-row items-center sm:items-end text-center sm:text-left gap-5 -mt-14 sm:-mt-16">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5 -mt-14 sm:-mt-16">
                 
                 {/* RV Avatar Badge */}
                 <div className="relative shrink-0 group">
@@ -189,7 +189,7 @@ export default function ProfilePage({
                 </div>
 
                 {/* Student Identity Information */}
-                <div className="space-y-1.5 pt-2 sm:pt-0">
+                <div className="space-y-1.5 pt-2 sm:pt-[4.5rem]">
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                     <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-950 dark:text-white tracking-tight">
                       {studentData.name}

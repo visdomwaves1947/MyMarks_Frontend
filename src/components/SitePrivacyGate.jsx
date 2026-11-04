@@ -72,7 +72,7 @@ export default function SitePrivacyGate({ onUnlock }) {
   };
 
   return (
-    <div className="fixed inset-0 z-[99999] min-h-screen w-full flex items-center justify-center p-4 bg-[#090D16] text-white selection:bg-indigo-600 selection:text-white overflow-y-auto">
+    <div className="fixed inset-0 z-[99999] min-h-screen w-full flex items-center justify-center p-4 bg-slate-50 text-slate-900 dark:bg-[#090D16] dark:text-white selection:bg-indigo-600 selection:text-white overflow-y-auto">
       <style>{`
         @keyframes gateShake {
           0%, 100% { transform: translateX(0); }
@@ -82,10 +82,10 @@ export default function SitePrivacyGate({ onUnlock }) {
       `}</style>
 
       {/* Full Screen Watermarked Background for MyMarks.co.in */}
-      <div className="fixed inset-0 w-full h-full pointer-events-none -z-10 bg-[#070B14] overflow-hidden select-none">
+      <div className="fixed inset-0 w-full h-full pointer-events-none -z-10 bg-slate-50 dark:bg-[#070B14] overflow-hidden select-none">
         
         {/* Subtle Gradient Backing */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#080D1A] via-[#0C152B] to-[#050812]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-indigo-50 dark:from-[#080D1A] dark:via-[#0C152B] dark:to-[#050812]"></div>
 
         {/* Large Center Watermark Brand Mark */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10 overflow-hidden">
@@ -113,8 +113,9 @@ export default function SitePrivacyGate({ onUnlock }) {
               <text 
                 x="15" 
                 y="35" 
-                fill="rgba(255, 255, 255, 0.16)" 
-                fontSize="16" 
+                fill="rgba(255, 255, 255, 0.16)"
+                className="fill-slate-500/20 dark:fill-[rgba(255,255,255,0.16)]"
+                fontSize="16"
                 fontWeight="900" 
                 letterSpacing="3" 
                 fontFamily="system-ui, sans-serif"
@@ -127,8 +128,9 @@ export default function SitePrivacyGate({ onUnlock }) {
               <text 
                 x="130" 
                 y="95" 
-                fill="rgba(129, 140, 248, 0.20)" 
-                fontSize="15" 
+                fill="rgba(129, 140, 248, 0.20)"
+                className="fill-indigo-500/25 dark:fill-[rgba(129,140,248,0.20)]"
+                fontSize="15"
                 fontWeight="800" 
                 letterSpacing="2.5" 
                 fontFamily="system-ui, sans-serif"
@@ -142,7 +144,7 @@ export default function SitePrivacyGate({ onUnlock }) {
         </svg>
 
         {/* Balanced Ambient Glow */}
-        <div className="absolute inset-0 bg-radial from-transparent via-[#070B14]/40 to-[#04070F]/85 pointer-events-none"></div>
+        <div className="absolute inset-0 bg-radial from-transparent via-white/20 to-slate-200/60 dark:via-[#070B14]/40 dark:to-[#04070F]/85 pointer-events-none"></div>
       </div>
 
       {/* Background glowing orbs */}
@@ -152,12 +154,12 @@ export default function SitePrivacyGate({ onUnlock }) {
       {/* Main Privacy Card */}
       <div 
         style={isShaking ? { animation: 'gateShake 0.45s ease-in-out' } : undefined}
-        className="relative w-full max-w-md bg-slate-900/90 backdrop-blur-2xl border border-slate-700/60 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-black/90 transition-transform"
+        className="relative w-full max-w-md bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border border-slate-200 dark:border-slate-700/60 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-slate-300/60 dark:shadow-black/90 transition-transform"
       >
         {/* Top Header Badge & Brand Icon */}
         <div className="flex flex-col items-center text-center mb-6">
           <div className="flex items-center justify-center gap-2.5 mb-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 dark:bg-white/5 border border-white/10 p-2 flex items-center justify-center shadow-lg backdrop-blur-md">
+            <div className="w-12 h-12 rounded-2xl bg-white/10 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-2 flex items-center justify-center shadow-lg backdrop-blur-md">
               <img 
                 src="/logomymarks.png" 
                 alt="MyMarks Logo" 
@@ -165,41 +167,41 @@ export default function SitePrivacyGate({ onUnlock }) {
               />
             </div>
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-500 p-0.5 shadow-lg shadow-indigo-500/25">
-              <div className="w-full h-full rounded-[14px] bg-slate-900 flex items-center justify-center text-indigo-400">
+              <div className="w-full h-full rounded-[14px] bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                 {isSuccess ? (
-                  <Unlock size={22} className="text-emerald-400 animate-bounce" />
+                  <Unlock size={22} className="text-emerald-600 dark:text-emerald-400 animate-bounce" />
                 ) : (
-                  <Lock size={22} className="text-indigo-400" />
+                  <Lock size={22} className="text-indigo-600 dark:text-indigo-400" />
                 )}
               </div>
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-bold mb-2">
-            <ShieldCheck size={14} className="text-indigo-400" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-300 text-xs font-bold mb-2">
+            <ShieldCheck size={14} className="text-indigo-600 dark:text-indigo-400" />
             <span>Private Access Protected</span>
           </div>
 
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
             MyMarks.co.in
           </h1>
-          <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-xs leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm mt-1 max-w-xs leading-relaxed">
             This website is under private preview. Please authenticate with authorized credentials to continue.
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs sm:text-sm flex items-center gap-2.5 animate-fadeIn">
-            <AlertCircle size={17} className="text-rose-400 shrink-0" />
+          <div className="mb-5 p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs sm:text-sm flex items-center gap-2.5 animate-fadeIn">
+            <AlertCircle size={17} className="text-rose-600 dark:text-rose-400 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
         {/* Success Alert */}
         {isSuccess && (
-          <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs sm:text-sm flex items-center gap-2.5 animate-fadeIn">
-            <CheckCircle2 size={17} className="text-emerald-400 shrink-0" />
+          <div className="mb-5 p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-900 dark:text-emerald-300 text-xs sm:text-sm flex items-center gap-2.5 animate-fadeIn">
+            <CheckCircle2 size={17} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
             <span>Access granted! Unlocking website...</span>
           </div>
         )}
@@ -208,7 +210,7 @@ export default function SitePrivacyGate({ onUnlock }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Username / Email */}
           <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Username / Email
             </label>
             <div className="relative">
@@ -223,14 +225,14 @@ export default function SitePrivacyGate({ onUnlock }) {
                   if (error) setError('');
                 }}
                 placeholder="Enter your email"
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-950/70 border border-slate-800 text-white placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-950/70 dark:border-slate-800 dark:text-white dark:placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>
           </div>
 
           {/* Password */}
           <div>
-            <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
               Password
             </label>
             <div className="relative">
@@ -244,12 +246,12 @@ export default function SitePrivacyGate({ onUnlock }) {
                   if (error) setError('');
                 }}
                 placeholder="••••••••"
-                className="w-full pl-10 pr-11 py-3 rounded-xl bg-slate-950/70 border border-slate-800 text-white placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full pl-10 pr-11 py-3 rounded-xl bg-white border border-slate-300 text-slate-900 placeholder:text-slate-400 dark:bg-slate-950/70 dark:border-slate-800 dark:text-white dark:placeholder:text-slate-600 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-lg transition-colors cursor-pointer"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -259,12 +261,12 @@ export default function SitePrivacyGate({ onUnlock }) {
 
           {/* Remember Me */}
           <div className="flex items-center justify-between text-xs pt-1">
-            <label className="flex items-center gap-2 text-slate-400 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-slate-600 dark:text-slate-400 cursor-pointer select-none">
               <input
                 type="checkbox"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-slate-700 bg-slate-950 text-indigo-600 focus:ring-indigo-500/40 w-4 h-4 cursor-pointer accent-indigo-600"
+                className="rounded border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-950 text-indigo-600 focus:ring-indigo-500/40 w-4 h-4 cursor-pointer accent-indigo-600"
               />
               <span>Remember on this browser</span>
             </label>
@@ -293,7 +295,7 @@ export default function SitePrivacyGate({ onUnlock }) {
         </form>
 
         {/* Footer Note */}
-        <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
+        <div className="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800/80 text-center">
           <p className="text-[11px] text-slate-500">
             Protected with 256-bit encrypted access • Confidential
           </p>

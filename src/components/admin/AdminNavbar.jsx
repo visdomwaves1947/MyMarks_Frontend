@@ -354,6 +354,7 @@ export default function AdminNavbar({
             { id: 'courses', label: 'Courses & Streams', icon: BookOpen },
             { id: 'videos', label: 'Videos, YouTube & Links', icon: Video },
             { id: 'bookings', label: 'Bookings & Inquiries', icon: Inbox },
+            { id: 'navigation', label: 'Navigation Menu', icon: Menu },
             { id: 'settings', label: 'Platform Controls', icon: Settings },
           ].map((item) => {
             const isActive = activeTab === item.id;

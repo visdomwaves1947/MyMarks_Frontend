@@ -54,7 +54,8 @@ export default function VideoDemoModal({ isOpen, onClose, onOpenBooking }) {
 
         {/* Modal Header */}
         <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
+          {/* Room on the right for the close button, so it never covers a tab on phones */}
+          <div className="flex flex-wrap items-center gap-2 mb-2 pr-10">
             <button
               onClick={() => setActiveTab('simulation')}
               className={`px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${

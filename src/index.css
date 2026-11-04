@@ -451,60 +451,61 @@ html.dark [class*="divide-[#CAD8EA]"] > :not([hidden]) ~ :not([hidden]) {
 }
 
 /* Typography & Text Contrast */
-html.dark .text-slate-950,
-html.dark .text-slate-900 {
+/* Text that sets its own dark colour (dark:text-...) keeps it; these only rescue older text */
+html.dark .text-slate-950:not([class*="dark:text-"]),
+html.dark .text-slate-900:not([class*="dark:text-"]) {
   color: #F8FAFC !important;
 }
-html.dark .text-slate-800 {
+html.dark .text-slate-800:not([class*="dark:text-"]) {
   color: #E2E8F0 !important;
 }
-html.dark .text-slate-700 {
+html.dark .text-slate-700:not([class*="dark:text-"]) {
   color: #CBD5E1 !important;
 }
-html.dark .text-slate-600 {
+html.dark .text-slate-600:not([class*="dark:text-"]) {
   color: #94A3B8 !important;
 }
-html.dark .text-slate-500 {
+html.dark .text-slate-500:not([class*="dark:text-"]) {
   color: #64748B !important;
 }
 
 /* Accents and Highlight Text */
-html.dark .text-indigo-950 {
+html.dark .text-indigo-950:not([class*="dark:text-"]) {
   color: #E0E7FF !important;
 }
-html.dark .text-indigo-900 {
+html.dark .text-indigo-900:not([class*="dark:text-"]) {
   color: #C7D2FE !important;
 }
-html.dark .text-indigo-800 {
+html.dark .text-indigo-800:not([class*="dark:text-"]) {
   color: #A5B4FC !important;
 }
-html.dark .text-indigo-700 {
+html.dark .text-indigo-700:not([class*="dark:text-"]) {
   color: #818CF8 !important;
 }
-html.dark .text-purple-700 {
+html.dark .text-purple-700:not([class*="dark:text-"]) {
   color: #C084FC !important;
 }
-html.dark .text-purple-800 {
+html.dark .text-purple-800:not([class*="dark:text-"]) {
   color: #D8B4FE !important;
 }
-html.dark .text-purple-950 {
+html.dark .text-purple-950:not([class*="dark:text-"]) {
   color: #F3E8FF !important;
 }
-html.dark .text-emerald-700,
-html.dark .text-emerald-800 {
+html.dark .text-emerald-700:not([class*="dark:text-"]),
+html.dark .text-emerald-800:not([class*="dark:text-"]) {
   color: #34D399 !important;
 }
-html.dark .text-emerald-950 {
+html.dark .text-emerald-950:not([class*="dark:text-"]) {
   color: #A7F3D0 !important;
 }
-html.dark .text-amber-700,
-html.dark .text-amber-800 {
+html.dark .text-amber-700:not([class*="dark:text-"]),
+html.dark .text-amber-800:not([class*="dark:text-"]) {
   color: #FBBF24 !important;
 }
-html.dark .text-amber-950 {
+html.dark .text-amber-950:not([class*="dark:text-"]) {
   color: #FDE68A !important;
 }
-html.dark .text-sky-700 {
+html.dark .text-sky-700:not([class*="dark:text-"]) {
   color: #38BDF8 !important;
 }
 

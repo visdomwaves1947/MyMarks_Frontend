@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Search,
@@ -9,21 +9,20 @@ import {
   Menu,
   X,
   Sparkles,
-  BookOpen,
   BrainCircuit,
   Calculator,
   GraduationCap,
   CheckCircle,
   PhoneCall,
-  Layers,
   Award,
   ChevronRight,
   Lock,
-  Globe,
-  FlaskConical,
 } from "lucide-react";
 import { VisdomBrand } from "./VisdomBrand";
 import useCatalog from "../hooks/useCatalog";
+import useNavigationMenu from "../hooks/useNavigationMenu";
+import MegaMenuPanel from "./nav/MegaMenuPanel";
+import { MEGA_MENU_OFFSET, MEGA_MENU_WIDTH, resolveSections } from "./nav/menuSections";
 
 export default function Navbar({
   onOpenBooking,
@@ -38,11 +37,26 @@ export default function Navbar({
   const navigate = useNavigate();
   const location = useLocation();
   const { courses, streams } = useCatalog();
+  const navigation = useNavigationMenu();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileDropdowns, setMobileDropdowns] = useState({});
   const dropdownTimeoutRef = useRef(null);
+  const megaMenuRef = useRef(null);
+
+  // A wide dropdown can run past the screen edge on smaller laptops; nudge it back inside
+  useLayoutEffect(() => {
+    const panel = megaMenuRef.current;
+    if (!panel) return;
+    panel.style.marginLeft = "";
+    const rect = panel.getBoundingClientRect();
+    const margin = 12;
+    let shift = 0;
+    if (rect.right > window.innerWidth - margin) shift = window.innerWidth - margin - rect.right;
+    if (rect.left + shift < margin) shift = margin - rect.left;
+    panel.style.marginLeft = `${shift}px`;
+  }, [activeDropdown]);
 
   // Automatically close mobile menu when user actually scrolls the page
   useEffect(() => {
@@ -147,63 +161,23 @@ export default function Navbar({
     }));
   };
 
-  const academicGroups = streams
-    .filter((stream) => stream.slug !== "languages")
-    .map((stream) => ({
-      name: stream.code,
-      desc: stream.shortName,
-      href: `/demo?group=${stream.slug}#courses`,
-    }));
-
-  const languageCourses = courses
-    .filter((course) => course.streams.some((stream) => stream.slug === "languages"))
-    .map((course) => ({
-      name: course.name,
-      href: course.ownLink || `/courses/${course.slug}`,
-    }));
-
-  const navLinks = [
-    {
-      name: "Home",
-      href: "/demo",
-    },
-    {
-      name: "About Us",
-      href: "/aboutus",
-    },
-    {
-      name: "Intermediate",
-      href: "/demo#courses",
-      sections: [
-        { title: "Academic Groups", icon: Layers, items: academicGroups },
-        { title: "Languages", icon: Globe, items: languageCourses },
-        {
-          title: "Lab / Practicals",
-          icon: FlaskConical,
-          items: [
-            { name: "Physics Lab (30M)", href: "/practicals?subject=phy" },
-            { name: "Chemistry Lab (30M)", href: "/practicals?subject=chem" },
-            { name: "Biology Labs (30M)", href: "/practicals?subject=bot" },
-            { name: "Computer Science (30M)", href: "/practicals?subject=cs" },
-            { name: "Electronics Lab (30M)", href: "/practicals?subject=elec" },
-            { name: "Geography Lab (30M)", href: "/practicals?subject=geo" },
-            { name: "View All Practical Handbooks", href: "/practicals" },
-          ],
-        },
-      ].filter((section) => section.items.length > 0),
-    },
-    {
-      name: "Contact Us",
-      href: "/contactus",
-    },
-  ];
+  // The menu is edited on the admin Navigation Menu page; every dropdown link has its own columns
+  const navLinks = navigation.links
+    .filter((link) => link.visible !== false)
+    .map((link) => {
+      const sections = link.kind === "menu" ? resolveSections(link.menu, { courses, streams }) : [];
+      return sections.length > 0
+        ? { name: link.label, href: link.href, sections, menu: link.menu }
+        : { name: link.label, href: link.href };
+    });
 
   const isLinkActive = (href) => {
     const p = location.pathname.toLowerCase();
     if (href === "/demo" || href === "/") return p === "/demo" || p === "/";
     if (href.includes("about")) return p === "/aboutus" || p === "/about" || p === "/about-us";
     if (href.includes("contact")) return p === "/contactus" || p === "/contact" || p === "/contact-us";
-    return false;
+    const path = href.split(/[?#]/)[0].toLowerCase();
+    return path.length > 1 && p === path;
   };
 
   const handleSignInClick = onOpenSignIn || onOpenPortal;
@@ -358,72 +332,20 @@ export default function Navbar({
                     {/* Desktop Dropdown Popover */}
                     {hasDropdown && activeDropdown === idx && (
                       <div
-                        className={`absolute top-[calc(100%+6px)] ${link.sections ? "-left-40 sm:-left-60 md:-left-64 w-[560px] sm:w-[620px] md:w-[650px]" : "left-0 w-72"} rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-visible ring-1 ring-black/5 before:content-[''] before:absolute before:-top-4 before:inset-x-0 before:h-4`}
+                        ref={link.sections ? megaMenuRef : undefined}
+                        className={`absolute top-[calc(100%+6px)] ${link.sections ? `${MEGA_MENU_OFFSET[link.sections.length]} ${MEGA_MENU_WIDTH[link.sections.length]}` : "left-0 w-72"} rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 overflow-visible ring-1 ring-black/5 before:content-[''] before:absolute before:-top-4 before:inset-x-0 before:h-4`}
                         onMouseEnter={() => handleDropdownEnter(idx)}
                         onMouseLeave={handleDropdownLeave}
                       >
                         {link.sections ? (
-                          <div>
-                            {/* 3-Column Grid: Academic Groups, Languages & Lab Practicals */}
-                            <div className={`grid ${link.sections.length === 3 ? "grid-cols-3" : "grid-cols-2"} divide-x divide-slate-100 dark:divide-slate-800 p-2 gap-1.5`}>
-                              {link.sections.map((section, secIdx) => {
-                                const SectionIcon = section.icon || BookOpen;
-                                return (
-                                  <div key={secIdx} className="px-1.5">
-                                    {/* Section Header */}
-                                    <div className="px-2.5 py-1.5 mb-1.5 rounded-lg bg-blue-50/90 dark:bg-blue-950/50 border border-blue-200/70 dark:border-blue-900/40 flex items-center gap-1.5">
-                                      <SectionIcon size={13} className="text-blue-600 dark:text-blue-400" />
-                                      <span className="text-[11px] font-bold text-blue-950 dark:text-blue-200 uppercase tracking-wider">
-                                        {section.title}
-                                      </span>
-                                    </div>
-
-                                    {/* Items List */}
-                                    <div className="space-y-0.5">
-                                      {section.items.map((sub, sIdx) => (
-                                        <a
-                                          key={sIdx}
-                                          href={sub.href}
-                                          onClick={(e) => {
-                                            setActiveDropdown(null);
-                                            handleLinkNavigation(e, sub.href);
-                                          }}
-                                          className="block px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/90 dark:hover:bg-blue-950/50 transition-colors cursor-pointer group"
-                                        >
-                                          <span className="block font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400">
-                                            {sub.name}
-                                          </span>
-                                          {sub.desc && (
-                                            <span className="block text-[10px] text-slate-400 dark:text-slate-500 font-normal">
-                                              {sub.desc}
-                                            </span>
-                                          )}
-                                        </a>
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            {/* Dropdown Bottom Footer */}
-                            <div className="mt-1 pt-2 pb-1.5 px-3.5 border-t border-slate-100 dark:border-slate-800 bg-blue-50/50 dark:bg-blue-950/30 flex items-center justify-between text-xs">
-                              <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400">
-                                AP & TS Intermediate
-                              </span>
-                              <a
-                                href="/demo#courses"
-                                onClick={(e) => {
-                                  setActiveDropdown(null);
-                                  handleLinkNavigation(e, "/demo#courses");
-                                }}
-                                className="text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1 group cursor-pointer"
-                              >
-                                <span>Explore All</span>
-                                <ChevronRight size={13} className="group-hover:translate-x-0.5 transition-transform" />
-                              </a>
-                            </div>
-                          </div>
+                          <MegaMenuPanel
+                            sections={link.sections}
+                            menu={link.menu}
+                            onNavigate={(e, href) => {
+                              setActiveDropdown(null);
+                              handleLinkNavigation(e, href);
+                            }}
+                          />
                         ) : (
                           <>
                             <div className="px-3.5 py-1.5 border-b border-slate-100 dark:border-slate-800 text-[10px] font-bold text-blue-900 dark:text-blue-300 uppercase tracking-wider sticky top-0 bg-blue-50/90 dark:bg-blue-950/70 backdrop-blur-xs">
@@ -468,7 +390,7 @@ export default function Navbar({
                 placeholder="Search calculus, algebra..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 dark:border-slate-700 rounded-full py-2 pl-3.5 pr-8 text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 shadow-xs transition-all font-semibold"
+                className="w-full text-xs bg-slate-50 hover:bg-slate-100 focus:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full py-2 pl-3.5 pr-8 text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 shadow-xs transition-all font-semibold"
               />
               <button
                 type="submit"
@@ -652,18 +574,20 @@ export default function Navbar({
                                     ))}
                                   </div>
                                 ))}
-                                <div className="pt-1.5 border-t border-slate-200/80 dark:border-slate-800">
-                                  <a
-                                    href="/demo#courses"
-                                    onClick={(e) => {
-                                      setMobileMenuOpen(false);
-                                      handleLinkNavigation(e, "/demo#courses");
-                                    }}
-                                    className="block py-1 px-2 text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline"
-                                  >
-                                    → Explore All Intermediate Courses
-                                  </a>
-                                </div>
+                                {link.menu?.exploreHref && (
+                                  <div className="pt-1.5 border-t border-slate-200/80 dark:border-slate-800">
+                                    <a
+                                      href={link.menu.exploreHref}
+                                      onClick={(e) => {
+                                        setMobileMenuOpen(false);
+                                        handleLinkNavigation(e, link.menu.exploreHref);
+                                      }}
+                                      className="block py-1 px-2 text-xs font-bold text-blue-700 dark:text-blue-400 hover:underline"
+                                    >
+                                      → {link.menu.exploreLabel || "Explore All"}
+                                    </a>
+                                  </div>
+                                )}
                               </>
                             ) : (
                               link.dropdown?.map((sub, sIdx) => (

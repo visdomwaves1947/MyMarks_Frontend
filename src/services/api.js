@@ -327,6 +327,21 @@ export async function fetchAdminUsers(params = {}) {
   }
 }
 
+/**
+ * Every student, page by page, so the directory, its search and the CSV are not cut off at one page
+ */
+export async function fetchAllAdminStudents() {
+  const students = [];
+  for (let page = 1; ; page += 1) {
+    const res = await fetchAdminUsers({ role: 'student', limit: 500, page });
+    if (!res.success) return { ...res, users: students };
+    students.push(...res.users);
+    if (res.users.length === 0 || students.length >= res.total) {
+      return { success: true, users: students, total: res.total };
+    }
+  }
+}
+
 export async function createAdminUserApi(userData) {
   try {
     const res = await adminFetch('/api/admin/users', {

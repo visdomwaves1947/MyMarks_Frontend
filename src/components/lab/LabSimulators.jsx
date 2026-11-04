@@ -29,13 +29,13 @@ export function PhysicsSimulator() {
   const calculatedG = 4 * Math.PI * Math.PI * lOverTSq;
 
   return (
-    <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full text-xs font-black bg-purple-50 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/30 uppercase tracking-wider">
             Virtual Lab Sandbox
           </span>
-          <h4 className="text-xl sm:text-2xl font-black text-white mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
             Simple Pendulum: L–T² Real-Time Simulation
           </h4>
         </div>
@@ -44,7 +44,7 @@ export function PhysicsSimulator() {
           className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
             isSwinging
               ? "bg-purple-600 hover:bg-purple-500 text-white"
-              : "bg-slate-800 hover:bg-slate-700 text-purple-300"
+              : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-purple-700 dark:text-purple-300"
           }`}
         >
           <Play size={14} className={isSwinging ? "animate-spin" : ""} />
@@ -54,8 +54,8 @@ export function PhysicsSimulator() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Animated Pendulum Visual Canvas */}
-        <div className="lg:col-span-6 bg-slate-950 rounded-2xl p-6 border border-slate-800/80 flex flex-col items-center justify-center min-h-[320px] relative overflow-hidden">
-          <div className="absolute top-4 left-4 text-xs font-mono text-slate-400">
+        <div className="lg:col-span-6 bg-slate-50 dark:bg-slate-950 rounded-2xl p-6 border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-center min-h-[320px] relative overflow-hidden">
+          <div className="absolute top-4 left-4 text-xs font-mono text-slate-500 dark:text-slate-400">
             Real-time Harmonic Motion (SHM)
           </div>
 
@@ -119,20 +119,20 @@ export function PhysicsSimulator() {
             }
           `}</style>
 
-          <div className="mt-4 flex items-center justify-between w-full px-4 text-xs font-mono text-slate-400 border-t border-slate-800/80 pt-3">
-            <span>Effective Length: <strong className="text-purple-300">{length} cm</strong></span>
-            <span>Period T: <strong className="text-cyan-300">{period.toFixed(3)} s</strong></span>
+          <div className="mt-4 flex items-center justify-between w-full px-4 text-xs font-mono text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800/80 pt-3">
+            <span>Effective Length: <strong className="text-purple-700 dark:text-purple-300">{length} cm</strong></span>
+            <span>Period T: <strong className="text-cyan-700 dark:text-cyan-300">{period.toFixed(3)} s</strong></span>
           </div>
         </div>
 
         {/* Parameter Sliders & Calculations */}
         <div className="lg:col-span-6 space-y-5">
-          <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60">
+          <div className="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60">
             <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
                 Thread Length (L)
               </label>
-              <span className="text-sm font-black text-purple-400">{length} cm</span>
+              <span className="text-sm font-black text-purple-600 dark:text-purple-400">{length} cm</span>
             </div>
             <input
               type="range"
@@ -153,39 +153,39 @@ export function PhysicsSimulator() {
 
           {/* Real-time Observation Table Row */}
           <div className="grid grid-cols-3 gap-2.5">
-            <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 text-center">
-              <span className="text-[10px] uppercase text-slate-400 font-bold block">Period (T)</span>
-              <span className="text-lg font-black text-cyan-400">{period.toFixed(2)} s</span>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 text-center">
+              <span className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold block">Period (T)</span>
+              <span className="text-lg font-black text-cyan-600 dark:text-cyan-400">{period.toFixed(2)} s</span>
             </div>
-            <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 text-center">
-              <span className="text-[10px] uppercase text-slate-400 font-bold block">T² (s²)</span>
-              <span className="text-lg font-black text-purple-400">{periodSq.toFixed(2)}</span>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 text-center">
+              <span className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold block">T² (s²)</span>
+              <span className="text-lg font-black text-purple-600 dark:text-purple-400">{periodSq.toFixed(2)}</span>
             </div>
-            <div className="p-3 rounded-xl bg-slate-800/40 border border-slate-700/50 text-center">
-              <span className="text-[10px] uppercase text-slate-400 font-bold block">L / T² Ratio</span>
-              <span className="text-lg font-black text-emerald-400">{(lOverTSq * 100).toFixed(1)}</span>
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700/50 text-center">
+              <span className="text-[10px] uppercase text-slate-500 dark:text-slate-400 font-bold block">L / T² Ratio</span>
+              <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{(lOverTSq * 100).toFixed(1)}</span>
             </div>
           </div>
 
           {/* Derived Result Box */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-950/60 to-slate-900 border border-purple-500/30">
+          <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-50 to-white dark:from-purple-950/60 dark:to-slate-900 border border-purple-200 dark:border-purple-500/30">
             <div className="flex items-center gap-2 mb-1.5">
-              <Sparkles size={16} className="text-amber-400" />
-              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+              <Sparkles size={16} className="text-amber-600 dark:text-amber-400" />
+              <span className="text-xs font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
                 Experimental Acceleration Due to Gravity
               </span>
             </div>
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-black text-white">
+            <div className="flex flex-wrap items-baseline gap-3">
+              <span className="text-3xl font-black text-slate-900 dark:text-white">
                 g = {calculatedG.toFixed(2)}
               </span>
-              <span className="text-sm font-semibold text-slate-400">m/s²</span>
-              <span className="ml-auto text-xs font-bold text-emerald-400 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30">
+              <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">m/s²</span>
+              <span className="ml-auto text-xs font-bold text-emerald-700 dark:text-emerald-400 px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30">
                 100% Concordant
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-2">
-              Formula: <code className="text-purple-300">g = 4π² × (L / T²)</code>. Verified within ±0.1% of accepted board value 9.8 m/s².
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+              Formula: <code className="text-purple-700 dark:text-purple-300">g = 4π² × (L / T²)</code>. Verified within ±0.1% of accepted board value 9.8 m/s².
             </p>
           </div>
         </div>
@@ -254,17 +254,17 @@ export function ChemistrySimulator() {
   const [selectedReagent, setSelectedReagent] = useState("ki");
 
   return (
-    <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full text-xs font-black bg-emerald-50 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30 uppercase tracking-wider">
             Virtual Chemistry Lab
           </span>
-          <h4 className="text-xl sm:text-2xl font-black text-white mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
             Qualitative Salt Analysis: Reaction Testing Rack
           </h4>
         </div>
-        <span className="text-xs font-bold text-slate-400 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+        <span className="text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
           AP / TS Board 10-Mark Practical
         </span>
       </div>
@@ -272,7 +272,7 @@ export function ChemistrySimulator() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Salt Picker & Test Tube */}
         <div className="lg:col-span-5 space-y-4">
-          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+          <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block">
             Select Unknown Inorganic Salt:
           </label>
           <div className="grid grid-cols-1 gap-2">
@@ -282,37 +282,37 @@ export function ChemistrySimulator() {
                 onClick={() => setSelectedSalt(s)}
                 className={`p-3 rounded-2xl text-left border transition-all cursor-pointer flex items-center justify-between ${
                   selectedSalt.id === s.id
-                    ? "bg-emerald-950/50 border-emerald-500 text-white shadow-md shadow-emerald-500/10"
-                    : "bg-slate-800/50 border-slate-700/60 text-slate-300 hover:bg-slate-800"
+                    ? "bg-emerald-50 dark:bg-emerald-950/50 border-emerald-500 text-slate-900 dark:text-white shadow-md shadow-emerald-500/10"
+                    : "bg-slate-50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                 }`}
               >
                 <div>
                   <div className="text-sm font-bold">{s.name}</div>
-                  <div className="text-[11px] text-slate-400">{s.color}</div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">{s.color}</div>
                 </div>
                 {selectedSalt.id === s.id && (
-                  <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                  <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                 )}
               </button>
             ))}
           </div>
 
           {/* Chemical Radical Confirmation Box */}
-          <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Identified Cation:</span>
-              <span className="font-bold text-emerald-400">{selectedSalt.cation}</span>
+          <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-slate-500 dark:text-slate-400">Identified Cation:</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">{selectedSalt.cation}</span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Identified Anion:</span>
-              <span className="font-bold text-cyan-400">{selectedSalt.anion}</span>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-slate-500 dark:text-slate-400">Identified Anion:</span>
+              <span className="font-bold text-cyan-600 dark:text-cyan-400">{selectedSalt.anion}</span>
             </div>
           </div>
         </div>
 
         {/* Right Column: Reagent Selector & Reaction Display */}
         <div className="lg:col-span-7 space-y-5">
-          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+          <label className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block">
             Add Analytical Reagent to Test Tube:
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -321,7 +321,7 @@ export function ChemistrySimulator() {
               className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
                 selectedReagent === "ki"
                   ? "bg-emerald-600 border-emerald-400 text-white"
-                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               Potassium Iodide (KI)
@@ -331,7 +331,7 @@ export function ChemistrySimulator() {
               className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
                 selectedReagent === "dilHcl"
                   ? "bg-emerald-600 border-emerald-400 text-white"
-                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               Dilute HCl
@@ -341,7 +341,7 @@ export function ChemistrySimulator() {
               className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
                 selectedReagent === "brownRing"
                   ? "bg-emerald-600 border-emerald-400 text-white"
-                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               Brown Ring Test
@@ -351,7 +351,7 @@ export function ChemistrySimulator() {
               className={`p-2.5 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
                 selectedReagent === "flame"
                   ? "bg-emerald-600 border-emerald-400 text-white"
-                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               Flame Test
@@ -359,21 +359,21 @@ export function ChemistrySimulator() {
           </div>
 
           {/* Test Tube Reaction Result Window */}
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-950 to-slate-900 border border-emerald-500/30 relative overflow-hidden">
+          <div className="p-6 rounded-2xl bg-gradient-to-br from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 border border-emerald-200 dark:border-emerald-500/30 relative overflow-hidden">
             <div className="flex items-center gap-2 mb-3">
-              <FlaskConical size={18} className="text-emerald-400" />
-              <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider">
+              <FlaskConical size={18} className="text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">
                 Experimental Observation & Confirmatory Test Result
               </span>
             </div>
 
-            <div className="bg-slate-900/90 rounded-xl p-4 border border-slate-800 font-mono text-sm leading-relaxed text-slate-200">
+            <div className="bg-white dark:bg-slate-900/90 rounded-xl p-4 border border-slate-200 dark:border-slate-800 font-mono text-sm leading-relaxed text-slate-700 dark:text-slate-200">
               {selectedSalt.tests[selectedReagent]}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 pt-3 border-t border-slate-800/80">
-              <span>Reaction Type: <strong className="text-emerald-300">Confirmatory Wet / Dry Test</strong></span>
-              <span className="text-emerald-400 font-bold flex items-center gap-1">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 pt-3 border-t border-slate-200 dark:border-slate-800/80">
+              <span>Reaction Type: <strong className="text-emerald-700 dark:text-emerald-300">Confirmatory Wet / Dry Test</strong></span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
                 <CheckCircle2 size={13} /> Verified for Board Viva
               </span>
             </div>
@@ -411,17 +411,17 @@ export function ElectronicsSimulator() {
   const output = calculateOutput(gate, inA, inB);
 
   return (
-    <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 uppercase tracking-wider">
             Digital Trainer Kit
           </span>
-          <h4 className="text-xl sm:text-2xl font-black text-white mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
             Logic Gates & Truth Table Simulator
           </h4>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {["AND", "OR", "NOT", "NAND", "NOR", "XOR"].map((g) => (
             <button
               key={g}
@@ -429,7 +429,7 @@ export function ElectronicsSimulator() {
               className={`px-3 py-1.5 rounded-xl text-xs font-black border transition-all cursor-pointer ${
                 gate === g
                   ? "bg-amber-500 border-amber-400 text-slate-950 shadow-md shadow-amber-500/20"
-                  : "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
               {g}
@@ -440,16 +440,16 @@ export function ElectronicsSimulator() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Interactive Circuit Workbench */}
-        <div className="lg:col-span-7 bg-slate-950 rounded-2xl p-6 border border-slate-800 flex flex-col items-center justify-center min-h-[260px] relative">
-          <div className="flex items-center justify-center gap-8 w-full max-w-md">
+        <div className="lg:col-span-7 bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 sm:p-6 border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center min-h-[260px] relative">
+          <div className="flex items-center justify-center gap-3 sm:gap-8 w-full max-w-md">
             {/* Input Switches */}
             <div className="flex flex-col gap-5">
               <button
                 onClick={() => setInA(inA === 1 ? 0 : 1)}
                 className={`w-20 py-2.5 rounded-xl font-mono font-bold text-xs flex flex-col items-center border transition-all cursor-pointer ${
                   inA === 1
-                    ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/20"
-                    : "bg-slate-800/80 border-slate-700 text-slate-400"
+                    ? "bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-lg shadow-emerald-500/20"
+                    : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"
                 }`}
               >
                 <span>INPUT A</span>
@@ -461,8 +461,8 @@ export function ElectronicsSimulator() {
                   onClick={() => setInB(inB === 1 ? 0 : 1)}
                   className={`w-20 py-2.5 rounded-xl font-mono font-bold text-xs flex flex-col items-center border transition-all cursor-pointer ${
                     inB === 1
-                      ? "bg-emerald-500/20 border-emerald-500 text-emerald-300 shadow-lg shadow-emerald-500/20"
-                      : "bg-slate-800/80 border-slate-700 text-slate-400"
+                      ? "bg-emerald-50 dark:bg-emerald-500/20 border-emerald-500 text-emerald-700 dark:text-emerald-300 shadow-lg shadow-emerald-500/20"
+                      : "bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400"
                   }`}
                 >
                   <span>INPUT B</span>
@@ -472,10 +472,10 @@ export function ElectronicsSimulator() {
             </div>
 
             {/* Central Logic Gate Emblem */}
-            <div className="w-24 h-24 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 flex flex-col items-center justify-center text-amber-400 shadow-xl shadow-amber-500/10">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border-2 border-amber-300 dark:border-amber-500/40 flex flex-col items-center justify-center text-amber-600 dark:text-amber-400 shadow-xl shadow-amber-500/10">
               <Zap size={24} className="mb-1" />
               <span className="text-base font-black font-mono">{gate}</span>
-              <span className="text-[10px] text-amber-300/70 font-semibold">GATE</span>
+              <span className="text-[10px] text-amber-700/70 dark:text-amber-300/70 font-semibold">GATE</span>
             </div>
 
             {/* Glowing Output Indicator LED */}
@@ -484,7 +484,7 @@ export function ElectronicsSimulator() {
                 className={`w-14 h-14 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${
                   output === 1
                     ? "bg-emerald-500 border-emerald-300 shadow-[0_0_35px_rgba(16,185,129,0.8)] scale-110"
-                    : "bg-slate-800 border-slate-700 text-slate-500 shadow-inner"
+                    : "bg-slate-200 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-500 shadow-inner"
                 }`}
               >
                 <span className="font-mono text-xl font-black text-slate-950">
@@ -493,7 +493,7 @@ export function ElectronicsSimulator() {
               </div>
               <span className="text-xs font-bold font-mono tracking-wider">
                 {output === 1 ? (
-                  <span className="text-emerald-400">LED ON (HIGH)</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">LED ON (HIGH)</span>
                 ) : (
                   <span className="text-slate-500">LED OFF (LOW)</span>
                 )}
@@ -503,13 +503,13 @@ export function ElectronicsSimulator() {
         </div>
 
         {/* Truth Table Verification */}
-        <div className="lg:col-span-5 bg-slate-800/60 p-5 rounded-2xl border border-slate-700/60">
-          <h5 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">
+        <div className="lg:col-span-5 bg-slate-100 dark:bg-slate-800/60 p-5 rounded-2xl border border-slate-200 dark:border-slate-700/60">
+          <h5 className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-3">
             {gate} Gate Truth Table Matrix:
           </h5>
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-700 text-slate-400 font-mono">
+              <tr className="border-b border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-mono">
                 <th className="py-1.5 px-2">A</th>
                 {gate !== "NOT" && <th className="py-1.5 px-2">B</th>}
                 <th className="py-1.5 px-2 text-right">Output (Y)</th>
@@ -533,10 +533,10 @@ export function ElectronicsSimulator() {
                   return (
                     <tr
                       key={idx}
-                      className={`border-b border-slate-800 transition-colors ${
+                      className={`border-b border-slate-200 dark:border-slate-800 transition-colors ${
                         isActiveRow
-                          ? "bg-amber-500/20 text-amber-300 font-bold"
-                          : "text-slate-400"
+                          ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold"
+                          : "text-slate-500 dark:text-slate-400"
                       }`}
                     >
                       <td className="py-2 px-2">{row.a}</td>
@@ -545,8 +545,8 @@ export function ElectronicsSimulator() {
                         <span
                           className={`px-2 py-0.5 rounded ${
                             expected === 1
-                              ? "bg-emerald-500/20 text-emerald-400 font-black"
-                              : "bg-slate-700/50 text-slate-400"
+                              ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 font-black"
+                              : "bg-slate-200 dark:bg-slate-700/50 text-slate-500 dark:text-slate-400"
                           }`}
                         >
                           {expected}
@@ -630,24 +630,24 @@ ORDER BY Marks DESC;`,
   };
 
   return (
-    <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 uppercase tracking-wider">
             Practical Coding Terminal
           </span>
-          <h4 className="text-xl sm:text-2xl font-black text-white mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
             Computer Science Program Runner
           </h4>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 max-w-full">
           <select
             value={selectedSnippet}
             onChange={(e) => {
               setSelectedSnippet(e.target.value);
               setTerminalOutput("");
             }}
-            className="bg-slate-800 border border-slate-700 text-xs font-bold text-slate-200 rounded-xl px-3 py-2 cursor-pointer"
+            className="max-w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-200 rounded-xl px-3 py-2 cursor-pointer"
           >
             <option value="stack">Stack (LIFO) Implementation</option>
             <option value="sql">SQL Relational Database Queries</option>
@@ -663,20 +663,20 @@ ORDER BY Marks DESC;`,
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-xs overflow-x-auto text-emerald-400">
+        <div className="lg:col-span-7 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 font-mono text-xs overflow-x-auto text-emerald-700 dark:text-emerald-400">
           <pre>{snippets[selectedSnippet].code}</pre>
         </div>
-        <div className="lg:col-span-5 bg-slate-950 p-4 rounded-2xl border border-slate-800 font-mono text-xs flex flex-col justify-between">
+        <div className="lg:col-span-5 bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 font-mono text-xs flex flex-col justify-between overflow-x-auto">
           <div>
             <div className="text-[10px] uppercase font-bold text-slate-500 mb-2">
               Console Output:
             </div>
-            <pre className="text-cyan-300 whitespace-pre-wrap leading-relaxed">
+            <pre className="text-cyan-700 dark:text-cyan-300 whitespace-pre-wrap leading-relaxed">
               {terminalOutput || "Click 'Run Practical' above to execute the board practical program."}
             </pre>
           </div>
-          <div className="text-[11px] text-slate-500 border-t border-slate-800 pt-2 mt-4 flex items-center gap-1.5">
-            <CheckCircle2 size={13} className="text-emerald-400" />
+          <div className="text-[11px] text-slate-500 border-t border-slate-200 dark:border-slate-800 pt-2 mt-4 flex items-center gap-1.5">
+            <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" />
             <span>100% compliant with board examiner test cases</span>
           </div>
         </div>
@@ -705,23 +705,23 @@ export function MicroscopeSimulator() {
   };
 
   return (
-    <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="px-3 py-1 rounded-full text-xs font-black bg-teal-500/20 text-teal-300 border border-teal-500/30 uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full text-xs font-black bg-teal-50 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-500/30 uppercase tracking-wider">
             Digital Microscope
           </span>
-          <h4 className="text-xl sm:text-2xl font-black text-white mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
             Histological Slide & Specimen Spotter
           </h4>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSpecimen("dicot")}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               specimen === "dicot"
                 ? "bg-teal-600 border-teal-400 text-white"
-                : "bg-slate-800 border-slate-700 text-slate-300"
+                : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
             }`}
           >
             T.S. Dicot Root
@@ -731,7 +731,7 @@ export function MicroscopeSimulator() {
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               specimen === "blood"
                 ? "bg-teal-600 border-teal-400 text-white"
-                : "bg-slate-800 border-slate-700 text-slate-300"
+                : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
             }`}
           >
             Human Blood Smear
@@ -741,17 +741,17 @@ export function MicroscopeSimulator() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Microscope Viewport Aperture */}
-        <div className="lg:col-span-6 bg-slate-950 p-6 rounded-2xl border border-slate-800 flex flex-col items-center justify-center min-h-[300px] relative overflow-hidden">
-          <div className="w-56 h-56 rounded-full border-4 border-teal-500/50 relative overflow-hidden shadow-[0_0_40px_rgba(20,184,166,0.3)] bg-radial from-teal-900/40 to-slate-950 flex items-center justify-center">
+        <div className="lg:col-span-6 bg-slate-50 dark:bg-slate-950 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col items-center justify-center min-h-[300px] relative overflow-hidden">
+          <div className="w-56 h-56 rounded-full border-4 border-teal-500/50 relative overflow-hidden shadow-[0_0_40px_rgba(20,184,166,0.3)] bg-radial from-teal-100/70 to-white dark:from-teal-900/40 dark:to-slate-950 flex items-center justify-center">
             {/* Visual simulation of cell structure */}
             <div
               className="w-48 h-48 rounded-full border border-teal-400/30 flex items-center justify-center transition-all duration-500"
               style={{ transform: `scale(${zoom / 40})` }}
             >
-              <div className="text-center font-mono text-xs text-teal-300">
-                <Microscope size={44} className="mx-auto mb-2 text-teal-400 animate-pulse" />
+              <div className="text-center font-mono text-xs text-teal-700 dark:text-teal-300">
+                <Microscope size={44} className="mx-auto mb-2 text-teal-600 dark:text-teal-400 animate-pulse" />
                 <span className="font-bold">{specimens[specimen].name}</span>
-                <span className="block text-[10px] text-slate-400 mt-1">Objective: {zoom}X Mag.</span>
+                <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-1">Objective: {zoom}X Mag.</span>
               </div>
             </div>
 
@@ -760,14 +760,14 @@ export function MicroscopeSimulator() {
             <div className="absolute inset-y-0 left-1/2 w-px bg-teal-500/20 pointer-events-none"></div>
           </div>
 
-          <div className="mt-4 flex items-center gap-3">
-            <span className="text-xs text-slate-400">Magnification:</span>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <span className="text-xs text-slate-500 dark:text-slate-400">Magnification:</span>
             {[10, 40, 100].map((z) => (
               <button
                 key={z}
                 onClick={() => setZoom(z)}
                 className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold cursor-pointer ${
-                  zoom === z ? "bg-teal-500 text-slate-950" : "bg-slate-800 text-slate-400"
+                  zoom === z ? "bg-teal-500 text-slate-950" : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                 }`}
               >
                 {z}X
@@ -779,20 +779,20 @@ export function MicroscopeSimulator() {
         {/* Anatomical Identification Layers */}
         <div className="lg:col-span-6 space-y-4">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-teal-400">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">
               {specimens[specimen].type}
             </span>
-            <h5 className="text-lg font-black text-white">{specimens[specimen].name}</h5>
-            <p className="text-xs text-slate-300 mt-1">{specimens[specimen].description}</p>
+            <h5 className="text-lg font-black text-slate-900 dark:text-white">{specimens[specimen].name}</h5>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">{specimens[specimen].description}</p>
           </div>
 
-          <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 space-y-2.5">
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+          <div className="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2.5">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block">
               Diagnostic Board Identification Points:
             </span>
             {specimens[specimen].layers.map((layer, idx) => (
-              <div key={idx} className="flex items-start gap-2 text-xs text-slate-300">
-                <CheckCircle2 size={14} className="text-teal-400 shrink-0 mt-0.5" />
+              <div key={idx} className="flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">
+                <CheckCircle2 size={14} className="text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
                 <span>{layer}</span>
               </div>
             ))}
@@ -818,21 +818,21 @@ export function MathSimulator() {
   const currentY = -(paramA || 1) * xTangent * xTangent + paramB * xTangent;
 
   return (
-    <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-xl">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-500/20 text-blue-300 border border-blue-500/30 uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-500/30 uppercase tracking-wider">
             Mathematics Virtual Workbench
           </span>
-          <h4 className="text-xl sm:text-2xl font-black text-white mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
             Dynamic Coordinate Geometry & Calculus Simulator
           </h4>
         </div>
-        <div className="flex items-center gap-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800">
+        <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800">
           <button
             onClick={() => setMode("parabola")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              mode === "parabola" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+              mode === "parabola" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Parabola Locus
@@ -840,7 +840,7 @@ export function MathSimulator() {
           <button
             onClick={() => setMode("calculus")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              mode === "calculus" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
+              mode === "calculus" ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
             Calculus Max/Min
@@ -850,7 +850,7 @@ export function MathSimulator() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         {/* Interactive SVG Coordinate Plane */}
-        <div className="lg:col-span-7 bg-slate-950 rounded-2xl p-4 border border-slate-800/80 flex flex-col items-center justify-center min-h-[340px] relative overflow-hidden">
+        <div className="lg:col-span-7 bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 border border-slate-200 dark:border-slate-800/80 flex flex-col items-center justify-center min-h-[340px] relative overflow-hidden">
           <svg viewBox="-120 -100 240 200" className="w-full h-64 overflow-visible">
             {/* Grid Lines */}
             {[-80, -40, 0, 40, 80].map((coord) => (
@@ -939,9 +939,9 @@ export function MathSimulator() {
             )}
           </svg>
 
-          <div className="mt-3 flex items-center justify-between w-full px-2 text-xs font-mono text-slate-400">
+          <div className="mt-3 flex items-center justify-between gap-3 w-full px-2 text-xs font-mono text-slate-500 dark:text-slate-400">
             <span>Focus-Directrix Property: SP / PM = e = 1.0</span>
-            <span className="text-emerald-400 font-bold">Locus Verified</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">Locus Verified</span>
           </div>
         </div>
 
@@ -949,9 +949,9 @@ export function MathSimulator() {
         <div className="lg:col-span-5 space-y-4">
           <div className="space-y-3">
             <div>
-              <div className="flex justify-between text-xs font-mono mb-1 text-slate-300">
+              <div className="flex justify-between text-xs font-mono mb-1 text-slate-600 dark:text-slate-300">
                 <span>{mode === "parabola" ? "Focal Length (a):" : "Curvature Factor (a):"}</span>
-                <span className="text-cyan-400 font-bold">{paramA}</span>
+                <span className="text-cyan-600 dark:text-cyan-400 font-bold">{paramA}</span>
               </div>
               <input
                 type="range"
@@ -960,14 +960,14 @@ export function MathSimulator() {
                 step="0.5"
                 value={paramA}
                 onChange={(e) => setParamA(parseFloat(e.target.value))}
-                className="w-full accent-cyan-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                className="w-full accent-cyan-500 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
               />
             </div>
 
             <div>
-              <div className="flex justify-between text-xs font-mono mb-1 text-slate-300">
+              <div className="flex justify-between text-xs font-mono mb-1 text-slate-600 dark:text-slate-300">
                 <span>{mode === "parabola" ? "Coordinate X on Axis:" : "Slope Parameter (b):"}</span>
-                <span className="text-amber-400 font-bold">{mode === "parabola" ? xTangent : paramB}</span>
+                <span className="text-amber-600 dark:text-amber-400 font-bold">{mode === "parabola" ? xTangent : paramB}</span>
               </div>
               <input
                 type="range"
@@ -980,32 +980,32 @@ export function MathSimulator() {
                   if (mode === "parabola") setXTangent(val);
                   else setParamB(val);
                 }}
-                className="w-full accent-amber-500 h-1.5 bg-slate-800 rounded-lg cursor-pointer"
+                className="w-full accent-amber-500 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg cursor-pointer"
               />
             </div>
           </div>
 
           {/* Real-time Math Output Card */}
-          <div className="bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60 space-y-2.5">
-            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider block">
+          <div className="bg-slate-100 dark:bg-slate-800/60 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/60 space-y-2.5">
+            <span className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider block">
               Active Analytical Equations:
             </span>
-            <div className="space-y-1.5 font-mono text-xs text-slate-300">
-              <div className="flex justify-between bg-slate-900/60 p-2 rounded-lg">
-                <span className="text-slate-400">Equation:</span>
-                <span className="text-cyan-300 font-bold">
+            <div className="space-y-1.5 font-mono text-xs text-slate-600 dark:text-slate-300">
+              <div className="flex justify-between gap-3 bg-white dark:bg-slate-900/60 p-2 rounded-lg">
+                <span className="text-slate-500 dark:text-slate-400">Equation:</span>
+                <span className="text-cyan-700 dark:text-cyan-300 font-bold">
                   {mode === "parabola" ? `y² = ${4 * paramA}x` : `f(x) = -${paramA}x² + ${paramB}x`}
                 </span>
               </div>
-              <div className="flex justify-between bg-slate-900/60 p-2 rounded-lg">
-                <span className="text-slate-400">{mode === "parabola" ? "Eccentricity (e):" : "Critical Point:"}</span>
-                <span className="text-emerald-400 font-bold">
+              <div className="flex justify-between gap-3 bg-white dark:bg-slate-900/60 p-2 rounded-lg">
+                <span className="text-slate-500 dark:text-slate-400">{mode === "parabola" ? "Eccentricity (e):" : "Critical Point:"}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                   {mode === "parabola" ? "e = 1.0 (Parabola)" : `x = ${vertexX.toFixed(2)}`}
                 </span>
               </div>
-              <div className="flex justify-between bg-slate-900/60 p-2 rounded-lg">
-                <span className="text-slate-400">First Derivative dy/dx:</span>
-                <span className="text-amber-300 font-bold">
+              <div className="flex justify-between gap-3 bg-white dark:bg-slate-900/60 p-2 rounded-lg">
+                <span className="text-slate-500 dark:text-slate-400">First Derivative dy/dx:</span>
+                <span className="text-amber-700 dark:text-amber-300 font-bold">
                   {mode === "parabola" ? slopeParabola.toFixed(2) : currentSlope.toFixed(2)}
                 </span>
               </div>

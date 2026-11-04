@@ -12,6 +12,7 @@ import {
   Trash2,
   Video,
 } from 'lucide-react';
+import useDialog from '../../../hooks/useDialog';
 import {
   fetchAdminCurriculum,
   importAdminCurriculum,
@@ -51,9 +52,19 @@ const updateList = (nodes, path, change) => {
   return updateNodes(nodes, path, (node) => ({ ...node, children: change(node.children || []) }));
 };
 
-function TopicNode({ node, path, siblings, videos, onUpdate, onUpdateList }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+// True when the lesson sent from the Videos page is somewhere in these topics
+const holdsNode = (nodes, nodeId) =>
+  Boolean(nodeId) && (nodes || []).some((node) => node.nodeId === nodeId || holdsNode(node.children, nodeId));
+
+function TopicNode({ node, path, siblings, videos, onUpdate, onUpdateList, focusNodeId }) {
+  const isFocused = Boolean(focusNodeId) && node.nodeId === focusNodeId;
+  const [isOpen, setIsOpen] = useState(() => holdsNode(node.children, focusNodeId));
+  const [isEditing, setIsEditing] = useState(isFocused);
+  const rowRef = useRef(null);
+
+  useEffect(() => {
+    if (isFocused) rowRef.current?.scrollIntoView({ block: 'center' });
+  }, [isFocused]);
 
   const index = path[path.length - 1];
   const parentPath = path.slice(0, -1);
@@ -66,8 +77,8 @@ function TopicNode({ node, path, siblings, videos, onUpdate, onUpdateList }) {
   };
 
   return (
-    <li>
-      <div className="flex items-center gap-1 py-1">
+    <li ref={rowRef}>
+      <div className={`flex items-center gap-1 py-1 ${isFocused ? 'rounded-lg ring-2 ring-blue-500/60 bg-blue-50 dark:bg-blue-950/40' : ''}`}>
         {children.length > 0 ? (
           <button type="button" aria-label="Show subtopics" aria-expanded={isOpen} onClick={() => setIsOpen(!isOpen)} className={ICON_BUTTON}>
             {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -166,6 +177,7 @@ function TopicNode({ node, path, siblings, videos, onUpdate, onUpdateList }) {
               videos={videos}
               onUpdate={onUpdate}
               onUpdateList={onUpdateList}
+              focusNodeId={focusNodeId}
             />
           ))}
         </ul>
@@ -174,8 +186,8 @@ function TopicNode({ node, path, siblings, videos, onUpdate, onUpdateList }) {
   );
 }
 
-function ChapterRow({ chapter, index, total, videos, onChange, onMove, onRemove }) {
-  const [isOpen, setIsOpen] = useState(false);
+function ChapterRow({ chapter, index, total, videos, onChange, onMove, onRemove, focusNodeId }) {
+  const [isOpen, setIsOpen] = useState(() => holdsNode(chapter.topics, focusNodeId));
   const [isEditing, setIsEditing] = useState(false);
   const topics = chapter.topics || [];
 
@@ -241,6 +253,7 @@ function ChapterRow({ chapter, index, total, videos, onChange, onMove, onRemove 
                 videos={videos}
                 onUpdate={onUpdate}
                 onUpdateList={onUpdateList}
+                focusNodeId={focusNodeId}
               />
             ))}
           </ul>
@@ -254,7 +267,8 @@ function ChapterRow({ chapter, index, total, videos, onChange, onMove, onRemove 
   );
 }
 
-export default function CurriculumStep({ courseId, showToast, onSaveDraft }) {
+export default function CurriculumStep({ courseId, showToast, onSaveDraft, focusNodeId = null }) {
+  const { confirm } = useDialog();
   const [chapters, setChapters] = useState([]);
   const [videos, setVideos] = useState([]);
   const [isLoading, setIsLoading] = useState(Boolean(courseId));
@@ -308,7 +322,14 @@ export default function CurriculumStep({ courseId, showToast, onSaveDraft }) {
     event.target.value = '';
     if (!file) return;
 
-    if (isDirty && !window.confirm('You have unsaved chapter changes. Importing will use the last saved chapters. Continue?')) {
+    if (
+      isDirty &&
+      !(await confirm({
+        title: 'Import over unsaved changes?',
+        message: 'You have unsaved chapter changes. Importing will use the last saved chapters instead.',
+        confirmLabel: 'Continue Import',
+      }))
+    ) {
       return;
     }
 
@@ -462,6 +483,7 @@ export default function CurriculumStep({ courseId, showToast, onSaveDraft }) {
             onChange={(next) => change(chapters.map((item, itemIndex) => (itemIndex === index ? next : item)))}
             onMove={(from, direction) => change(moveItem(chapters, from, direction))}
             onRemove={(from) => change(chapters.filter((_, itemIndex) => itemIndex !== from))}
+            focusNodeId={focusNodeId}
           />
         ))}
       </div>

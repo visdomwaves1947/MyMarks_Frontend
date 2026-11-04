@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Archive, ArrowDown, ArrowUp, Edit, ExternalLink, Plus, RotateCcw, Search, Send, Undo2 } from 'lucide-react';
 import {
+  fetchAdminCourseOptions,
   fetchAdminCourses,
   fetchAdminStreams,
   saveAdminCourseOrder,
@@ -12,6 +13,7 @@ import { SkeletonRows } from '../AdminSkeleton';
 import CourseEditor from './CourseEditor';
 import CourseFlags from '../../course/CourseFlags';
 import StreamsPanel from './StreamsPanel';
+import OptionsPanel from './OptionsPanel';
 import { ICON_BUTTON, INPUT_STYLE, PANEL_STYLE, PRIMARY_BUTTON, moveItem } from './fields';
 
 const STATUS_STYLES = {
@@ -23,23 +25,35 @@ const STATUS_STYLES = {
 const VIEW_TABS = [
   { id: 'courses', label: 'Courses' },
   { id: 'streams', label: 'Streams' },
+  { id: 'boards', label: 'Boards' },
+  { id: 'years', label: 'Years' },
 ];
 
-export default function CoursesTab({ showToast, onChanged }) {
+/**
+ * openRequest opens one course straight away, at a step and lesson, when the Videos page sends the admin here
+ */
+export default function CoursesTab({ showToast, onChanged, openRequest = null }) {
+  const [request, setRequest] = useState(openRequest);
   const [view, setView] = useState('courses');
   const [courses, setCourses] = useState([]);
   const [streams, setStreams] = useState([]);
+  const [courseOptions, setCourseOptions] = useState({ boards: [], years: [] });
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('active');
   const [streamFilter, setStreamFilter] = useState('all');
-  const [editingId, setEditingId] = useState(null); // course id, 'new' or null
+  const [editingId, setEditingId] = useState(openRequest?.id || null); // course id, 'new' or null
 
   const load = useCallback(async () => {
     try {
-      const [courseList, streamList] = await Promise.all([fetchAdminCourses(), fetchAdminStreams()]);
+      const [courseList, streamList, optionLists] = await Promise.all([
+        fetchAdminCourses(),
+        fetchAdminStreams(),
+        fetchAdminCourseOptions(),
+      ]);
       setCourses(courseList);
       setStreams(streamList);
+      setCourseOptions(optionLists);
     } catch (error) {
       showToast(error.message, 'error');
     } finally {
@@ -51,7 +65,10 @@ export default function CoursesTab({ showToast, onChanged }) {
     load();
   }, [load]);
 
-  const closeEditor = useCallback(() => setEditingId(null), []);
+  const closeEditor = useCallback(() => {
+    setEditingId(null);
+    setRequest(null);
+  }, []);
 
   const afterChange = useCallback(async () => {
     await load();
@@ -103,9 +120,13 @@ export default function CoursesTab({ showToast, onChanged }) {
       <CourseEditor
         courseId={editingId === 'new' ? null : editingId}
         streams={streams}
+        boards={courseOptions.boards}
+        years={courseOptions.years}
         showToast={showToast}
         onChanged={afterChange}
         onClose={closeEditor}
+        initialStep={request?.id === editingId ? request.step : 0}
+        focusNodeId={request?.id === editingId ? request.nodeId : null}
       />
     );
   }
@@ -129,6 +150,8 @@ export default function CoursesTab({ showToast, onChanged }) {
 
       {view === 'streams' ? (
         <StreamsPanel showToast={showToast} onChanged={afterChange} />
+      ) : view === 'boards' || view === 'years' ? (
+        <OptionsPanel key={view} kind={view === 'boards' ? 'board' : 'year'} showToast={showToast} onChanged={afterChange} />
       ) : (
         <>
           {/* Filter Bar */}

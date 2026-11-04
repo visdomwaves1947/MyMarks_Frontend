@@ -1,5 +1,6 @@
 import React from 'react';
 import { Bookmark, X, Check, Video, FileText, CheckSquare, Tag, ArrowRight } from 'lucide-react';
+import useDialog from '../../hooks/useDialog';
 
 const RESOURCE_STYLES = {
   video: { icon: Video, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800' },
@@ -9,6 +10,7 @@ const RESOURCE_STYLES = {
 };
 
 export default function PlannerDashboard({ planData, onRestart }) {
+  const { alert: showMessage } = useDialog();
   // Use plan data or default fallbacks
   const durationText = planData?.steps ? planData.title.toUpperCase() : planData?.planTitle ? planData.planTitle.toUpperCase() : (planData?.duration === 1 ? '1 DAY' : planData?.duration ? `${planData.duration} DAYS` : '15 DAYS');
   const planSubtitle = planData?.expectedScore ? `Target Score: ${planData.expectedScore}` : 'Perfect for students with almost no preparation. Secures minimum passing marks.';
@@ -154,7 +156,7 @@ export default function PlannerDashboard({ planData, onRestart }) {
 
               {/* Action Button */}
               <button 
-                onClick={() => alert(`Starting Step 0${step.id}: ${step.title}`)}
+                onClick={() => showMessage({ title: `Starting Step 0${step.id}`, message: step.title })}
                 className="mt-auto w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-sm py-3.5 rounded-[20px] transition-colors flex items-center justify-center gap-2"
               >
                 Start Step 0{step.id} <ArrowRight size={14} />

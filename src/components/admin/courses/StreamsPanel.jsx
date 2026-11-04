@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Edit, Eye, EyeOff, Plus, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, Edit, Eye, EyeOff, Plus, Trash2, X } from 'lucide-react';
 import {
   createAdminStream,
+  deleteAdminStream,
   fetchAdminStreams,
   saveAdminStreamOrder,
   updateAdminStream,
 } from '../../../services/courseApi';
 import { refreshCatalog } from '../../../hooks/useCatalog';
 import { SkeletonRows } from '../AdminSkeleton';
+import useDialog from '../../../hooks/useDialog';
 import { ICON_BUTTON, PANEL_STYLE, PRIMARY_BUTTON, SECONDARY_BUTTON, TextArea, TextInput, moveItem } from './fields';
 
 const BLANK_STREAM = {
@@ -20,6 +22,7 @@ const BLANK_STREAM = {
 };
 
 export default function StreamsPanel({ showToast, onChanged }) {
+  const { confirm, alert } = useDialog();
   const [streams, setStreams] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState(null);
@@ -68,6 +71,31 @@ export default function StreamsPanel({ showToast, onChanged }) {
   const handleVisibility = async (stream) => {
     try {
       await updateAdminStream(stream._id, { status: stream.status === 'active' ? 'hidden' : 'active' });
+      await afterChange();
+    } catch (error) {
+      showToast(error.message, 'error');
+    }
+  };
+
+  // A stream in use is hidden instead. The server also checks archived courses, and says why it refuses.
+  const handleDelete = async (stream) => {
+    if (stream.courseCount > 0) {
+      await alert({
+        title: `${stream.code} is in use`,
+        message: `It is on ${stream.courseCount} ${stream.courseCount === 1 ? 'course' : 'courses'}, so it can't be deleted. Hide it instead, or take it off those courses first.`,
+      });
+      return;
+    }
+    const ok = await confirm({
+      title: `Delete the ${stream.code} stream?`,
+      message: 'This cannot be undone.',
+      confirmLabel: 'Delete Stream',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    try {
+      await deleteAdminStream(stream._id);
+      showToast('Stream deleted');
       await afterChange();
     } catch (error) {
       showToast(error.message, 'error');
@@ -174,6 +202,15 @@ export default function StreamsPanel({ showToast, onChanged }) {
               className={ICON_BUTTON}
             >
               <Edit size={15} />
+            </button>
+            <button
+              type="button"
+              aria-label={`Delete ${stream.code}`}
+              title={stream.courseCount ? 'In use: hide it instead, or take it off its courses first' : 'Delete'}
+              onClick={() => handleDelete(stream)}
+              className={`${ICON_BUTTON} hover:!text-rose-500`}
+            >
+              <Trash2 size={15} />
             </button>
           </div>
         ))}

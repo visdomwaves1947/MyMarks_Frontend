@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -30,13 +30,15 @@ import SitePrivacyGate from './components/SitePrivacyGate';
 import AdminPage from './pages/AdminPage';
 import CoursePage from './pages/CoursePage';
 import LegacyCourse from './components/course/LegacyCourse';
+import { jumpToTop } from './utils/scroll';
 
-// Automatic scroll-to-top on route changes unless an anchor hash exists
+// Automatic scroll-to-top on route changes unless an anchor hash exists.
+// Runs before the new page is drawn, and jumps instead of gliding, so the page opens at its top.
 function ScrollToTop() {
   const { pathname, hash } = useLocation();
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!hash) {
-      window.scrollTo(0, 0);
+      jumpToTop();
     } else {
       const el = document.querySelector(hash);
       if (el) {
@@ -257,7 +259,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#E6F0FA] text-slate-900 flex flex-col font-sans selection:bg-indigo-600 selection:text-white">
+    <div className="min-h-screen bg-[#E6F0FA] text-slate-900 dark:bg-slate-950 dark:text-slate-100 flex flex-col font-sans selection:bg-indigo-600 selection:text-white">
       <ScrollToTop />
 
       {/* Shared Navigation Header */}

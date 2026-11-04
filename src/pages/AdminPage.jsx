@@ -72,7 +72,7 @@ import {
 
 import {
   fetchAdminStats,
-  fetchAdminUsers,
+  fetchAllAdminStudents,
   createAdminUserApi,
   updateAdminUserApi,
   deleteAdminUserApi,
@@ -94,6 +94,12 @@ import AdminNavbar from "../components/admin/AdminNavbar";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminTabSkeleton from "../components/admin/AdminSkeleton";
 import CoursesTab from "../components/admin/courses/CoursesTab";
+import NavigationTab from "../components/admin/navigation/NavigationTab";
+import VideosByStream from "../components/admin/videos/VideosByStream";
+import useDialog from "../hooks/useDialog";
+
+// Every admin tab; /admin/<tab> opens that tab directly
+const ADMIN_TABS = ["dashboard", "students", "courses", "videos", "bookings", "navigation", "settings"];
 
 // Used for videos until the courses are in the database
 const DEFAULT_VIDEO_SUBJECTS = [
@@ -191,8 +197,22 @@ export default function AdminPage({
       );
   }, [onSessionExpired]);
 
-  // Active Tab: 'dashboard' | 'students' | 'courses' | 'bookings' | 'settings'
-  const [activeTab, setActiveTab] = useState("dashboard");
+  // Active Tab, one of ADMIN_TABS
+  const [activeTab, setActiveTab] = useState(() => {
+    const fromAddress = window.location.pathname.split("/")[2];
+    return ADMIN_TABS.includes(fromAddress) ? fromAddress : "dashboard";
+  });
+
+  // A lesson typed into a course syllabus opens in Courses & Streams, at the Curriculum step
+  const [courseRequest, setCourseRequest] = useState(null);
+  const changeTab = useCallback((tab) => {
+    setCourseRequest(null);
+    setActiveTab(tab);
+  }, []);
+  const openCourseSyllabus = useCallback(({ courseId, nodeId }) => {
+    setCourseRequest({ id: courseId, step: 3, nodeId });
+    setActiveTab("courses");
+  }, []);
 
   // Loading & Refresh State
   const [isLoading, setIsLoading] = useState(false);
@@ -238,7 +258,7 @@ export default function AdminPage({
   const [videoBoardFilter, setVideoBoardFilter] = useState("all");
   const [videoYearFilter, setVideoYearFilter] = useState("all");
   const [videoStatusFilter, setVideoStatusFilter] = useState("all");
-  const [videoViewMode, setVideoViewMode] = useState("grid"); // 'grid' | 'table'
+  const [videoViewMode, setVideoViewMode] = useState("streams"); // 'streams' | 'grid' | 'table'
 
   // Modals
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -265,7 +285,7 @@ export default function AdminPage({
   const [thumbDragOver, setThumbDragOver] = useState(false);
   const [youtubeError, setYoutubeError] = useState("");
   const [showTopicSection, setShowTopicSection] = useState(false); // Toggle Topic & Sub Topic section (+/-)
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'user'|'course'|'booking'|'video', id, title }
+  const { confirm } = useDialog();
 
   // Old Videos Storage & Replace State
   const [replaceExistingVideo, setReplaceExistingVideo] = useState(true); // Optional replace & archive old video
@@ -715,7 +735,7 @@ export default function AdminPage({
 
       return (
         <div className="flex flex-col gap-1.5 shrink-0">
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-1.5 flex-wrap">
             {/* YouTube URL Small Button */}
             <button
               type="button"
@@ -861,7 +881,7 @@ export default function AdminPage({
       }
 
       // 2. Users
-      const usersRes = await fetchAdminUsers({ limit: 100 });
+      const usersRes = await fetchAllAdminStudents();
       if (usersRes.success && Array.isArray(usersRes.users)) {
         setUsers(usersRes.users);
       }
@@ -923,6 +943,42 @@ export default function AdminPage({
       loadAdminData();
     }
   }, [isAdminAuthed, loadAdminData]);
+
+  // Students and their counts, refreshed while the panel is open so new sign-ups appear
+  const loadStudents = useCallback(async () => {
+    const [statsRes, usersRes] = await Promise.all([
+      fetchAdminStats(),
+      fetchAllAdminStudents(),
+    ]);
+    if (statsRes.success) setStats(statsRes.stats);
+    if (usersRes.success) setUsers(usersRes.users);
+  }, []);
+
+  const showsStudents = activeTab === "students" || activeTab === "dashboard";
+
+  // Fresh list each time the Students or Overview tab is opened
+  const previousTab = useRef(activeTab);
+  useEffect(() => {
+    const opened = previousTab.current !== activeTab;
+    previousTab.current = activeTab;
+    if (opened && showsStudents && isAdminAuthed && !isFirstLoad) {
+      loadStudents();
+    }
+  }, [activeTab, showsStudents, isAdminAuthed, isFirstLoad, loadStudents]);
+
+  // And every 30 seconds while one of them is on screen
+  useEffect(() => {
+    if (!isAdminAuthed || !showsStudents) return undefined;
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") loadStudents();
+    };
+    const timer = setInterval(refreshIfVisible, 30000);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
+  }, [isAdminAuthed, showsStudents, loadStudents]);
 
   const handleAdminLogout = () => {
     try {
@@ -1262,7 +1318,6 @@ export default function AdminPage({
     try {
       await deleteAdminUserApi(id);
       showToast("Student deleted successfully");
-      setDeleteConfirm(null);
       await loadAdminData();
     } catch (err) {
       showToast(err.message || "Delete failed", "error");
@@ -1272,18 +1327,19 @@ export default function AdminPage({
   };
 
   // Video & Resource Actions
-  const handleOpenAddVideo = (mode = "upload", step = 1) => {
+  // A preset from the Streams view fills in the subject and lesson, and picks the level to upload at
+  const handleOpenAddVideo = (mode = "upload", step = 1, preset = null) => {
     setVideoModalMode("create");
-    setVideoForm(initialVideoForm);
+    setVideoForm({ ...initialVideoForm, ...preset?.form });
     setLevelMedia(initialLevelMedia);
-    setActiveUploadContext("chapter");
+    setActiveUploadContext(preset?.level || "chapter");
     setVideoSourceMode(mode);
     setVideoStudioStep(step);
     setIsVideoFullScreen(true); // Automatically open in full screen
     setVideoUploadProgress(0);
     setVideoUploadInfo(null);
     setYoutubeError("");
-    setShowTopicSection(false);
+    setShowTopicSection(Boolean(preset && preset.level !== "chapter"));
     setIsVideoModalOpen(true);
   };
 
@@ -1543,8 +1599,13 @@ export default function AdminPage({
   const handleRestoreArchivedVideo = async (videoToRestore) => {
     if (!videoToRestore) return;
     const vidTitle = videoToRestore.title || "this video";
-    if (!window.confirm(`Restore "${vidTitle}" back as the active video?`))
-      return;
+    const ok = await confirm({
+      title: `Restore "${vidTitle}"?`,
+      message:
+        "It becomes the active video again. A video now active at the same place is moved to Old Videos Storage.",
+      confirmLabel: "Restore Video",
+    });
+    if (!ok) return;
 
     setIsLoading(true);
     try {
@@ -1598,12 +1659,13 @@ export default function AdminPage({
 
   // Delete a video permanently from storage
   const handleDeleteArchivedVideo = async (id, title) => {
-    if (
-      !window.confirm(
-        `Permanently delete "${title || "this video"}" from storage? This cannot be undone.`,
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: `Permanently delete "${title || "this video"}"?`,
+      message: "It is removed from storage. This cannot be undone.",
+      confirmLabel: "Delete Forever",
+      tone: "danger",
+    });
+    if (!ok) return;
     setIsLoading(true);
     try {
       await deleteAdminVideoApi(id);
@@ -2214,7 +2276,6 @@ export default function AdminPage({
     try {
       await deleteAdminVideoApi(id);
       showToast("Video removed successfully");
-      setDeleteConfirm(null);
       await loadAdminData();
     } catch (err) {
       showToast(err.message || "Delete failed", "error");
@@ -2223,13 +2284,26 @@ export default function AdminPage({
     }
   };
 
+  // Students and videos are deleted after the shared confirmation dialog
+  const askDelete = async ({ type, id, title }) => {
+    const ok = await confirm({
+      title: `Delete "${title}"?`,
+      message: "This cannot be undone.",
+      confirmLabel: type === "user" ? "Delete Student" : "Delete Video",
+      tone: "danger",
+    });
+    if (!ok) return;
+    if (type === "user") handleDeleteUser(id);
+    else handleDeleteVideo(id);
+  };
+
   const handleSeedVideos = async () => {
-    if (
-      !window.confirm(
-        "Seed standard curriculum lecture videos and study materials?",
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: "Add the standard lecture videos?",
+      message: "This adds the standard curriculum lecture videos and study materials.",
+      confirmLabel: "Add Videos",
+    });
+    if (!ok) return;
     setIsLoading(true);
     try {
       await seedAdminVideosApi();
@@ -2347,7 +2421,7 @@ export default function AdminPage({
         toggleTheme={handleToggleTheme}
         onLogout={handleAdminLogout}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={changeTab}
         apiStatus={apiStatus}
         newBookingCount={newBookingCount}
       />
@@ -2355,7 +2429,7 @@ export default function AdminPage({
       {/* Left Vertical Navigation Sidebar - Fixed at left-0 top-[122px] (desktop) / top bar (mobile/tablet) */}
       <AdminSidebar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={changeTab}
         usersCount={users.length}
         coursesCount={courses.length}
         videosCount={videos.length}
@@ -2498,7 +2572,7 @@ export default function AdminPage({
               </div>
 
               {/* Quick Actions Bar */}
-              <div className="p-5 rounded-3xl bg-white dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 shadow-sm dark:shadow-none flex flex-wrap items-center justify-between gap-4">
+              <div className="p-5 rounded-3xl bg-white dark:bg-slate-900 dark:bg-gradient-to-r dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 border border-slate-200/90 dark:border-slate-800 shadow-sm dark:shadow-none flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-base">
                     Quick Operations
@@ -2589,7 +2663,7 @@ export default function AdminPage({
                             <span className="inline-block px-2.5 py-1 rounded-md text-[11px] font-semibold bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-300">
                               {user.board || "AP Intermediate"}
                             </span>
-                            <span className="block text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                            <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                               {user.createdAt
                                 ? new Date(user.createdAt).toLocaleDateString()
                                 : "Active"}
@@ -2883,7 +2957,7 @@ export default function AdminPage({
 
                           {/* Actions */}
                           <td className="py-3.5 px-4 text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                            <div className="flex items-center justify-end gap-1.5 min-w-max">
                               {/* View Details */}
                               <button
                                 onClick={() => setViewUserDetail(user)}
@@ -2905,7 +2979,7 @@ export default function AdminPage({
                               {/* Delete */}
                               <button
                                 onClick={() =>
-                                  setDeleteConfirm({
+                                  askDelete({
                                     type: "user",
                                     id: user._id || user.id,
                                     title: user.fullName || user.name,
@@ -2925,7 +2999,7 @@ export default function AdminPage({
                         <tr>
                           <td
                             colSpan={7}
-                            className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm"
+                            className="py-12 text-center text-slate-500 dark:text-slate-400 text-sm"
                           >
                             No student records matching your search or filters.
                           </td>
@@ -2942,8 +3016,14 @@ export default function AdminPage({
             TAB 3: CURRICULUM & COURSES
            ───────────────────────────────────────────────────────────── */}
           {activeTab === "courses" && (
-            <CoursesTab showToast={showToast} onChanged={loadCourses} />
+            <CoursesTab
+              showToast={showToast}
+              onChanged={loadCourses}
+              openRequest={courseRequest}
+            />
           )}
+
+          {activeTab === "navigation" && <NavigationTab showToast={showToast} />}
 
           {/* ─────────────────────────────────────────────────────────────
             TAB 4: VIDEOS, YOUTUBE & CURRICULUM MANAGEMENT
@@ -3237,6 +3317,18 @@ export default function AdminPage({
                   {/* View Mode Toggle: Grid vs Table */}
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 shrink-0">
                     <button
+                      onClick={() => setVideoViewMode("streams")}
+                      className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                        videoViewMode === "streams"
+                          ? "bg-white dark:bg-slate-800 text-blue-600 dark:text-blue-400 shadow-xs"
+                          : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-300"
+                      }`}
+                      title="Stream, subject and lesson folders"
+                    >
+                      <Layers size={15} />
+                      <span className="hidden sm:inline">Streams</span>
+                    </button>
+                    <button
                       onClick={() => setVideoViewMode("grid")}
                       className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
                         videoViewMode === "grid"
@@ -3296,6 +3388,24 @@ export default function AdminPage({
                   )}
                 </div>
               </div>
+
+              {videoViewMode === "streams" && (
+                <VideosByStream
+                  videos={filteredVideos}
+                  allVideos={videos}
+                  courses={courses}
+                  thumbnailFor={(v) =>
+                    getSafeThumbnailUrl(
+                      v.thumbnailUrl,
+                      extractYouTubeId(v.url) || v.youtubeId,
+                    )
+                  }
+                  onPreview={setPreviewVideoModal}
+                  onEdit={handleOpenEditVideo}
+                  onAdd={(mode, preset) => handleOpenAddVideo(mode, 1, preset)}
+                  onEditSyllabus={openCourseSyllabus}
+                />
+              )}
 
               {/* ─── VIEW 1: RESPONSIVE CARDS GRID ─── */}
               {videoViewMode === "grid" && (
@@ -3396,7 +3506,7 @@ export default function AdminPage({
                                   ★ Premium
                                 </span>
                               ) : (
-                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500 text-white shadow-md">
+                                <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-600 text-white shadow-md">
                                   Free Preview
                                 </span>
                               )}
@@ -3628,7 +3738,7 @@ export default function AdminPage({
 
                               <button
                                 onClick={() =>
-                                  setDeleteConfirm({
+                                  askDelete({
                                     type: "video",
                                     id: v.id || v._id,
                                     title: v.title,
@@ -3835,7 +3945,7 @@ export default function AdminPage({
                               </td>
 
                               <td className="py-3 px-4 text-right whitespace-nowrap">
-                                <div className="flex items-center justify-end gap-1">
+                                <div className="flex items-center justify-end gap-1 min-w-max">
                                   {(v.status === "archived" ||
                                     v.isArchived) && (
                                     <button
@@ -3864,7 +3974,7 @@ export default function AdminPage({
                                   </button>
                                   <button
                                     onClick={() =>
-                                      setDeleteConfirm({
+                                      askDelete({
                                         type: "video",
                                         id: v.id || v._id,
                                         title: v.title,
@@ -4031,7 +4141,12 @@ export default function AdminPage({
                             <button
                               onClick={async () => {
                                 if (
-                                  window.confirm("Delete this booking record?")
+                                  await confirm({
+                                    title: "Delete this booking?",
+                                    message: `"${b.title || "This booking"}" is removed. This cannot be undone.`,
+                                    confirmLabel: "Delete Booking",
+                                    tone: "danger",
+                                  })
                                 ) {
                                   await deleteAdminBookingApi(b._id || b.id);
                                   showToast("Booking deleted");
@@ -4051,7 +4166,7 @@ export default function AdminPage({
                         <tr>
                           <td
                             colSpan={6}
-                            className="py-12 text-center text-slate-400 dark:text-slate-500 text-sm"
+                            className="py-12 text-center text-slate-500 dark:text-slate-400 text-sm"
                           >
                             No pending diagnostic assessments or bookings.
                             Requests from the Booking modal appear here.
@@ -4658,7 +4773,7 @@ export default function AdminPage({
                             Chapter Name, Number & Key Word{" "}
                             <span className="text-rose-500">*</span>
                           </span>
-                          <span className="text-[10px] font-normal text-slate-400">
+                          <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400">
                             Right: Key Word (Save) & Media Actions (YouTube URL
                             / Upload video / Thumbnail)
                           </span>
@@ -5015,7 +5130,7 @@ export default function AdminPage({
                             <div className="space-y-1.5">
                               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center justify-between">
                                 <span>Sub Topic Name, Number & Key Word</span>
-                                <span className="text-[10px] font-normal text-slate-400">
+                                <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400">
                                   Right: Key Word (Save) & Media Actions
                                   (YouTube URL / Upload video / Thumbnail)
                                 </span>
@@ -5181,7 +5296,7 @@ export default function AdminPage({
                                 <span>
                                   Sub Sub Topic Name, Number & Key Word
                                 </span>
-                                <span className="text-[10px] font-normal text-slate-400">
+                                <span className="text-[10px] font-normal text-slate-500 dark:text-slate-400">
                                   Right: Key Word (Save) & Media Actions
                                   (YouTube URL / Upload video / Thumbnail)
                                 </span>
@@ -5560,7 +5675,7 @@ export default function AdminPage({
 
                             if (list.length === 0) {
                               return (
-                                <div className="text-xs text-slate-400 dark:text-slate-500 italic py-1">
+                                <div className="text-xs text-slate-500 dark:text-slate-400 italic py-1">
                                   No key words saved yet. Enter a key word in
                                   Chapter, Topic, or Sub Topic and click{" "}
                                   <span className="font-semibold text-blue-600 dark:text-cyan-400">
@@ -6643,7 +6758,7 @@ export default function AdminPage({
                                     <span>Premium</span>
                                   </span>
                                 ) : (
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500 text-white flex items-center gap-1 shadow-md">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white flex items-center gap-1 shadow-md">
                                     <Unlock size={10} />
                                     <span>Free Preview</span>
                                   </span>
@@ -7418,7 +7533,7 @@ export default function AdminPage({
                   <option value="subSubTopic">Sub Sub Topic Videos</option>
                 </select>
 
-                <span className="text-xs font-bold text-slate-400 dark:text-slate-500 whitespace-nowrap pl-1">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap pl-1">
                   {filteredArchivedVideos.length} found
                 </span>
               </div>
@@ -7653,11 +7768,11 @@ export default function AdminPage({
 
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-              <div className="relative w-full max-w-4xl bg-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-6 text-left">
+              <div className="relative w-full max-w-4xl bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-6 text-left">
                 {/* Top Close Bar */}
-                <div className="p-4 sm:px-6 flex items-center justify-between border-b border-slate-800 bg-slate-900/90">
+                <div className="p-4 sm:px-6 flex items-center justify-between border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/90">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-600/20 text-blue-400 border border-blue-500/30 uppercase tracking-wider">
+                    <span className="px-2.5 py-1 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-600/20 dark:text-blue-400 dark:border-blue-500/30 uppercase tracking-wider">
                       {previewVideoModal.subject || "Lecture"}
                     </span>
                     {previewVideoModal.badgeText && (
@@ -7669,14 +7784,14 @@ export default function AdminPage({
                       </span>
                     )}
                     {previewVideoModal.qualityBadge && (
-                      <span className="px-1.5 py-0.5 rounded bg-black/60 text-[10px] font-bold text-amber-300 border border-amber-400/30">
+                      <span className="px-1.5 py-0.5 rounded bg-amber-50 text-[10px] font-bold text-amber-700 border border-amber-300 dark:bg-black/60 dark:text-amber-300 dark:border-amber-400/30">
                         {previewVideoModal.qualityBadge}
                       </span>
                     )}
-                    <span className="text-xs text-slate-400 font-medium hidden sm:inline">
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-medium hidden sm:inline">
                       •
                     </span>
-                    <span className="text-xs text-slate-300 font-semibold truncate max-w-sm">
+                    <span className="text-xs text-slate-600 dark:text-slate-300 font-semibold truncate max-w-sm">
                       {previewVideoModal.chapter ||
                         previewVideoModal.linkType ||
                         (isVid
@@ -7695,7 +7810,7 @@ export default function AdminPage({
                           "modal-preview",
                         )
                       }
-                      className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
                       title="Copy Link URL"
                     >
                       <Copy
@@ -7711,7 +7826,7 @@ export default function AdminPage({
 
                     <button
                       onClick={() => setPreviewVideoModal(null)}
-                      className="p-1.5 rounded-full text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer transition-colors"
+                      className="p-1.5 rounded-full text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 cursor-pointer transition-colors"
                     >
                       <X size={18} />
                     </button>
@@ -7766,18 +7881,18 @@ export default function AdminPage({
                       </video>
                     </div>
                   ) : (
-                    <div className="p-8 sm:p-14 text-center bg-gradient-to-b from-slate-900 to-slate-950 flex flex-col items-center justify-center min-h-[300px]">
-                      <div className="w-16 h-16 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center mb-4">
+                    <div className="p-8 sm:p-14 text-center bg-gradient-to-b from-slate-50 to-white dark:from-slate-900 dark:to-slate-950 flex flex-col items-center justify-center min-h-[300px]">
+                      <div className="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 flex items-center justify-center mb-4">
                         {previewVideoModal.type === "drive" ? (
                           <FileText size={32} />
                         ) : (
                           <Link2 size={32} />
                         )}
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 max-w-xl">
+                      <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2 max-w-xl">
                         {previewVideoModal.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-400 max-w-lg mb-6 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-lg mb-6 leading-relaxed">
                         {previewVideoModal.description ||
                           "Verified curriculum study material, blueprint notes or virtual lab portal."}
                       </p>
@@ -7795,13 +7910,13 @@ export default function AdminPage({
                 </div>
 
                 {/* Video Details Bar */}
-                <div className="p-5 sm:p-6 bg-slate-900/60 border-t border-slate-800">
+                <div className="p-5 sm:p-6 bg-slate-50 border-t border-slate-200 dark:bg-slate-900/60 dark:border-slate-800">
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                     <div>
-                      <h3 className="text-lg sm:text-xl font-bold text-white mb-1.5">
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-1.5">
                         {previewVideoModal.title}
                       </h3>
-                      <p className="text-xs sm:text-sm text-slate-400 max-w-3xl leading-relaxed">
+                      <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-3xl leading-relaxed">
                         {previewVideoModal.description ||
                           "Comprehensive lecture with deep conceptual breakdown and board exam insights."}
                       </p>
@@ -7814,7 +7929,7 @@ export default function AdminPage({
                           setPreviewVideoModal(null);
                           handleOpenEditVideo(item);
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-700"
+                        className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border"
                       >
                         <Edit size={14} />
                         <span>Edit Video</span>
@@ -7829,35 +7944,35 @@ export default function AdminPage({
                   </div>
 
                   {/* Metadata Badges */}
-                  <div className="mt-4 pt-4 border-t border-slate-800/80 flex flex-wrap items-center gap-2 text-xs">
+                  <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80 flex flex-wrap items-center gap-2 text-xs">
                     {previewVideoModal.topicName && (
-                      <span className="px-2.5 py-1 rounded-md bg-blue-900/50 text-cyan-300 border border-blue-700/50 font-bold">
+                      <span className="px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/50 dark:text-cyan-300 dark:border-blue-700/50 font-bold">
                         Topic: {previewVideoModal.topicName}
                       </span>
                     )}
                     {(previewVideoModal.lessonName ||
                       previewVideoModal.lesson) && (
-                      <span className="px-2.5 py-1 rounded-md bg-indigo-900/50 text-indigo-300 border border-indigo-700/50 font-bold">
+                      <span className="px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-700/50 font-bold">
                         {previewVideoModal.lessonName ||
                           previewVideoModal.lesson}
                       </span>
                     )}
-                    <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-semibold">
+                    <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-semibold">
                       Faculty:{" "}
-                      <strong className="text-white">
+                      <strong className="text-slate-900 dark:text-white">
                         {previewVideoModal.instructor || "Visdom Waves Lead"}
                       </strong>
                     </span>
-                    <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-semibold">
+                    <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-semibold">
                       Class:{" "}
-                      <strong className="text-white">
+                      <strong className="text-slate-900 dark:text-white">
                         {previewVideoModal.classLevel || "Intermediate"}
                       </strong>
                     </span>
                     {previewVideoModal.duration && (
-                      <span className="px-2.5 py-1 rounded-md bg-slate-800 text-slate-300 font-semibold">
+                      <span className="px-2.5 py-1 rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 font-semibold">
                         Length:{" "}
-                        <strong className="text-white">
+                        <strong className="text-slate-900 dark:text-white">
                           {previewVideoModal.duration}
                         </strong>
                       </span>
@@ -7871,7 +7986,7 @@ export default function AdminPage({
                     ).map((kw, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-0.5 rounded bg-slate-800/80 text-blue-300 text-[11px] border border-slate-700/60 font-medium"
+                        className="px-2 py-0.5 rounded bg-slate-100 text-blue-700 border-slate-200 dark:bg-slate-800/80 dark:text-blue-300 dark:border-slate-700/60 text-[11px] border font-medium"
                       >
                         #{kw}
                       </span>
@@ -8037,49 +8152,6 @@ export default function AdminPage({
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────
-          MODAL: DELETE CONFIRMATION
-         ───────────────────────────────────────────────────────────── */}
-      {deleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md">
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl text-center transition-colors duration-200">
-            <div className="w-12 h-12 rounded-2xl bg-rose-500/10 text-rose-500 dark:text-rose-400 border border-rose-500/20 mx-auto flex items-center justify-center mb-4">
-              <Trash2 size={22} />
-            </div>
-            <h4 className="font-bold text-slate-900 dark:text-white text-base mb-1">
-              Confirm Deletion
-            </h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">
-              Are you sure you want to delete{" "}
-              <span className="text-slate-900 dark:text-white font-semibold">
-                &quot;{deleteConfirm.title}&quot;
-              </span>
-              ? This action cannot be undone.
-            </p>
-            <div className="flex items-center justify-center gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold text-xs cursor-pointer transition-colors border border-slate-300 dark:border-slate-700 shadow-xs dark:shadow-none"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => {
-                  if (deleteConfirm.type === "user") {
-                    handleDeleteUser(deleteConfirm.id);
-                  } else if (deleteConfirm.type === "video") {
-                    handleDeleteVideo(deleteConfirm.id);
-                  }
-                }}
-                disabled={isLoading}
-                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-600/30 cursor-pointer transition-all"
-              >
-                {isLoading ? "Deleting..." : "Yes, Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
