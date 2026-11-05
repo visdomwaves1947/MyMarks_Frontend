@@ -117,6 +117,25 @@ export async function importAdminCurriculum(id, file, { preview, mode }) {
   );
 }
 
+// ── Admin: study roadmaps ────────────────────────────────────────
+
+// Every course, with how many roadmaps it has and how many have a plan
+export async function fetchAdminRoadmapCourses() {
+  const data = await readJson(await adminFetch('/api/admin/roadmaps'), 'Could not load the roadmaps');
+  return data.courses;
+}
+
+export async function fetchAdminRoadmaps(courseId) {
+  return readJson(await adminFetch(`/api/admin/courses/${courseId}/roadmaps`), 'Could not load these roadmaps');
+}
+
+export async function saveAdminRoadmaps(courseId, roadmaps) {
+  return readJson(
+    await sendJson(`/api/admin/courses/${courseId}/roadmaps`, 'PUT', roadmaps),
+    'Could not save the roadmaps'
+  );
+}
+
 // ── Admin: streams and requests ──────────────────────────────────
 
 export async function fetchAdminStreams() {

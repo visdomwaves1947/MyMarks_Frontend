@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import useStudentReviews from '../../hooks/useStudentReviews';
 import { 
   Clock, 
   Award, 
@@ -406,70 +407,63 @@ export default function WhyChooseMyMarksSection({ onOpenBooking, showTestimonial
   );
 }
 
+// One review card. The admin Student Reviews page shows the same card as its preview.
+export function ReviewCard({ review, isCopy = false }) {
+  return (
+    <div
+      data-testid={isCopy ? undefined : 'student-review'}
+      aria-hidden={isCopy || undefined}
+      className="bg-[#c8e1fd] dark:bg-[#0f2a4a] p-4 sm:p-5 rounded-2xl shadow-xs border-2 border-[#93c5fd] dark:border-[#1e4b7a] space-y-2.5 w-[270px] xs:w-[300px] sm:w-[330px] shrink-0 flex flex-col justify-between hover:shadow-md transition-shadow"
+    >
+      <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 italic font-normal leading-relaxed line-clamp-3">
+        "{review.text}"
+      </p>
+      <div className="pt-2 border-t border-blue-200/80 dark:border-slate-800 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
+            {review.name}
+          </h4>
+          {review.role && (
+            <p className="text-[10px] text-blue-700 dark:text-blue-400 font-normal uppercase tracking-wider">
+              {review.role}
+            </p>
+          )}
+        </div>
+        {review.badge && (
+          <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
+            {review.badge}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// The lane repeats short lists so it is always full, and moves at the same speed for any number of reviews
+const MIN_LANE_CARDS = 8;
+const SECONDS_PER_CARD = 3.8;
+
+// "What Our Students Say", edited on the admin Student Reviews page
 export function StudentReviewsSection() {
-  const testimonials = [
-    {
-      name: "K. Sai Varun",
-      role: "1st Year Board Topper",
-      text: "The chapter breakdowns and concept maps are lifesavers. I scored 99 out of 100 in my first-year boards. The timed tests gave me great confidence!",
-    },
-    {
-      name: "Ananya Sharma",
-      role: "2nd Year Student",
-      text: "The explanations and formula guides make tough concepts so easy to memorize. The dashboard progress bars kept me disciplined.",
-    },
-    {
-      name: "Prof. K. Satyanarayana",
-      role: "Senior Board Paper Evaluator",
-      text: "As an instructor, I recommend this portal to all my students. The comprehensive syllabus coverage and solved question banks are perfect for intermediate students.",
-    },
-    {
-      name: "P. Srinivas Rao",
-      role: "1st Year Topper (99/100)",
-      text: "The solved previous board papers from 2021-2026 are incredibly accurate. Practicing mock exams helped me complete my actual paper early!",
-    },
-    {
-      name: "M. Venkat Reddy",
-      role: "2nd Year Topper (99/100)",
-      text: "Crucial concepts and long questions are explained with clear diagrams and notes. The chapter classes helped me get a state rank.",
-    },
-    {
-      name: "T. Lakshmi Prasanna",
-      role: "1st Year Student (98/100)",
-      text: "I was very nervous about solving equations and numerical problems, but the simple tricks and interactive quizzes made it my favorite subject!",
-    },
-    {
-      name: "G. Chandra Shekar",
-      role: "Parent of Student",
-      text: "I was worried about my son's board presentation. The board writing tips and handwriting presentation guides changed his score from 75 to 99!",
-    },
-    {
-      name: "B. Rama Devi",
-      role: "2nd Year Topper (99/100)",
-      text: "The 5-day masterclass revision plan is a lifesaver. It structures your study hours perfectly and covered exactly what came in the exams.",
-    },
-    {
-      name: "K. Rajesh Kumar",
-      role: "1st Year Student (99/100)",
-      text: "MyMarks is the ultimate platform for intermediate students. Extremely clean interface and the faculty response to doubts is very fast.",
-    },
-    {
-      name: "S. Gayatri Devi",
-      role: "2nd Year Student (99/100)",
-      text: "Thanks to the Expected Long Questions predicted on the platform, I was able to score full marks without any exam stress.",
-    },
-  ];
+  const { heading, subheading, items } = useStudentReviews();
+  if (items.length === 0) return null;
+
+  const lane = Array.from({ length: Math.ceil(MIN_LANE_CARDS / items.length) }, () => items).flat();
 
   return (
-    <section className="py-10 sm:py-14 bg-[#e6f0fa] dark:bg-[#071328] overflow-hidden border-b border-blue-200/60 dark:border-blue-900/40">
+    <section id="student-reviews" className="py-10 sm:py-14 bg-[#e6f0fa] dark:bg-[#071328] overflow-hidden border-b border-blue-200/60 dark:border-blue-900/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
         <div className="text-center max-w-3xl mx-auto mb-6">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-slate-900 dark:text-white tracking-tight">
-            What Our Students Say
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal mt-1 leading-relaxed">
-            Thousands of intermediate students score top marks in AP & Telangana board exams using our learning system.
-          </p>
+          {heading && (
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-semibold text-slate-900 dark:text-white tracking-tight">
+              {heading}
+            </h2>
+          )}
+          {subheading && (
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal mt-1 leading-relaxed">
+              {subheading}
+            </p>
+          )}
         </div>
       </div>
 
@@ -478,29 +472,12 @@ export function StudentReviewsSection() {
         <div className="absolute left-0 inset-y-0 w-8 sm:w-16 bg-gradient-to-r from-[#e6f0fa] dark:from-[#071328] to-transparent z-10 pointer-events-none" />
         <div className="absolute right-0 inset-y-0 w-8 sm:w-16 bg-gradient-to-l from-[#e6f0fa] dark:from-[#071328] to-transparent z-10 pointer-events-none" />
 
-        <div className="animate-train-marquee flex gap-3 sm:gap-5">
-          {[...testimonials, ...testimonials].map((testimonial, idx) => (
-            <div
-              key={idx}
-              className="bg-[#c8e1fd] dark:bg-[#0f2a4a] p-4 sm:p-5 rounded-2xl shadow-xs border-2 border-[#93c5fd] dark:border-[#1e4b7a] space-y-2.5 w-[270px] xs:w-[300px] sm:w-[330px] shrink-0 flex flex-col justify-between hover:shadow-md transition-shadow"
-            >
-              <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-200 italic font-normal leading-relaxed line-clamp-3">
-                "{testimonial.text}"
-              </p>
-              <div className="pt-2 border-t border-blue-200/80 dark:border-slate-800 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
-                    {testimonial.name}
-                  </h4>
-                  <p className="text-[10px] text-blue-700 dark:text-blue-400 font-normal uppercase tracking-wider">
-                    {testimonial.role}
-                  </p>
-                </div>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-800">
-                  Topper
-                </span>
-              </div>
-            </div>
+        <div
+          className="animate-train-marquee flex gap-3 sm:gap-5"
+          style={{ animationDuration: `${lane.length * SECONDS_PER_CARD}s` }}
+        >
+          {[...lane, ...lane].map((review, idx) => (
+            <ReviewCard key={idx} review={review} isCopy={idx >= items.length} />
           ))}
         </div>
       </div>

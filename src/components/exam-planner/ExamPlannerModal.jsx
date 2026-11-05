@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import PlannerDashboard from './PlannerDashboard';
 
-export default function ExamPlannerModal({ isOpen, onClose, selectedRoadmap }) {
+// A course page also passes how to open its lessons, and a key that keeps the student's progress
+export default function ExamPlannerModal({ isOpen, onClose, selectedRoadmap, onOpenLesson, canOpenLesson, progressKey }) {
   if (!isOpen || !selectedRoadmap) return null;
 
   return (
@@ -31,7 +32,13 @@ export default function ExamPlannerModal({ isOpen, onClose, selectedRoadmap }) {
 
         {/* Scrollable Content Area */}
         <div className="flex-1 overflow-y-auto relative">
-          <PlannerDashboard planData={selectedRoadmap} onRestart={onClose} />
+          <PlannerDashboard
+            planData={selectedRoadmap}
+            onRestart={onClose}
+            onOpenLesson={onOpenLesson}
+            canOpenLesson={canOpenLesson}
+            progressKey={progressKey}
+          />
         </div>
         
       </div>

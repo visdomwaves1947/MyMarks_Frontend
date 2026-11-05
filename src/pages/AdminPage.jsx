@@ -95,11 +95,13 @@ import AdminSidebar from "../components/admin/AdminSidebar";
 import AdminTabSkeleton from "../components/admin/AdminSkeleton";
 import CoursesTab from "../components/admin/courses/CoursesTab";
 import NavigationTab from "../components/admin/navigation/NavigationTab";
+import RoadmapsTab from "../components/admin/roadmaps/RoadmapsTab";
+import WebsitePagesTab from "../components/admin/pages/WebsitePagesTab";
 import VideosByStream from "../components/admin/videos/VideosByStream";
 import useDialog from "../hooks/useDialog";
 
 // Every admin tab; /admin/<tab> opens that tab directly
-const ADMIN_TABS = ["dashboard", "students", "courses", "videos", "bookings", "navigation", "settings"];
+const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "bookings", "pages", "navigation", "settings"];
 
 // Used for videos until the courses are in the database
 const DEFAULT_VIDEO_SUBJECTS = [
@@ -3022,6 +3024,10 @@ export default function AdminPage({
               openRequest={courseRequest}
             />
           )}
+
+          {activeTab === "roadmaps" && <RoadmapsTab showToast={showToast} />}
+
+          {activeTab === "pages" && <WebsitePagesTab showToast={showToast} />}
 
           {activeTab === "navigation" && <NavigationTab showToast={showToast} />}
 

@@ -1,7 +1,7 @@
 import { courses as fallbackCourses } from '../data/coursesData';
 import { quickMathChallenges as fallbackChallenges } from '../data/quizData';
 
-export const LOCAL_API_URL = 'http://localhost:5000';
+export const LOCAL_API_URL = 'http://localhost:5001';
 export const CLOUD_API_URL = 'https://mymarks-backend-six.vercel.app';
 
 // Dynamic cache of working API URL

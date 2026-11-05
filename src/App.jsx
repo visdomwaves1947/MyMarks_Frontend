@@ -280,10 +280,9 @@ export default function App() {
           <Route 
             path="/courses/:slug" 
             element={
-              <CoursePage 
+              <CoursePage
                 currentUser={currentUser}
                 onOpenBooking={handleOpenBooking}
-                onSelectRoadmap={handleSelectRoadmap}
                 onOpenSignIn={handleOpenSignIn}
               />
             } 

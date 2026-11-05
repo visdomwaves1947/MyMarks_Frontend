@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { courseImage, showDefaultImage } from '../../utils/courseImage';
 import CourseLecturePlayer from './CourseLecturePlayer';
-import { firstLessonIn, flattenChapters, isVideoLesson } from './curriculumTree';
+import { firstLessonIn, flattenChapters, isVideoLesson, withExtraLessons } from './curriculumTree';
 
 const normalize = (value) =>
   (value || '')
@@ -41,7 +41,7 @@ const matchesSearch = (topic, query) => {
 // Every subtopic below a topic, for the card's syllabus preview
 const subtopicsOf = (topic) => flattenChapters([{ chapterId: '', name: '', topics: topic.children || [] }]);
 
-function LessonPrompt({ prompt, course, onClose, onSignIn, onEnroll }) {
+export function LessonPrompt({ prompt, course, onClose, onSignIn, onEnroll }) {
   const isSignIn = prompt === 'sign-in';
 
   return (
@@ -241,27 +241,7 @@ export default function CourseCurriculum({ course, curriculum, theme, isSignedIn
   const [playingId, setPlayingId] = useState(null);
   const [prompt, setPrompt] = useState(null); // 'sign-in' | 'enroll'
 
-  const extraChapter = useMemo(() => {
-    const lessons = curriculum.extraLessons || [];
-    if (lessons.length === 0) return [];
-    return [
-      {
-        chapterId: 'more-lessons',
-        name: 'More Lessons',
-        number: '',
-        topics: lessons.map((lesson) => ({
-          nodeId: lesson.videoId,
-          code: '',
-          title: lesson.title,
-          keywords: [],
-          lesson,
-          children: [],
-        })),
-      },
-    ];
-  }, [curriculum.extraLessons]);
-
-  const chapters = useMemo(() => [...curriculum.chapters, ...extraChapter], [curriculum.chapters, extraChapter]);
+  const chapters = useMemo(() => withExtraLessons(curriculum), [curriculum]);
   const allTopics = useMemo(() => flattenChapters(chapters), [chapters]);
   const topLevelCount = useMemo(() => chapters.reduce((sum, chapter) => sum + chapter.topics.length, 0), [chapters]);
 

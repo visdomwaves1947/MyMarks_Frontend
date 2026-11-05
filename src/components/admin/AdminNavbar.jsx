@@ -17,6 +17,8 @@ import {
   Inbox,
   Settings,
   Database,
+  Route,
+  PanelsTopLeft,
 } from 'lucide-react';
 import { VisdomBrand } from '../VisdomBrand';
 
@@ -352,8 +354,10 @@ export default function AdminNavbar({
             { id: 'dashboard', label: 'Overview & Analytics', icon: BarChart3 },
             { id: 'students', label: 'Students Directory', icon: Users },
             { id: 'courses', label: 'Courses & Streams', icon: BookOpen },
+            { id: 'roadmaps', label: 'Study Roadmaps', icon: Route },
             { id: 'videos', label: 'Videos, YouTube & Links', icon: Video },
             { id: 'bookings', label: 'Bookings & Inquiries', icon: Inbox },
+            { id: 'pages', label: 'Website Pages', icon: PanelsTopLeft },
             { id: 'navigation', label: 'Navigation Menu', icon: Menu },
             { id: 'settings', label: 'Platform Controls', icon: Settings },
           ].map((item) => {

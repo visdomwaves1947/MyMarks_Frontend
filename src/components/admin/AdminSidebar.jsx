@@ -8,6 +8,8 @@ import {
   Settings,
   Database,
   Menu,
+  Route,
+  PanelsTopLeft,
 } from "lucide-react";
 
 export default function AdminSidebar({
@@ -33,6 +35,11 @@ export default function AdminSidebar({
       icon: BookOpen,
     },
     {
+      id: "roadmaps",
+      label: "Study Roadmaps",
+      icon: Route,
+    },
+    {
       id: "videos",
       label: "Videos, YouTube & Links",
       icon: Video,
@@ -41,6 +48,11 @@ export default function AdminSidebar({
       id: "bookings",
       label: "Bookings & Inquiries",
       icon: Inbox,
+    },
+    {
+      id: "pages",
+      label: "Website Pages",
+      icon: PanelsTopLeft,
     },
     {
       id: "navigation",

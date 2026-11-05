@@ -20,6 +20,29 @@ export const flattenChapters = (chapters) => {
   return list;
 };
 
+// The course's chapters, plus one for published lessons that fit no chapter
+export const withExtraLessons = (curriculum) => {
+  const chapters = curriculum?.chapters || [];
+  const lessons = curriculum?.extraLessons || [];
+  if (lessons.length === 0) return chapters;
+  return [
+    ...chapters,
+    {
+      chapterId: 'more-lessons',
+      name: 'More Lessons',
+      number: '',
+      topics: lessons.map((lesson) => ({
+        nodeId: lesson.videoId,
+        code: '',
+        title: lesson.title,
+        keywords: [],
+        lesson,
+        children: [],
+      })),
+    },
+  ];
+};
+
 // The first lesson inside a topic, preferring one that is not locked
 export const firstLessonIn = (node) => {
   const found = [];

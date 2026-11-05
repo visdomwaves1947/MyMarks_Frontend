@@ -8,6 +8,7 @@ import { isOutsideLink } from '../utils/courseImage';
 import CourseHero from '../components/course/CourseHero';
 import CourseSkeleton from '../components/course/CourseSkeleton';
 import CourseCurriculum from '../components/course/CourseCurriculum';
+import CourseRoadmapPlanner from '../components/course/CourseRoadmapPlanner';
 import {
   CourseFaqs,
   CourseGuarantee,
@@ -30,13 +31,15 @@ function CourseMessage({ title, text, children }) {
   );
 }
 
-export default function CoursePage({ currentUser, onOpenBooking, onSelectRoadmap, onOpenSignIn }) {
+export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn }) {
   const { slug } = useParams();
   const { hash } = useLocation();
   const [state, setState] = useState({ status: 'loading', data: null });
+  const [openPlan, setOpenPlan] = useState(null);
 
   const load = useCallback(async () => {
     setState({ status: 'loading', data: null });
+    setOpenPlan(null);
     try {
       const data = await fetchCoursePage(slug);
       setState({ status: data ? 'ready' : 'missing', data });
@@ -146,7 +149,20 @@ export default function CoursePage({ currentUser, onOpenBooking, onSelectRoadmap
       )}
 
       {isShown('roadmaps') && (
-        <CourseRoadmaps data={page.roadmaps} course={course} theme={theme} onSelectRoadmap={onSelectRoadmap} />
+        <CourseRoadmaps data={page.roadmaps} theme={theme} onSelectRoadmap={setOpenPlan} />
+      )}
+
+      {openPlan && (
+        <CourseRoadmapPlanner
+          plan={openPlan}
+          course={course}
+          curriculum={state.data.curriculum}
+          theme={theme}
+          isSignedIn={Boolean(currentUser)}
+          onClose={() => setOpenPlan(null)}
+          onEnroll={enroll}
+          onOpenSignIn={onOpenSignIn}
+        />
       )}
 
       {isShown('guarantee') && <CourseGuarantee data={page.guarantee} theme={theme} />}

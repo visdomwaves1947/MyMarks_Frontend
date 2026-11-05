@@ -16,7 +16,8 @@ export const ICON_BUTTON =
 export const PANEL_STYLE =
   'p-4 sm:p-5 rounded-3xl bg-white dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800/80 shadow-sm dark:shadow-none';
 
-export function Field({ label, hint, required, children }) {
+// An error shows in place of the hint
+export function Field({ label, hint, error, required, children }) {
   return (
     <div>
       <label className="block">
@@ -26,36 +27,55 @@ export function Field({ label, hint, required, children }) {
         </span>
         {children}
       </label>
-      {hint && <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{hint}</p>}
+      {error ? (
+        <p className="mt-1 text-[11px] font-semibold text-rose-600 dark:text-rose-400">{error}</p>
+      ) : (
+        hint && <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">{hint}</p>
+      )}
     </div>
   );
 }
 
-export function TextInput({ label, hint, required, value, onChange, ...props }) {
+export function TextInput({ label, hint, error, required, value, onChange, ...props }) {
   return (
-    <Field label={label} hint={hint} required={required}>
+    <Field label={label} hint={hint} error={error} required={required}>
       <input
         type="text"
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value)}
-        className={INPUT_STYLE}
+        aria-invalid={error ? true : undefined}
+        className={`${INPUT_STYLE}${error ? ' !border-rose-400 dark:!border-rose-700' : ''}`}
         {...props}
       />
     </Field>
   );
 }
 
-export function TextArea({ label, hint, required, value, onChange, rows = 3, ...props }) {
+export function TextArea({ label, hint, error, required, value, onChange, rows = 3, ...props }) {
   return (
-    <Field label={label} hint={hint} required={required}>
+    <Field label={label} hint={hint} error={error} required={required}>
       <textarea
         rows={rows}
         value={value ?? ''}
         onChange={(event) => onChange(event.target.value)}
-        className={INPUT_STYLE}
+        aria-invalid={error ? true : undefined}
+        className={`${INPUT_STYLE}${error ? ' !border-rose-400 dark:!border-rose-700' : ''}`}
         {...props}
       />
     </Field>
+  );
+}
+
+// One item per line, because items can contain commas
+export function LinesField({ label, hint = 'One per line.', rows = 4, value, onChange }) {
+  return (
+    <TextArea
+      label={label}
+      hint={hint}
+      rows={rows}
+      value={(value || []).join('\n')}
+      onChange={(text) => onChange(text.split('\n'))}
+    />
   );
 }
 
