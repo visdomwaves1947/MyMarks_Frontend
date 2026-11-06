@@ -20,7 +20,7 @@ export default function WebsitePagesTab({ showToast }) {
     <div className="space-y-5">
       <div className={`${PANEL_STYLE} flex flex-col sm:flex-row sm:items-center justify-between gap-3`}>
         <div>
-          <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <PanelsTopLeft size={18} className="text-blue-600" />
             <span>Website Pages</span>
           </h2>

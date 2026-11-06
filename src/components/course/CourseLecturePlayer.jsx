@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Compass,
@@ -9,12 +10,32 @@ import {
   ListTree,
   Lock,
   Play,
+  RotateCcw,
   Search,
   Sparkles,
   Tag,
   X,
 } from 'lucide-react';
 import { flattenChapters, isVideoLesson } from './curriculumTree';
+import { VideoLesson, YouTubeLesson } from './LessonMedia';
+import useLessonTracker from '../../hooks/useLessonTracker';
+import { formatClock, lessonKeyOf, resumePoint } from '../../utils/watchTime';
+
+const NO_TRACKING = { progress: { lessons: {} }, update: undefined, enabled: false };
+
+// A tick for a finished lesson, or where the student stopped
+function WatchMark({ saved }) {
+  if (!saved) return null;
+  if (saved.completed) {
+    return <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" aria-label="Watched" />;
+  }
+  if (!(saved.position > 0)) return null;
+  return (
+    <span className="text-[10px] font-mono font-semibold text-slate-500 dark:text-slate-400" title="Where you stopped">
+      {formatClock(saved.position)}
+    </span>
+  );
+}
 
 const matches = (entry, query) => {
   const q = query.toLowerCase();
@@ -39,7 +60,7 @@ const openPath = (entry) =>
   entry ? Object.fromEntries([...entry.trail.map((step) => step.nodeId), entry.nodeId].map((id) => [id, true])) : {};
 
 // One row of the topic hierarchy (the collapse method), with its subtopics underneath
-function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, player }) {
+function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, player, savedOf }) {
   const hasChildren = node.children?.length > 0;
   const isExpanded = Boolean(expanded[node.nodeId]);
   const isSelected = currentId === node.nodeId;
@@ -131,7 +152,9 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
             <Lock size={12} className="text-amber-600 dark:text-amber-400" />
           ) : !lesson ? (
             <span className="text-[10px] font-semibold text-slate-500">Soon</span>
-          ) : null}
+          ) : (
+            <WatchMark saved={savedOf?.(node)} />
+          )}
         </div>
       </div>
 
@@ -150,6 +173,7 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
                 onToggle={onToggle}
                 onSelect={onSelect}
                 player={player}
+                savedOf={savedOf}
               />
             </div>
           ))}
@@ -163,7 +187,16 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
  * Full-page lecture player: the lesson plays on the left, the topic hierarchy with its subtopics is on the right.
  * The hierarchy is the opened topic and its subtopics; a topic without subtopics shows the rest of its chapter.
  */
-export default function CourseLecturePlayer({ course, chapters, theme, startId, onClose, onLocked, onAsk }) {
+export default function CourseLecturePlayer({
+  course,
+  chapters,
+  theme,
+  startId,
+  onClose,
+  onLocked,
+  onAsk,
+  tracking = NO_TRACKING,
+}) {
   const player = theme.player;
 
   const scope = useMemo(() => {
@@ -234,6 +267,20 @@ export default function CourseLecturePlayer({ course, chapters, theme, startId, 
   useEffect(() => {
     revealPlaying(listRef.current);
   }, [sidebarOpen]);
+
+  const lessonKey = lessonKeyOf(current);
+  const report = useLessonTracker({
+    courseId: course._id,
+    lessonKey,
+    enabled: tracking.enabled && Boolean(current?.lesson) && !current?.lesson?.isLocked,
+    onSaved: tracking.update,
+  });
+  const [resume, setResume] = useState({ id: null, at: 0 });
+  if (current && resume.id !== current.nodeId) {
+    setResume({ id: current.nodeId, at: tracking.enabled ? resumePoint(tracking.progress.lessons[lessonKey]) : 0 });
+  }
+  const startAt = resume.id === current?.nodeId ? resume.at : 0;
+  const savedOf = (node) => tracking.progress.lessons[lessonKeyOf(node)];
 
   if (!current) return null;
 
@@ -346,16 +393,15 @@ export default function CourseLecturePlayer({ course, chapters, theme, startId, 
         <div className="lg:flex-1 flex flex-col lg:overflow-y-auto bg-slate-50 dark:bg-black/40 shrink-0 lg:shrink">
           <div className="relative w-full aspect-video lg:max-h-[64vh] bg-black flex items-center justify-center shadow-2xl shrink-0">
             {lesson.youtubeId ? (
-              <iframe
+              <YouTubeLesson
                 key={current.nodeId}
-                src={`https://www.youtube-nocookie.com/embed/${lesson.youtubeId}?autoplay=1&rel=0`}
+                youtubeId={lesson.youtubeId}
                 title={current.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-                className="absolute inset-0 w-full h-full border-0"
+                startAt={startAt}
+                report={report}
               />
             ) : isVideoLesson(lesson) ? (
-              <video key={current.nodeId} src={lesson.url} controls autoPlay className="absolute inset-0 w-full h-full object-contain bg-black" />
+              <VideoLesson key={current.nodeId} url={lesson.url} startAt={startAt} report={report} />
             ) : lesson.url ? (
               <div className="text-center px-6">
                 <Link2 size={30} className={`mx-auto mb-3 ${player.text}`} />
@@ -385,6 +431,15 @@ export default function CourseLecturePlayer({ course, chapters, theme, startId, 
                     </span>
                   )}
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{current.chapterName}</span>
+                  {startAt > 0 && (
+                    <span
+                      data-testid="lesson-resumed"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 text-[11px] font-semibold"
+                    >
+                      <RotateCcw size={11} />
+                      <span>Resumed at {formatClock(startAt)}</span>
+                    </span>
+                  )}
                 </div>
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white leading-tight">{current.title}</h1>
               </div>
@@ -540,6 +595,7 @@ export default function CourseLecturePlayer({ course, chapters, theme, startId, 
                         onToggle={toggle}
                         onSelect={select}
                         player={player}
+                        savedOf={savedOf}
                       />
                       {entry.trail.length > 0 && (
                         <div className="flex items-center gap-1 mt-1 ml-2 text-[10px] text-slate-500 truncate">
@@ -561,6 +617,7 @@ export default function CourseLecturePlayer({ course, chapters, theme, startId, 
                     onToggle={toggle}
                     onSelect={select}
                     player={player}
+                    savedOf={savedOf}
                   />
                 ))
               )}

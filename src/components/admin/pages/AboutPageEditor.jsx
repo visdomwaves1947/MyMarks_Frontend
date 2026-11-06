@@ -10,6 +10,7 @@ import { LuminaryCard } from '../../SupportersSlider';
 import ImageField from '../courses/ImageField';
 import { SkeletonForm } from '../AdminSkeleton';
 import {
+  CollapsiblePanel,
   Field,
   INPUT_STYLE,
   LinesField,
@@ -77,28 +78,43 @@ const editable = (about) => ({
 
 const filled = (lines) => lines.filter((line) => line.trim());
 
+// What stops each section from saving, as messages per section
 const aboutProblems = (draft) => {
-  const problems = [];
-  if (draft.leaders.length > LIMITS.leaders) problems.push(`The page can show up to ${LIMITS.leaders} leaders.`);
+  const leaders = [];
+  if (draft.leaders.length > LIMITS.leaders) leaders.push(`The page can show up to ${LIMITS.leaders} leaders.`);
   draft.leaders.forEach((leader, index) => {
     const who = leader.name.trim() || `Leader ${index + 1}`;
-    if (!leader.name.trim()) problems.push(`Leader ${index + 1} needs a name.`);
-    if (!leader.role.trim()) problems.push(`${who} needs a role.`);
-    if (linkProblem(leader.link)) problems.push(`The Read more link of ${who} must start with https:// or be a page on this site.`);
-    if (filled(leader.tags).length > LIMITS.tags) problems.push(`${who} has more than ${LIMITS.tags} tags.`);
+    if (!leader.name.trim()) leaders.push(`Leader ${index + 1} needs a name.`);
+    if (!leader.role.trim()) leaders.push(`${who} needs a role.`);
+    if (linkProblem(leader.link)) leaders.push(`The Read more link of ${who} must start with https:// or be a page on this site.`);
+    if (filled(leader.tags).length > LIMITS.tags) leaders.push(`${who} has more than ${LIMITS.tags} tags.`);
     if (filled(leader.highlights).length > LIMITS.highlights) {
-      problems.push(`${who} has more than ${LIMITS.highlights} impact points.`);
+      leaders.push(`${who} has more than ${LIMITS.highlights} impact points.`);
     }
   });
 
+  const inspirations = [];
   const items = draft.inspirations.items;
-  if (items.length > LIMITS.inspirations) problems.push(`The page can show up to ${LIMITS.inspirations} inspiration cards.`);
+  if (items.length > LIMITS.inspirations) inspirations.push(`The page can show up to ${LIMITS.inspirations} inspiration cards.`);
   items.forEach((item, index) => {
-    if (!item.name.trim()) problems.push(`Inspiration card ${index + 1} needs a name.`);
-    if (!item.quote.trim()) problems.push(`The card of ${item.name.trim() || `inspiration ${index + 1}`} needs a quote.`);
+    if (!item.name.trim()) inspirations.push(`Inspiration card ${index + 1} needs a name.`);
+    if (!item.quote.trim()) inspirations.push(`The card of ${item.name.trim() || `inspiration ${index + 1}`} needs a quote.`);
   });
-  return problems;
+  return { leaders, inspirations };
 };
+
+// The short note on a closed card that needs fixing
+const leaderProblem = (leader) =>
+  !leader.name.trim()
+    ? 'Needs a name'
+    : !leader.role.trim()
+      ? 'Needs a role'
+      : linkProblem(leader.link)
+        ? 'Check the link'
+        : filled(leader.tags).length > LIMITS.tags || filled(leader.highlights).length > LIMITS.highlights
+          ? 'Too many lines'
+          : '';
+const inspirationProblem = (item) => (!item.name.trim() ? 'Needs a name' : !item.quote.trim() ? 'Needs a quote' : '');
 
 // Empty lines are left out, as the server does when it saves
 const forPreview = (leader) => ({ ...leader, tags: filled(leader.tags), highlights: filled(leader.highlights) });
@@ -117,14 +133,7 @@ function Select({ label, value, options, onChange }) {
   );
 }
 
-function SectionTitle({ title, text }) {
-  return (
-    <div>
-      <h3 className="text-sm font-black text-slate-900 dark:text-white">{title}</h3>
-      {text && <p className="text-[11px] text-slate-500 dark:text-slate-400">{text}</p>}
-    </div>
-  );
-}
+
 
 /**
  * Website Pages > About Us: the hero text, the leader cards and the "Pioneering Minds" slider
@@ -173,7 +182,8 @@ export default function AboutPageEditor({ showToast }) {
   if (!draft) return <SkeletonForm fields={6} label="Loading the About Us page" />;
 
   const isChanged = JSON.stringify(draft) !== savedCopy;
-  const problems = aboutProblems(draft);
+  const sectionProblems = aboutProblems(draft);
+  const problems = [...sectionProblems.leaders, ...sectionProblems.inspirations];
   const shownLeaders = draft.leaders.filter((leader) => leader.visible).length;
   const shownCards = draft.inspirations.items.filter((item) => item.visible);
 
@@ -234,7 +244,7 @@ export default function AboutPageEditor({ showToast }) {
     <div className="space-y-5">
       <div className={`${PANEL_STYLE} flex flex-col md:flex-row md:items-center justify-between gap-4`}>
         <div>
-          <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Users size={18} className="text-blue-600" />
             <span>About Us Page</span>
           </h2>
@@ -279,8 +289,11 @@ export default function AboutPageEditor({ showToast }) {
         </div>
       )}
 
-      <div className={`${PANEL_STYLE} space-y-3`}>
-        <SectionTitle title="Top of the page" text="The box over the picture at the top of the About Us page." />
+      <CollapsiblePanel
+        testId="about-hero"
+        title="Top of the page"
+        summary="The badge, heading and text in the box over the picture at the top of the About Us page."
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <TextInput label="Badge" value={draft.hero.badge} onChange={(badge) => setHero({ badge })} maxLength={80} />
           <TextInput label="Heading" value={draft.hero.heading} onChange={(heading) => setHero({ heading })} maxLength={160} />
@@ -292,18 +305,21 @@ export default function AboutPageEditor({ showToast }) {
           onChange={(subheading) => setHero({ subheading })}
           maxLength={400}
         />
-      </div>
+      </CollapsiblePanel>
 
-      <div className={`${PANEL_STYLE} space-y-3`}>
-        <SectionTitle
-          title={`Leader cards (${draft.leaders.length}, ${shownLeaders} shown)`}
-          text="Shown in this order. Turn one off to hide it without deleting it. Open the preview under a card to see it as visitors do."
-        />
+      <CollapsiblePanel
+        testId="about-leaders"
+        title="Leader cards"
+        summary={`${draft.leaders.length} leaders, ${shownLeaders} shown. Open a card to change it, and its preview to see it as visitors do.`}
+        problemCount={sectionProblems.leaders.length}
+      >
         <RepeatList
           items={draft.leaders}
           onChange={setLeaders}
           blank={BLANK_LEADER}
           addLabel="Add Leader"
+          collapsible
+          itemProblem={leaderProblem}
           itemTitle={(leader) => `${leader.name || 'New leader'}${leader.visible ? '' : ' (hidden)'}`}
           renderItem={(leader, change) => (
             <div className="space-y-3">
@@ -385,13 +401,14 @@ export default function AboutPageEditor({ showToast }) {
             </div>
           )}
         />
-      </div>
+      </CollapsiblePanel>
 
-      <div className={`${PANEL_STYLE} space-y-3`}>
-        <SectionTitle
-          title={`Pioneering Minds slider (${draft.inspirations.items.length}, ${shownCards.length} shown)`}
-          text="The moving row of cards at the bottom of the page. With every card off, the slider is hidden."
-        />
+      <CollapsiblePanel
+        testId="about-inspirations"
+        title="Pioneering Minds slider"
+        summary={`${draft.inspirations.items.length} cards, ${shownCards.length} shown. The moving row of cards at the bottom of the page.`}
+        problemCount={sectionProblems.inspirations.length}
+      >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <TextInput
             label="Badge"
@@ -429,6 +446,8 @@ export default function AboutPageEditor({ showToast }) {
           onChange={(items) => setInspirations({ items })}
           blank={BLANK_INSPIRATION}
           addLabel="Add Card"
+          collapsible
+          itemProblem={inspirationProblem}
           itemTitle={(item) => `${item.name || 'New card'}${item.visible ? '' : ' (hidden)'}`}
           renderItem={(item, change) => (
             <div className="space-y-2">
@@ -471,7 +490,7 @@ export default function AboutPageEditor({ showToast }) {
             </div>
           )}
         />
-      </div>
+      </CollapsiblePanel>
 
       {isChanged && <div className="flex justify-end">{saveButton}</div>}
     </div>

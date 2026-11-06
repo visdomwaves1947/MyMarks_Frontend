@@ -54,19 +54,30 @@ export async function openAsAdmin(page, request) {
   );
 }
 
+// The API allows one account 10 sign-ins every 15 minutes, so each test worker signs the student in once
+let studentLogin = null;
+
+export async function signInStudent(request) {
+  if (!studentLogin) {
+    const res = await request.post(`${API_URL}/api/auth/login`, {
+      data: { signInInput: process.env.E2E_STUDENT_EMAIL, signInPassword: process.env.E2E_STUDENT_PASSWORD },
+    });
+    expect(res.ok()).toBeTruthy();
+    studentLogin = await res.json();
+  }
+  return studentLogin;
+}
+
 export async function openAsStudent(page, request) {
-  const res = await request.post(`${API_URL}/api/auth/login`, {
-    data: { signInInput: process.env.E2E_STUDENT_EMAIL, signInPassword: process.env.E2E_STUDENT_PASSWORD },
-  });
-  expect(res.ok()).toBeTruthy();
-  const user = await res.json();
+  const user = await signInStudent(request);
 
   await page.addInitScript(
     ({ key, value, student }) => {
       localStorage.setItem(key, value);
       localStorage.setItem('mla_user', JSON.stringify(student));
     },
-    { ...ACCESS, student: user.user || user }
+    // Saved like the site does after signing in: the account details with the token
+    { ...ACCESS, student: { ...(user.user || user), token: user.token } }
   );
 }
 

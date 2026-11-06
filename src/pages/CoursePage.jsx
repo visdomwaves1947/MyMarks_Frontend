@@ -1,8 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import { Eye, RefreshCw } from 'lucide-react';
 import { fetchCoursePage } from '../services/courseApi';
 import useDocumentMeta from '../hooks/useDocumentMeta';
+import useCourseCheckout from '../hooks/useCourseCheckout';
+import useCourseProgress from '../hooks/useCourseProgress';
 import { getCourseTheme } from '../components/course/courseTheme';
 import { isOutsideLink } from '../utils/courseImage';
 import CourseHero from '../components/course/CourseHero';
@@ -37,22 +39,48 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
   const [state, setState] = useState({ status: 'loading', data: null });
   const [openPlan, setOpenPlan] = useState(null);
 
-  const load = useCallback(async () => {
-    setState({ status: 'loading', data: null });
-    setOpenPlan(null);
-    try {
-      const data = await fetchCoursePage(slug);
-      setState({ status: data ? 'ready' : 'missing', data });
-    } catch {
-      setState({ status: 'error', data: null });
-    }
-  }, [slug]);
+  // A quiet load keeps the page on screen, such as after a purchase or signing in
+  const load = useCallback(
+    async ({ quiet = false } = {}) => {
+      if (!quiet) {
+        setState({ status: 'loading', data: null });
+        setOpenPlan(null);
+      }
+      try {
+        const data = await fetchCoursePage(slug);
+        setState({ status: data ? 'ready' : 'missing', data });
+      } catch {
+        if (!quiet) setState({ status: 'error', data: null });
+      }
+    },
+    [slug]
+  );
 
   useEffect(() => {
     load();
   }, [load]);
 
+  // Signing in or out changes which lessons open, so the page asks again
+  const signedInAs = currentUser?.token || '';
+  const firstUser = useRef(signedInAs);
+  useEffect(() => {
+    if (firstUser.current === signedInAs) return;
+    firstUser.current = signedInAs;
+    load({ quiet: true });
+  }, [signedInAs, load]);
+
   const course = state.data?.course;
+  const access = state.data?.access || {};
+  const isSignedIn = Boolean(currentUser);
+  const isStudent = isSignedIn && currentUser.role !== 'admin';
+  const tracking = useCourseProgress(course?._id, isStudent && access.canWatch !== false && state.status === 'ready');
+  const { buy, buying } = useCourseCheckout({
+    course: course || {},
+    access,
+    isSignedIn,
+    onOpenSignIn,
+    onBought: () => load({ quiet: true }),
+  });
 
   useDocumentMeta({
     title: course ? course.seoTitle || `${course.name} | MyMarks` : '',
@@ -122,6 +150,9 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
         <CourseHero
           course={course}
           theme={theme}
+          access={access}
+          onBuy={buy}
+          buying={buying}
           onEnroll={enroll}
           onExplore={() => document.getElementById('course-curriculum')?.scrollIntoView({ behavior: 'smooth' })}
         />
@@ -142,9 +173,13 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           course={course}
           curriculum={state.data.curriculum}
           theme={theme}
-          isSignedIn={Boolean(currentUser)}
+          isSignedIn={isSignedIn}
           onEnroll={enroll}
           onOpenSignIn={onOpenSignIn}
+          access={access}
+          onBuy={buy}
+          buying={buying}
+          tracking={tracking}
         />
       )}
 
@@ -158,10 +193,14 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           course={course}
           curriculum={state.data.curriculum}
           theme={theme}
-          isSignedIn={Boolean(currentUser)}
+          isSignedIn={isSignedIn}
           onClose={() => setOpenPlan(null)}
           onEnroll={enroll}
           onOpenSignIn={onOpenSignIn}
+          access={access}
+          onBuy={buy}
+          buying={buying}
+          tracking={tracking}
         />
       )}
 

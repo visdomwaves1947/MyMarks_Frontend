@@ -271,6 +271,7 @@ export default function App() {
         theme={theme}
         toggleTheme={toggleTheme}
         onLockSite={handleLockSite}
+        onLogout={handleLogout}
       />
 
       {/* Routed Main Content */}

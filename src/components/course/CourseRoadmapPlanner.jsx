@@ -8,11 +8,25 @@ import { firstLessonIn, flattenChapters, withExtraLessons } from './curriculumTr
  * A roadmap's day-by-day plan over its course page. Lesson videos in the plan
  * open in the course's own player, with the same sign-in and enroll checks.
  */
-export default function CourseRoadmapPlanner({ plan, course, curriculum, theme, isSignedIn, onClose, onEnroll, onOpenSignIn }) {
+export default function CourseRoadmapPlanner({
+  plan,
+  course,
+  curriculum,
+  theme,
+  isSignedIn,
+  onClose,
+  onEnroll,
+  onOpenSignIn,
+  access = {},
+  onBuy,
+  buying = false,
+  tracking,
+}) {
+  const mustBuy = Boolean(access.forSale && !access.owned);
   const chapters = useMemo(() => withExtraLessons(curriculum), [curriculum]);
   const topics = useMemo(() => new Map(flattenChapters(chapters).map((topic) => [topic.nodeId, topic])), [chapters]);
   const [playingId, setPlayingId] = useState(null);
-  const [prompt, setPrompt] = useState(null); // 'sign-in' | 'enroll'
+  const [prompt, setPrompt] = useState(null); // 'sign-in' | 'sign-in-to-buy' | 'enroll' | 'buy'
 
   // A step can point at a topic with its own lesson, or at a topic with lessons inside it
   const lessonAt = useCallback(
@@ -27,8 +41,8 @@ export default function CourseRoadmapPlanner({ plan, course, curriculum, theme, 
   const openLesson = (nodeId) => {
     const start = lessonAt(nodeId);
     if (!start) return;
-    if (!isSignedIn) setPrompt('sign-in');
-    else if (start.lesson.isLocked) setPrompt('enroll');
+    if (!isSignedIn) setPrompt(mustBuy ? 'sign-in-to-buy' : 'sign-in');
+    else if (start.lesson.isLocked) setPrompt(mustBuy ? 'buy' : 'enroll');
     else setPlayingId(start.nodeId);
   };
 
@@ -60,7 +74,8 @@ export default function CourseRoadmapPlanner({ plan, course, curriculum, theme, 
           theme={theme}
           startId={playingId}
           onClose={closePlayer}
-          onLocked={() => setPrompt('enroll')}
+          onLocked={() => setPrompt(mustBuy ? 'buy' : 'enroll')}
+          tracking={tracking}
           onAsk={(topic) => leaveFor(() => onEnroll(`${course.name} help: ${topic.title}`))}
         />
       )}
@@ -72,6 +87,8 @@ export default function CourseRoadmapPlanner({ plan, course, curriculum, theme, 
           onClose={() => setPrompt(null)}
           onSignIn={() => leaveFor(onOpenSignIn)}
           onEnroll={() => leaveFor(() => onEnroll(course.name))}
+          onBuy={() => leaveFor(onBuy)}
+          buying={buying}
         />
       )}
     </>

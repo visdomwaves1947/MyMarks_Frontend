@@ -12,6 +12,16 @@ const openAboutEditor = async (page, request) => {
   return editor;
 };
 
+// Sections and their cards start closed, and open when clicked
+const openSection = async (editor, testId, title) => {
+  const section = editor.getByTestId(testId);
+  const header = section.getByRole('button', { name: new RegExp(`^${title}`) });
+  await header.click();
+  return { section, header };
+};
+const openItem = (section, number, name) =>
+  section.getByRole('button', { name: new RegExp(`^${number}\\. ${name}`) }).click();
+
 const restoreBuiltIn = async (page) => {
   await page.getByRole('button', { name: 'Use Built-in Page' }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Use Built-in Page' }).click();
@@ -21,24 +31,30 @@ const restoreBuiltIn = async (page) => {
 test('an admin changes the About Us cards in Website Pages, and visitors see them', async ({ page, request }) => {
   const editor = await openAboutEditor(page, request);
   await expect(editor.getByText('Showing the built-in page until you save.')).toBeVisible();
-  await expect(editor.getByText('Leader cards (5, 5 shown)')).toBeVisible();
+  // Every section starts closed
+  await expect(editor.getByRole('textbox')).toHaveCount(0);
 
-  await editor.getByRole('textbox', { name: 'Heading', exact: true }).first().fill('Meet Our Team');
+  const hero = await openSection(editor, 'about-hero', 'Top of the page');
+  await hero.section.getByRole('textbox', { name: 'Heading', exact: true }).fill('Meet Our Team');
 
   // Hide the last leader, and add a new one with no photo and no link
-  await editor.getByRole('checkbox', { name: 'Show on the About Us page' }).nth(4).uncheck();
-  await editor.getByRole('button', { name: 'Add Leader' }).click();
+  const leaders = await openSection(editor, 'about-leaders', 'Leader cards');
+  await expect(leaders.header).toContainText('5 leaders, 5 shown');
+  await openItem(leaders.section, 5, 'Mr\\. Gedela');
+  await leaders.section.getByRole('checkbox', { name: 'Show on the About Us page' }).last().uncheck();
+  await leaders.section.getByRole('button', { name: 'Add Leader' }).click();
   const save = editor.getByRole('button', { name: 'Save About Us' }).first();
   await expect(editor.getByTestId('about-problems')).toContainText('Leader 6 needs a name.');
+  await expect(leaders.header).toContainText('2 problems');
   await expect(save).toBeDisabled();
 
-  await editor.getByRole('textbox', { name: 'Name *', exact: true }).nth(5).fill('Anita Rao');
-  await editor.getByRole('textbox', { name: 'Role *', exact: true }).last().fill('Head of Student Success');
-  await editor.getByRole('textbox', { name: 'Tagline', exact: true }).last().fill('Every student gets a plan.');
-  await editor.getByRole('textbox', { name: 'Strategic impact points', exact: true }).last().fill('Guided 500 students');
-  await editor.getByRole('textbox', { name: 'Tags', exact: true }).last().fill('Mentor\n\nCareer Guide');
+  await leaders.section.getByRole('textbox', { name: 'Name *', exact: true }).last().fill('Anita Rao');
+  await leaders.section.getByRole('textbox', { name: 'Role *', exact: true }).last().fill('Head of Student Success');
+  await leaders.section.getByRole('textbox', { name: 'Tagline', exact: true }).last().fill('Every student gets a plan.');
+  await leaders.section.getByRole('textbox', { name: 'Strategic impact points', exact: true }).last().fill('Guided 500 students');
+  await leaders.section.getByRole('textbox', { name: 'Tags', exact: true }).last().fill('Mentor\n\nCareer Guide');
 
-  const link = editor.getByRole('textbox', { name: 'Read more link', exact: true }).last();
+  const link = leaders.section.getByRole('textbox', { name: 'Read more link', exact: true }).last();
   await link.fill('ftp://files.example.com');
   await expect(editor.getByTestId('about-problems')).toContainText('The Read more link of Anita Rao must start with https://');
   await link.fill('');
@@ -50,8 +66,10 @@ test('an admin changes the About Us cards in Website Pages, and visitors see the
   await expect(preview).toContainText('AR');
 
   // Hide one card of the slider
-  await editor.getByRole('checkbox', { name: 'Show in the slider' }).nth(6).uncheck();
-  await expect(editor.getByText('Pioneering Minds slider (7, 6 shown)')).toBeVisible();
+  const slider = await openSection(editor, 'about-inspirations', 'Pioneering Minds slider');
+  await openItem(slider.section, 7, 'Srinivasa Ramanujan');
+  await slider.section.getByRole('checkbox', { name: 'Show in the slider' }).uncheck();
+  await expect(slider.header).toContainText('7 cards, 6 shown');
 
   await save.click();
   await expect(page.getByText('About Us page saved.')).toBeVisible();
@@ -84,12 +102,13 @@ test('an admin changes the About Us cards in Website Pages, and visitors see the
 
 test('switching between the Home Page and About Us tabs keeps unsaved changes', async ({ page, request }) => {
   const editor = await openAboutEditor(page, request);
-  await editor.getByRole('textbox', { name: 'Heading', exact: true }).first().fill('Draft heading');
+  const hero = await openSection(editor, 'about-hero', 'Top of the page');
+  await hero.section.getByRole('textbox', { name: 'Heading', exact: true }).fill('Draft heading');
 
   await page.getByRole('tab', { name: 'Home Page' }).click();
-  await expect(page.getByRole('heading', { name: 'What Our Students Say' })).toBeVisible();
+  await expect(page.getByRole('tabpanel', { name: 'Home Page' }).getByRole('heading', { name: 'Home Page' })).toBeVisible();
   await page.getByRole('tab', { name: 'About Us' }).click();
 
-  await expect(editor.getByRole('textbox', { name: 'Heading', exact: true }).first()).toHaveValue('Draft heading');
+  await expect(hero.section.getByRole('textbox', { name: 'Heading', exact: true })).toHaveValue('Draft heading');
   await expect(editor.getByText('You have unsaved changes.')).toBeVisible();
 });

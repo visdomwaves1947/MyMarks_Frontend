@@ -33,7 +33,8 @@ export default defineConfig({
     {
       name: 'phone',
       use: { ...devices['Pixel 7'], channel: 'chrome' },
-      testMatch: /site\.spec\.js/,
+      // Students mostly use phones, so buying and watching are checked there too
+      testMatch: /(site|payments)\.spec\.js/,
     },
   ],
   webServer: [

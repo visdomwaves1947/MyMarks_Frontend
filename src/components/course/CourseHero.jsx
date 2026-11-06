@@ -1,10 +1,12 @@
 import React from 'react';
-import { ArrowRight, BookOpen, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, CheckCircle2, ShoppingCart, Zap } from 'lucide-react';
 import CourseFlags from './CourseFlags';
 import { formatPrice } from '../../utils/courseImage';
 
-export default function CourseHero({ course, theme, onEnroll, onExplore }) {
+export default function CourseHero({ course, theme, onEnroll, onExplore, access = {}, onBuy, buying = false }) {
   const hero = course.page?.hero || {};
+  const mustBuy = Boolean(access.forSale && !access.owned);
+  const owns = Boolean(access.forSale && access.owned);
 
   return (
     <section className="relative pt-8 pb-14 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-16 overflow-hidden bg-[#EBF0F7] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -39,16 +41,33 @@ export default function CourseHero({ course, theme, onEnroll, onExplore }) {
                     {formatPrice(course.oldPrice)}
                   </span>
                 )}
+                {owns && (
+                  <span
+                    data-testid="course-owned"
+                    className="ml-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 text-xs font-semibold"
+                  >
+                    <CheckCircle2 size={13} />
+                    <span>You have this course</span>
+                  </span>
+                )}
               </div>
             )}
 
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 mb-7 w-full sm:w-auto">
               <button
-                onClick={() => onEnroll(course.name)}
-                className={`w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r ${theme.button} text-white font-bold text-sm sm:text-base shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer border`}
+                onClick={() => {
+                  if (mustBuy) onBuy();
+                  else if (owns) onExplore();
+                  else onEnroll(course.name);
+                }}
+                disabled={buying}
+                className={`w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r ${theme.button} disabled:opacity-60 text-white font-bold text-sm sm:text-base shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer border`}
               >
-                <span>{hero.primaryLabel || 'Enroll Now'}</span>
-                <ArrowRight size={17} />
+                {mustBuy && <ShoppingCart size={17} />}
+                <span>
+                  {mustBuy ? (buying ? 'Opening payment...' : 'Buy Now') : owns ? 'Start Learning' : hero.primaryLabel || 'Enroll Now'}
+                </span>
+                {!mustBuy && <ArrowRight size={17} />}
               </button>
 
               <button

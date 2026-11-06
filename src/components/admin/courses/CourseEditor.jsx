@@ -51,6 +51,7 @@ const BLANK_COURSE = {
   tagLabel: '',
   price: '',
   oldPrice: '',
+  sellOnline: false,
   mostBought: false,
   bestValue: false,
   ownLink: '',
@@ -317,6 +318,13 @@ export default function CourseEditor({
               <TextInput label="Price (₹)" required type="number" min="0" value={form.price} onChange={setField('price')} />
               <TextInput label="Old price (₹)" type="number" min="0" value={form.oldPrice} onChange={setField('oldPrice')} />
             </div>
+
+            <Toggle
+              label="Sell online"
+              hint="Students buy this course with Razorpay, and its lessons stay locked until they do. Needs a price of ₹1 or more. Leave off to keep the lessons open to every signed-in student."
+              checked={Boolean(form.sellOnline)}
+              onChange={setField('sellOnline')}
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <TextInput

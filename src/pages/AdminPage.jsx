@@ -99,6 +99,7 @@ import RoadmapsTab from "../components/admin/roadmaps/RoadmapsTab";
 import WebsitePagesTab from "../components/admin/pages/WebsitePagesTab";
 import VideosByStream from "../components/admin/videos/VideosByStream";
 import useDialog from "../hooks/useDialog";
+import StudentLearning from "../components/admin/students/StudentLearning";
 
 // Every admin tab; /admin/<tab> opens that tab directly
 const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "bookings", "pages", "navigation", "settings"];
@@ -8009,7 +8010,7 @@ export default function AdminPage({
          ───────────────────────────────────────────────────────────── */}
       {viewUserDetail && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 transition-colors duration-200">
+          <div role="dialog" aria-label="Student details" className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 transition-colors duration-200">
             <button
               onClick={() => setViewUserDetail(null)}
               className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
@@ -8134,6 +8135,8 @@ export default function AdminPage({
                 </code>
               </div>
             </div>
+
+            {viewUserDetail.role !== "admin" && <StudentLearning student={viewUserDetail} />}
 
             <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
               <button

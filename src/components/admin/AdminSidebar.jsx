@@ -103,7 +103,7 @@ export default function AdminSidebar({
                     if (workspace) workspace.scrollTo({ top: 0, behavior: "smooth" });
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-150 group cursor-pointer ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-all duration-150 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 ${
                     isActive
                       ? "bg-blue-600 text-white shadow-md shadow-blue-600/25 font-semibold"
                       : "text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-800/70 font-semibold"
