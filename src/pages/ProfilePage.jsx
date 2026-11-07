@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Mail,
   Phone,
@@ -11,26 +11,21 @@ import {
   Sparkles,
   LogOut,
   ArrowLeft,
+  ArrowRight,
   CheckCircle2,
   Shield,
-  ChevronRight,
   Video,
   Copy,
   Check,
   Lock,
 } from 'lucide-react';
-import StudentVideoDashboard from '../components/dashboard/StudentVideoDashboard';
 import useCatalog from '../hooks/useCatalog';
+import MyCourses from '../components/profile/MyCourses';
+import { fetchMyProfileApi } from '../services/api';
 import { courseImage, courseTag, isOutsideLink } from '../utils/courseImage';
 
-const CARD_ACCENTS = [
-  'border-blue-400',
-  'border-purple-400',
-  'border-emerald-400',
-  'border-green-400',
-  'border-cyan-400',
-  'border-amber-400',
-];
+// How many subjects the profile shows before "See all subjects"
+const SUBJECTS_SHOWN = 8;
 
 export default function ProfilePage({
   currentUser,
@@ -43,26 +38,41 @@ export default function ProfilePage({
   const { courses } = useCatalog();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [copiedRoll, setCopiedRoll] = useState(false);
+  const [latest, setLatest] = useState(null);
+
+  // The details saved at sign-in can be old, so the page asks the server for the latest
+  const token = currentUser?.token;
+  useEffect(() => {
+    if (!token) return undefined;
+    let isCurrent = true;
+    fetchMyProfileApi(token)
+      .then((user) => isCurrent && setLatest(user))
+      .catch(() => {});
+    return () => {
+      isCurrent = false;
+    };
+  }, [token]);
 
   // Student profile data from the signed-in account
   const notProvided = 'Not provided';
-  const displayName = currentUser?.name || currentUser?.fullName || 'Student';
+  const profile = currentUser ? { ...currentUser, ...(latest || {}) } : null;
+  const displayName = profile?.name || profile?.fullName || 'Student';
   const studentData = {
     initials: displayName.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(),
     name: displayName,
-    email: currentUser?.email || notProvided,
-    mobile: currentUser?.mobile || currentUser?.mobileNumber || notProvided,
-    role: currentUser?.role || 'student',
-    board: currentUser?.board || notProvided,
-    year: currentUser?.year || notProvided,
-    collegeName: currentUser?.collegeName || notProvided,
-    hallTicketNumber: currentUser?.hallTicketNumber || notProvided,
-    studyMonthYear: currentUser?.studyMonthYear || notProvided,
-    fatherName: currentUser?.fatherName || notProvided,
-    fatherMobile: currentUser?.fatherMobile || notProvided,
-    relationship: currentUser?.relationship || 'Guardian',
+    email: profile?.email || notProvided,
+    mobile: profile?.mobile || profile?.mobileNumber || notProvided,
+    role: profile?.role || 'student',
+    board: profile?.board || notProvided,
+    year: profile?.year || notProvided,
+    collegeName: profile?.collegeName || notProvided,
+    hallTicketNumber: profile?.hallTicketNumber || notProvided,
+    studyMonthYear: profile?.studyMonthYear || notProvided,
+    fatherName: profile?.fatherName || notProvided,
+    fatherMobile: profile?.fatherMobile || notProvided,
+    relationship: profile?.relationship || 'Guardian',
     status: 'Active Student',
-    avatarUrl: currentUser?.avatarUrl || ''
+    avatarUrl: profile?.avatarUrl || ''
   };
 
   const handleOpenCourse = (course) => {
@@ -250,16 +260,6 @@ export default function ProfilePage({
                   <span>Book 1-on-1 Mentorship</span>
                 </button>
 
-                {/* Log Out */}
-                <button
-                  id="logout-button"
-                  onClick={() => setShowLogoutConfirm(true)}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 border border-rose-200 dark:border-rose-900/60 shadow-2xs hover:shadow-xs transition-all cursor-pointer hover:scale-[1.01] active:scale-95"
-                  title="Log Out of Account"
-                >
-                  <LogOut size={15} />
-                  <span>Log Out</span>
-                </button>
               </div>
 
             </div>
@@ -376,54 +376,6 @@ export default function ProfilePage({
               </div>
             </div>
 
-            {/* Intermediate Subjects Card */}
-            <div className="relative overflow-hidden rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-7 transition-all hover:shadow-md">
-              <div className="relative z-10 flex items-center justify-between pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <BookOpen size={18} />
-                  </div>
-                  <span>Intermediate Subjects</span>
-                </h2>
-              </div>
-
-              {/* First 6 published courses, in the order set in the admin panel */}
-              <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-                {courses.slice(0, 6).map((course, idx) => (
-                  <button
-                    key={course._id}
-                    onClick={() => handleOpenCourse(course)}
-                    className={`relative overflow-hidden h-36 sm:h-40 rounded-2xl border ${CARD_ACCENTS[idx % CARD_ACCENTS.length]} transition-all duration-300 text-left group cursor-pointer shadow-md hover:shadow-xl hover:-translate-y-1 text-white flex flex-col justify-between p-3.5`}
-                    style={{
-                      backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.40) 50%, rgba(15, 23, 42, 0.05) 100%), url('${courseImage(course.thumbnail, 480)}')`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  >
-                    {/* Top Bar with Icon & Arrow */}
-                    <div className="flex items-center justify-between w-full relative z-10">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-black/50 backdrop-blur-md text-white shadow-xs group-hover:scale-110 transition-transform border border-white/20">
-                        <BookOpen size={15} />
-                      </div>
-                      <div className="w-6 h-6 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 group-hover:bg-cyan-500 transition-colors">
-                        <ChevronRight size={13} className="text-white transition-all" />
-                      </div>
-                    </div>
-
-                    {/* Bottom Label with High Contrast Readability */}
-                    <div className="relative z-10 pt-2">
-                      <div className="text-sm sm:text-base font-extrabold text-white group-hover:text-cyan-200 transition-colors drop-shadow-md">
-                        {course.name}
-                      </div>
-                      <p className="text-[10.5px] text-slate-200 mt-0.5 leading-tight font-medium drop-shadow-sm">
-                        {courseTag(course)}
-                      </p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
           </div>
 
           {/* Right Column (5 cols): Account Management */}
@@ -476,14 +428,64 @@ export default function ProfilePage({
           </div>
         </div>
 
+        {/* What the student bought, and how far they got */}
+        {currentUser.role !== 'admin' && <MyCourses currentUser={currentUser} />}
+
         {/* ======================================================== */}
-        {/* STUDENT CURRICULUM VIDEO MASTERCLASSES & LECTURE VAULT   */}
+        {/* SUBJECTS                                                 */}
         {/* ======================================================== */}
-        <StudentVideoDashboard
-          studentBoard={studentData.board}
-          studentYear={studentData.year}
-          onOpenBooking={onOpenBooking}
-        />
+        {courses.length > 0 && (
+          <div
+            data-testid="profile-subjects"
+            className="rounded-3xl bg-white dark:bg-[#111827] border border-slate-200/90 dark:border-slate-800 shadow-sm p-6 sm:p-7"
+          >
+            <div className="flex items-center justify-between gap-3 pb-4 mb-5 border-b border-slate-100 dark:border-slate-800">
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                  <BookOpen size={18} />
+                </div>
+                <span>Subjects</span>
+              </h2>
+              <Link
+                to="/demo#courses"
+                className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-blue-600 dark:text-cyan-400 hover:underline"
+              >
+                <span>See all subjects</span>
+                <ArrowRight size={14} />
+              </Link>
+            </div>
+
+            {/* The first published courses, in the order set in the admin panel */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+              {courses.slice(0, SUBJECTS_SHOWN).map((course) => (
+                <button
+                  key={course._id}
+                  type="button"
+                  onClick={() => handleOpenCourse(course)}
+                  className="group relative h-32 sm:h-36 rounded-2xl overflow-hidden text-left text-white p-3.5 flex flex-col justify-end shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer"
+                  style={{
+                    backgroundImage: `linear-gradient(to top, rgba(15, 23, 42, 0.92) 0%, rgba(15, 23, 42, 0.40) 55%, rgba(15, 23, 42, 0.05) 100%), url('${courseImage(course.thumbnail, 480)}')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  <span className="text-sm sm:text-base font-extrabold leading-tight group-hover:text-cyan-200 transition-colors drop-shadow-md">
+                    {course.name}
+                  </span>
+                  <span className="text-[10.5px] text-slate-200 mt-0.5 font-medium drop-shadow-sm">{courseTag(course)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+          Something wrong or missing in your details?{' '}
+          <Link to="/contactus" className="font-semibold text-blue-600 dark:text-cyan-400 hover:underline">
+            Contact us
+          </Link>{' '}
+          and we will update them.
+        </p>
 
       </div>
 

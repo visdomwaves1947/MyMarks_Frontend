@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { loginUser, registerUser } from '../redux/thunks/authThunks';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { loginUser, loginWithGoogle, registerUser, registerWithGoogle } from '../redux/thunks/authThunks';
 import useDialog from '../hooks/useDialog';
 import LegalTermsModal from './LegalTermsModal';
+import GoogleSignInButton from './GoogleSignInButton';
 import {
   X,
   Lock,
@@ -29,6 +30,76 @@ import {
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+// After signing in: the welcome shows this long, then the sign-in page fades away over FADE_MS
+const WELCOME_MS = 1100;
+const FADE_MS = 450;
+
+const reducedMotion = () => {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+};
+
+// Where the student goes after signing in, in words
+const destinationOf = (from, isAdmin) => {
+  if (isAdmin) return 'Opening the admin panel';
+  if (!from || from === '/demo' || from === '/') return 'Taking you to Home';
+  if (from.startsWith('/checkout')) return 'Taking you back to checkout';
+  if (from.startsWith('/cart')) return 'Taking you back to your cart';
+  if (from.startsWith('/courses/')) return 'Taking you back to the course';
+  return 'Taking you back';
+};
+
+/**
+ * Shown over the sign-in page once signing in worked: a tick, a welcome by name and where the
+ * student is going, with a bar that fills while it waits.
+ */
+function SignedInWelcome({ welcome }) {
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setStarted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return (
+    <div
+      data-testid="auth-welcome"
+      role="status"
+      aria-live="polite"
+      className="fixed inset-0 z-40 flex items-center justify-center px-4 bg-white/70 dark:bg-slate-950/70 backdrop-blur-md animate-fadeIn"
+    >
+      <div
+        className={`w-full max-w-sm rounded-[28px] bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-900/60 shadow-2xl px-7 py-8 text-center transition-all duration-500 ease-out motion-reduce:transition-none ${
+          started ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-3 scale-95'
+        }`}
+      >
+        <span className="relative mx-auto mb-4 w-16 h-16 flex items-center justify-center">
+          <span className="absolute inset-0 rounded-full bg-emerald-400/30 animate-ping motion-reduce:animate-none" />
+          <span
+            className={`relative w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 transition-transform duration-500 ease-out ${
+              started ? 'scale-100' : 'scale-50'
+            }`}
+          >
+            <Check size={30} strokeWidth={3} />
+          </span>
+        </span>
+        <h2 className="text-xl font-black text-slate-950 dark:text-white">
+          {welcome.isNew ? 'Welcome' : 'Welcome back'}
+          {welcome.name ? `, ${welcome.name}` : ''}!
+        </h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{welcome.destination}...</p>
+        <div className="mt-5 h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-sky-500 to-emerald-500 ease-linear"
+            style={{ width: started ? '100%' : '0%', transition: `width ${WELCOME_MS}ms linear` }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const STEP_TITLES = [
   'Personal Details',
   'Select Board',
@@ -42,10 +113,50 @@ export default function AuthModal({
   initialMode = 'signin',
   currentUser = null,
   onLoginSuccess,
-  notice = ''
+  notice = '',
+  leaving = false, // the student is signed in and the page behind is ready: fade this away
+  onLeft,
 }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Signing in ends with a short welcome, then the sign-in page fades into the page behind it
+  const [welcome, setWelcome] = useState(null); // { name, isNew, destination }
+  const [fading, setFading] = useState(false);
+  const timers = useRef([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const later = (ms, run) => timers.current.push(setTimeout(run, ms));
+
+  const finishSignIn = (user, { isNew = false } = {}) => {
+    if (!user) return;
+    const isAdmin = user.role === 'admin';
+    setWelcome({
+      name: String(user.fullName || user.name || '').trim().split(/\s+/)[0],
+      isNew,
+      destination: destinationOf(location.state?.from, isAdmin),
+    });
+    const wait = reducedMotion() ? 250 : WELCOME_MS;
+    if (isAdmin) {
+      // The admin panel is a different screen: fade out first, then open it
+      later(wait, () => setFading(true));
+      later(wait + FADE_MS, () => onLoginSuccess?.(user));
+    } else {
+      // The page behind changes to the signed-in one, and this fades away to show it
+      later(wait, () => onLoginSuccess?.(user));
+    }
+  };
+
+  // Read through a ref: the parent passes a new function each time it draws, which must not restart the fade
+  const onLeftRef = useRef(onLeft);
+  useEffect(() => {
+    onLeftRef.current = onLeft;
+  });
+  useEffect(() => {
+    if (!leaving) return undefined;
+    const timer = setTimeout(() => onLeftRef.current?.(), reducedMotion() ? 0 : FADE_MS);
+    return () => clearTimeout(timer);
+  }, [leaving]);
   const { alert: showMessage } = useDialog();
   const [mode, setMode] = useState(initialMode); // 'signin' | 'signup' | 'portal'
   const [step, setStep] = useState(1);
@@ -100,6 +211,10 @@ export default function AuthModal({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // { signupToken, email } while a new student finishes signing up with Google
+  const [googleSignup, setGoogleSignup] = useState(null);
+  const [googleError, setGoogleError] = useState('');
+
   // Synchronize modal mode when initialMode changes or modal opens
   useEffect(() => {
     if (isOpen) {
@@ -110,6 +225,10 @@ export default function AuthModal({
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
+      setGoogleSignup(null);
+      setGoogleError('');
+      setWelcome(null);
+      setFading(false);
     }
     return () => {
       document.body.style.overflow = 'unset';
@@ -244,18 +363,20 @@ export default function AuthModal({
         }
       }
 
-      // Password validation
-      if (!formData.password) {
-        errors.password = 'Password is required';
-      } else if (formData.password.length < 6) {
-        errors.password = 'Password must be at least 6 characters';
-      }
+      // Password validation. A Google sign-up has no password.
+      if (!googleSignup) {
+        if (!formData.password) {
+          errors.password = 'Password is required';
+        } else if (formData.password.length < 6) {
+          errors.password = 'Password must be at least 6 characters';
+        }
 
-      // Confirm Password validation
-      if (!formData.confirmPassword) {
-        errors.confirmPassword = 'Please re-enter password';
-      } else if (formData.password !== formData.confirmPassword) {
-        errors.confirmPassword = 'Passwords do not match';
+        // Confirm Password validation
+        if (!formData.confirmPassword) {
+          errors.confirmPassword = 'Please re-enter password';
+        } else if (formData.password !== formData.confirmPassword) {
+          errors.confirmPassword = 'Passwords do not match';
+        }
       }
     }
 
@@ -329,17 +450,14 @@ export default function AuthModal({
             sessionStorage.setItem('mymarks_admin_auth', 'true');
             if (user.token) localStorage.setItem('mymarks_admin_token', user.token);
           } catch (e) {}
-          if (onClose) onClose();
           if (onLoginSuccess) {
-            onLoginSuccess(user);
+            finishSignIn(user);
           } else {
             navigate('/admin');
           }
           return;
         }
-        if (onLoginSuccess) {
-          onLoginSuccess(user);
-        }
+        finishSignIn(user);
       } else {
         const errorMsg = resultAction.payload || 'Invalid credentials. Please try again.';
         setSignInErrors({ server: errorMsg });
@@ -350,6 +468,76 @@ export default function AuthModal({
       triggerShake();
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Google gave the page a sign-in. A student with an account is signed in; a new one
+  // goes to the sign-up form with their Google name, email and photo filled in.
+  const handleGoogleCredential = async (credential) => {
+    setIsSubmitting(true);
+    setGoogleError('');
+    setSignInErrors({});
+    setSignUpSuccessMsg('');
+
+    try {
+      const resultAction = await dispatch(loginWithGoogle(credential));
+      if (!loginWithGoogle.fulfilled.match(resultAction)) {
+        setGoogleError(resultAction.payload || 'Google sign-in failed. Please try again.');
+        triggerShake();
+        return;
+      }
+
+      const result = resultAction.payload;
+      if (result.user) {
+        setGoogleSignup(null);
+        finishSignIn(result.user);
+        return;
+      }
+
+      setGoogleSignup({ signupToken: result.signupToken, email: result.profile.email });
+      setFormData((prev) => ({
+        ...prev,
+        fullName: prev.fullName || result.profile.fullName || '',
+        email: result.profile.email,
+        avatarUrl: prev.avatarUrl || result.profile.avatarUrl || '',
+        password: '',
+        confirmPassword: '',
+      }));
+      setFormErrors({});
+      navigate('/signup');
+      setMode('signup');
+      setStep(1);
+    } catch (err) {
+      setGoogleError(err.message || 'Google sign-in failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Back to the normal sign-up form, with its own email and password
+  const leaveGoogleSignup = () => {
+    setGoogleSignup(null);
+    setFormData((prev) => ({ ...prev, email: '' }));
+  };
+
+  // A Google sign-up sends the form without the password fields, and signs the student in at once
+  const submitGoogleSignUp = async () => {
+    const details = Object.fromEntries(
+      Object.entries(formData).filter(([field]) => !['password', 'confirmPassword', 'termsAccepted'].includes(field))
+    );
+    const resultAction = await dispatch(registerWithGoogle({ ...details, signupToken: googleSignup.signupToken }));
+    if (registerWithGoogle.fulfilled.match(resultAction)) {
+      try {
+        confetti({ particleCount: 120, spread: 85, origin: { y: 0.6 } });
+      } catch {
+        // Fallback
+      }
+      setGoogleSignup(null);
+      setStep(1);
+      finishSignIn(resultAction.payload, { isNew: true });
+    } else {
+      setFormErrors({ submit: resultAction.payload || 'Registration failed. Please check your details.' });
+      triggerShake();
     }
   };
 
@@ -365,6 +553,11 @@ export default function AuthModal({
     setFormErrors({});
 
     try {
+      if (googleSignup) {
+        await submitGoogleSignUp();
+        return;
+      }
+
       const resultAction = await dispatch(registerUser(formData));
       if (registerUser.fulfilled.match(resultAction)) {
         try {
@@ -398,8 +591,17 @@ export default function AuthModal({
     }
   };
 
+  // Only opacity fades this page: a transform on it would trap the fixed welcome layer inside it
   return (
-    <div className="fixed inset-0 z-50 min-h-screen w-screen overflow-y-auto bg-slate-50 dark:bg-slate-950 flex flex-col justify-between animate-fadeIn">
+    <div
+      data-testid="auth-page"
+      data-leaving={leaving || fading ? 'true' : undefined}
+      className={`fixed inset-0 z-50 min-h-screen w-screen overflow-y-auto bg-slate-50 dark:bg-slate-950 flex flex-col justify-between animate-fadeIn transition-opacity ease-out motion-reduce:transition-none ${
+        leaving || fading ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}
+      style={{ transitionDuration: `${FADE_MS}ms` }}
+    >
+      {welcome && <SignedInWelcome welcome={welcome} />}
       
       {/* Full Page Artistic Watercolor Background */}
       <div 
@@ -466,11 +668,13 @@ export default function AuthModal({
         </button>
       </header>
 
-      {/* Main Full Page Central Card */}
-      <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 my-auto py-3 sm:py-6 flex items-center justify-center">
+      {/* Main Full Page Central Card. It scales in once when it opens. A mistake only shakes the card:
+          putting the opening animation back after a shake played it again, and the card flickered. */}
+      <main className="relative z-10 w-full max-w-5xl mx-auto px-4 sm:px-6 my-auto py-3 sm:py-6 flex items-center justify-center animate-scaleUp">
         <div 
+          data-testid="auth-card"
           className={`w-full rounded-[36px] bg-white/90 dark:bg-[#1E1611]/85 backdrop-blur-2xl border border-amber-300/60 dark:border-amber-400/30 shadow-[0_30px_90px_-15px_rgba(15,23,42,0.18)] dark:shadow-[0_30px_90px_-15px_rgba(0,0,0,0.7)] overflow-hidden transition-all grid grid-cols-1 lg:grid-cols-12 ${
-            isShaking ? 'animate-shake' : 'animate-scaleUp'
+            isShaking ? 'animate-shake' : ''
           }`}
         >
           
@@ -650,6 +854,14 @@ export default function AuthModal({
                     )}
                   </button>
 
+                  {/* SIGN IN WITH GOOGLE, under the password form */}
+                  <GoogleSignInButton text="signin_with" onCredential={handleGoogleCredential} dividerLabel="or" />
+                  {googleError && (
+                    <p role="alert" className="text-center text-rose-600 dark:text-rose-400 text-[11px] font-semibold">
+                      {googleError}
+                    </p>
+                  )}
+
                   {/* Bottom Divider & Switcher */}
                   <div className="pt-3 border-t border-slate-200 dark:border-white/10 text-xs text-slate-600 dark:text-slate-300 font-medium flex items-center justify-between">
                     <span>
@@ -706,6 +918,28 @@ export default function AuthModal({
                 {step === 1 && (
                   <div className={direction === 'forward' ? 'animate-slideInRight' : 'animate-slideInLeft'}>
                     <div className="space-y-2 text-xs">
+
+                      {/* SIGN UP WITH GOOGLE */}
+                      {googleSignup ? (
+                        <div
+                          data-testid="google-signup-note"
+                          className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-200 text-[11px] font-semibold flex items-start justify-between gap-2"
+                        >
+                          <span className="flex items-start gap-1.5">
+                            <CheckCircle2 size={14} className="shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>
+                              Signed in with Google as {googleSignup.email}. Fill in the rest to create your account. No password is needed.
+                            </span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={leaveGoogleSignup}
+                            className="shrink-0 font-bold underline cursor-pointer text-emerald-700 dark:text-emerald-300"
+                          >
+                            Use another way
+                          </button>
+                        </div>
+                      ) : null}
                       
                       {/* Row 1: Profile Photo Avatar + Full Name * */}
                       <div className="flex items-center gap-3">
@@ -814,7 +1048,11 @@ export default function AuthModal({
                               placeholder="student@example.com"
                               value={formData.email}
                               onChange={(e) => handleInputChange('email', e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                              readOnly={Boolean(googleSignup)}
+                              title={googleSignup ? 'Verified by Google' : undefined}
+                              className={`w-full pl-8 pr-3 py-1.5 text-slate-900 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm ${
+                                googleSignup ? 'bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed' : 'bg-white dark:bg-slate-900/80'
+                              }`}
                             />
                           </div>
                           {formErrors.email && (
@@ -925,7 +1163,8 @@ export default function AuthModal({
                         )}
                       </div>
 
-                      {/* Row 6: Password * & Re-enter Password * in 2 columns */}
+                      {/* Row 6: Password * & Re-enter Password * in 2 columns. Not needed with Google. */}
+                      {!googleSignup && (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
                           <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
@@ -979,6 +1218,7 @@ export default function AuthModal({
                           )}
                         </div>
                       </div>
+                      )}
 
                       {/* Next Step Button */}
                       <div className="pt-1.5">
@@ -991,6 +1231,18 @@ export default function AuthModal({
                           <ChevronRight size={16} />
                         </button>
                       </div>
+
+                      {/* SIGN UP WITH GOOGLE, under the form */}
+                      {!googleSignup && (
+                        <div className="pt-1">
+                          <GoogleSignInButton text="signup_with" onCredential={handleGoogleCredential} dividerLabel="or" />
+                        </div>
+                      )}
+                      {googleError && (
+                        <p role="alert" className="text-center text-rose-600 dark:text-rose-400 text-[11px] font-semibold">
+                          {googleError}
+                        </p>
+                      )}
 
                       <div className="text-center text-[11px] text-slate-600 dark:text-slate-300 font-medium pt-1">
                         Already have an account?{' '}

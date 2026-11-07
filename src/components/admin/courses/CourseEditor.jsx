@@ -51,6 +51,7 @@ const BLANK_COURSE = {
   tagLabel: '',
   price: '',
   oldPrice: '',
+  sellOnline: true,
   mostBought: false,
   bestValue: false,
   ownLink: '',
@@ -317,6 +318,13 @@ export default function CourseEditor({
               <TextInput label="Price (₹)" required type="number" min="0" value={form.price} onChange={setField('price')} />
               <TextInput label="Old price (₹)" type="number" min="0" value={form.oldPrice} onChange={setField('oldPrice')} />
             </div>
+
+            <Toggle
+              label="Sell online"
+              hint="On: students buy this course online, and only its first free lessons play until they do. Off: every lesson is open to signed-in students. A course without a price is never sold."
+              checked={form.sellOnline !== false}
+              onChange={setField('sellOnline')}
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <TextInput

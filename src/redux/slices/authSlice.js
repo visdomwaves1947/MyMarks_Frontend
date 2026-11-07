@@ -1,5 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
-import { loginUser, registerUser } from '../thunks/authThunks';
+import { loginUser, loginWithGoogle, registerUser, registerWithGoogle } from '../thunks/authThunks';
 
 // Safely get user from localStorage on initial load
 const getUserFromStorage = () => {
@@ -60,6 +60,31 @@ const authSlice = createSlice({
         state.user = action.payload;
       })
       .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Google: signed in, or still finishing the sign-up form
+      .addCase(loginWithGoogle.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginWithGoogle.fulfilled, (state, action) => {
+        state.loading = false;
+        if (action.payload.user) state.user = action.payload.user;
+      })
+      .addCase(loginWithGoogle.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(registerWithGoogle.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerWithGoogle.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(registerWithGoogle.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

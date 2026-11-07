@@ -1,16 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import ImageField from './ImageField';
-import { Field, INPUT_STYLE, PANEL_STYLE, RepeatList, TextArea, TextInput, Toggle } from './fields';
+import { Field, LinesField, PANEL_STYLE, RepeatList, TextArea, TextInput, Toggle } from './fields';
 
 const THEME_COLORS = ['blue', 'indigo', 'purple', 'emerald', 'teal', 'amber', 'rose', 'orange', 'red'];
-
-const RESOURCE_KINDS = [
-  { value: 'video', label: 'Video' },
-  { value: 'notes', label: 'Notes' },
-  { value: 'quiz', label: 'Quiz' },
-  { value: 'tag', label: 'Tag' },
-];
 
 function Group({ title, sectionKey, sections, setSections, children }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,19 +31,6 @@ function Group({ title, sectionKey, sections, setSections, children }) {
       </div>
       {isOpen && <div className="px-4 pb-4 space-y-3 border-t border-slate-100 dark:border-slate-800/70 pt-3">{children}</div>}
     </div>
-  );
-}
-
-// One item per line, because topic names can contain commas
-function LinesField({ label, value, onChange }) {
-  return (
-    <TextArea
-      label={label}
-      hint="One per line."
-      rows={4}
-      value={(value || []).join('\n')}
-      onChange={(text) => onChange(text.split('\n'))}
-    />
   );
 }
 
@@ -192,90 +172,11 @@ export default function CoursePageStep({ form, update }) {
         </Field>
       </Group>
 
-      <Group title="Roadmaps" sectionKey="roadmaps" {...groupProps}>
-        <TextInput label="Heading" {...partField('roadmaps', 'heading')} />
-        <TextArea label="Subheading" rows={2} {...partField('roadmaps', 'subheading')} />
-        <RepeatList
-          items={page.roadmaps?.items}
-          onChange={(items) => setPart('roadmaps', { items })}
-          blank={{ key: '', level: '', expectedScore: '', title: '', desc: '', duration: 1, stats: {}, planSteps: [] }}
-          addLabel="Add Roadmap"
-          itemTitle={(item) => item.title}
-          renderItem={(item, change) => (
-            <div className="space-y-2">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <TextInput label="Title" value={item.title} onChange={(title) => change({ title })} />
-                <TextInput label="Level" value={item.level} onChange={(level) => change({ level })} />
-                <TextInput label="Expected score" value={item.expectedScore} onChange={(expectedScore) => change({ expectedScore })} />
-              </div>
-              <TextArea label="Description" rows={2} value={item.desc} onChange={(desc) => change({ desc })} />
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                <TextInput label="Days" type="number" min="1" value={item.duration} onChange={(duration) => change({ duration })} />
-                {[
-                  ['modules', 'Modules'],
-                  ['tests', 'Tests'],
-                  ['notes', 'Notes'],
-                  ['videos', 'Videos'],
-                ].map(([key, label]) => (
-                  <TextInput
-                    key={key}
-                    label={label}
-                    type="number"
-                    min="0"
-                    value={item.stats?.[key]}
-                    onChange={(value) => change({ stats: { ...(item.stats || {}), [key]: value } })}
-                  />
-                ))}
-              </div>
-              <Field
-                label="Plan steps"
-                hint="The Select Roadmap button appears only when this roadmap has at least one step."
-              >
-                <RepeatList
-                  items={item.planSteps}
-                  onChange={(planSteps) => change({ planSteps })}
-                  blank={{ time: '', title: '', desc: '', resources: [] }}
-                  addLabel="Add Step"
-                  itemTitle={(step) => step.title}
-                  renderItem={(planStep, changeStep) => (
-                    <div className="space-y-2">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        <TextInput label="Time" value={planStep.time} onChange={(time) => changeStep({ time })} placeholder="e.g. 00-15 MINUTES" />
-                        <TextInput label="Title" value={planStep.title} onChange={(title) => changeStep({ title })} />
-                      </div>
-                      <TextArea label="Description" rows={2} value={planStep.desc} onChange={(desc) => changeStep({ desc })} />
-                      <RepeatList
-                        items={planStep.resources}
-                        onChange={(resources) => changeStep({ resources })}
-                        blank={{ kind: 'video', text: '' }}
-                        addLabel="Add Resource"
-                        itemTitle={(resource) => resource.text}
-                        renderItem={(resource, changeResource) => (
-                          <div className="grid grid-cols-3 gap-2">
-                            <Field label="Kind">
-                              <select
-                                value={resource.kind}
-                                onChange={(event) => changeResource({ kind: event.target.value })}
-                                className={INPUT_STYLE}
-                              >
-                                {RESOURCE_KINDS.map((kind) => (
-                                  <option key={kind.value} value={kind.value}>{kind.label}</option>
-                                ))}
-                              </select>
-                            </Field>
-                            <div className="col-span-2">
-                              <TextInput label="Text" value={resource.text} onChange={(text) => changeResource({ text })} />
-                            </div>
-                          </div>
-                        )}
-                      />
-                    </div>
-                  )}
-                />
-              </Field>
-            </div>
-          )}
-        />
+      <Group title="Roadmaps" {...groupProps}>
+        <p className="text-xs text-slate-600 dark:text-slate-300">
+          Roadmaps have their own page now. Open Study Roadmaps in the admin menu to add 1, 5, 10 or 30 day plans for this
+          course, set their heading, and show or hide them.
+        </p>
       </Group>
 
       <Group title="Guarantee" sectionKey="guarantee" {...groupProps}>

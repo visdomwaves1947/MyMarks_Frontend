@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowRight, Award, CheckCircle2, ChevronDown, HelpCircle, ShieldCheck, Star } from 'lucide-react';
 import { courseImage, showDefaultImage } from '../../utils/courseImage';
+import { hasPlan } from './roadmapPlan';
 
 export function CourseWhyChoose({ data }) {
   if (!data?.items?.length) return null;
@@ -45,7 +46,7 @@ export function CourseWhyChoose({ data }) {
   );
 }
 
-export function CourseRoadmaps({ data, course, theme, onSelectRoadmap }) {
+export function CourseRoadmaps({ data, theme, onSelectRoadmap }) {
   if (!data?.items?.length) return null;
 
   return (
@@ -91,9 +92,9 @@ export function CourseRoadmaps({ data, course, theme, onSelectRoadmap }) {
                 ))}
               </div>
 
-              {plan.planSteps?.length > 0 && (
+              {hasPlan(plan) && (
                 <button
-                  onClick={() => onSelectRoadmap({ ...plan, steps: plan.planSteps, courseName: course.name })}
+                  onClick={() => onSelectRoadmap(plan)}
                   className={`w-full py-3 rounded-xl ${theme.solid} font-bold text-sm transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm`}
                 >
                   <span>Select Roadmap</span>

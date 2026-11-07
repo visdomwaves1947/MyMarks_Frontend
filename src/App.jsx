@@ -5,6 +5,10 @@ import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
 import VideoDemoModal from './components/VideoDemoModal';
 import AuthModal from './components/AuthModal';
+import MyCoursesPage from './pages/MyCoursesPage';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import LikedCoursesPage from './pages/LikedCoursesPage';
 import ExamPlannerModal from './components/exam-planner/ExamPlannerModal';
 import MathsPage from './pages/MathsPage';
 import DemoPage from './pages/DemoPage';
@@ -89,6 +93,9 @@ export default function App() {
     }
   });
 
+  // After signing in, the sign-in page stays a moment to fade into the page it opened
+  const [authLeaving, setAuthLeaving] = useState(false);
+
   const handleLoginSuccess = (user) => {
     setAuthNotice('');
     setCurrentUser(user);
@@ -113,6 +120,7 @@ export default function App() {
     }
 
     const from = location.state?.from || '/demo';
+    setAuthLeaving(true);
     navigate(from === '/admin' ? '/portal' : from);
   };
 
@@ -147,11 +155,11 @@ export default function App() {
       navigate('/admin');
       return;
     }
-    navigate(currentUser ? '/portal' : '/signin', { state: { from: location.pathname !== '/signin' && location.pathname !== '/signup' && location.pathname !== '/portal' ? location.pathname : (location.state?.from || '/demo') } });
+    navigate(currentUser ? '/portal' : '/signin', { state: { from: location.pathname !== '/signin' && location.pathname !== '/signup' && location.pathname !== '/portal' ? location.pathname + location.search : (location.state?.from || '/demo') } });
   };
 
   const handleOpenSignUp = () => {
-    navigate('/signup', { state: { from: location.pathname !== '/signin' && location.pathname !== '/signup' && location.pathname !== '/portal' ? location.pathname : (location.state?.from || '/demo') } });
+    navigate('/signup', { state: { from: location.pathname !== '/signin' && location.pathname !== '/signup' && location.pathname !== '/portal' ? location.pathname + location.search : (location.state?.from || '/demo') } });
   };
   
   const handleCloseAuth = () => {
@@ -239,7 +247,7 @@ export default function App() {
   // Dedicated Full-Screen Administrator Workspace
   if (isAdminRoute) {
     return (
-      <div className={`h-screen w-full max-w-full flex flex-col font-sans transition-colors duration-200 overflow-hidden overflow-x-hidden ${theme === 'dark' ? 'bg-[#070B14] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
+      <div className={`h-screen w-full max-w-full flex flex-col font-sans transition-colors duration-200 overflow-hidden overflow-x-hidden animate-fadeIn ${theme === 'dark' ? 'bg-[#070B14] text-slate-100' : 'bg-slate-100 text-slate-900'}`}>
         <ScrollToTop />
         <Routes>
           <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onSessionExpired={handleAdminSessionExpired} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />
@@ -271,6 +279,7 @@ export default function App() {
         theme={theme}
         toggleTheme={toggleTheme}
         onLockSite={handleLockSite}
+        onLogout={handleLogout}
       />
 
       {/* Routed Main Content */}
@@ -280,10 +289,9 @@ export default function App() {
           <Route 
             path="/courses/:slug" 
             element={
-              <CoursePage 
+              <CoursePage
                 currentUser={currentUser}
                 onOpenBooking={handleOpenBooking}
-                onSelectRoadmap={handleSelectRoadmap}
                 onOpenSignIn={handleOpenSignIn}
               />
             } 
@@ -859,6 +867,13 @@ export default function App() {
               />
             } 
           />
+          <Route path="/my-courses" element={<MyCoursesPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} />} />
+          <Route path="/cart" element={<CartPage currentUser={currentUser} />} />
+          <Route path="/liked" element={<LikedCoursesPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} />} />
+          <Route
+            path="/checkout"
+            element={<CheckoutPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} onOpenSignUp={handleOpenSignUp} />}
+          />
           <Route path="/Profile" element={<Navigate to="/profile" replace />} />
           <Route path="/portal" element={<Navigate to="/profile" replace />} />
           <Route path="/Portal" element={<Navigate to="/profile" replace />} />
@@ -931,15 +946,19 @@ export default function App() {
         onClose={() => setBookingOpen(false)}
         preselectedTrack={selectedTrack}
         course={bookingCourse}
+        currentUser={currentUser}
+        onOpenSignIn={handleOpenSignIn}
       />
 
-      <AuthModal 
-        isOpen={isAuthRoute} 
+      <AuthModal
+        isOpen={isAuthRoute || authLeaving}
         onClose={handleCloseAuth}
         initialMode={authMode}
         currentUser={currentUser}
         onLoginSuccess={handleLoginSuccess}
         notice={authNotice}
+        leaving={authLeaving && !isAuthRoute}
+        onLeft={() => setAuthLeaving(false)}
       />
 
       <VideoDemoModal 

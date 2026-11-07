@@ -240,6 +240,7 @@ export default function CoursesTab({ showToast, onChanged, openRequest = null })
                   <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                     {(course.streams || []).map((stream) => stream.code).join(' / ') || 'No stream'}
                     {course.price !== null && course.price !== undefined ? ` • ₹${course.price}` : ' • No price'}
+                    {course.sellOnline !== false && course.price > 0 ? ' • Sold online' : ' • Free to watch'}
                     {course.ownLink ? ' • Own link' : ''}
                   </p>
                   <CourseFlags course={course} className="mt-1" />

@@ -1,4 +1,4 @@
-import { adminFetch, getAdminToken, resilientFetch } from './api';
+import { adminFetch, getAdminToken, getStudentToken, resilientFetch } from './api';
 
 const readJson = async (res, fallbackMessage) => {
   const data = await res.json().catch(() => ({}));
@@ -28,11 +28,12 @@ export async function fetchPublicStreams() {
 }
 
 /**
- * One full course page. The admin token opens drafts for preview.
+ * One full course page. The admin token opens drafts for preview, and a student's token
+ * opens the lessons of a course they have bought.
  * Returns null when the course does not exist or is not published.
  */
 export async function fetchCoursePage(slug) {
-  const token = getAdminToken();
+  const token = getAdminToken() || getStudentToken();
   const res = await resilientFetch(`/api/courses/${encodeURIComponent(slug)}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -114,6 +115,25 @@ export async function importAdminCurriculum(id, file, { preview, mode }) {
   return readJson(
     await adminFetch(`/api/admin/courses/${id}/curriculum/import?${query}`, { method: 'POST', body: form }),
     'Could not import this file'
+  );
+}
+
+// ── Admin: study roadmaps ────────────────────────────────────────
+
+// Every course, with how many roadmaps it has and how many have a plan
+export async function fetchAdminRoadmapCourses() {
+  const data = await readJson(await adminFetch('/api/admin/roadmaps'), 'Could not load the roadmaps');
+  return data.courses;
+}
+
+export async function fetchAdminRoadmaps(courseId) {
+  return readJson(await adminFetch(`/api/admin/courses/${courseId}/roadmaps`), 'Could not load these roadmaps');
+}
+
+export async function saveAdminRoadmaps(courseId, roadmaps) {
+  return readJson(
+    await sendJson(`/api/admin/courses/${courseId}/roadmaps`, 'PUT', roadmaps),
+    'Could not save the roadmaps'
   );
 }
 

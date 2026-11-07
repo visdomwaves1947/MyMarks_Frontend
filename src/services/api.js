@@ -1,7 +1,7 @@
 import { courses as fallbackCourses } from '../data/coursesData';
 import { quickMathChallenges as fallbackChallenges } from '../data/quizData';
 
-export const LOCAL_API_URL = 'http://localhost:5000';
+export const LOCAL_API_URL = 'http://localhost:5001';
 export const CLOUD_API_URL = 'https://mymarks-backend-six.vercel.app';
 
 // Dynamic cache of working API URL
@@ -86,6 +86,15 @@ export async function resilientFetch(path, options = {}) {
 export const getAdminToken = () => {
   try {
     return localStorage.getItem('mymarks_admin_token') || sessionStorage.getItem('mymarks_admin_token');
+  } catch {
+    return null;
+  }
+};
+
+// The signed-in student's token, saved with their details when they sign in
+export const getStudentToken = () => {
+  try {
+    return JSON.parse(localStorage.getItem('mla_user') || 'null')?.token || null;
   } catch {
     return null;
   }
@@ -268,6 +277,53 @@ export async function registerUserApi(userData) {
   } catch (err) {
     throw err;
   }
+}
+
+const postAuthJson = async (path, body, fallbackMessage) => {
+  const res = await resilientFetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success) {
+    throw new Error(data.message || fallbackMessage);
+  }
+  return data;
+};
+
+/**
+ * The signed-in student's latest details, as stored on the server
+ */
+export async function fetchMyProfileApi(token) {
+  const res = await resilientFetch('/api/auth/profile', { headers: { Authorization: `Bearer ${token}` } });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.success) throw new Error(data.message || 'Could not load your profile');
+  return data.user;
+}
+
+/**
+ * Whether "Sign in with Google" is set up, and the public client id the button needs
+ */
+export async function fetchGoogleSignInConfig() {
+  const res = await resilientFetch('/api/auth/google/config');
+  const data = await res.json().catch(() => ({}));
+  return { enabled: Boolean(res.ok && data.enabled && data.clientId), clientId: data.clientId || '' };
+}
+
+/**
+ * Sign in with the token from the Google button. A student without an account gets
+ * { needsSignUp, signupToken, profile } back instead of a sign-in.
+ */
+export async function googleSignInApi(credential) {
+  return postAuthJson('/api/auth/google', { credential }, 'Google sign-in failed');
+}
+
+/**
+ * Finish a Google sign-up with the sign-up form. The email comes from Google.
+ */
+export async function googleRegisterApi(userData) {
+  return postAuthJson('/api/auth/google/register', userData, 'Registration failed');
 }
 
 /**
