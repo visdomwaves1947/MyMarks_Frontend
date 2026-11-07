@@ -1,5 +1,14 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, courseCard, expectNoSideScroll, goToHome, openAsAdmin, openAsStudent, openAsVisitor } from './helpers';
+import {
+  API_URL,
+  courseCard,
+  expectNoSideScroll,
+  getAdminToken,
+  goToHome,
+  openAsAdmin,
+  openAsStudent,
+  openAsVisitor,
+} from './helpers';
 
 test.beforeEach(async ({ page }) => {
   await openAsVisitor(page);
@@ -92,7 +101,9 @@ test('a subject with modules but no lessons opens on its modules', async ({ page
 });
 
 test('a YouTube live link plays as a lesson', async ({ request }) => {
-  const res = await request.get(`${API_URL}/api/courses/history`);
+  const res = await request.get(`${API_URL}/api/courses/history`, {
+    headers: { Authorization: `Bearer ${await getAdminToken(request)}` },
+  });
   const { curriculum } = await res.json();
   const lessons = curriculum.chapters.flatMap((chapter) => chapter.topics).map((topic) => topic.lesson?.youtubeId);
   expect(lessons).toContain('XF_dbbzXCOA');
@@ -138,6 +149,45 @@ test('the enrollment form opens with the course from the card', async ({ page })
   await courseCard(page, 'Chemistry').getByRole('button', { name: 'Enroll' }).click();
   await expect(page.getByText('Enroll in Chemistry Course & Doubt Portal')).toBeVisible();
   await expect(page.getByTestId('enrollment-price')).toHaveText('₹299');
+});
+
+test('the enrollment form fills in a signed-in student\'s details, and stays empty for a visitor', async ({ page, request, browser, isMobile }) => {
+  // Two browsers each open the home page and wait for it to scroll, which takes a while
+  test.setTimeout(90000);
+  const name = (target) => target.getByPlaceholder('e.g. Rahul Sharma');
+  // On phones the form sits behind its own tab
+  const openForm = async (target) => {
+    if (isMobile) await target.getByRole('button', { name: /^Enrollment Form/ }).click();
+  };
+  const grade = (target) => target.locator('select').filter({ has: target.locator('option', { hasText: 'Junior Inter' }) });
+
+  await goToHome(page);
+  await courseCard(page, 'Chemistry').getByRole('button', { name: 'Enroll' }).click();
+  await openForm(page);
+  await expect(name(page)).toHaveValue('');
+  await expect(page.getByPlaceholder('parent@example.com')).toHaveValue('');
+  await expect(page.getByTestId('booking-filled')).toHaveCount(0);
+
+  const context = await browser.newContext(isMobile ? { viewport: { width: 412, height: 839 } } : {});
+  const student = await context.newPage();
+  await openAsStudent(student, request);
+  await goToHome(student);
+  await courseCard(student, 'Chemistry').getByRole('button', { name: 'Enroll' }).click();
+  await openForm(student);
+  await expect(student.getByTestId('booking-filled')).toBeVisible();
+  await expect(name(student)).toHaveValue('E2E Student');
+  await expect(student.getByPlaceholder('parent@example.com')).toHaveValue(process.env.E2E_STUDENT_EMAIL);
+  await expect(student.getByPlaceholder('10-digit mobile number')).toHaveValue('9000000001');
+  await expect(grade(student)).toHaveValue('Intermediate 1st Year (Junior Inter)');
+
+  // What the student changes is kept when the form opens again
+  await name(student).fill('Ravi Kumar');
+  await student.getByRole('button', { name: 'Close dialog' }).first().click();
+  await courseCard(student, 'Physics').getByRole('button', { name: 'Enroll' }).click();
+  await openForm(student);
+  await expect(name(student)).toHaveValue('Ravi Kumar');
+  await expect(student.getByPlaceholder('10-digit mobile number')).toHaveValue('9000000001');
+  await context.close();
 });
 
 test('a course page sets its title and description', async ({ page }) => {
@@ -251,7 +301,8 @@ test('a signed-in student plays a free lesson', async ({ page, request, browser,
 test('the lecture player lists the subtopics of the opened topic', async ({ request, browser, isMobile }) => {
   const context = await browser.newContext(isMobile ? { viewport: { width: 412, height: 839 } } : {});
   const studentPage = await context.newPage();
-  await openAsStudent(studentPage, request);
+  // Maths is sold online, so most of its lessons are locked for students; the admin sees them all
+  await openAsAdmin(studentPage, request);
 
   await studentPage.goto('/courses/maths');
   await studentPage.getByTestId('course-topic').filter({ hasText: 'Interactive Syllabus' }).first()
@@ -345,6 +396,24 @@ const lowestCardOpacity = (page) =>
     return lowest;
   });
 
+test('signing in with a password shows a welcome, then fades back into the page it came from', async ({ page }) => {
+  await page.goto('/courses/physics');
+  await page.getByRole('button', { name: 'Sign In / Sign Up' }).first().click();
+  await expect(page).toHaveURL(/\/signin/);
+  await page.getByPlaceholder('Enter 10-digit mobile or email address').fill(process.env.E2E_STUDENT_EMAIL);
+  await page.getByPlaceholder('Enter password (min 6 characters)').fill(process.env.E2E_STUDENT_PASSWORD);
+  await page.getByRole('button', { name: /continue with password/i }).click();
+
+  const welcome = page.getByTestId('auth-welcome');
+  await expect(welcome).toContainText('Welcome back, E2E!');
+  await expect(welcome).toContainText('Taking you back to the course');
+  // The course page comes back behind it, signed in, as the sign-in page fades away
+  await expect(page).toHaveURL(/\/courses\/physics$/);
+  await expect(page.getByTestId('auth-page')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Account menu' })).toBeVisible();
+  await expectNoSideScroll(page);
+});
+
 test('a wrong sign-in or an incomplete sign-up shakes the card without it closing and opening again', async ({ page }) => {
   await page.goto('/signin');
   const card = page.getByTestId('auth-card');
@@ -390,6 +459,69 @@ test("the administrator's avatar opens a menu with their profile and the admin p
   await page.getByRole('button', { name: 'Account menu' }).click();
   await page.getByRole('menu', { name: 'Account' }).getByRole('menuitem', { name: 'Admin Panel' }).click();
   await expect(page).toHaveURL(/\/admin/);
+});
+
+test('in the admin panel the avatar opens View Profile, View Website and Sign Out, like on the website', async ({ page, request, isMobile }) => {
+  await openAsAdmin(page, request);
+  await page.goto('/admin');
+
+  const avatar = page.getByRole('button', { name: 'Account menu' });
+  await avatar.click();
+  const menu = page.getByRole('menu', { name: 'Account' });
+  await expect(menu).toContainText('MyMarks Administrator');
+  await expect(menu.getByRole('menuitem')).toHaveText(['View Profile', 'View Website', 'Sign Out']);
+  // The whole menu shows, below the avatar and inside the screen
+  const box = await menu.boundingBox();
+  const avatarBox = await avatar.boundingBox();
+  const width = page.viewportSize().width;
+  expect(box.y).toBeGreaterThan(avatarBox.y + avatarBox.height - 1);
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(width);
+
+  // Escape and a click outside close it
+  await page.keyboard.press('Escape');
+  await expect(menu).toHaveCount(0);
+  await avatar.click();
+  await expect(menu).toBeVisible();
+  await page.mouse.click(5, page.viewportSize().height - 5);
+  await expect(menu).toHaveCount(0);
+
+  // View Profile opens the same profile page students see
+  await avatar.click();
+  await menu.getByRole('menuitem', { name: 'View Profile' }).click();
+  await expect(page).toHaveURL(/\/profile/);
+  await expect(page.getByRole('heading', { name: 'MyMarks Administrator' })).toBeVisible();
+
+  await page.goto('/admin');
+  await avatar.click();
+  await menu.getByRole('menuitem', { name: 'View Website' }).click();
+  await expect(page).toHaveURL(/\/demo/);
+
+  // On a phone the profile row in the menu drawer opens the profile too
+  if (isMobile) {
+    await page.goto('/admin');
+    await page.getByRole('button', { name: 'Open Navigation Menu' }).click();
+    await page.getByRole('button', { name: /View Profile/ }).click();
+    await expect(page).toHaveURL(/\/profile/);
+    await page.goto('/admin');
+  }
+
+  await page.goto('/admin');
+  await avatar.click();
+  await menu.getByRole('menuitem', { name: 'Sign Out' }).click();
+  await expect(page).not.toHaveURL(/\/admin/);
+});
+
+test('Get Started signs a visitor up, and takes a signed-in student on to the subjects', async ({ page, request }) => {
+  await page.goto('/demo');
+  await page.getByTestId('how-to-use-start').click();
+  await expect(page).toHaveURL(/\/signup/);
+
+  await openAsStudent(page, request);
+  await page.goto('/demo');
+  await page.getByTestId('how-to-use-start').click();
+  await expect(page.locator('#courses')).toBeInViewport();
+  await expect(page).toHaveURL(/\/demo/);
 });
 
 test('the admin course list works on this screen size', async ({ page, request }) => {

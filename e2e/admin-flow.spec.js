@@ -198,7 +198,8 @@ test.describe.serial('admin manages a course from start to finish', () => {
     await visitor.goto('/courses/robotics');
     await expect(visitor.getByTestId('course-price')).toContainText('₹449');
 
-    await visitor.getByRole('button', { name: 'Enroll Now' }).first().click();
+    await expect(visitor.getByRole('button', { name: 'Buy Now' }).first()).toBeVisible();
+    await visitor.getByRole('button', { name: 'Book 1-on-1 Doubt Session' }).click();
     await expect(visitor.getByTestId('enrollment-price')).toHaveText('₹449');
   });
 
@@ -307,7 +308,8 @@ test.describe.serial('admin manages a course from start to finish', () => {
 
     const visitor = await newVisitorPage(page);
     await visitor.goto('/courses/robotics');
-    await visitor.getByRole('button', { name: 'Enroll Now' }).first().click();
+    // Robotics has a price, so it is sold online: the enrollment form opens from the 1-on-1 button
+    await visitor.getByRole('button', { name: 'Book 1-on-1 Doubt Session' }).click();
 
     await visitor.getByPlaceholder('e.g. Rahul Sharma').fill('Test Student');
     await visitor.getByPlaceholder('parent@example.com').fill('parent@mymarks.test');

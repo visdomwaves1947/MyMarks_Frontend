@@ -1,10 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Eye, RefreshCw } from 'lucide-react';
 import { fetchCoursePage } from '../services/courseApi';
 import useDocumentMeta from '../hooks/useDocumentMeta';
-import useCourseCheckout from '../hooks/useCourseCheckout';
+import { COURSE_BOUGHT } from '../hooks/useCourseCheckout';
+import useDialog from '../hooks/useDialog';
 import useCourseProgress from '../hooks/useCourseProgress';
+import useCart, { addToCart } from '../hooks/useCart';
+import useLikes from '../hooks/useLikes';
+import { boughtIds } from '../utils/purchaseEvents';
 import { getCourseTheme } from '../components/course/courseTheme';
 import { isOutsideLink } from '../utils/courseImage';
 import CourseHero from '../components/course/CourseHero';
@@ -36,6 +40,9 @@ function CourseMessage({ title, text, children }) {
 export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn }) {
   const { slug } = useParams();
   const { hash } = useLocation();
+  const navigate = useNavigate();
+  const cart = useCart();
+  const likes = useLikes(currentUser);
   const [state, setState] = useState({ status: 'loading', data: null });
   const [openPlan, setOpenPlan] = useState(null);
 
@@ -71,16 +78,48 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
 
   const course = state.data?.course;
   const access = state.data?.access || {};
+
+  // Bought somewhere else on the site, such as the enrollment form: open the lessons here too
+  const courseId = course?._id;
+  useEffect(() => {
+    const onBoughtElsewhere = (event) => {
+      if (boughtIds(event).includes(courseId)) load({ quiet: true });
+    };
+    window.addEventListener(COURSE_BOUGHT, onBoughtElsewhere);
+    return () => window.removeEventListener(COURSE_BOUGHT, onBoughtElsewhere);
+  }, [courseId, load]);
   const isSignedIn = Boolean(currentUser);
   const isStudent = isSignedIn && currentUser.role !== 'admin';
-  const tracking = useCourseProgress(course?._id, isStudent && access.canWatch !== false && state.status === 'ready');
-  const { buy, buying } = useCourseCheckout({
-    course: course || {},
-    access,
-    isSignedIn,
-    onOpenSignIn,
-    onBought: () => load({ quiet: true }),
-  });
+  const tracking = useCourseProgress(course?._id, isStudent && state.status === 'ready');
+  const { confirm } = useDialog();
+  // Buy Now opens the checkout with only this course; signing in and paying happen there
+  const buy = () => navigate(`/checkout?course=${encodeURIComponent(course?.slug || slug)}`);
+  const buying = false;
+  const addCourseToCart = async () => {
+    if (!addToCart(course)) return;
+    const goToCart = await confirm({
+      title: 'Added to cart',
+      message: `${course.name} is in your cart. Add more courses, then pay for them together.`,
+      confirmLabel: 'Go to Cart',
+      cancelLabel: 'Keep Browsing',
+      tone: 'success',
+    });
+    if (goToCart) navigate('/cart');
+  };
+  // Add to Cart sits next to Buy Now, for anyone but an administrator (who sees every lesson)
+  const cartButton =
+    course && access.forSale && !access.owned && currentUser?.role !== 'admin'
+      ? { inCart: cart.has(course._id), isFull: cart.isFull, onAdd: addCourseToCart, onOpen: () => navigate('/cart') }
+      : null;
+  // The heart, for a course not bought yet: a visitor signs in first; administrators have no likes
+  const likeButton =
+    course && !access.owned && currentUser?.role !== 'admin'
+      ? {
+          liked: likes.isLiked(course._id),
+          onToggle: () =>
+            currentUser ? likes.toggle(course).catch((problem) => problem.status === 401 && onOpenSignIn()) : onOpenSignIn(),
+        }
+      : null;
 
   useDocumentMeta({
     title: course ? course.seoTitle || `${course.name} | MyMarks` : '',
@@ -153,6 +192,8 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           access={access}
           onBuy={buy}
           buying={buying}
+          cart={cartButton}
+          like={likeButton}
           onEnroll={enroll}
           onExplore={() => document.getElementById('course-curriculum')?.scrollIntoView({ behavior: 'smooth' })}
         />
@@ -179,6 +220,7 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           access={access}
           onBuy={buy}
           buying={buying}
+          cart={cartButton}
           tracking={tracking}
         />
       )}

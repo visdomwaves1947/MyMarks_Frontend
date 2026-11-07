@@ -11,11 +11,13 @@ const ENDED = 0;
  * every few seconds; if it cannot load, the video still plays and only the time is not saved.
  * Nothing is saved until the video has played, so opening and closing a lesson keeps the old place.
  */
-export function YouTubeLesson({ youtubeId, title, startAt, report }) {
+export function YouTubeLesson({ youtubeId, title, startAt, report, onEnded }) {
   const frame = useRef(null);
   const reportRef = useRef(report);
+  const endedRef = useRef(onEnded);
   useEffect(() => {
     reportRef.current = report;
+    endedRef.current = onEnded;
   });
 
   useEffect(() => {
@@ -41,8 +43,10 @@ export function YouTubeLesson({ youtubeId, title, startAt, report }) {
           events: {
             onStateChange: (event) => {
               if (event.data === PLAYING || event.data === PAUSED || event.data === ENDED) played = true;
-              if (event.data === ENDED) send({ ended: true });
-              else if (event.data === PAUSED) send({ now: true });
+              if (event.data === ENDED) {
+                send({ ended: true });
+                endedRef.current?.();
+              } else if (event.data === PAUSED) send({ now: true });
             },
           },
         });
@@ -75,7 +79,7 @@ export function YouTubeLesson({ youtubeId, title, startAt, report }) {
 }
 
 // An uploaded video lesson that starts where the student stopped, saving only once it has played
-export function VideoLesson({ url, startAt, report }) {
+export function VideoLesson({ url, startAt, report, onEnded }) {
   const video = useRef(null);
   const played = useRef(false);
   const reportRef = useRef(report);
@@ -109,7 +113,10 @@ export function VideoLesson({ url, startAt, report }) {
       }}
       onTimeUpdate={() => send()}
       onPause={() => send({ now: true })}
-      onEnded={() => send({ ended: true })}
+      onEnded={() => {
+        send({ ended: true });
+        onEnded?.();
+      }}
       className="absolute inset-0 w-full h-full object-contain bg-black"
     />
   );

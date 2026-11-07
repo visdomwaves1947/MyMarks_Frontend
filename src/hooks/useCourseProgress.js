@@ -33,7 +33,15 @@ export default function useCourseProgress(courseId, enabled) {
         const before = lessons[lessonKey] || {};
         return {
           courseId,
-          lessons: { ...lessons, [lessonKey]: { ...before, ...values, completed: Boolean(before.completed || values.completed) } },
+          lessons: {
+            ...lessons,
+            [lessonKey]: {
+              ...before,
+              ...values,
+              completed: Boolean(before.completed || values.completed),
+              updatedAt: new Date().toISOString(),
+            },
+          },
           last: lessonKey,
         };
       });
@@ -41,6 +49,7 @@ export default function useCourseProgress(courseId, enabled) {
     [courseId]
   );
 
-  const progress = isOn && saved.courseId === courseId ? { lessons: saved.lessons, last: saved.last } : EMPTY;
-  return { progress, update, enabled: isOn };
+  const ready = !isOn || saved.courseId === courseId;
+  const progress = isOn && ready ? { lessons: saved.lessons, last: saved.last } : EMPTY;
+  return { progress, update, enabled: isOn, ready };
 }

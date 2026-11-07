@@ -72,8 +72,10 @@ test('a new student signs up with Google, fills in the rest of the form, and is 
   await page.locator('input[type="checkbox"]').check();
   await page.getByRole('button', { name: /Complete Registration/ }).click();
 
-  // Signed in at once, and taken to the home page
+  // Signed in at once: a welcome, then the sign-in page fades into the home page
+  await expect(page.getByTestId('auth-welcome')).toContainText('Welcome, ');
   await expect(page).toHaveURL(/\/demo/);
+  await expect(page.getByTestId('auth-page')).toHaveCount(0);
   await expect.poll(() => signedInEmail(page)).toBe('google.student@gmail.test');
 
   // The account has no password, so the password sign-in cannot open it
@@ -92,7 +94,11 @@ test('the same student signs in with Google next time, straight away', async ({ 
   expect(googleButton.y).toBeGreaterThan(passwordButton.y);
   await clickGoogle(page, 'Sign in with Google', credentialFor(GOOGLE_STUDENT));
 
+  const welcome = page.getByTestId('auth-welcome');
+  await expect(welcome).toContainText('Welcome back');
+  await expect(welcome).toContainText('Taking you to Home');
   await expect(page).toHaveURL(/\/demo/);
+  await expect(page.getByTestId('auth-page')).toHaveCount(0);
   await expect.poll(() => signedInEmail(page)).toBe('google.student@gmail.test');
 });
 

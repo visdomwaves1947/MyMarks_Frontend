@@ -1,7 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
+  CheckCircle2,
   ExternalLink,
   Layers,
   ListTree,
@@ -17,7 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { courseImage, formatPrice, showDefaultImage } from '../../utils/courseImage';
-import { formatClock, lessonKeyOf, watchedPercent } from '../../utils/watchTime';
+import { formatClock, lessonKeysOf, savedFor, watchedPercent } from '../../utils/watchTime';
 import CourseLecturePlayer from './CourseLecturePlayer';
 import { firstLessonIn, flattenChapters, isVideoLesson, withExtraLessons } from './curriculumTree';
 
@@ -69,7 +71,7 @@ const PROMPTS = {
   buy: {
     label: 'Buy this course',
     title: 'Buy to Watch',
-    text: (course) => `Every lesson of ${course.name} opens once you buy it.`,
+    text: (course) => `This lesson opens once you buy ${course.name}. The free lessons are open to watch now.`,
     button: (course) => `Buy for ${formatPrice(course.price)}`,
     Icon: ShoppingCart,
   },
@@ -120,8 +122,52 @@ export function LessonPrompt({ prompt, course, onClose, onSignIn, onEnroll, onBu
   );
 }
 
+// The lessons of a topic: its own and every one under it, in page order
+const lessonsUnder = (topic) => {
+  const found = [];
+  const visit = (node) => {
+    if (node.lesson) found.push(node);
+    (node.children || []).forEach(visit);
+  };
+  visit(topic);
+  return found;
+};
+
+/**
+ * How far the student got in a topic with subtopics: lessons finished out of all of them, whether they
+ * are part way, and the lesson to carry on with (the one they stopped in last, or the next unfinished).
+ * Null for a topic without subtopics, whose card shows its own lesson.
+ */
+const topicProgressOf = (topic, lessons) => {
+  if (!(topic.children?.length > 0)) return null;
+  const all = lessonsUnder(topic).map((node) => ({ node, saved: savedFor(lessons, node) }));
+  if (all.length === 0) return null;
+  const finished = all.filter((item) => item.saved?.completed).length;
+  const started = all
+    .filter((item) => item.saved && !item.saved.completed && item.saved.position > 0)
+    .sort((a, b) => new Date(b.saved.updatedAt || 0) - new Date(a.saved.updatedAt || 0));
+  const watching = finished < all.length && (finished > 0 || started.length > 0);
+  const nextUnfinished = all.find((item) => !item.saved?.completed && !item.node.lesson.isLocked);
+  return {
+    total: all.length,
+    finished,
+    watching,
+    target: watching ? started[0]?.node || nextUnfinished?.node || null : null,
+  };
+};
+
 // Lesson card for the curriculum grid, with a preview of its subtopics
-function TopicCard({ topic, theme, isSearching, onOpen, fallbackImage = '', lockedLabel = 'Locked', saved }) {
+function TopicCard({
+  topic,
+  theme,
+  isSearching,
+  onOpen,
+  fallbackImage = '',
+  lockedLabel = 'Locked',
+  saved,
+  progress = null,
+  showFree = false,
+}) {
   const { lesson } = topic;
   const subtopics = useMemo(() => subtopicsOf(topic), [topic]);
   const hasChildren = subtopics.length > 0;
@@ -131,10 +177,13 @@ function TopicCard({ topic, theme, isSearching, onOpen, fallbackImage = '', lock
     lesson?.thumbnailUrl ||
     (lesson?.youtubeId ? `https://img.youtube.com/vi/${lesson.youtubeId}/hqdefault.jpg` : '') ||
     (isLocked ? fallbackImage : '');
-  const watched = watchedPercent(saved);
+  // A topic with subtopics counts all its lessons; a single lesson counts itself
+  const watched = progress ? Math.round((progress.finished / progress.total) * 100) : watchedPercent(saved);
+  const allWatched = progress ? progress.finished === progress.total : Boolean(saved?.completed);
+  const watching = progress ? progress.watching : watched > 0 && watched < 100;
 
   const open = () => {
-    if (startsLesson) onOpen(topic);
+    if (startsLesson) onOpen(progress?.target || topic);
   };
 
   return (
@@ -188,11 +237,45 @@ function TopicCard({ topic, theme, isSearching, onOpen, fallbackImage = '', lock
           </div>
         )}
 
+        {(allWatched || watching || (showFree && lesson?.isFreePreview && !isLocked)) && (
+          <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
+            {allWatched && (
+              <span
+                data-testid="lesson-completed"
+                className="px-2 py-0.5 rounded-lg bg-emerald-600 text-white text-[11px] font-semibold flex items-center gap-1 shadow-sm"
+              >
+                <CheckCircle2 size={12} />
+                <span>Watched</span>
+              </span>
+            )}
+            {!allWatched && watching && (
+              <span
+                data-testid="lesson-watching"
+                className="px-2 py-0.5 rounded-lg bg-blue-600 text-white text-[11px] font-semibold flex items-center gap-1 shadow-sm"
+              >
+                <Play size={10} className="fill-white" />
+                <span>Watching{progress ? ` · ${progress.finished}/${progress.total}` : ''}</span>
+              </span>
+            )}
+            {showFree && lesson?.isFreePreview && !isLocked && (
+              <span data-testid="lesson-free" className="px-2 py-0.5 rounded-lg bg-white/95 text-emerald-700 text-[11px] font-semibold shadow-sm">
+                Free
+              </span>
+            )}
+          </div>
+        )}
+
         {watched > 0 && (
           <div
             data-testid="lesson-watched"
             className="absolute bottom-0 inset-x-0 h-1 bg-white/25"
-            title={saved?.completed ? 'Watched' : `Stopped at ${formatClock(saved.position)}`}
+            title={
+              progress
+                ? `${progress.finished} of ${progress.total} lessons finished`
+                : saved?.completed
+                  ? 'Watched'
+                  : `Stopped at ${formatClock(saved.position)}`
+            }
           >
             <div className="h-full bg-red-500" style={{ width: `${watched}%` }} />
           </div>
@@ -229,6 +312,22 @@ function TopicCard({ topic, theme, isSearching, onOpen, fallbackImage = '', lock
                 </span>
                 <span className="text-[10px] font-mono font-bold">{subtopics.length} Subtopics</span>
               </div>
+              {progress && (progress.finished > 0 || progress.watching) && (
+                <div data-testid="topic-progress" className="mb-1.5">
+                  <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 size={11} className="text-emerald-600 dark:text-emerald-400" />
+                      <span>
+                        {progress.finished} of {progress.total} finished
+                      </span>
+                    </span>
+                    <span className="font-mono">{watched}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 rounded-full bg-white/70 dark:bg-slate-800 overflow-hidden">
+                    <div className="h-full rounded-full bg-emerald-500 transition-[width] duration-500" style={{ width: `${watched}%` }} />
+                  </div>
+                </div>
+              )}
               <p className="text-[11px] text-slate-600 dark:text-slate-400 line-clamp-2 leading-relaxed">
                 Includes {subtopics.slice(0, 3).map((item) => `${item.code ? `${item.code} ` : ''}${item.title}`).join(' • ')}
                 {subtopics.length > 3 ? ' with complete collapsible navigation inside the lecture.' : '.'}
@@ -252,7 +351,7 @@ function TopicCard({ topic, theme, isSearching, onOpen, fallbackImage = '', lock
             >
               {isLocked ? <Lock size={14} /> : <Play size={14} className="fill-white" />}
               <span>
-                {isLocked ? lockedLabel : `${watched > 0 && watched < 100 ? 'Continue' : 'Watch Lecture'}${topic.code ? ` (${topic.code})` : ''}`}
+                {isLocked ? lockedLabel : `${watching ? 'Continue' : 'Watch Lecture'}${topic.code ? ` (${topic.code})` : ''}`}
               </span>
             </button>
           ) : (
@@ -277,7 +376,7 @@ function TopicCard({ topic, theme, isSearching, onOpen, fallbackImage = '', lock
   );
 }
 
-const NO_TRACKING = { progress: { lessons: {}, last: null }, update: undefined, enabled: false };
+const NO_TRACKING = { progress: { lessons: {}, last: null }, update: undefined, enabled: false, ready: true };
 
 export default function CourseCurriculum({
   course,
@@ -289,6 +388,7 @@ export default function CourseCurriculum({
   access = {},
   onBuy,
   buying = false,
+  cart = null,
   tracking = NO_TRACKING,
 }) {
   const intro = course.page?.curriculumIntro || {};
@@ -308,6 +408,7 @@ export default function CourseCurriculum({
   const chapters = useMemo(() => withExtraLessons(curriculum), [curriculum]);
   const allTopics = useMemo(() => flattenChapters(chapters), [chapters]);
   const topLevelCount = useMemo(() => chapters.reduce((sum, chapter) => sum + chapter.topics.length, 0), [chapters]);
+  const lessonCount = useMemo(() => allTopics.filter((topic) => topic.lesson).length, [allTopics]);
 
   const query = search.trim();
   const isSearching = query.length > 0;
@@ -327,7 +428,7 @@ export default function CourseCurriculum({
     const start = topic.lesson ? topic : firstLessonIn(topic);
     if (!start) return;
     if (!isSignedIn) {
-      setPrompt(mustBuy ? 'sign-in-to-buy' : 'sign-in');
+      setPrompt(mustBuy && start.lesson.isLocked ? 'sign-in-to-buy' : 'sign-in');
     } else if (start.lesson.isLocked) {
       setPrompt(mustBuy ? 'buy' : 'enroll');
     } else {
@@ -336,14 +437,34 @@ export default function CourseCurriculum({
   };
 
   const closePlayer = useCallback(() => setPlayingId(null), []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const wantsContinue = searchParams.has('continue');
 
   // The lesson the student watched last, to carry on from it
   const lastWatched = useMemo(() => {
     const key = tracking.progress.last;
-    if (!key || mustBuy) return null;
-    const entry = allTopics.find((topic) => topic.lesson && !topic.lesson.isLocked && lessonKeyOf(topic) === key);
-    return entry ? { entry, saved: tracking.progress.lessons[key] } : null;
-  }, [allTopics, mustBuy, tracking.progress]);
+    if (!key) return null;
+    // The saved key may be the lesson's video or its topic
+    const entry = allTopics.find((topic) => topic.lesson && !topic.lesson.isLocked && lessonKeysOf(topic).includes(key));
+    return entry ? { entry, saved: savedFor(tracking.progress.lessons, entry) } : null;
+  }, [allTopics, tracking.progress]);
+
+  // Arriving from a Continue button: open the lesson the student was watching, or the first one
+  useEffect(() => {
+    if (!wantsContinue || tracking.ready === false) return;
+    const first = allTopics.find((topic) => topic.lesson && !topic.lesson.isLocked);
+    const target = lastWatched?.entry || first;
+    if (target) openLecture(target);
+    setSearchParams(
+      (params) => {
+        params.delete('continue');
+        return params;
+      },
+      { replace: true }
+    );
+    // openLecture is a plain function of this render; the effect runs once per Continue click
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantsContinue, tracking.ready, lastWatched, allTopics, setSearchParams]);
 
   return (
     <section id="course-curriculum" className="py-16 sm:py-24 bg-[#EBF0F7] dark:bg-[#0B0F19] border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
@@ -456,7 +577,7 @@ export default function CourseCurriculum({
           </p>
         ) : (
           <>
-            {mustBuy ? (
+            {mustBuy && (
               <div
                 data-testid="course-buy-strip"
                 className="mb-6 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left"
@@ -466,21 +587,47 @@ export default function CourseCurriculum({
                     <Lock size={18} />
                   </span>
                   <p className="text-sm text-slate-700 dark:text-slate-300">
-                    <span className="font-semibold text-slate-900 dark:text-white">Every lesson opens once you buy {course.name}.</span>{' '}
-                    {formatPrice(course.price)}, paid securely with Razorpay.
+                    {access.freeLessons > 0 ? (
+                      <>
+                        <span className="font-semibold text-slate-900 dark:text-white">
+                          The first {access.freeLessons === 1 ? 'lesson is' : `${access.freeLessons} lessons are`} free.
+                        </span>{' '}
+                        Buy {course.name} to open all {lessonCount} lessons for {formatPrice(course.price)}
+                        {access.paymentMethod === 'demo' ? ' (demo payment, no real money).' : ', paid securely with Razorpay.'}
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-semibold text-slate-900 dark:text-white">Every lesson opens once you buy {course.name}.</span>{' '}
+                        {formatPrice(course.price)}
+                        {access.paymentMethod === 'demo' ? ' (demo payment, no real money).' : ', paid securely with Razorpay.'}
+                      </>
+                    )}
                   </p>
                 </div>
-                <button
-                  onClick={onBuy}
-                  disabled={buying}
-                  className={`px-5 py-2.5 rounded-xl ${theme.solid} disabled:opacity-60 text-sm font-semibold inline-flex items-center gap-2 cursor-pointer shrink-0`}
-                >
-                  <ShoppingCart size={15} />
-                  <span>{buying ? 'Opening payment...' : isSignedIn ? 'Buy Now' : 'Sign In to Buy'}</span>
-                </button>
+                <div className="flex flex-wrap items-center justify-center gap-2 shrink-0">
+                  {cart && (
+                    <button
+                      type="button"
+                      onClick={cart.inCart ? cart.onOpen : cart.onAdd}
+                      disabled={!cart.inCart && cart.isFull}
+                      className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-60 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 text-sm font-semibold inline-flex items-center gap-2 cursor-pointer"
+                    >
+                      {cart.inCart ? <CheckCircle2 size={15} className="text-emerald-600" /> : <ShoppingCart size={15} />}
+                      <span>{cart.inCart ? 'Go to Cart' : 'Add to Cart'}</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={onBuy}
+                    disabled={buying}
+                    className={`px-5 py-2.5 rounded-xl ${theme.solid} disabled:opacity-60 text-sm font-semibold inline-flex items-center gap-2 cursor-pointer`}
+                  >
+                    <ShoppingCart size={15} />
+                    <span>{buying ? 'Opening payment...' : 'Buy Now'}</span>
+                  </button>
+                </div>
               </div>
-            ) : (
-              lastWatched && (
+            )}
+            {lastWatched && (
                 <div
                   data-testid="course-continue"
                   className="mb-6 p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left"
@@ -508,7 +655,6 @@ export default function CourseCurriculum({
                     <span>Continue</span>
                   </button>
                 </div>
-              )
             )}
 
             <div className="mb-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
@@ -578,7 +724,9 @@ export default function CourseCurriculum({
                     onOpen={openLecture}
                     fallbackImage={course.thumbnail}
                     lockedLabel={mustBuy ? 'Buy to Watch' : 'Locked'}
-                    saved={tracking.progress.lessons[lessonKeyOf(topic.lesson ? topic : firstLessonIn(topic))]}
+                    showFree={mustBuy}
+                    saved={savedFor(tracking.progress.lessons, topic.lesson ? topic : firstLessonIn(topic))}
+                    progress={topicProgressOf(topic, tracking.progress.lessons)}
                   />
                 ))}
               </div>
@@ -605,10 +753,12 @@ export default function CourseCurriculum({
 
       {playingId && (
         <CourseLecturePlayer
+          key={playingId}
           course={course}
           chapters={chapters}
           theme={theme}
           startId={playingId}
+          onJump={setPlayingId}
           onClose={closePlayer}
           onLocked={() => setPrompt(mustBuy ? 'buy' : 'enroll')}
           tracking={tracking}

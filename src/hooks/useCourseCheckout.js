@@ -1,14 +1,19 @@
 import { useCallback, useState } from 'react';
 import useDialog from './useDialog';
-import { createCourseOrder, verifyCoursePayment } from '../services/learningApi';
-import { payWithRazorpay } from '../utils/razorpayCheckout';
+import { createCourseOrder } from '../services/learningApi';
+import payForOrder from '../utils/payForOrder';
+import { COURSE_BOUGHT } from '../utils/purchaseEvents';
+
+// Sent when a payment is confirmed, so an open course page and My Courses load again
+export { COURSE_BOUGHT };
 
 /**
- * Buying a course: sign in first, then Razorpay's checkout, then the server checks the payment
- * and onBought reloads the page with every lesson open.
+ * Buy Now for one course: sign in first, then the payment, then the server checks it and onBought
+ * reloads the page with every lesson open. The payment is Razorpay's checkout, or, while payments
+ * are on the demo method, a confirmation on the site that takes no money.
  */
 export default function useCourseCheckout({ course, access, isSignedIn, onOpenSignIn, onBought }) {
-  const { alert } = useDialog();
+  const { alert, confirm } = useDialog();
   const [buying, setBuying] = useState(false);
 
   const buy = useCallback(async () => {
@@ -27,20 +32,18 @@ export default function useCourseCheckout({ course, access, isSignedIn, onOpenSi
     setBuying(true);
     try {
       const started = await createCourseOrder(course._id);
-      const checkout = await payWithRazorpay(started);
-      if (!checkout.paid) {
-        if (checkout.problem) {
-          await alert({ title: 'The payment did not go through', message: `${checkout.problem} No money was taken.`, tone: 'danger' });
-        }
-        return;
-      }
+      const { paid, isDemo } = await payForOrder(started, { alert, confirm });
+      if (!paid) return;
 
-      await verifyCoursePayment(checkout.response);
+      window.dispatchEvent(new CustomEvent(COURSE_BOUGHT, { detail: { courseId: course._id } }));
       await onBought();
       await alert({
         title: `You have ${course.name}`,
-        message: 'Payment received. Every lesson is open now.',
+        message: isDemo
+          ? 'Demo payment done, no money was taken. Every lesson is open now.'
+          : 'Payment received. Every lesson is open now.',
         confirmLabel: 'Start Learning',
+        tone: 'success',
       });
     } catch (error) {
       if (error.status === 401) {
@@ -51,7 +54,7 @@ export default function useCourseCheckout({ course, access, isSignedIn, onOpenSi
     } finally {
       setBuying(false);
     }
-  }, [access?.paymentsOpen, alert, course._id, course.name, isSignedIn, onBought, onOpenSignIn]);
+  }, [access?.paymentsOpen, alert, confirm, course._id, course.name, isSignedIn, onBought, onOpenSignIn]);
 
   return { buy, buying };
 }

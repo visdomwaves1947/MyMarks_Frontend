@@ -13,6 +13,8 @@ import LabPracticalHub from "./lab/LabPracticalHub";
 import CourseCard from "./course/CourseCard";
 import { LAB_SUBJECTS } from "../data/labPracticalsData";
 import useCatalog from "../hooks/useCatalog";
+import useMyCourses, { continueLink } from "../hooks/useMyCourses";
+import useLikes from "../hooks/useLikes";
 import { isOutsideLink } from "../utils/courseImage";
 import { jumpToTop } from "../utils/scroll";
 
@@ -101,6 +103,32 @@ export default function IntermediateSubjects({
       onEnroll(course.name, course);
     }
   };
+
+  // Courses the signed-in student already has go straight back in, at the lesson they stopped in
+  const mine = useMyCourses(currentUser);
+  const owned = new Map(mine.courses.map((item) => [item.courseId, item]));
+  const ownedBy = (course) => {
+    const item = owned.get(String(course._id));
+    return item ? { started: item.lessonsStarted > 0 } : null;
+  };
+  const handleContinue = (course) => {
+    jumpToTop();
+    navigate(continueLink(course));
+  };
+
+  // The heart on each card: a visitor signs in first; administrators have no likes
+  const likes = useLikes(currentUser);
+  const signIn = () => (onOpenSignIn ? onOpenSignIn() : navigate("/signin"));
+  const likeFor = (course) =>
+    currentUser?.role === "admin"
+      ? null
+      : {
+          liked: likes.isLiked(course._id),
+          onToggle: () =>
+            currentUser
+              ? likes.toggle(course).catch((problem) => problem.status === 401 && signIn())
+              : signIn(),
+        };
 
   const handleGoToSignIn = () => {
     setLockedSubject(null);
@@ -356,6 +384,9 @@ export default function IntermediateSubjects({
                 course={course}
                 onExplore={handleExplore}
                 onEnroll={handleEnroll}
+                mine={ownedBy(course)}
+                onContinue={handleContinue}
+                like={likeFor(course)}
               />
             ))}
           </div>

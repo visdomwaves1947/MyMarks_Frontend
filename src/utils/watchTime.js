@@ -10,6 +10,22 @@ export function formatClock(seconds) {
 // The key a lesson's progress is saved under: its video, or its syllabus topic for a typed YouTube link
 export const lessonKeyOf = (entry) => entry?.lesson?.videoId || entry?.nodeId || '';
 
+// Every key a lesson's progress may be under. A topic that first had a typed YouTube link and later
+// got an uploaded video has both, so older progress is under its topic and newer under its video.
+export const lessonKeysOf = (entry) => [entry?.lesson?.videoId, entry?.nodeId].filter(Boolean);
+
+// A lesson's saved progress, read under all its keys: where it stopped most recently, and finished
+// if it was ever finished. The server matches progress to lessons the same way.
+export function savedFor(lessons, entry) {
+  const found = lessonKeysOf(entry)
+    .map((key) => lessons?.[key])
+    .filter(Boolean);
+  if (found.length <= 1) return found[0];
+  const when = (saved) => new Date(saved.updatedAt || 0).getTime();
+  const newest = found.reduce((best, saved) => (when(saved) > when(best) ? saved : best));
+  return { ...newest, completed: found.some((saved) => saved.completed) };
+}
+
 // Where to start a lesson again: not at the very start or end, and not once it was finished
 export function resumePoint(saved) {
   if (!saved || saved.completed) return 0;

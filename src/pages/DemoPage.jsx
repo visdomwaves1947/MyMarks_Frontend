@@ -6,6 +6,7 @@ import NightSkyHeroBackground from "../components/NightSkyHeroBackground";
 import NewsScroller from "../components/NewsScroller";
 import HeroContinuousOverlay from "../components/HeroContinuousOverlay";
 import WhyChooseMyMarksSection, { StudentReviewsSection } from "../components/home/WhyChooseMyMarksSection";
+import ContinueLearning from "../components/home/ContinueLearning";
 
 export default function DemoPage({
   onOpenBooking,
@@ -22,6 +23,9 @@ export default function DemoPage({
       <div className="absolute inset-0 bg-math-grid opacity-70 dark:opacity-40 pointer-events-none -z-10"></div>
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-300/25 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse-subtle"></div>
       <div className="absolute bottom-10 right-1/4 w-[420px] h-[420px] bg-purple-300/20 dark:bg-purple-600/15 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+      {/* A signed-in student's courses, one click back into the lesson they were watching */}
+      <ContinueLearning currentUser={currentUser} />
 
       {/* Hero Section with Consistent Royal Cosmic Night Sky Background for All Scenes */}
       <section className="relative overflow-hidden min-h-[340px] xs:min-h-[380px] sm:min-h-[460px] md:min-h-[calc(100vh-122px)] flex items-center justify-center">
@@ -50,6 +54,7 @@ export default function DemoPage({
 
       {/* How To Use Section */}
       <HowToUse
+        currentUser={currentUser}
         onOpenSignUp={onOpenSignUp || onOpenSignIn}
       />
 

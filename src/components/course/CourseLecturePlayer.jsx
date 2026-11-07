@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
+  Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -19,15 +20,24 @@ import {
 import { flattenChapters, isVideoLesson } from './curriculumTree';
 import { VideoLesson, YouTubeLesson } from './LessonMedia';
 import useLessonTracker from '../../hooks/useLessonTracker';
-import { formatClock, lessonKeyOf, resumePoint } from '../../utils/watchTime';
+import { formatClock, lessonKeyOf, resumePoint, savedFor } from '../../utils/watchTime';
 
 const NO_TRACKING = { progress: { lessons: {} }, update: undefined, enabled: false };
 
-// A tick for a finished lesson, or where the student stopped
+// Revisit for a finished lesson, or where the student stopped
 function WatchMark({ saved }) {
   if (!saved) return null;
   if (saved.completed) {
-    return <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400" aria-label="Watched" />;
+    return (
+      <span
+        data-testid="lesson-revisit"
+        title="Finished. Click to watch it again"
+        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-400 bg-emerald-50 text-emerald-700 dark:border-emerald-600/70 dark:bg-emerald-950/40 dark:text-emerald-300 text-[10px] font-bold"
+      >
+        <RotateCcw size={10} />
+        <span>Revisit</span>
+      </span>
+    );
   }
   if (!(saved.position > 0)) return null;
   return (
@@ -55,6 +65,137 @@ const revealPlaying = (list) => {
   return true;
 };
 
+// A lesson is finished once it was watched to the end. A topic with no video of its own is finished
+// once every lesson under it is.
+const isFinished = (node, savedOf) => {
+  if (!savedOf) return false;
+  if (node.lesson) return !node.lesson.isLocked && Boolean(savedOf(node)?.completed);
+  const parts = (node.children || []).filter((child) => child.lesson || child.children?.length > 0);
+  return parts.length > 0 && parts.every((child) => isFinished(child, savedOf));
+};
+
+const AUTO_NEXT_SECONDS = 10;
+
+/**
+ * Shown on the video when a lesson ends: the next lesson starts by itself after 10 seconds, or at once
+ * with Play now; Watch again starts this one over, and the cross stops it. A locked next lesson offers
+ * to unlock instead, and the last lesson of the course only offers to watch again.
+ */
+function UpNextCard({ next, onPlay, onReplay, onUnlock, onDismiss, player }) {
+  const counting = Boolean(next && !next.lesson.isLocked);
+  const [left, setLeft] = useState(AUTO_NEXT_SECONDS);
+  const [shown, setShown] = useState(false);
+  const playRef = useRef(onPlay);
+  useEffect(() => {
+    playRef.current = onPlay;
+  });
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (!counting) return undefined;
+    const timer = setInterval(() => setLeft((seconds) => seconds - 1), 1000);
+    return () => clearInterval(timer);
+  }, [counting]);
+
+  useEffect(() => {
+    if (counting && left <= 0) playRef.current();
+  }, [counting, left]);
+
+  const ring = 2 * Math.PI * 16;
+  const title = next ? `${next.code ? `${next.code} ` : ''}${next.title}` : '';
+
+  return (
+    <div
+      data-testid="up-next"
+      data-state={shown ? 'shown' : 'entering'}
+      role="status"
+      aria-live="polite"
+      className={`absolute bottom-3 right-3 z-20 w-[290px] max-w-[calc(100%-24px)] rounded-2xl bg-slate-900/95 text-white border border-white/15 shadow-2xl backdrop-blur p-3.5 transition-all duration-300 ease-out motion-reduce:transition-none ${
+        shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        {counting ? (
+          <span className="relative w-10 h-10 shrink-0" aria-hidden="true">
+            <svg viewBox="0 0 40 40" className="w-10 h-10 -rotate-90">
+              <circle cx="20" cy="20" r="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-white/15" />
+              <circle
+                cx="20"
+                cy="20"
+                r="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={ring}
+                strokeDashoffset={ring * (1 - left / AUTO_NEXT_SECONDS)}
+                className="text-emerald-400 transition-[stroke-dashoffset] duration-1000 ease-linear"
+              />
+            </svg>
+            <span data-testid="up-next-seconds" className="absolute inset-0 flex items-center justify-center text-sm font-black">
+              {Math.max(left, 0)}
+            </span>
+          </span>
+        ) : (
+          <span className="w-10 h-10 shrink-0 rounded-full bg-white/10 flex items-center justify-center" aria-hidden="true">
+            {next ? <Lock size={16} className="text-amber-300" /> : <CheckCircle2 size={18} className="text-emerald-400" />}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="text-[10px] font-extrabold uppercase tracking-wider text-white/60">
+            {!next ? 'Course finished' : counting ? `Up next in ${Math.max(left, 0)}s` : 'Next lesson is locked'}
+          </div>
+          <div className="text-sm font-bold leading-snug line-clamp-2">
+            {next ? title : 'You have reached the last lesson of this course.'}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Close up next"
+          className="group -mr-1 -mt-1 w-7 h-7 shrink-0 rounded-full flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+        >
+          <X size={15} className="transition-transform duration-300 group-hover:rotate-90" />
+        </button>
+      </div>
+      <div className="mt-3 flex items-center gap-2">
+        {counting && (
+          <button
+            type="button"
+            onClick={onPlay}
+            className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl ${player.solid} text-white text-xs font-bold cursor-pointer`}
+          >
+            <Play size={12} className="fill-white" />
+            <span>Play now</span>
+          </button>
+        )}
+        {next && !counting && (
+          <button
+            type="button"
+            onClick={onUnlock}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer"
+          >
+            <Lock size={12} />
+            <span>Unlock</span>
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onReplay}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-colors cursor-pointer"
+        >
+          <RotateCcw size={12} />
+          <span>Watch again</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // The topics above an entry, and the entry itself, opened in the tree
 const openPath = (entry) =>
   entry ? Object.fromEntries([...entry.trail.map((step) => step.nodeId), entry.nodeId].map((id) => [id, true])) : {};
@@ -65,11 +206,18 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
   const isExpanded = Boolean(expanded[node.nodeId]);
   const isSelected = currentId === node.nodeId;
   const lesson = node.lesson;
+  const finished = isFinished(node, savedOf);
 
   let rowStyle =
     'bg-white hover:bg-slate-50 border-slate-200/80 text-slate-600 dark:bg-slate-800/40 dark:hover:bg-slate-800/80 dark:border-slate-700/50 dark:text-slate-300';
   if (isSelected) {
-    rowStyle = `bg-gradient-to-r ${player.active} text-white font-bold shadow-lg ring-1 ring-white/30 border-transparent`;
+    rowStyle = `bg-gradient-to-r ${player.active} text-white font-bold shadow-lg border-transparent ${
+      finished ? 'ring-2 ring-emerald-400' : 'ring-1 ring-white/30'
+    }`;
+  } else if (finished) {
+    // Finished: a green border, so done lessons stand out from the ones still to watch
+    rowStyle =
+      'bg-emerald-50/70 hover:bg-emerald-50 border-emerald-400 text-slate-700 shadow-xs dark:bg-emerald-950/20 dark:hover:bg-emerald-950/40 dark:border-emerald-600/70 dark:text-slate-200';
   } else if (depth === 0) {
     rowStyle =
       'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-900 shadow-sm dark:bg-slate-800/90 dark:hover:bg-slate-800 dark:border-slate-600/60 dark:text-white';
@@ -83,6 +231,7 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
       <div
         data-testid="syllabus-node"
         data-playing={isSelected ? 'true' : undefined}
+        data-finished={finished ? 'true' : undefined}
         onClick={() => onSelect(node)}
         className={`group flex items-center justify-between gap-2.5 py-2 px-3 rounded-xl border transition-all duration-150 ${
           lesson || hasChildren ? 'cursor-pointer' : 'cursor-default opacity-60'
@@ -113,6 +262,18 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
                 <Play size={11} className={isSelected ? 'fill-white text-white' : 'fill-slate-500 text-slate-500'} />
               )}
             </div>
+          )}
+
+          {finished && (
+            <span
+              data-testid="lesson-finished"
+              title="Finished"
+              className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 shadow-xs ${
+                isSelected ? 'bg-white text-emerald-600' : 'bg-emerald-500 text-white'
+              }`}
+            >
+              <Check size={12} strokeWidth={3} aria-label="Finished" />
+            </span>
           )}
 
           {node.code && (
@@ -195,6 +356,7 @@ export default function CourseLecturePlayer({
   onClose,
   onLocked,
   onAsk,
+  onJump,
   tracking = NO_TRACKING,
 }) {
   const player = theme.player;
@@ -221,6 +383,11 @@ export default function CourseLecturePlayer({
 
   const entries = useMemo(() => scope?.entries || [], [scope]);
   const playable = useMemo(() => entries.filter((entry) => entry.lesson && !entry.lesson.isLocked), [entries]);
+  // Every lesson of the course in page order, for what comes after the last one shown here
+  const courseOrder = useMemo(() => flattenChapters(chapters).filter((entry) => entry.lesson), [chapters]);
+  const [endedId, setEndedId] = useState(null); // the lesson that just ended, while its Up next card shows
+  const [replay, setReplay] = useState(0);
+  const lessonCount = entries.filter((entry) => entry.lesson).length;
 
   const [currentId, setCurrentId] = useState(startId);
   const current = entries.find((entry) => entry.nodeId === currentId) || playable[0];
@@ -277,10 +444,11 @@ export default function CourseLecturePlayer({
   });
   const [resume, setResume] = useState({ id: null, at: 0 });
   if (current && resume.id !== current.nodeId) {
-    setResume({ id: current.nodeId, at: tracking.enabled ? resumePoint(tracking.progress.lessons[lessonKey]) : 0 });
+    setResume({ id: current.nodeId, at: tracking.enabled ? resumePoint(savedFor(tracking.progress.lessons, current)) : 0 });
   }
   const startAt = resume.id === current?.nodeId ? resume.at : 0;
-  const savedOf = (node) => tracking.progress.lessons[lessonKeyOf(node)];
+  const savedOf = (node) => savedFor(tracking.progress.lessons, node);
+  const finishedCount = playable.filter((entry) => savedOf(entry)?.completed).length;
 
   if (!current) return null;
 
@@ -301,6 +469,20 @@ export default function CourseLecturePlayer({
   };
 
   const expandAll = () => setExpanded(Object.fromEntries(entries.map((entry) => [entry.nodeId, true])));
+
+  // After this lesson: the next one in the course, which may be locked, or none at the end
+  const upNext = courseOrder[courseOrder.findIndex((entry) => entry.nodeId === current.nodeId) + 1] || null;
+  const playNext = () => {
+    setEndedId(null);
+    if (!upNext || upNext.lesson.isLocked) return;
+    if (entries.some((entry) => entry.nodeId === upNext.nodeId)) select(upNext);
+    else onJump?.(upNext.nodeId);
+  };
+  const watchAgain = () => {
+    setEndedId(null);
+    setResume({ id: current.nodeId, at: 0 });
+    setReplay((count) => count + 1);
+  };
 
   const { lesson } = current;
   const crumbs = [...current.trail, { nodeId: current.nodeId, code: current.code, title: current.title }];
@@ -394,14 +576,21 @@ export default function CourseLecturePlayer({
           <div className="relative w-full aspect-video lg:max-h-[64vh] bg-black flex items-center justify-center shadow-2xl shrink-0">
             {lesson.youtubeId ? (
               <YouTubeLesson
-                key={current.nodeId}
+                key={`${current.nodeId}:${replay}`}
                 youtubeId={lesson.youtubeId}
                 title={current.title}
                 startAt={startAt}
                 report={report}
+                onEnded={() => setEndedId(current.nodeId)}
               />
             ) : isVideoLesson(lesson) ? (
-              <VideoLesson key={current.nodeId} url={lesson.url} startAt={startAt} report={report} />
+              <VideoLesson
+                key={`${current.nodeId}:${replay}`}
+                url={lesson.url}
+                startAt={startAt}
+                report={report}
+                onEnded={() => setEndedId(current.nodeId)}
+              />
             ) : lesson.url ? (
               <div className="text-center px-6">
                 <Link2 size={30} className={`mx-auto mb-3 ${player.text}`} />
@@ -419,6 +608,20 @@ export default function CourseLecturePlayer({
             ) : (
               <div className="text-slate-400 text-sm">Video media unavailable</div>
             )}
+            {endedId === current.nodeId && (
+              <UpNextCard
+                key={endedId}
+                next={upNext}
+                player={player}
+                onPlay={playNext}
+                onReplay={watchAgain}
+                onUnlock={() => {
+                  setEndedId(null);
+                  onLocked();
+                }}
+                onDismiss={() => setEndedId(null)}
+              />
+            )}
           </div>
 
           <div className="p-5 sm:p-8 space-y-5 max-w-5xl mx-auto w-full">
@@ -431,6 +634,15 @@ export default function CourseLecturePlayer({
                     </span>
                   )}
                   <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{current.chapterName}</span>
+                  {savedOf(current)?.completed && (
+                    <span
+                      data-testid="lesson-done"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 text-[11px] font-semibold"
+                    >
+                      <CheckCircle2 size={11} />
+                      <span>Finished</span>
+                    </span>
+                  )}
                   {startAt > 0 && (
                     <span
                       data-testid="lesson-resumed"
@@ -518,9 +730,21 @@ export default function CourseLecturePlayer({
                     Topic Hierarchy
                   </span>
                 </div>
-                <span className={`px-2.5 py-0.5 rounded-full ${player.soft} font-mono text-xs font-bold border shrink-0`}>
-                  {playable.length} {playable.length === 1 ? 'Lesson' : 'Lessons'}
-                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {tracking.enabled && finishedCount > 0 && (
+                    <span
+                      data-testid="hierarchy-finished"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/70 dark:bg-emerald-950/40 dark:text-emerald-300 font-mono text-xs font-bold"
+                    >
+                      <Check size={11} strokeWidth={3} />
+                      {finishedCount} of {playable.length} finished
+                    </span>
+                  )}
+                  <span className={`px-2.5 py-0.5 rounded-full ${player.soft} font-mono text-xs font-bold border shrink-0`}>
+                    {lessonCount} {lessonCount === 1 ? 'Lesson' : 'Lessons'}
+                    {lessonCount > playable.length ? ` · ${lessonCount - playable.length} locked` : ''}
+                  </span>
+                </div>
               </div>
 
               <div>

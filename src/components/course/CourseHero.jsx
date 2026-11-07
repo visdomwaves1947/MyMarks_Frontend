@@ -1,9 +1,10 @@
 import React from 'react';
 import { ArrowRight, BookOpen, CheckCircle2, ShoppingCart, Zap } from 'lucide-react';
 import CourseFlags from './CourseFlags';
+import LikeButton from './LikeButton';
 import { formatPrice } from '../../utils/courseImage';
 
-export default function CourseHero({ course, theme, onEnroll, onExplore, access = {}, onBuy, buying = false }) {
+export default function CourseHero({ course, theme, onEnroll, onExplore, access = {}, onBuy, buying = false, cart = null, like = null }) {
   const hero = course.page?.hero || {};
   const mustBuy = Boolean(access.forSale && !access.owned);
   const owns = Boolean(access.forSale && access.owned);
@@ -53,7 +54,7 @@ export default function CourseHero({ course, theme, onEnroll, onExplore, access 
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 mb-7 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap items-center justify-center lg:justify-start gap-3.5 mb-7 w-full sm:w-auto">
               <button
                 onClick={() => {
                   if (mustBuy) onBuy();
@@ -69,6 +70,22 @@ export default function CourseHero({ course, theme, onEnroll, onExplore, access 
                 </span>
                 {!mustBuy && <ArrowRight size={17} />}
               </button>
+
+              {cart && (
+                <button
+                  type="button"
+                  data-testid="hero-cart"
+                  onClick={cart.inCart ? cart.onOpen : cart.onAdd}
+                  disabled={!cart.inCart && cart.isFull}
+                  title={!cart.inCart && cart.isFull ? 'Your cart is full' : undefined}
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-60 text-slate-900 dark:text-white font-bold text-sm sm:text-base border-2 border-slate-900 dark:border-slate-200 shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  {cart.inCart ? <CheckCircle2 size={16} className="text-emerald-600" /> : <ShoppingCart size={16} />}
+                  <span>{cart.inCart ? 'Go to Cart' : 'Add to Cart'}</span>
+                </button>
+              )}
+
+              {like && <LikeButton liked={like.liked} onToggle={like.onToggle} name={course.name} variant="hero" className="w-full sm:w-auto" />}
 
               <button
                 onClick={onExplore}

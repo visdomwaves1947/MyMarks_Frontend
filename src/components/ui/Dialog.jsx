@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, HelpCircle, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, HelpCircle, Info } from 'lucide-react';
 import { DialogContext } from './dialogContext';
 
 const TONES = {
@@ -11,6 +11,12 @@ const TONES = {
   primary: {
     icon: HelpCircle,
     badge: 'bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-500/30',
+    button: 'bg-blue-600 hover:bg-blue-500 focus-visible:ring-blue-500 shadow-blue-600/30',
+  },
+  // Something worked: a course added to the cart, a payment received
+  success: {
+    icon: CheckCircle2,
+    badge: 'bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30',
     button: 'bg-blue-600 hover:bg-blue-500 focus-visible:ring-blue-500 shadow-blue-600/30',
   },
   info: {

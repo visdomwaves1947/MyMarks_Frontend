@@ -1,5 +1,7 @@
 import React from 'react';
+import { CheckCircle2, Play } from 'lucide-react';
 import CourseFlags from './CourseFlags';
+import LikeButton from './LikeButton';
 import { courseImage, courseTag, showDefaultImage } from '../../utils/courseImage';
 
 const BUTTON_STYLE =
@@ -11,7 +13,12 @@ const cardBorder = (course) => {
   return 'border-blue-400/60 hover:border-blue-500';
 };
 
-export default function CourseCard({ course, onExplore, onEnroll }) {
+const OWNED_BUTTON_STYLE =
+  'flex-1 py-2 px-2 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-md bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white border border-emerald-300/40 cursor-pointer';
+
+// mine: set when the signed-in student has this course ({ started }); its second button then goes
+// back into the course instead of Enroll. like: { liked, onToggle } shows the heart.
+export default function CourseCard({ course, onExplore, onEnroll, mine = null, onContinue, like = null }) {
   const handleButton = (event, action) => {
     event.stopPropagation();
     if (action) action(course);
@@ -37,12 +44,24 @@ export default function CourseCard({ course, onExplore, onEnroll }) {
 
       {/* Overlay Content */}
       <div className="relative z-10 flex flex-col justify-between h-full p-3.5 sm:p-4">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           {courseTag(course) && (
             <span className="text-[10px] sm:text-[11px] font-semibold text-blue-100 bg-blue-950/85 backdrop-blur-md px-2.5 py-1 rounded-lg border border-blue-400/30 uppercase tracking-wider">
               {courseTag(course)}
             </span>
           )}
+          <div className="ml-auto flex items-center gap-1.5">
+            {mine && (
+              <span
+                data-testid="course-card-owned"
+                className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-semibold text-white bg-emerald-600/95 px-2 py-1 rounded-lg shadow-sm"
+              >
+                <CheckCircle2 size={12} />
+                <span>Your course</span>
+              </span>
+            )}
+            {like && <LikeButton liked={like.liked} onToggle={like.onToggle} name={course.name} />}
+          </div>
         </div>
 
         <div className="mt-auto pt-2">
@@ -56,9 +75,16 @@ export default function CourseCard({ course, onExplore, onEnroll }) {
             <button type="button" onClick={(event) => handleButton(event, onExplore)} className={BUTTON_STYLE}>
               <span>Explore</span>
             </button>
-            <button type="button" onClick={(event) => handleButton(event, onEnroll)} className={BUTTON_STYLE}>
-              <span>Enroll</span>
-            </button>
+            {mine ? (
+              <button type="button" onClick={(event) => handleButton(event, onContinue)} className={OWNED_BUTTON_STYLE}>
+                <Play size={11} className="fill-white" />
+                <span>{mine.started ? 'Continue' : 'Start Learning'}</span>
+              </button>
+            ) : (
+              <button type="button" onClick={(event) => handleButton(event, onEnroll)} className={BUTTON_STYLE}>
+                <span>Enroll</span>
+              </button>
+            )}
           </div>
         </div>
       </div>

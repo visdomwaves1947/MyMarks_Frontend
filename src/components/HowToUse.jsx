@@ -15,7 +15,8 @@ const STEP_ICONS = {
 };
 
 // "How to Use MyMarks". The admin preview passes its own content; the home page uses the saved one.
-export default function HowToUse({ onOpenSignUp, content }) {
+// Its button signs a visitor up; someone already signed in goes on to the subjects instead.
+export default function HowToUse({ onOpenSignUp, content, currentUser = null }) {
   const home = useHomePage();
   const { heading, subheading, buttonLabel, steps = [] } = content || home.howToUse;
   if (steps.length === 0) return null;
@@ -63,7 +64,14 @@ export default function HowToUse({ onOpenSignUp, content }) {
         {buttonLabel && (
           <div className="text-center">
             <button
-              onClick={() => onOpenSignUp && onOpenSignUp()}
+              data-testid="how-to-use-start"
+              onClick={() => {
+                if (currentUser) {
+                  document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  return;
+                }
+                if (onOpenSignUp) onOpenSignUp();
+              }}
               className="inline-flex items-center justify-center px-6 py-2.5 text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-xl transition-all shadow-md shadow-blue-500/20 cursor-pointer"
             >
               {buttonLabel}

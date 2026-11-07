@@ -97,12 +97,13 @@ import CoursesTab from "../components/admin/courses/CoursesTab";
 import NavigationTab from "../components/admin/navigation/NavigationTab";
 import RoadmapsTab from "../components/admin/roadmaps/RoadmapsTab";
 import WebsitePagesTab from "../components/admin/pages/WebsitePagesTab";
+import PaymentsTab from "../components/admin/payments/PaymentsTab";
 import VideosByStream from "../components/admin/videos/VideosByStream";
 import useDialog from "../hooks/useDialog";
 import StudentLearning from "../components/admin/students/StudentLearning";
 
 // Every admin tab; /admin/<tab> opens that tab directly
-const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "bookings", "pages", "navigation", "settings"];
+const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "payments", "bookings", "pages", "navigation", "settings"];
 
 // Used for videos until the courses are in the database
 const DEFAULT_VIDEO_SUBJECTS = [
@@ -3030,6 +3031,8 @@ export default function AdminPage({
 
           {activeTab === "pages" && <WebsitePagesTab showToast={showToast} />}
 
+          {activeTab === "payments" && <PaymentsTab showToast={showToast} />}
+
           {activeTab === "navigation" && <NavigationTab showToast={showToast} />}
 
           {/* ─────────────────────────────────────────────────────────────
@@ -4305,8 +4308,8 @@ export default function AdminPage({
           MODAL: ADD / EDIT STUDENT
          ───────────────────────────────────────────────────────────── */}
       {isUserModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 transition-colors duration-200">
+        <div className="fixed inset-0 z-50 flex justify-center p-4 sm:py-8 bg-black/60 dark:bg-black/80 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-auto transition-colors duration-200">
             <button
               onClick={() => setIsUserModalOpen(false)}
               className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"
@@ -8009,8 +8012,9 @@ export default function AdminPage({
           MODAL: VIEW FULL STUDENT PROFILE CARD
          ───────────────────────────────────────────────────────────── */}
       {viewUserDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-md overflow-y-auto">
-          <div role="dialog" aria-label="Student details" className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-8 transition-colors duration-200">
+        <div className="fixed inset-0 z-50 flex justify-center p-4 sm:py-8 bg-black/60 dark:bg-black/80 backdrop-blur-md overflow-y-auto">
+          {/* Centred with auto margins, not items-center: a long dialog then scrolls from its top instead of losing it */}
+          <div role="dialog" aria-label="Student details" className="relative w-full max-w-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl my-auto transition-colors duration-200">
             <button
               onClick={() => setViewUserDetail(null)}
               className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors"

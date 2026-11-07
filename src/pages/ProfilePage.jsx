@@ -20,6 +20,7 @@ import {
   Lock,
 } from 'lucide-react';
 import useCatalog from '../hooks/useCatalog';
+import MyCourses from '../components/profile/MyCourses';
 import { fetchMyProfileApi } from '../services/api';
 import { courseImage, courseTag, isOutsideLink } from '../utils/courseImage';
 
@@ -426,6 +427,9 @@ export default function ProfilePage({
 
           </div>
         </div>
+
+        {/* What the student bought, and how far they got */}
+        {currentUser.role !== 'admin' && <MyCourses currentUser={currentUser} />}
 
         {/* ======================================================== */}
         {/* SUBJECTS                                                 */}

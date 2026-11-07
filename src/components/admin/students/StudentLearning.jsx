@@ -14,6 +14,7 @@ const rupees = (paise) => `₹${(Number(paise || 0) / 100).toLocaleString('en-IN
 
 const STATUS = {
   razorpay: { label: 'Bought online', style: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60' },
+  demo: { label: 'Demo payment', style: 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/60' },
   admin: { label: 'Given by admin', style: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60' },
   revoked: { label: 'Removed', style: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700' },
   created: { label: 'Payment not finished', style: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60' },
@@ -170,7 +171,7 @@ export default function StudentLearning({ student }) {
                           <span className={`px-2 py-0.5 rounded-full border text-[10px] font-semibold ${status.style}`}>{status.label}</span>
                         </div>
                         <div className="text-slate-500 dark:text-slate-400 space-x-2">
-                          <span>{purchase.source === 'admin' ? 'Free' : rupees(purchase.amount)}</span>
+                          <span>{purchase.source === 'admin' ? 'Free' : purchase.source === 'demo' ? `${rupees(purchase.amount)}, demo (no money)` : rupees(purchase.amount)}</span>
                           <span>· {when(purchase.status === 'revoked' ? purchase.revokedAt : purchase.paidAt || purchase.createdAt)}</span>
                         </div>
                         {(purchase.razorpayPaymentId || (purchase.status === 'created' && purchase.razorpayOrderId)) && (

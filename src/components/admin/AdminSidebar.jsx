@@ -10,6 +10,7 @@ import {
   Menu,
   Route,
   PanelsTopLeft,
+  CreditCard,
 } from "lucide-react";
 
 export default function AdminSidebar({
@@ -43,6 +44,11 @@ export default function AdminSidebar({
       id: "videos",
       label: "Videos, YouTube & Links",
       icon: Video,
+    },
+    {
+      id: "payments",
+      label: "Payments",
+      icon: CreditCard,
     },
     {
       id: "bookings",

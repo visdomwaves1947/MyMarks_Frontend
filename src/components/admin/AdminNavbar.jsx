@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
+  ChevronDown,
+  User,
   Sun,
   Moon,
   Menu,
@@ -19,6 +22,7 @@ import {
   Database,
   Route,
   PanelsTopLeft,
+  CreditCard,
 } from 'lucide-react';
 import { VisdomBrand } from '../VisdomBrand';
 
@@ -34,8 +38,48 @@ export default function AdminNavbar({
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  // The avatar opens the same kind of menu as on the website. It holds where to draw the menu while open.
+  const [profileMenu, setProfileMenu] = useState(null);
+  const profileButtonRef = useRef(null);
+  const profileMenuRef = useRef(null);
 
   const navigate = useNavigate();
+
+  // The header hides anything that sticks out of it, so the menu is drawn on the page, under the avatar
+  const toggleProfileMenu = () => {
+    if (profileMenu) {
+      setProfileMenu(null);
+      return;
+    }
+    const box = profileButtonRef.current.getBoundingClientRect();
+    setProfileMenu({ top: box.bottom + 8, right: Math.max(8, window.innerWidth - box.right) });
+  };
+
+  useEffect(() => {
+    if (!profileMenu) return undefined;
+    const close = () => setProfileMenu(null);
+    const onPointer = (event) => {
+      if (profileMenuRef.current?.contains(event.target) || profileButtonRef.current?.contains(event.target)) return;
+      close();
+    };
+    const onKey = (event) => {
+      if (event.key === 'Escape') close();
+    };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', close);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', close);
+    };
+  }, [profileMenu]);
+
+  const openFromMenu = (to) => {
+    setProfileMenu(null);
+    setMobileMenuOpen(false);
+    navigate(to);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -235,10 +279,16 @@ export default function AdminNavbar({
                 </div>
               </button>
 
-              {/* Admin Profile Monogram Badge */}
-              <div
-                className="flex items-center gap-2 p-1 xl:pl-1.5 xl:pr-3 xl:py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-200 shrink-0 cursor-default"
-                title={`Signed in as ${adminName} (${adminEmail})`}
+              {/* Admin Profile Monogram Badge: opens View Profile, View Website and Sign Out */}
+              <button
+                type="button"
+                ref={profileButtonRef}
+                onClick={toggleProfileMenu}
+                aria-label="Account menu"
+                aria-haspopup="menu"
+                aria-expanded={Boolean(profileMenu)}
+                className="flex items-center gap-2 p-1 xl:pl-1.5 xl:pr-3 xl:py-1.5 rounded-full bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-200 shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                title={adminEmail ? `Signed in as ${adminName} (${adminEmail})` : `Signed in as ${adminName}`}
               >
                 {/* Monogram Avatar with Status Indicator */}
                 <div className="relative shrink-0 flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-bold shadow-2xs ring-1 ring-white dark:ring-slate-800">
@@ -255,7 +305,11 @@ export default function AdminNavbar({
                     {adminRole}
                   </span>
                 </div>
-              </div>
+                <ChevronDown
+                  size={14}
+                  className={`hidden xl:block text-slate-500 dark:text-slate-400 transition-transform duration-200 ${profileMenu ? 'rotate-180' : ''}`}
+                />
+              </button>
 
               {/* Sign Out Button - visible on tablet & desktop */}
               {onLogout && (
@@ -282,6 +336,45 @@ export default function AdminNavbar({
           </div>
         </div>
       </header>
+
+      {profileMenu &&
+        createPortal(
+          <div
+            ref={profileMenuRef}
+            role="menu"
+            aria-label="Account"
+            style={{ top: profileMenu.top, right: profileMenu.right }}
+            className="fixed z-[60] w-56 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl p-1.5 animate-fadeIn select-none"
+          >
+            <div className="px-3 py-2 mb-1 border-b border-slate-100 dark:border-slate-800">
+              <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">{adminName}</div>
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{adminEmail || 'Administrator'}</div>
+            </div>
+            {[
+              { label: 'View Profile', Icon: User, onClick: () => openFromMenu('/profile') },
+              { label: 'View Website', Icon: ExternalLink, onClick: () => openFromMenu('/demo') },
+              ...(onLogout
+                ? [{ label: 'Sign Out', Icon: LogOut, danger: true, onClick: () => { setProfileMenu(null); onLogout(); } }]
+                : []),
+            ].map(({ label, Icon, danger, onClick }) => (
+              <button
+                key={label}
+                type="button"
+                role="menuitem"
+                onClick={onClick}
+                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-colors cursor-pointer ${
+                  danger
+                    ? 'text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
+                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white'
+                }`}
+              >
+                <Icon size={15} className={danger ? '' : 'text-slate-500 dark:text-slate-400'} />
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>,
+          document.body
+        )}
 
       {/* Mobile & Tablet Off-Canvas Drawer Backdrop */}
       {mobileMenuOpen && (
@@ -323,8 +416,12 @@ export default function AdminNavbar({
           </button>
         </div>
 
-        {/* Admin Profile Row */}
-        <div className="w-full py-2.5 px-3 rounded-2xl bg-white/95 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between shadow-2xs mb-3">
+        {/* Admin Profile Row: opens the administrator's profile, like on the website */}
+        <button
+          type="button"
+          onClick={() => openFromMenu('/profile')}
+          title="View Profile"
+          className="w-full py-2.5 px-3 rounded-2xl bg-white/95 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between shadow-2xs mb-3 cursor-pointer transition-colors">
           <div className="flex items-center gap-2.5">
             <div className="relative flex items-center justify-center h-8 w-8 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs font-bold shadow-xs">
               {userInitials}
@@ -335,7 +432,7 @@ export default function AdminNavbar({
                 {adminName}
               </div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                {adminRole}
+                {adminRole} • View Profile
               </div>
             </div>
           </div>
@@ -343,7 +440,7 @@ export default function AdminNavbar({
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span>Live</span>
           </div>
-        </div>
+        </button>
 
         {/* Admin Navigation Tabs */}
         <div className="space-y-1.5 mb-3 flex-1">
@@ -356,6 +453,7 @@ export default function AdminNavbar({
             { id: 'courses', label: 'Courses & Streams', icon: BookOpen },
             { id: 'roadmaps', label: 'Study Roadmaps', icon: Route },
             { id: 'videos', label: 'Videos, YouTube & Links', icon: Video },
+            { id: 'payments', label: 'Payments', icon: CreditCard },
             { id: 'bookings', label: 'Bookings & Inquiries', icon: Inbox },
             { id: 'pages', label: 'Website Pages', icon: PanelsTopLeft },
             { id: 'navigation', label: 'Navigation Menu', icon: Menu },

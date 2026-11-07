@@ -19,11 +19,16 @@ import {
   LogOut,
   Lock,
   LayoutDashboard,
+  GraduationCap as CoursesIcon,
+  ShoppingCart,
+  Heart,
 } from "lucide-react";
 import { VisdomBrand } from "./VisdomBrand";
 import useDialog from "../hooks/useDialog";
 import useCatalog from "../hooks/useCatalog";
 import useNavigationMenu from "../hooks/useNavigationMenu";
+import useCart from "../hooks/useCart";
+import useLikes from "../hooks/useLikes";
 import MegaMenuPanel from "./nav/MegaMenuPanel";
 import { MEGA_MENU_OFFSET, MEGA_MENU_WIDTH, resolveSections } from "./nav/menuSections";
 
@@ -44,7 +49,7 @@ export default function Navbar({
   const { courses, streams } = useCatalog();
   const navigation = useNavigationMenu();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // The administrator's avatar opens a small menu: View Profile or Admin Panel
+  // The avatar opens a small menu: View Profile, and My Courses (students) or Admin Panel (admins)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -192,6 +197,12 @@ export default function Navbar({
   const handleSignUpClick = onOpenSignUp || onOpenPortal;
 
   const isAdminUser = Boolean(currentUser && currentUser.role === 'admin');
+  // Everyone but an administrator has a cart; it works before signing in
+  const cart = useCart();
+  const showCart = !isAdminUser;
+  const cartLabel = cart.count === 0 ? "Cart" : `Cart, ${cart.count} ${cart.count === 1 ? "course" : "courses"}`;
+  const likes = useLikes(currentUser);
+  const likedLabel = likes.count === 0 ? "Liked courses" : `Liked courses, ${likes.count}`;
 
   useEffect(() => {
     if (!profileMenuOpen) return undefined;
@@ -482,17 +493,55 @@ export default function Navbar({
               )}
 
 
+              {/* Liked courses, with how many (phones reach them from the menu) */}
+              {showCart && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/liked")}
+                  aria-label={likedLabel}
+                  title={likedLabel}
+                  data-testid="nav-liked"
+                  className="relative hidden sm:flex p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                >
+                  <Heart size={19} />
+                  {likes.count > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
+                      {likes.count}
+                    </span>
+                  )}
+                </button>
+              )}
+
+              {/* Cart, with how many courses are in it */}
+              {showCart && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/cart")}
+                  aria-label={cartLabel}
+                  title={cartLabel}
+                  data-testid="nav-cart"
+                  className="relative p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                >
+                  <ShoppingCart size={19} />
+                  {cart.count > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
+                      {cart.count}
+                    </span>
+                  )}
+                </button>
+              )}
+
               {/* User Account / Profile Navigation Action (Compact Icon Only to keep navbar UI balanced & responsive) */}
               {currentUser ? (
                 <div ref={profileMenuRef} className="relative shrink-0">
                 <button
                   type="button"
-                  onClick={() => (isAdminUser ? setProfileMenuOpen((open) => !open) : navigate("/profile"))}
+                  onClick={() => setProfileMenuOpen((open) => !open)}
                   className="relative p-0.5 rounded-full hover:ring-2 hover:ring-blue-500/60 dark:hover:ring-blue-400/60 transition-all duration-200 cursor-pointer shrink-0 active:scale-95 group focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  title={isAdminUser ? "Account menu" : currentUser.name ? `${currentUser.name} • View Profile` : "View Profile"}
-                  aria-label={isAdminUser ? "Account menu" : "View Student Profile"}
-                  aria-haspopup={isAdminUser ? "menu" : undefined}
-                  aria-expanded={isAdminUser ? profileMenuOpen : undefined}
+                  title="Account menu"
+                  aria-label="Account menu"
+                  aria-haspopup="menu"
+                  aria-expanded={profileMenuOpen}
                 >
                   {/* Clean Monogram / Account Avatar with Online Status Indicator */}
                   <div className="relative shrink-0 flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-gradient-to-tr from-blue-700 via-indigo-600 to-sky-500 text-white text-xs sm:text-[13px] font-bold shadow-sm ring-1.5 ring-white dark:ring-slate-800 group-hover:shadow-md transition-shadow">
@@ -510,7 +559,7 @@ export default function Navbar({
                 </button>
 
                 {/* An administrator chooses between their profile and the admin panel */}
-                {isAdminUser && profileMenuOpen && (
+                {profileMenuOpen && (
                   <div
                     role="menu"
                     aria-label="Account"
@@ -518,14 +567,17 @@ export default function Navbar({
                   >
                     <div className="px-3 py-2 mb-1 border-b border-slate-100 dark:border-slate-800">
                       <div className="text-xs font-semibold text-slate-900 dark:text-white truncate">
-                        {currentUser.name || currentUser.fullName || "Administrator"}
+                        {currentUser.name || currentUser.fullName || (isAdminUser ? "Administrator" : "Student")}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400">Administrator</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">{isAdminUser ? "Administrator" : "Student"}</div>
                     </div>
                     {[
                       { label: "View Profile", Icon: User, to: "/profile" },
-                      { label: "Admin Panel", Icon: LayoutDashboard, to: "/admin" },
-                    ].map(({ label, Icon, to }) => (
+                      isAdminUser
+                        ? { label: "Admin Panel", Icon: LayoutDashboard, to: "/admin" }
+                        : { label: "My Courses", Icon: CoursesIcon, to: "/my-courses" },
+                      !isAdminUser && { label: "Liked Courses", Icon: Heart, to: "/liked" },
+                    ].filter(Boolean).map(({ label, Icon, to }) => (
                       <button
                         key={to}
                         type="button"
@@ -793,18 +845,39 @@ export default function Navbar({
                 </button>
               )}
 
-              {isAdminUser && (
+              {currentUser && (
                 <button
                   type="button"
                   onClick={() => {
                     setMobileMenuOpen(false);
-                    navigate("/admin");
+                    navigate(isAdminUser ? "/admin" : "/my-courses");
                   }}
                   className="w-full py-2.5 px-3.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between transition-colors shadow-xs cursor-pointer"
                 >
                   <span className="flex items-center gap-2.5">
-                    <LayoutDashboard size={15} className="text-slate-500 dark:text-slate-400" />
-                    <span>Admin Panel</span>
+                    {isAdminUser ? (
+                      <LayoutDashboard size={15} className="text-slate-500 dark:text-slate-400" />
+                    ) : (
+                      <CoursesIcon size={15} className="text-slate-500 dark:text-slate-400" />
+                    )}
+                    <span>{isAdminUser ? "Admin Panel" : "My Courses"}</span>
+                  </span>
+                  <ChevronRight size={15} className="text-slate-400" />
+                </button>
+              )}
+
+              {currentUser && !isAdminUser && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate("/liked");
+                  }}
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between transition-colors shadow-xs cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Heart size={15} className="text-rose-500" />
+                    <span>Liked Courses{likes.count > 0 ? ` (${likes.count})` : ""}</span>
                   </span>
                   <ChevronRight size={15} className="text-slate-400" />
                 </button>

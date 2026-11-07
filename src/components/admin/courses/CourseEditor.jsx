@@ -51,7 +51,7 @@ const BLANK_COURSE = {
   tagLabel: '',
   price: '',
   oldPrice: '',
-  sellOnline: false,
+  sellOnline: true,
   mostBought: false,
   bestValue: false,
   ownLink: '',
@@ -321,8 +321,8 @@ export default function CourseEditor({
 
             <Toggle
               label="Sell online"
-              hint="Students buy this course with Razorpay, and its lessons stay locked until they do. Needs a price of ₹1 or more. Leave off to keep the lessons open to every signed-in student."
-              checked={Boolean(form.sellOnline)}
+              hint="On: students buy this course online, and only its first free lessons play until they do. Off: every lesson is open to signed-in students. A course without a price is never sold."
+              checked={form.sellOnline !== false}
               onChange={setField('sellOnline')}
             />
 

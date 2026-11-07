@@ -18,16 +18,62 @@ import {
   Compass,
   Zap
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { submitEnrollmentRequest } from '../services/api';
+import { fetchPaymentConfig } from '../services/learningApi';
 import useCatalog from '../hooks/useCatalog';
+import useCourseCheckout from '../hooks/useCourseCheckout';
+import useMyCourses from '../hooks/useMyCourses';
 import { formatPrice } from '../utils/courseImage';
 
 // Used only when the form opens from an old subject page with no course behind it
 const DEFAULT_PRICE = 299;
 const DEFAULT_OLD_PRICE = 999;
 
-export default function BookingModal({ isOpen, onClose, preselectedTrack = '', course = null }) {
+// The form fields a signed-in student's account can fill in
+const GRADES = {
+  first: 'Intermediate 1st Year (Junior Inter)',
+  second: 'Intermediate 2nd Year (Senior Inter)',
+};
+
+const accountDetails = (user) => {
+  if (!user || user.role === 'admin') return null;
+  const digits = String(user.mobileNumber || user.mobile || user.phone || '').replace(/\D/g, '');
+  const phone = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+  const year = String(user.year || '').toLowerCase();
+  let gradeLevel = '';
+  if (/2nd|second/.test(year)) gradeLevel = GRADES.second;
+  else if (/1st|first/.test(year)) gradeLevel = GRADES.first;
+  return {
+    studentName: user.fullName || user.name || '',
+    parentEmail: user.email || '',
+    parentPhone: phone.length === 10 ? phone : '',
+    gradeLevel,
+  };
+};
+
+// A field gets the account's value when it is empty, or still holds what an earlier account put there
+const fillFrom = (form, next, before) => {
+  const filled = { ...form };
+  Object.keys(next).forEach((key) => {
+    const untouched = !form[key] || (before && form[key] === before[key]) || (key === 'gradeLevel' && form[key] === GRADES.first);
+    if (next[key] && untouched) filled[key] = next[key];
+  });
+  return filled;
+};
+
+// After signing out, the account's details leave the form; anything the visitor typed stays
+const clearFrom = (form, before) => {
+  const cleared = { ...form };
+  ['studentName', 'parentEmail', 'parentPhone'].forEach((key) => {
+    if (before[key] && form[key] === before[key]) cleared[key] = '';
+  });
+  return cleared;
+};
+
+export default function BookingModal({ isOpen, onClose, preselectedTrack = '', course = null, currentUser = null, onOpenSignIn }) {
   const { courses } = useCatalog();
+  const navigate = useNavigate();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentStep, setCurrentStep] = useState('form'); // 'form' | 'confirmed'
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,6 +123,57 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
     goalArea: preselectedTrack || `Complete ${detectedSubject.name} Chapters & Doubt Support`,
     studyGoal: 'Full Syllabus Access & Doubt Support',
   });
+
+  // A course sold online can be paid for right here, or the student asks the team to contact them
+  const isAdmin = currentUser?.role === 'admin';
+  const forSale = Boolean(selectedCourse?._id && selectedCourse.sellOnline !== false && Number(selectedCourse.price) > 0);
+  const offersPayment = forSale && !isAdmin;
+  const [paymentsOn, setPaymentsOn] = useState(null);
+  const [isDemoPayment, setIsDemoPayment] = useState(false);
+  useEffect(() => {
+    if (!isOpen || !offersPayment) return undefined;
+    let live = true;
+    fetchPaymentConfig().then(
+      (config) => {
+        if (!live) return;
+        setPaymentsOn(Boolean(config.enabled));
+        setIsDemoPayment(config.provider === 'demo');
+      },
+      () => live && setPaymentsOn(false)
+    );
+    return () => {
+      live = false;
+    };
+  }, [isOpen, offersPayment]);
+  // Asked only while the form is open, so pages do not load the student's courses for nothing
+  const { courses: myCourses } = useMyCourses(isOpen && offersPayment ? currentUser : null);
+  const owned = offersPayment && myCourses.some((mine) => mine.slug === selectedCourse.slug);
+  const { buy, buying } = useCourseCheckout({
+    course: selectedCourse || {},
+    access: { paymentsOpen: Boolean(paymentsOn) },
+    isSignedIn: Boolean(currentUser) && !isAdmin,
+    onOpenSignIn: () => {
+      onClose();
+      onOpenSignIn?.();
+    },
+    onBought: async () => {
+      onClose();
+      navigate(`/courses/${selectedCourse.slug}`);
+    },
+  });
+
+  // A signed-in student finds their name, email, mobile and year already filled in
+  const account = accountDetails(currentUser);
+  const accountKey = account ? `${account.studentName}|${account.parentEmail}|${account.parentPhone}|${account.gradeLevel}` : '';
+  const [filledFrom, setFilledFrom] = useState(null); // { key, details }
+  if (isOpen && account && filledFrom?.key !== accountKey) {
+    setFormData((form) => fillFrom(form, account, filledFrom?.details));
+    setFilledFrom({ key: accountKey, details: account });
+  } else if (!account && filledFrom) {
+    setFormData((form) => clearFrom(form, filledFrom.details));
+    setFilledFrom(null);
+  }
+  const showsAccount = Boolean(account && filledFrom);
 
   // Keep goalArea synced when preselectedTrack changes
   useEffect(() => {
@@ -421,8 +518,15 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
                       Student Details & Course Enrollment
                     </h3>
                     <p className="text-[11px] sm:text-xs text-slate-600 dark:!text-slate-400 font-medium">
-                      Send your details and our team will contact you to complete your {detectedSubject.name} enrollment for {priceText}. No payment is taken on this form.
+                      {offersPayment
+                        ? `Pay ${priceText} online now to open every ${detectedSubject.name} lesson at once, or send your details and our team will contact you.`
+                        : `Send your details and our team will contact you to complete your ${detectedSubject.name} enrollment for ${priceText}. No payment is taken on this form.`}
                     </p>
+                    {showsAccount && (
+                      <p data-testid="booking-filled" className="mt-1.5 text-[11px] sm:text-xs text-emerald-700 dark:!text-emerald-400 font-medium">
+                        We filled in your details from your account. Check them before you send.
+                      </p>
+                    )}
                   </div>
 
                   <form onSubmit={handleSubmitRequest} className="space-y-3 sm:space-y-4 text-xs sm:text-sm">
@@ -540,8 +644,59 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
                       <span className="text-blue-900 dark:!text-blue-200 font-medium">
                         Enrollment Fee: <strong className="text-slate-950 dark:!text-white font-bold">{priceText} per Subject</strong> (All Inclusive)
                       </span>
-                      <span className="text-emerald-700 dark:!text-emerald-400 text-[10.5px] sm:text-[11px] font-semibold">Pay after our team contacts you</span>
+                      <span className="text-emerald-700 dark:!text-emerald-400 text-[10.5px] sm:text-[11px] font-semibold">
+                        {offersPayment ? 'Pay online now, or after our team contacts you' : 'Pay after our team contacts you'}
+                      </span>
                     </div>
+
+                    {/* Pay online now: the same Razorpay checkout as the course page */}
+                    {offersPayment && (
+                      <div data-testid="booking-pay" className="pt-1 sm:pt-2 space-y-2">
+                        {owned ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onClose();
+                              navigate(`/courses/${selectedCourse.slug}?continue=1`);
+                            }}
+                            className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <span>You have {detectedSubject.name}: Start Learning</span>
+                            <ArrowRight size={15} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={buy}
+                            disabled={buying || paymentsOn === false}
+                            className="w-full py-3 sm:py-3.5 px-4 sm:px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-300 disabled:text-slate-600 dark:disabled:!bg-slate-700 dark:disabled:!text-slate-300 disabled:shadow-none disabled:cursor-not-allowed text-white font-bold text-xs sm:text-sm shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Lock size={14} />
+                            <span>
+                              {paymentsOn === false
+                                ? 'Online payment opens soon'
+                                : buying
+                                  ? 'Opening payment...'
+                                  : `Pay ${priceText} now`}
+                            </span>
+                          </button>
+                        )}
+                        {!owned && (
+                          <p className="text-center text-[10.5px] sm:text-[11px] text-slate-600 dark:!text-slate-400">
+                            {paymentsOn === false
+                              ? 'Until then, send your details below and our team will help you pay.'
+                              : isDemoPayment
+                                ? `Demo payment: no money is taken, and every ${detectedSubject.name} lesson opens at once.`
+                                : `Every ${detectedSubject.name} lesson opens as soon as Razorpay confirms the payment (UPI, cards, net banking).`}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:!text-slate-500 pt-1">
+                          <span className="h-px flex-1 bg-slate-300/80 dark:!bg-slate-700" />
+                          <span>or</span>
+                          <span className="h-px flex-1 bg-slate-300/80 dark:!bg-slate-700" />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Send Request Button with Website Signature Blue Gradient */}
                     <div className="pt-1 sm:pt-2">
@@ -564,7 +719,9 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
 
                     <div className="flex items-center justify-center gap-1.5 text-[10.5px] sm:text-[11px] text-slate-600 dark:!text-slate-400 text-center font-medium pt-0.5">
                       <Lock size={12} className="text-emerald-600 dark:!text-emerald-400" />
-                      <span>No payment is taken here • Zero hidden charges</span>
+                      <span>
+                        {offersPayment ? 'Online payments are made through Razorpay • Zero hidden charges' : 'No payment is taken here • Zero hidden charges'}
+                      </span>
                     </div>
                   </form>
                 </div>
