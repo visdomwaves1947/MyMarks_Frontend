@@ -1,10 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, Monitor, Sparkles, Play, Video, ExternalLink, BookOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { X, CheckCircle2, Monitor, Sparkles, Play, Video, ExternalLink, Lock } from 'lucide-react';
 import { fetchAdminVideos } from '../services/api';
+import { fetchPublicCourses } from '../services/courseApi';
+import { youtubeIdOf } from '../utils/youtubeLink';
+
+// The lessons of a course for sale come without their links until the course is bought, so they cannot play here
+export const isPlayable = (video) => Boolean(video && !video.isLocked && (youtubeIdOf(video) || video.url));
+
+const sameText = (a, b) => (a || '').trim().toLowerCase() === (b || '').trim().toLowerCase();
 
 export default function VideoDemoModal({ isOpen, onClose, onOpenBooking }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('simulation'); // 'simulation' | 'lectures'
   const [videos, setVideos] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
@@ -17,8 +27,10 @@ export default function VideoDemoModal({ isOpen, onClose, onOpenBooking }) {
         .then((res) => {
           if (isMounted && res && res.data && Array.isArray(res.data)) {
             setVideos(res.data);
-            if (res.data.length > 0 && !selectedVideo) {
-              setSelectedVideo(res.data[0]);
+            // Start on a video that plays
+            const first = res.data.find(isPlayable) || res.data[0];
+            if (first && !selectedVideo) {
+              setSelectedVideo(first);
             }
           }
         })
@@ -26,6 +38,10 @@ export default function VideoDemoModal({ isOpen, onClose, onOpenBooking }) {
         .finally(() => {
           if (isMounted) setIsLoadingVideos(false);
         });
+      // To link a locked lesson to its course page
+      fetchPublicCourses()
+        .then((list) => isMounted && setCourses(Array.isArray(list) ? list : []))
+        .catch(() => {});
 
       return () => {
         isMounted = false;
@@ -36,13 +52,26 @@ export default function VideoDemoModal({ isOpen, onClose, onOpenBooking }) {
   if (!isOpen) return null;
 
   const subjects = ['all', 'Mathematics', 'Physics', 'Chemistry', 'Botany', 'General'];
-  const filteredVideos = videos.filter(
-    (v) => selectedSubject === 'all' || v.subject?.toLowerCase() === selectedSubject.toLowerCase()
-  );
+  // Videos that play come first, locked lessons after them
+  const filteredVideos = videos
+    .filter((v) => selectedSubject === 'all' || v.subject?.toLowerCase() === selectedSubject.toLowerCase())
+    .sort((a, b) => Number(isPlayable(b)) - Number(isPlayable(a)));
+
+  const courseOf = (video) =>
+    courses.find(
+      (course) => (video?.course && String(course._id) === String(video.course)) || sameText(course.subject, video?.subject)
+    );
+  const openCourse = (course) => {
+    onClose();
+    navigate(course?.slug ? `/courses/${course.slug}` : '/demo#courses');
+  };
+  const selectedYoutubeId = youtubeIdOf(selectedVideo);
+  const lockedCourse = selectedVideo && !isPlayable(selectedVideo) ? courseOf(selectedVideo) : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn overflow-y-auto">
-      <div className="relative w-full max-w-3xl bg-[#DFE7F2] dark:bg-[#131927] border border-[#BAC9DC] dark:border-[#243048] rounded-3xl shadow-2xl p-5 sm:p-7 text-left my-6 transition-colors duration-200">
+    // Centred while it fits; taller than the screen, it starts at the top and scrolls
+    <div className="fixed inset-0 z-50 flex justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-md animate-fadeIn overflow-y-auto">
+      <div data-testid="demo-videos" className="relative w-full max-w-3xl bg-[#DFE7F2] dark:bg-[#131927] border border-[#BAC9DC] dark:border-[#243048] rounded-3xl shadow-2xl p-5 sm:p-7 text-left my-auto transition-colors duration-200">
         
         {/* Close Button */}
         <button
@@ -176,11 +205,34 @@ export default function VideoDemoModal({ isOpen, onClose, onOpenBooking }) {
 
             {/* Active Video Player */}
             {selectedVideo && (
-              <div className="rounded-2xl overflow-hidden border border-[#B8CADF] dark:border-[#243048] bg-black">
-                {selectedVideo.type === 'youtube' || selectedVideo.youtubeId ? (
+              <div data-testid="demo-player" className="rounded-2xl overflow-hidden border border-[#B8CADF] dark:border-[#243048] bg-black">
+                {!isPlayable(selectedVideo) ? (
+                  // A locked lesson: say where it can be watched, in place of a player that cannot load it
+                  <div
+                    data-testid="demo-locked"
+                    className="relative aspect-video w-full bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 text-white flex flex-col items-center justify-center gap-3 p-6 text-center"
+                  >
+                    <span className="w-12 h-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center">
+                      <Lock size={22} />
+                    </span>
+                    <p className="text-sm sm:text-base font-bold">
+                      This lesson is in the {lockedCourse?.name || selectedVideo.subject || 'MyMarks'} course
+                    </p>
+                    <p className="text-xs text-slate-300 max-w-sm">
+                      Open the course to watch its free lessons after signing in, or buy it to open every lesson.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => openCourse(lockedCourse)}
+                      className="mt-1 px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold cursor-pointer"
+                    >
+                      {lockedCourse ? `Open ${lockedCourse.name}` : 'See the Courses'}
+                    </button>
+                  </div>
+                ) : selectedYoutubeId ? (
                   <div className="relative aspect-video w-full bg-black">
                     <iframe
-                      src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1&rel=0`}
+                      src={`https://www.youtube.com/embed/${selectedYoutubeId}?autoplay=1&rel=0`}
                       title={selectedVideo.title}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
@@ -224,31 +276,43 @@ export default function VideoDemoModal({ isOpen, onClose, onOpenBooking }) {
 
             {/* Video Playlist Thumbnails Carousel/Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto pr-1">
-              {filteredVideos.map((item) => (
-                <div
-                  key={item.id || item._id}
-                  onClick={() => setSelectedVideo(item)}
-                  className={`p-2 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
-                    selectedVideo?.id === item.id || selectedVideo?._id === item._id
-                      ? 'bg-red-500/10 border-red-500/40 dark:bg-red-500/20'
-                      : 'bg-white/60 dark:bg-slate-900/60 border-slate-300 dark:border-slate-800 hover:border-slate-400'
-                  }`}
-                >
-                  <div className="relative w-14 h-10 rounded-lg overflow-hidden bg-slate-950 shrink-0">
-                    {item.thumbnailUrl ? (
-                      <img src={item.thumbnailUrl} alt={item.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-500">
-                        <Play size={12} fill="currentColor" />
-                      </div>
-                    )}
+              {filteredVideos.map((item) => {
+                const locked = !isPlayable(item);
+                return (
+                  <div
+                    key={item.id || item._id}
+                    data-testid="demo-video"
+                    data-locked={locked ? 'true' : 'false'}
+                    onClick={() => setSelectedVideo(item)}
+                    className={`p-2 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
+                      selectedVideo?.id === item.id || selectedVideo?._id === item._id
+                        ? 'bg-red-500/10 border-red-500/40 dark:bg-red-500/20'
+                        : 'bg-white/60 dark:bg-slate-900/60 border-slate-300 dark:border-slate-800 hover:border-slate-400'
+                    }`}
+                  >
+                    <div className="relative w-14 h-10 rounded-lg overflow-hidden bg-slate-950 shrink-0">
+                      {item.thumbnailUrl ? (
+                        <img src={item.thumbnailUrl} alt={item.title} className={`w-full h-full object-cover ${locked ? 'opacity-60' : ''}`} />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-500">
+                          <Play size={12} fill="currentColor" />
+                        </div>
+                      )}
+                      {locked && (
+                        <span className="absolute inset-0 flex items-center justify-center bg-slate-950/45 text-white">
+                          <Lock size={12} />
+                        </span>
+                      )}
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{item.title}</p>
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
+                        {item.subject} • {locked ? 'In the course' : item.duration || 'Lecture'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="overflow-hidden">
-                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{item.title}</p>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">{item.subject} • {item.duration || 'Lecture'}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}

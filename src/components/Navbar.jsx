@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
-  Search,
+  Bookmark,
+  NotebookPen,
   ChevronDown,
   Sun,
   Moon,
@@ -29,8 +30,10 @@ import useCatalog from "../hooks/useCatalog";
 import useNavigationMenu from "../hooks/useNavigationMenu";
 import useCart from "../hooks/useCart";
 import useLikes from "../hooks/useLikes";
+import useSavedHighlights from "../hooks/useSavedHighlights";
 import MegaMenuPanel from "./nav/MegaMenuPanel";
 import { MEGA_MENU_OFFSET, MEGA_MENU_WIDTH, resolveSections } from "./nav/menuSections";
+import SearchBox from "./search/SearchBox";
 
 export default function Navbar({
   onOpenBooking,
@@ -53,7 +56,6 @@ export default function Navbar({
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
   const [mobileDropdowns, setMobileDropdowns] = useState({});
   const dropdownTimeoutRef = useRef(null);
   const megaMenuRef = useRef(null);
@@ -140,19 +142,6 @@ export default function Navbar({
 
 
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      const el =
-        document.getElementById("courses") ||
-        document.getElementById("interactive-lab");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      }
-      setSearchQuery("");
-      setMobileMenuOpen(false);
-    }
-  };
 
   const handleDropdownEnter = (index) => {
     if (dropdownTimeoutRef.current) {
@@ -202,6 +191,9 @@ export default function Navbar({
   const showCart = !isAdminUser;
   const cartLabel = cart.count === 0 ? "Cart" : `Cart, ${cart.count} ${cart.count === 1 ? "course" : "courses"}`;
   const likes = useLikes(currentUser);
+  // My Highlights: the highlights this student saved
+  const savedHighlights = useSavedHighlights(currentUser);
+  const savedLabel = savedHighlights.count === 0 ? "My Highlights" : `My Highlights, ${savedHighlights.count}`;
   const likedLabel = likes.count === 0 ? "Liked courses" : `Liked courses, ${likes.count}`;
 
   useEffect(() => {
@@ -427,26 +419,8 @@ export default function Navbar({
               })}
             </nav>
 
-            {/* Search Box (Desktop / Tablet) */}
-            <form
-              onSubmit={handleSearchSubmit}
-              className="hidden xl:flex items-center relative max-w-[190px] w-full"
-            >
-              <input
-                type="text"
-                placeholder="Search calculus, algebra..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs bg-slate-50 hover:bg-slate-100 focus:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:focus:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full py-2 pl-3.5 pr-8 text-slate-950 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600/20 shadow-xs transition-all font-semibold"
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="absolute right-2.5 text-slate-800 hover:text-blue-600 transition-colors cursor-pointer"
-              >
-                <Search size={14} />
-              </button>
-            </form>
+            {/* Search Box (Desktop / Tablet): highlights, reels, courses and lessons */}
+            <SearchBox variant="bar" placeholder="Search calculus, algebra..." className="hidden xl:block max-w-[190px] w-full" />
 
             {/* Right Controls & Actions */}
             <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
@@ -492,6 +466,25 @@ export default function Navbar({
                 </button>
               )}
 
+
+              {/* My Highlights, for signed-in students (phones reach it from the menu) */}
+              {currentUser && !isAdminUser && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/my-highlights")}
+                  aria-label={savedLabel}
+                  title={savedLabel}
+                  data-testid="nav-saved-highlights"
+                  className="relative hidden sm:flex p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+                >
+                  <Bookmark size={19} />
+                  {savedHighlights.count > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
+                      {savedHighlights.count}
+                    </span>
+                  )}
+                </button>
+              )}
 
               {/* Liked courses, with how many (phones reach them from the menu) */}
               {showCart && (
@@ -577,6 +570,8 @@ export default function Navbar({
                         ? { label: "Admin Panel", Icon: LayoutDashboard, to: "/admin" }
                         : { label: "My Courses", Icon: CoursesIcon, to: "/my-courses" },
                       !isAdminUser && { label: "Liked Courses", Icon: Heart, to: "/liked" },
+                      !isAdminUser && { label: "My Highlights", Icon: Bookmark, to: "/my-highlights" },
+                      !isAdminUser && { label: "My Notes", Icon: NotebookPen, to: "/my-notes" },
                     ].filter(Boolean).map(({ label, Icon, to }) => (
                       <button
                         key={to}
@@ -650,24 +645,7 @@ export default function Navbar({
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile Search */}
-            <form
-              onSubmit={handleSearchSubmit}
-              className="relative flex items-center mb-3"
-            >
-              <input
-                type="text"
-                placeholder="Search curriculum, labs, lessons..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full text-xs bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl py-2.5 pl-3.5 pr-9 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 font-medium shadow-xs"
-              />
-              <button
-                type="submit"
-                className="absolute right-3 text-slate-400 hover:text-blue-600"
-              >
-                <Search size={16} />
-              </button>
-            </form>
+            <SearchBox variant="drawer" placeholder="Search curriculum, labs, lessons..." onNavigate={() => setMobileMenuOpen(false)} />
 
             {/* Mobile Navigation List */}
             <div className="space-y-1">
@@ -878,6 +856,42 @@ export default function Navbar({
                   <span className="flex items-center gap-2.5">
                     <Heart size={15} className="text-rose-500" />
                     <span>Liked Courses{likes.count > 0 ? ` (${likes.count})` : ""}</span>
+                  </span>
+                  <ChevronRight size={15} className="text-slate-400" />
+                </button>
+              )}
+
+              {currentUser && !isAdminUser && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate("/my-highlights");
+                  }}
+                  data-testid="drawer-saved-highlights"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between transition-colors shadow-xs cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Bookmark size={15} className="text-blue-600" />
+                    <span>My Highlights{savedHighlights.count > 0 ? ` (${savedHighlights.count})` : ""}</span>
+                  </span>
+                  <ChevronRight size={15} className="text-slate-400" />
+                </button>
+              )}
+
+              {currentUser && !isAdminUser && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    navigate("/my-notes");
+                  }}
+                  data-testid="drawer-my-notes"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/80 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-medium text-xs flex items-center justify-between transition-colors shadow-xs cursor-pointer"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <NotebookPen size={15} className="text-blue-600" />
+                    <span>My Notes</span>
                   </span>
                   <ChevronRight size={15} className="text-slate-400" />
                 </button>

@@ -390,6 +390,7 @@ export default function CourseCurriculum({
   buying = false,
   cart = null,
   tracking = NO_TRACKING,
+  currentUser = null,
 }) {
   const intro = course.page?.curriculumIntro || {};
   const modules = course.page?.modules || [];
@@ -439,6 +440,9 @@ export default function CourseCurriculum({
   const closePlayer = useCallback(() => setPlayingId(null), []);
   const [searchParams, setSearchParams] = useSearchParams();
   const wantsContinue = searchParams.has('continue');
+  // A lesson to open at a set time, from a time tapped in a note: ?lesson=<video or topic>&t=<seconds>
+  const wantedLesson = searchParams.get('lesson');
+  const [startOverride, setStartOverride] = useState(null);
 
   // The lesson the student watched last, to carry on from it
   const lastWatched = useMemo(() => {
@@ -448,6 +452,27 @@ export default function CourseCurriculum({
     const entry = allTopics.find((topic) => topic.lesson && !topic.lesson.isLocked && lessonKeysOf(topic).includes(key));
     return entry ? { entry, saved: savedFor(tracking.progress.lessons, entry) } : null;
   }, [allTopics, tracking.progress]);
+
+  // Arriving from My Notes: open that lesson at the time tapped
+  useEffect(() => {
+    if (!wantedLesson) return;
+    const target = allTopics.find((topic) => topic.lesson && (topic.nodeId === wantedLesson || lessonKeysOf(topic).includes(wantedLesson)));
+    if (target) {
+      const at = Math.max(0, Number(searchParams.get('t')) || 0);
+      setStartOverride({ nodeId: target.nodeId, at });
+      openLecture(target);
+    }
+    setSearchParams(
+      (params) => {
+        params.delete('lesson');
+        params.delete('t');
+        return params;
+      },
+      { replace: true }
+    );
+    // openLecture is a plain function of this render; the effect runs once per link
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wantedLesson, allTopics, setSearchParams]);
 
   // Arriving from a Continue button: open the lesson the student was watching, or the first one
   useEffect(() => {
@@ -481,8 +506,12 @@ export default function CourseCurriculum({
           </h2>
           {intro.subheading && <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg font-medium">{intro.subheading}</p>}
 
-          {intro.noticeTitle && (
-            <div className="mt-6 p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600/70 shadow-md text-amber-950 dark:text-amber-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+          {/* The "sample demo videos" notice is for students without the course; once bought, every lesson is open */}
+          {intro.noticeTitle && !(access.forSale && access.owned) && !access.adminView && (
+            <div
+              data-testid="course-sample-notice"
+              className="mt-6 p-4 sm:p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border-2 border-amber-400 dark:border-amber-600/70 shadow-md text-amber-950 dark:text-amber-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left"
+            >
               <div className="flex items-center sm:items-start gap-3">
                 <div className="p-2.5 rounded-xl bg-amber-500 text-white shrink-0 shadow-sm">
                   <Sparkles size={20} />
@@ -492,16 +521,14 @@ export default function CourseCurriculum({
                   <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300/90 mt-0.5 leading-relaxed">{intro.noticeText}</p>
                 </div>
               </div>
-              {!(access.forSale && access.owned) && (
-                <button
-                  onClick={() => (mustBuy ? onBuy() : onEnroll(course.name))}
-                  disabled={buying}
-                  className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-xs sm:text-sm font-extrabold shadow-md transition-all cursor-pointer shrink-0 inline-flex items-center gap-1.5"
-                >
-                  <span>{mustBuy ? 'Buy Now' : 'Enroll Now'}</span>
-                  <ArrowRight size={15} />
-                </button>
-              )}
+              <button
+                onClick={() => (mustBuy ? onBuy() : onEnroll(course.name))}
+                disabled={buying}
+                className="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white text-xs sm:text-sm font-extrabold shadow-md transition-all cursor-pointer shrink-0 inline-flex items-center gap-1.5"
+              >
+                <span>{mustBuy ? 'Buy Now' : 'Enroll Now'}</span>
+                <ArrowRight size={15} />
+              </button>
             </div>
           )}
 
@@ -758,10 +785,16 @@ export default function CourseCurriculum({
           chapters={chapters}
           theme={theme}
           startId={playingId}
-          onJump={setPlayingId}
+          startOverride={startOverride}
+          onJump={(nodeId, at) => {
+            setStartOverride(at === undefined ? null : { nodeId, at });
+            setPlayingId(nodeId);
+          }}
           onClose={closePlayer}
           onLocked={() => setPrompt(mustBuy ? 'buy' : 'enroll')}
           tracking={tracking}
+          currentUser={currentUser}
+          onOpenSignIn={onOpenSignIn}
           onAsk={(topic) => {
             setPlayingId(null);
             onEnroll(`${course.name} help: ${topic.title}`);

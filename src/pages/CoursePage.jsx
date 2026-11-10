@@ -78,6 +78,8 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
 
   const course = state.data?.course;
   const access = state.data?.access || {};
+  // Administrators see every lesson: the page shows them the lessons, never Buy Now
+  const shownAccess = currentUser?.role === 'admin' ? { ...access, forSale: false, adminView: true } : access;
 
   // Bought somewhere else on the site, such as the enrollment form: open the lessons here too
   const courseId = course?._id;
@@ -189,7 +191,7 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
         <CourseHero
           course={course}
           theme={theme}
-          access={access}
+          access={shownAccess}
           onBuy={buy}
           buying={buying}
           cart={cartButton}
@@ -217,11 +219,12 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           isSignedIn={isSignedIn}
           onEnroll={enroll}
           onOpenSignIn={onOpenSignIn}
-          access={access}
+          access={shownAccess}
           onBuy={buy}
           buying={buying}
           cart={cartButton}
           tracking={tracking}
+          currentUser={currentUser}
         />
       )}
 
@@ -239,7 +242,7 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           onClose={() => setOpenPlan(null)}
           onEnroll={enroll}
           onOpenSignIn={onOpenSignIn}
-          access={access}
+          access={shownAccess}
           onBuy={buy}
           buying={buying}
           tracking={tracking}

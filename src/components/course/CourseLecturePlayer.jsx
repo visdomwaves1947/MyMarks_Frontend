@@ -20,7 +20,9 @@ import {
 import { flattenChapters, isVideoLesson } from './curriculumTree';
 import { VideoLesson, YouTubeLesson } from './LessonMedia';
 import useLessonTracker from '../../hooks/useLessonTracker';
-import { formatClock, lessonKeyOf, resumePoint, savedFor } from '../../utils/watchTime';
+import { formatClock, lessonKeyOf, lessonKeysOf, resumePoint, savedFor } from '../../utils/watchTime';
+import LessonHighlights from './LessonHighlights';
+import LessonNotes from './LessonNotes';
 
 const NO_TRACKING = { progress: { lessons: {} }, update: undefined, enabled: false };
 
@@ -358,6 +360,9 @@ export default function CourseLecturePlayer({
   onAsk,
   onJump,
   tracking = NO_TRACKING,
+  startOverride = null,
+  currentUser = null,
+  onOpenSignIn,
 }) {
   const player = theme.player;
 
@@ -404,6 +409,13 @@ export default function CourseLecturePlayer({
     return opened;
   });
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  // The right panel: the lessons, or the student's notes for the chapter
+  const [panel, setPanel] = useState('lessons');
+  // Once opened, My Notes stays in place (hidden on the Lessons tab), so switching back is instant
+  const [notesOpened, setNotesOpened] = useState(false);
+  const videoTime = useRef(0);
+  const videoLength = useRef(0);
+  const lessonControl = useRef(null);
   const [filter, setFilter] = useState('');
 
   const position = playable.findIndex((entry) => entry.nodeId === current?.nodeId);
@@ -436,6 +448,9 @@ export default function CourseLecturePlayer({
   }, [sidebarOpen]);
 
   const lessonKey = lessonKeyOf(current);
+  useEffect(() => {
+    videoLength.current = 0;
+  }, [lessonKey]);
   const report = useLessonTracker({
     courseId: course._id,
     lessonKey,
@@ -444,9 +459,13 @@ export default function CourseLecturePlayer({
   });
   const [resume, setResume] = useState({ id: null, at: 0 });
   if (current && resume.id !== current.nodeId) {
-    setResume({ id: current.nodeId, at: tracking.enabled ? resumePoint(savedFor(tracking.progress.lessons, current)) : 0 });
+    const asked = startOverride && startOverride.nodeId === current.nodeId ? startOverride.at : null;
+    setResume({ id: current.nodeId, at: asked ?? (tracking.enabled ? resumePoint(savedFor(tracking.progress.lessons, current)) : 0) });
   }
   const startAt = resume.id === current?.nodeId ? resume.at : 0;
+  // A highlight of this lesson playing on its own: only its part, and the place in the lesson is not saved
+  const [part, setPart] = useState(null);
+  const activePart = part && part.nodeId === current?.nodeId ? part : null;
   const savedOf = (node) => savedFor(tracking.progress.lessons, node);
   const finishedCount = playable.filter((entry) => savedOf(entry)?.completed).length;
 
@@ -477,6 +496,54 @@ export default function CourseLecturePlayer({
     if (!upNext || upNext.lesson.isLocked) return;
     if (entries.some((entry) => entry.nodeId === upNext.nodeId)) select(upNext);
     else onJump?.(upNext.nodeId);
+  };
+
+  // Highlights: play one part of this lesson, then offer the next one or the whole lesson
+  const playPart = (clip, list) => {
+    setEndedId(null);
+    setPart((previous) => ({
+      id: String(clip._id),
+      title: clip.title,
+      start: clip.start,
+      end: clip.end,
+      list,
+      nodeId: current.nodeId,
+      round: (previous?.round || 0) + 1,
+      ended: false,
+    }));
+    workspaceRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const nextPart = activePart ? activePart.list[activePart.list.findIndex((clip) => String(clip._id) === activePart.id) + 1] : null;
+  const watchFullLesson = () => {
+    if (activePart) setResume({ id: current.nodeId, at: activePart.start });
+    setPart(null);
+  };
+  const noReport = () => {};
+
+  // A time tapped in a note: jump the video there (leaving a highlight for the whole lesson)
+  const seekTo = (seconds) => {
+    if (activePart || !lessonControl.current) {
+      setResume({ id: current.nodeId, at: seconds });
+      setPart(null);
+      if (!activePart) setReplay((count) => count + 1);
+      return;
+    }
+    lessonControl.current.seek(seconds);
+  };
+  // Another video's note: open that lesson at the time tapped
+  const openLessonAt = (key, seconds = 0) => {
+    const entry = courseOrder.find((item) => lessonKeysOf(item).includes(key));
+    if (!entry) return;
+    if (entry.nodeId === current.nodeId) {
+      seekTo(seconds);
+      return;
+    }
+    if (entries.some((item) => item.nodeId === entry.nodeId)) {
+      setResume({ id: entry.nodeId, at: seconds });
+      select(entry);
+    } else {
+      onJump?.(entry.nodeId, seconds);
+    }
   };
   const watchAgain = () => {
     setEndedId(null);
@@ -576,20 +643,32 @@ export default function CourseLecturePlayer({
           <div className="relative w-full aspect-video lg:max-h-[64vh] bg-black flex items-center justify-center shadow-2xl shrink-0">
             {lesson.youtubeId ? (
               <YouTubeLesson
-                key={`${current.nodeId}:${replay}`}
+                key={`${current.nodeId}:${replay}:${activePart ? `${activePart.id}:${activePart.round}` : 'full'}`}
                 youtubeId={lesson.youtubeId}
                 title={current.title}
-                startAt={startAt}
-                report={report}
-                onEnded={() => setEndedId(current.nodeId)}
+                startAt={activePart ? activePart.start : startAt}
+                endAt={activePart ? activePart.end : 0}
+                report={activePart ? noReport : report}
+                onEnded={() => (activePart ? setPart({ ...activePart, ended: true }) : setEndedId(current.nodeId))}
+                onTime={(seconds, length) => {
+                  videoTime.current = seconds;
+                  if (length > 0) videoLength.current = length;
+                }}
+                control={lessonControl}
               />
             ) : isVideoLesson(lesson) ? (
               <VideoLesson
-                key={`${current.nodeId}:${replay}`}
+                key={`${current.nodeId}:${replay}:${activePart ? `${activePart.id}:${activePart.round}` : 'full'}`}
                 url={lesson.url}
-                startAt={startAt}
-                report={report}
-                onEnded={() => setEndedId(current.nodeId)}
+                startAt={activePart ? activePart.start : startAt}
+                endAt={activePart ? activePart.end : 0}
+                report={activePart ? noReport : report}
+                onEnded={() => (activePart ? setPart({ ...activePart, ended: true }) : setEndedId(current.nodeId))}
+                onTime={(seconds, length) => {
+                  videoTime.current = seconds;
+                  if (length > 0) videoLength.current = length;
+                }}
+                control={lessonControl}
               />
             ) : lesson.url ? (
               <div className="text-center px-6">
@@ -608,7 +687,47 @@ export default function CourseLecturePlayer({
             ) : (
               <div className="text-slate-400 text-sm">Video media unavailable</div>
             )}
-            {endedId === current.nodeId && (
+            {activePart?.ended && (
+              <div
+                data-testid="highlight-ended"
+                className="absolute inset-0 z-10 bg-slate-950/85 flex flex-col items-center justify-center gap-3 text-center p-6"
+              >
+                <p className="text-base sm:text-lg font-bold text-white">Highlight finished</p>
+                <p className="text-xs text-slate-300">
+                  {activePart.title} · {formatClock(activePart.start)}–{formatClock(activePart.end)}
+                </p>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => playPart({ _id: activePart.id, ...activePart }, activePart.list)}
+                    className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <RotateCcw size={13} />
+                    <span>Replay</span>
+                  </button>
+                  {nextPart && (
+                    <button
+                      type="button"
+                      data-testid="highlight-next"
+                      onClick={() => playPart(nextPart, activePart.list)}
+                      className={`px-4 py-2 rounded-xl ${player.solid} text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer`}
+                    >
+                      <span>Next highlight</span>
+                      <ChevronRight size={14} />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    data-testid="highlight-full"
+                    onClick={watchFullLesson}
+                    className="px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold cursor-pointer"
+                  >
+                    Watch the full lesson from {formatClock(activePart.start)}
+                  </button>
+                </div>
+              </div>
+            )}
+            {!activePart && endedId === current.nodeId && (
               <UpNextCard
                 key={endedId}
                 next={upNext}
@@ -643,7 +762,7 @@ export default function CourseLecturePlayer({
                       <span>Finished</span>
                     </span>
                   )}
-                  {startAt > 0 && (
+                  {startAt > 0 && !activePart && (
                     <span
                       data-testid="lesson-resumed"
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 text-[11px] font-semibold"
@@ -673,6 +792,33 @@ export default function CourseLecturePlayer({
                 </button>
               </div>
             </div>
+
+            {activePart && !activePart.ended && (
+              <div
+                data-testid="highlight-playing"
+                className="flex flex-wrap items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 dark:bg-blue-950/30 dark:border-blue-900 dark:text-blue-100 text-sm"
+              >
+                <span className="font-bold">Playing highlight:</span>
+                <span>
+                  {activePart.title} · {formatClock(activePart.start)}–{formatClock(activePart.end)}
+                </span>
+                <button type="button" onClick={watchFullLesson} className="ml-auto text-xs font-bold underline cursor-pointer">
+                  Watch the full lesson
+                </button>
+              </div>
+            )}
+
+            {(lesson.youtubeId || isVideoLesson(lesson)) && (
+              <LessonHighlights
+                lesson={lesson}
+                playingId={activePart && !activePart.ended ? activePart.id : ''}
+                onPlay={playPart}
+                onFull={watchFullLesson}
+                player={player}
+                currentUser={currentUser}
+                onOpenSignIn={onOpenSignIn}
+              />
+            )}
 
             {(current.description || current.keywords?.length > 0) && (
               <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 dark:bg-slate-900/90 dark:border-slate-800/80 shadow-md">
@@ -722,6 +868,49 @@ export default function CourseLecturePlayer({
             aria-label="Topic hierarchy"
             className="w-full lg:w-[420px] xl:w-[460px] bg-white dark:bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800 flex flex-col shrink-0 lg:overflow-hidden shadow-2xl"
           >
+            <div role="tablist" aria-label="Side panel" className="grid grid-cols-2 gap-1 p-1.5 m-3 mb-0 rounded-xl bg-slate-100 dark:bg-slate-800/80 shrink-0">
+              {[
+                { key: 'lessons', label: 'Lessons' },
+                { key: 'notes', label: 'My Notes' },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  role="tab"
+                  data-testid={`panel-${tab.key}`}
+                  aria-selected={panel === tab.key}
+                  onClick={() => {
+                    setPanel(tab.key);
+                    if (tab.key === 'notes') setNotesOpened(true);
+                  }}
+                  className={`py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                    panel === tab.key
+                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {notesOpened && (
+              <div className={panel === 'notes' ? 'contents' : 'hidden'}>
+                <LessonNotes
+                  course={course}
+                  current={current}
+                  currentChapter={chapters.find((chapter) => chapter.chapterId === current.chapterId)}
+                  currentUser={currentUser}
+                  onOpenSignIn={onOpenSignIn}
+                  getTime={() => videoTime.current}
+                  getLength={() => videoLength.current}
+                  onSeek={seekTo}
+                  onOpenLesson={openLessonAt}
+                  player={player}
+                />
+              </div>
+            )}
+            <div className={panel === 'lessons' ? 'contents' : 'hidden'}>
             <div className="p-4 bg-white/95 border-b border-slate-200 dark:bg-slate-900/95 dark:border-slate-800 space-y-3 shrink-0">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5">
@@ -845,6 +1034,7 @@ export default function CourseLecturePlayer({
                   />
                 ))
               )}
+            </div>
             </div>
           </aside>
         )}

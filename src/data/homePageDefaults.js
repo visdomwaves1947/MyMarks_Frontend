@@ -106,7 +106,7 @@ export const DEFAULT_HOME = {
       {
         "title": "100% Refund Guarantee",
         "text": "Zero risk, only performance gains.",
-        "image": "https://i.pinimg.com/1200x/70/14/04/701404e60eafd759dbad2677cdcb406e.jpg",
+        "image": "/home/refund-guarantee.jpg",
         "visible": true
       }
     ]

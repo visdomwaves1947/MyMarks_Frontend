@@ -53,7 +53,7 @@ const headersFor = async (request) => ({ Authorization: `Bearer ${await getAdmin
 const madeCourses = [];
 
 // A published course of its own for each test and screen size, sold online, with three YouTube lessons
-const addCourseForSale = async (request, testInfo) => {
+const addCourseForSale = async (request, testInfo, extra = {}) => {
   const headers = await headersFor(request);
   const name = `Sale ${testInfo.project.name} ${Date.now()}`;
   const created = await request.post(`${API_URL}/api/admin/courses`, {
@@ -66,6 +66,7 @@ const addCourseForSale = async (request, testInfo) => {
       price: 299,
       oldPrice: 999,
       sellOnline: true,
+      ...extra,
     },
   });
   expect(created.ok(), await created.text()).toBeTruthy();
@@ -775,10 +776,20 @@ test('Buy Now takes the course out of the cart, and a course the student has is 
   await expect(page.getByTestId('cart-total')).toHaveText('₹299');
   await expect(page.getByTestId('cart-checkout')).toHaveText('Proceed to Checkout');
 
-  // Remove takes a course out
-  await page.getByRole('button', { name: `Remove ${now.name}` }).click();
-  await expect(page.getByTestId('cart-item')).toHaveCount(1);
+  // Remove stands apart from the "You have this course" line: beside the price, or under the line on phones
+  const ownedRow = page.getByTestId('cart-item').filter({ hasText: now.name });
+  const note = await ownedRow.getByText('You have this course').boundingBox();
+  const remove = await ownedRow.getByTestId('cart-remove').boundingBox();
+  const apart = remove.x >= note.x + note.width + 8 || remove.y >= note.y + note.height;
+  expect(apart, 'Remove is not stuck to the end of the line').toBe(true);
+
+  // Remove takes a course out; with only a course the student has left, the cart says so
   await page.getByRole('button', { name: `Remove ${later.name}` }).click();
+  await expect(page.getByTestId('cart-item')).toHaveCount(1);
+  await expect(page.getByTestId('cart-total')).toHaveText('₹0');
+  await expect(page.getByTestId('cart-checkout')).toBeDisabled();
+  await expect(page.getByTestId('cart-note')).toHaveText('You already have every course here. Remove them to empty your cart.');
+  await page.getByRole('button', { name: `Remove ${now.name}` }).click();
   await expect(page.getByTestId('cart-empty')).toBeVisible();
   await expect(page.getByTestId('nav-cart')).toHaveAccessibleName('Cart');
 });
@@ -899,4 +910,106 @@ test('the admin Payments page lists payments as they come in and saves the Razor
     // Back to the test server's own keys, for the other tests
     await request.put(`${API_URL}/api/admin/payment-settings`, { headers, data: { keyId: '', enabled: true } });
   }
+});
+
+test('the demo videos window never shows a broken player: a lesson of a course for sale points to its course', async ({ page, request }, testInfo) => {
+  const course = await addCourseForSale(request, testInfo);
+  const headers = await headersFor(request);
+  const made = [];
+  const addVideo = async (data) => {
+    const res = await request.post(`${API_URL}/api/videos`, { headers, data: { status: 'published', ...data } });
+    expect(res.ok(), await res.text()).toBeTruthy();
+    const body = await res.json();
+    made.push(body.data?._id || body.video?._id || body._id);
+  };
+  const lockedTitle = `Locked lesson ${course.name}`;
+  try {
+    // A lesson of the course for sale (sent without its link to a visitor), and a video anyone may watch
+    await addVideo({
+      title: lockedTitle,
+      url: `https://www.youtube.com/watch?v=${YOUTUBE_IDS[2]}`,
+      subject: course.name,
+      chapterNumber: '1',
+      chapterName: 'Motion',
+      topicNumber: '1.3',
+      topicName: 'Circular Motion',
+    });
+    await addVideo({ title: `Open demo ${testInfo.project.name}`, url: `https://www.youtube.com/watch?v=${YOUTUBE_IDS[0]}`, subject: 'General' });
+
+    await openAsVisitor(page);
+    await page.route('https://www.youtube.com/embed/**', (route) =>
+      route.fulfill({ contentType: 'text/html', body: '<html><body>player</body></html>' })
+    );
+    await page.goto('/demo');
+    await page.getByRole('button', { name: 'Watch Demo Videos' }).click();
+    const demo = page.getByTestId('demo-videos');
+    await demo.getByRole('button', { name: /YouTube & Video Lectures/ }).click();
+
+    // It starts on a video that plays, with a real YouTube id in the player
+    await expect(demo.getByTestId('demo-player').locator('iframe')).toHaveAttribute('src', /\/embed\/[A-Za-z0-9_-]{11}\?/);
+
+    // The locked lesson is marked, and shows where to watch it in place of a player that cannot load it
+    const locked = demo.getByTestId('demo-video').filter({ hasText: lockedTitle });
+    await expect(locked).toHaveAttribute('data-locked', 'true');
+    await locked.click();
+    await expect(demo.getByTestId('demo-locked')).toContainText(`This lesson is in the ${course.name} course`);
+    await expect(demo.locator('iframe')).toHaveCount(0);
+    await demo.getByRole('button', { name: `Open ${course.name}` }).click();
+    await expect(page).toHaveURL(new RegExp(`/courses/${course.slug}$`));
+  } finally {
+    for (const id of made) await request.delete(`${API_URL}/api/videos/${id}`, { headers });
+  }
+});
+
+test('an administrator sees the lessons, not Buy Now, and the checkout says why there is nothing to buy', async ({ page, request }, testInfo) => {
+  const course = await addCourseForSale(request, testInfo);
+  await openAsAdmin(page, request);
+  await page.goto(`/courses/${course.slug}`);
+
+  await expect(page.getByTestId('course-admin-view')).toHaveText('Admin view: every lesson is open');
+  await expect(page.getByTestId('hero-primary')).toHaveText('Start Learning');
+  await expect(page.getByRole('button', { name: 'Buy Now' })).toHaveCount(0);
+  await expect(page.getByTestId('course-buy-strip')).toHaveCount(0);
+
+  // Opening the checkout anyway: a clear card with a way back, not an empty page
+  await page.goto(`/checkout?course=${course.slug}`);
+  const notice = page.getByTestId('checkout-admin');
+  await expect(notice).toContainText('You are signed in as an administrator');
+  await expect(notice.getByRole('link', { name: 'Admin Panel' })).toHaveAttribute('href', '/admin');
+  await notice.getByRole('link', { name: 'Back to Course' }).click();
+  await expect(page).toHaveURL(new RegExp(`/courses/${course.slug}$`));
+
+  await page.goto('/cart');
+  await expect(page.getByTestId('cart-admin')).toContainText('nothing to buy');
+});
+
+test('the sample videos notice shows until the student has the course', async ({ page, request }, testInfo) => {
+  const course = await addCourseForSale(request, testInfo, {
+    page: {
+      curriculumIntro: {
+        noticeTitle: 'Sample Demo Video Lectures',
+        noticeText: 'These are sample demo videos. Enroll now to get full access.',
+      },
+    },
+  });
+  const visitor = await newVisitorPage(page);
+  await visitor.goto(`/courses/${course.slug}`);
+  await expect(visitor.getByTestId('course-sample-notice')).toContainText('Sample Demo Video Lectures');
+  await closeVisitorPages();
+
+  // Given to the student by the admin, as after paying
+  const login = await signInStudent(request);
+  const student = login.user || login;
+  const given = await request.post(`${API_URL}/api/admin/users/${student._id}/purchases`, {
+    headers: await headersFor(request),
+    data: { courseId: course._id, note: 'Sample notice test' },
+  });
+  expect(given.ok(), await given.text()).toBeTruthy();
+
+  await openAsStudent(page, request);
+  await page.goto(`/courses/${course.slug}`);
+  await expect(page.getByTestId('course-owned')).toBeVisible();
+  await expect(page.locator('#course-curriculum')).toBeVisible();
+  await expect(page.getByTestId('course-sample-notice')).toHaveCount(0);
+  await expect(page.getByText('Sample Demo Video Lectures')).toHaveCount(0);
 });

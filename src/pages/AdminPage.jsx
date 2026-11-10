@@ -68,6 +68,7 @@ import {
   FileDown,
   ArrowLeft,
   ArrowRight,
+  Scissors,
 } from "lucide-react";
 
 import {
@@ -92,6 +93,9 @@ import { fetchAdminCourses, fetchNewBookingCount } from "../services/courseApi";
 import { TOPICS_DATA } from "../components/maths/MathsCurriculum";
 import AdminNavbar from "../components/admin/AdminNavbar";
 import AdminSidebar from "../components/admin/AdminSidebar";
+import HighlightsPanel from "../components/admin/highlights/HighlightsPanel";
+import ClipEditor from "../components/admin/highlights/ClipEditor";
+import VideoHighlights from "../components/admin/highlights/VideoHighlights";
 import AdminTabSkeleton from "../components/admin/AdminSkeleton";
 import CoursesTab from "../components/admin/courses/CoursesTab";
 import NavigationTab from "../components/admin/navigation/NavigationTab";
@@ -103,7 +107,7 @@ import useDialog from "../hooks/useDialog";
 import StudentLearning from "../components/admin/students/StudentLearning";
 
 // Every admin tab; /admin/<tab> opens that tab directly
-const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "payments", "bookings", "pages", "navigation", "settings"];
+const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "highlights", "payments", "bookings", "pages", "navigation", "settings"];
 
 // Used for videos until the courses are in the database
 const DEFAULT_VIDEO_SUBJECTS = [
@@ -237,6 +241,9 @@ export default function AdminPage({
   const [courses, setCourses] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [newBookingCount, setNewBookingCount] = useState(0);
+  // Refresh Requests: reloads only the requests, and says when it last worked
+  const [bookingsRefreshing, setBookingsRefreshing] = useState(false);
+  const [bookingsUpdatedAt, setBookingsUpdatedAt] = useState(null);
   const [videos, setVideos] = useState([]);
 
   // Toast Notifications
@@ -274,6 +281,8 @@ export default function AdminPage({
   const [videoModalMode, setVideoModalMode] = useState("create");
   const [selectedVideo, setSelectedVideo] = useState(null);
   const [previewVideoModal, setPreviewVideoModal] = useState(null);
+  // Add to highlights: the video a part is being cut from
+  const [clipEditorVideo, setClipEditorVideo] = useState(null);
   const [copiedVideoId, setCopiedVideoId] = useState(null);
 
   // Video Upload & Full Screen Studio States
@@ -897,8 +906,9 @@ export default function AdminPage({
       const bookingsRes = await fetchAdminBookings();
       if (bookingsRes.success && Array.isArray(bookingsRes.bookings)) {
         setBookings(bookingsRes.bookings);
+        setBookingsUpdatedAt(new Date());
       }
-      setNewBookingCount(await fetchNewBookingCount());
+      setNewBookingCount(await fetchNewBookingCount().catch(() => 0));
 
       // 5. Videos & Links
       const videosRes = await fetchAdminVideos({ limit: 100 });
@@ -941,6 +951,24 @@ export default function AdminPage({
       setIsFirstLoad(false);
     }
   }, [loadCourses]);
+
+  // Refresh Requests: only the requests and their count, with a message either way
+  const refreshBookings = useCallback(async () => {
+    setBookingsRefreshing(true);
+    try {
+      const [res, count] = await Promise.all([fetchAdminBookings(), fetchNewBookingCount().catch(() => null)]);
+      if (!res.success || !Array.isArray(res.bookings)) throw new Error("Could not load the requests");
+      setBookings(res.bookings);
+      if (typeof count === "number") setNewBookingCount(count);
+      setBookingsUpdatedAt(new Date());
+      const total = res.bookings.length;
+      showToast(`Requests updated: ${total} ${total === 1 ? "request" : "requests"}`);
+    } catch {
+      showToast("Could not refresh the requests. Check your connection, or sign in again if it keeps failing.", "error");
+    } finally {
+      setBookingsRefreshing(false);
+    }
+  }, [showToast]);
 
   useEffect(() => {
     if (isAdminAuthed) {
@@ -3032,6 +3060,7 @@ export default function AdminPage({
           {activeTab === "pages" && <WebsitePagesTab showToast={showToast} />}
 
           {activeTab === "payments" && <PaymentsTab showToast={showToast} />}
+          {!isFirstLoad && activeTab === "highlights" && <HighlightsPanel showToast={showToast} />}
 
           {activeTab === "navigation" && <NavigationTab showToast={showToast} />}
 
@@ -3695,6 +3724,17 @@ export default function AdminPage({
                             </button>
 
                             <div className="flex items-center gap-1">
+                              {(isYouTube || isDirectVideo) && (
+                                <button
+                                  onClick={() => setClipEditorVideo(v)}
+                                  data-testid="add-to-highlights"
+                                  aria-label={`Add part of ${v.title} to highlights`}
+                                  className="p-1.5 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer"
+                                  title="Add to highlights"
+                                >
+                                  <Scissors size={15} />
+                                </button>
+                              )}
                               {v.status === "archived" || v.isArchived ? (
                                 <button
                                   onClick={() => handleRestoreArchivedVideo(v)}
@@ -4062,13 +4102,21 @@ export default function AdminPage({
                     Requests submitted by students/parents for diagnostic
                     assessment and 1-on-1 demo
                   </p>
+                  {bookingsUpdatedAt && (
+                    <p data-testid="bookings-updated" className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                      Updated at{" "}
+                      {bookingsUpdatedAt.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" })}
+                    </p>
+                  )}
                 </div>
                 <button
-                  onClick={loadAdminData}
-                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs dark:shadow-none"
+                  onClick={refreshBookings}
+                  disabled={bookingsRefreshing}
+                  data-testid="refresh-bookings"
+                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 disabled:opacity-70 disabled:cursor-wait dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs dark:shadow-none shrink-0"
                 >
-                  <RefreshCw size={14} />
-                  <span>Refresh Requests</span>
+                  <RefreshCw size={14} className={bookingsRefreshing ? "animate-spin" : ""} />
+                  <span>{bookingsRefreshing ? "Refreshing..." : "Refresh Requests"}</span>
                 </button>
               </div>
 
@@ -5809,6 +5857,11 @@ export default function AdminPage({
                         </label>
                       </div>
                     </div>
+
+                    {/* The highlights cut from this video (once it is saved) */}
+                    {videoModalMode === "edit" && (
+                      <VideoHighlights video={selectedVideo} showToast={showToast} />
+                    )}
 
                     <div className="flex justify-end pt-2">
                       <button
@@ -7754,6 +7807,16 @@ export default function AdminPage({
       {/* ─────────────────────────────────────────────────────────────
           MODAL: INTERACTIVE VIDEO & LINK PREVIEW PLAYER
          ───────────────────────────────────────────────────────────── */}
+      {clipEditorVideo && (
+        <ClipEditor
+          video={clipEditorVideo}
+          onClose={() => setClipEditorVideo(null)}
+          onSaved={({ message }) => {
+            setClipEditorVideo(null);
+            showToast(message);
+          }}
+        />
+      )}
       {previewVideoModal &&
         (() => {
           const isYt =
@@ -7777,8 +7840,9 @@ export default function AdminPage({
             );
 
           return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
-              <div className="relative w-full max-w-4xl bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-6 text-left">
+            // Centred while it fits; once taller than the screen it starts at the top and scrolls, so its top bar stays reachable
+            <div data-testid="video-preview-modal" className="fixed inset-0 z-50 flex justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+              <div className="relative w-full max-w-4xl bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 rounded-3xl overflow-hidden shadow-2xl my-auto text-left">
                 {/* Top Close Bar */}
                 <div className="p-4 sm:px-6 flex items-center justify-between border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/90">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -7933,6 +7997,20 @@ export default function AdminPage({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                      {(isYt || isVid) && (
+                        <button
+                          onClick={() => {
+                            const item = previewVideoModal;
+                            setPreviewVideoModal(null);
+                            setClipEditorVideo(item);
+                          }}
+                          data-testid="preview-add-to-highlights"
+                          className="px-3.5 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:hover:bg-blue-900/50 dark:text-blue-300 dark:border-blue-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                        >
+                          <Scissors size={14} />
+                          <span>Add to Highlights</span>
+                        </button>
+                      )}
                       <button
                         onClick={() => {
                           const item = previewVideoModal;

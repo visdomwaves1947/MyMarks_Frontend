@@ -8,6 +8,7 @@ import useDocumentMeta from '../hooks/useDocumentMeta';
 import { fetchCoursePage } from '../services/courseApi';
 import { fetchPaymentConfig } from '../services/learningApi';
 import { courseImage, formatPrice, showDefaultImage } from '../utils/courseImage';
+import NoticePanel from '../components/ui/NoticePanel';
 
 const PANEL = 'bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm';
 
@@ -149,12 +150,27 @@ export default function CheckoutPage({ currentUser, onOpenSignIn, onOpenSignUp }
     body = <p className="text-sm text-slate-500 dark:text-slate-400">Loading your order...</p>;
   } else if (order.status !== 'ready') {
     body = (
-      <p className="text-sm text-slate-600 dark:text-slate-400">
-        {order.status === 'missing' ? 'This course is not available.' : 'We could not load this course. Please check your connection and try again.'}
-      </p>
+      <NoticePanel
+        testId="checkout-problem"
+        icon={<ShoppingCart size={26} />}
+        title={order.status === 'missing' ? 'This course is not available' : 'We could not load this course'}
+        actions={[back]}
+      >
+        {order.status === 'missing' ? 'It may have been moved or is no longer sold.' : 'Please check your connection and try again.'}
+      </NoticePanel>
     );
   } else if (isAdmin) {
-    body = <p className="text-sm text-slate-600 dark:text-slate-400">Administrators see every course, so there is nothing to buy.</p>;
+    // Administrators see every lesson; say so plainly, with a way back
+    body = (
+      <NoticePanel
+        testId="checkout-admin"
+        icon={<ShieldCheck size={26} />}
+        title="You are signed in as an administrator"
+        actions={[back, { to: '/admin', label: 'Admin Panel' }]}
+      >
+        Administrators see every lesson, so there is nothing to buy. To try buying, sign in with a student account.
+      </NoticePanel>
+    );
   } else if (order.mode === 'express' && order.access?.owned) {
     body = (
       <p data-testid="checkout-owned" className="text-sm text-slate-600 dark:text-slate-400">

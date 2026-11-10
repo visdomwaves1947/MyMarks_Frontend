@@ -71,3 +71,41 @@ export async function fetchCourseProgress(courseId) {
 export function saveLessonProgress(courseId, progress, { keepalive = false } = {}) {
   return studentFetch(`/api/progress/${courseId}`, { method: 'PUT', body: progress, keepalive }).catch(() => null);
 }
+
+// My Highlights: the highlights a student saved, grouped by subject
+export async function fetchSavedHighlights() {
+  return readJson(await studentFetch('/api/saved-highlights'), 'Could not load your saved highlights.');
+}
+
+export async function saveHighlightRequest(highlightId) {
+  return readJson(await studentFetch(`/api/saved-highlights/${highlightId}`, { method: 'PUT' }), 'Could not save the highlight.');
+}
+
+export async function unsaveHighlightRequest(highlightId) {
+  return readJson(await studentFetch(`/api/saved-highlights/${highlightId}`, { method: 'DELETE' }), 'Could not remove the highlight.');
+}
+
+// A student's own notes for a course, one per chapter
+export async function fetchNotes(courseId) {
+  return readJson(await studentFetch(`/api/notes/${courseId}`), 'Could not load your notes.');
+}
+
+export async function saveNoteRequest(courseId, chapterKey, { text, chapterName }) {
+  return readJson(
+    await studentFetch(`/api/notes/${courseId}/${encodeURIComponent(chapterKey)}`, { method: 'PUT', body: { text, chapterName } }),
+    'Could not save your note.'
+  );
+}
+
+// The note of one lesson video, with its title, number and length
+export async function saveVideoNoteRequest(courseId, lessonKey, body) {
+  return readJson(
+    await studentFetch(`/api/notes/${courseId}/lessons/${encodeURIComponent(lessonKey)}`, { method: 'PUT', body }),
+    'Could not save your note.'
+  );
+}
+
+// Every note of the student, by subject, chapter and video (My Notes)
+export async function fetchAllNotes() {
+  return readJson(await studentFetch('/api/notes'), 'Could not load your notes.');
+}

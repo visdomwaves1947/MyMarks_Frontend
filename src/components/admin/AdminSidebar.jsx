@@ -11,6 +11,7 @@ import {
   Route,
   PanelsTopLeft,
   CreditCard,
+  Clapperboard,
 } from "lucide-react";
 
 export default function AdminSidebar({
@@ -44,6 +45,11 @@ export default function AdminSidebar({
       id: "videos",
       label: "Videos, YouTube & Links",
       icon: Video,
+    },
+    {
+      id: "highlights",
+      label: "Highlights",
+      icon: Clapperboard,
     },
     {
       id: "payments",

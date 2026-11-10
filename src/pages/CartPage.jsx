@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCircle2, ShoppingCart, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
+import NoticePanel from '../components/ui/NoticePanel';
 import useCart, { removeFromCart } from '../hooks/useCart';
 import useMyCourses from '../hooks/useMyCourses';
 import useDocumentMeta from '../hooks/useDocumentMeta';
@@ -8,9 +9,26 @@ import { courseImage, formatPrice, showDefaultImage } from '../utils/courseImage
 
 const PANEL = 'bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm';
 
+const REMOVE_MS = 200;
+
 function CartItem({ item, owned }) {
+  // The row fades out, then leaves the cart
+  const [removing, setRemoving] = useState(false);
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const remove = () => {
+    if (removing) return;
+    setRemoving(true);
+    timer.current = setTimeout(() => removeFromCart(item.id), REMOVE_MS);
+  };
+
   return (
-    <li data-testid="cart-item" className="p-3 sm:p-4 flex gap-3 sm:gap-4">
+    <li
+      data-testid="cart-item"
+      className={`p-3 sm:p-4 flex gap-3 sm:gap-4 transition-all duration-200 motion-reduce:transition-none ${
+        removing ? 'opacity-0 -translate-x-3' : 'opacity-100'
+      }`}
+    >
       <Link to={`/courses/${item.slug}`} className="shrink-0">
         <img
           src={courseImage(item.image, 320)}
@@ -28,30 +46,35 @@ function CartItem({ item, owned }) {
             {item.name}
           </Link>
           {owned ? (
-            <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-              <CheckCircle2 size={13} />
+            <p className="mt-1.5 flex items-start gap-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 size={14} className="shrink-0 mt-px" />
               <span>You have this course, so it is not in the total</span>
             </p>
           ) : (
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Every lesson opens once you pay.</p>
+            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">Every lesson opens once you pay.</p>
           )}
+        </div>
+        {/* Price, with Remove under it (beside it on phones) */}
+        <div className="shrink-0 flex sm:flex-col items-center sm:items-end justify-between gap-2 sm:gap-3">
+          <div className="sm:text-right">
+            <div className={`text-base font-black ${owned ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
+              {formatPrice(item.price)}
+            </div>
+            {!owned && item.oldPrice > item.price && (
+              <div className="text-xs text-slate-500 dark:text-slate-400 line-through">{formatPrice(item.oldPrice)}</div>
+            )}
+          </div>
           <button
             type="button"
-            onClick={() => removeFromCart(item.id)}
+            onClick={remove}
+            disabled={removing}
             aria-label={`Remove ${item.name}`}
-            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:underline cursor-pointer"
+            data-testid="cart-remove"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-rose-200 dark:border-rose-900/60 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 hover:border-rose-300 dark:hover:bg-rose-950/40 dark:hover:border-rose-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400/60"
           >
-            <Trash2 size={13} />
+            <Trash2 size={14} />
             <span>Remove</span>
           </button>
-        </div>
-        <div className="sm:text-right shrink-0">
-          <div className={`text-base font-black ${owned ? 'text-slate-400 line-through' : 'text-slate-900 dark:text-white'}`}>
-            {formatPrice(item.price)}
-          </div>
-          {!owned && item.oldPrice > item.price && (
-            <div className="text-xs text-slate-500 dark:text-slate-400 line-through">{formatPrice(item.oldPrice)}</div>
-          )}
         </div>
       </div>
     </li>
@@ -76,9 +99,17 @@ export default function CartPage({ currentUser }) {
   let body;
   if (isAdmin) {
     body = (
-      <p className="text-center text-sm text-slate-600 dark:text-slate-400">
-        Administrators see every course, so there is nothing to buy.
-      </p>
+      <NoticePanel
+        testId="cart-admin"
+        icon={<ShieldCheck size={26} />}
+        title="You are signed in as an administrator"
+        actions={[
+          { to: '/demo#courses', label: 'Browse Courses' },
+          { to: '/admin', label: 'Admin Panel' },
+        ]}
+      >
+        Administrators see every lesson, so there is nothing to buy. To try buying, sign in with a student account.
+      </NoticePanel>
     );
   } else if (cart.count === 0) {
     body = (
@@ -135,8 +166,10 @@ export default function CartPage({ currentUser }) {
             <span>Proceed to Checkout</span>
             <ArrowRight size={16} />
           </button>
-          <p className="text-xs text-center text-slate-500 dark:text-slate-400">
-            You won't be charged yet. One payment covers every course here.
+          <p data-testid="cart-note" className="text-xs text-center text-slate-500 dark:text-slate-400">
+            {toPay.length === 0
+              ? 'You already have every course here. Remove them to empty your cart.'
+              : "You won't be charged yet. One payment covers every course here."}
           </p>
         </aside>
       </div>

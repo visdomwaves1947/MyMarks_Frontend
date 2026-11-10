@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, BookOpen, CheckCircle2, ShoppingCart, Zap } from 'lucide-react';
+import { ArrowRight, BookOpen, CheckCircle2, ShieldCheck, ShoppingCart, Zap } from 'lucide-react';
 import CourseFlags from './CourseFlags';
 import LikeButton from './LikeButton';
 import { formatPrice } from '../../utils/courseImage';
@@ -8,6 +8,8 @@ export default function CourseHero({ course, theme, onEnroll, onExplore, access 
   const hero = course.page?.hero || {};
   const mustBuy = Boolean(access.forSale && !access.owned);
   const owns = Boolean(access.forSale && access.owned);
+  // An administrator sees every lesson, so the page opens the lessons in place of Buy Now
+  const adminView = Boolean(access.adminView);
 
   return (
     <section className="relative pt-8 pb-14 sm:pt-8 sm:pb-16 lg:pt-10 lg:pb-16 overflow-hidden bg-[#EBF0F7] dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 transition-colors duration-300">
@@ -51,6 +53,15 @@ export default function CourseHero({ course, theme, onEnroll, onExplore, access 
                     <span>You have this course</span>
                   </span>
                 )}
+                {adminView && (
+                  <span
+                    data-testid="course-admin-view"
+                    className="ml-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60 text-xs font-semibold"
+                  >
+                    <ShieldCheck size={13} />
+                    <span>Admin view: every lesson is open</span>
+                  </span>
+                )}
               </div>
             )}
 
@@ -58,15 +69,22 @@ export default function CourseHero({ course, theme, onEnroll, onExplore, access 
               <button
                 onClick={() => {
                   if (mustBuy) onBuy();
-                  else if (owns) onExplore();
+                  else if (owns || adminView) onExplore();
                   else onEnroll(course.name);
                 }}
                 disabled={buying}
+                data-testid="hero-primary"
                 className={`w-full sm:w-auto px-7 py-3.5 rounded-xl bg-gradient-to-r ${theme.button} disabled:opacity-60 text-white font-bold text-sm sm:text-base shadow-lg hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer border`}
               >
                 {mustBuy && <ShoppingCart size={17} />}
                 <span>
-                  {mustBuy ? (buying ? 'Opening payment...' : 'Buy Now') : owns ? 'Start Learning' : hero.primaryLabel || 'Enroll Now'}
+                  {mustBuy
+                    ? buying
+                      ? 'Opening payment...'
+                      : 'Buy Now'
+                    : owns || adminView
+                      ? 'Start Learning'
+                      : hero.primaryLabel || 'Enroll Now'}
                 </span>
                 {!mustBuy && <ArrowRight size={17} />}
               </button>
