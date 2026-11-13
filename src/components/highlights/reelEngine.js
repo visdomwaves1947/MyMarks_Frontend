@@ -12,6 +12,7 @@ import { locate, reelTimeOf } from '../../utils/reelTimeline';
 const YOUTUBE_HOST = 'https://www.youtube-nocookie.com';
 const YT_ENDED = 0;
 const YT_PLAYING = 1;
+const YT_BUFFERING = 3;
 const TICK_MS = 100;
 // A part ends this close to its end time, so the next one starts without a pause
 const END_SLACK = 0.12;
@@ -37,6 +38,56 @@ class Deck {
     this.index = -1;
     this.loaded = false;
     this.holdAt = null;
+    // What the viewer chose; the reel copies these to both slots
+    this.volume = 100;
+    this.userMuted = false;
+    this.rate = 1;
+  }
+
+  // The sound of the part being watched: the viewer's volume, and silent only when they muted it
+  applySound() {
+    try {
+      if (this.kind === 'youtube') {
+        this.player?.setVolume?.(this.volume);
+        if (this.userMuted) this.player?.mute?.();
+        else this.player?.unMute?.();
+      } else if (this.kind === 'file') {
+        this.player.volume = this.volume / 100;
+        this.player.muted = this.userMuted;
+      }
+    } catch {
+      // Not ready yet
+    }
+  }
+
+  applyRate() {
+    try {
+      if (this.kind === 'youtube') this.player?.setPlaybackRate?.(this.rate);
+      if (this.kind === 'file') {
+        this.player.defaultPlaybackRate = this.rate;
+        this.player.playbackRate = this.rate;
+      }
+    } catch {
+      // Not ready yet
+    }
+  }
+
+  // How far this slot's video has loaded, in seconds of that video
+  loadedTo() {
+    try {
+      if (this.kind === 'youtube') {
+        return Number(this.player?.getVideoLoadedFraction?.()) * Number(this.player?.getDuration?.());
+      }
+      if (this.kind === 'file') {
+        const { buffered, currentTime } = this.player;
+        for (let i = 0; i < buffered.length; i += 1) {
+          if (buffered.start(i) <= currentTime + 0.5 && buffered.end(i) >= currentTime) return buffered.end(i);
+        }
+      }
+    } catch {
+      // Not ready yet
+    }
+    return NaN;
   }
 
   show(visible) {
@@ -82,8 +133,9 @@ class Deck {
               this.loaded = true;
             } else if (event.data === YT_PLAYING) {
               this.loaded = true;
+              this.applyRate();
             }
-            this.onEvent(this, event.data === YT_ENDED ? 'ended' : 'state');
+            this.onEvent(this, event.data === YT_ENDED ? 'ended' : 'state', event.data);
           },
         },
       });
@@ -99,6 +151,8 @@ class Deck {
     video.preload = 'auto';
     Object.assign(video.style, { width: '100%', height: '100%', objectFit: 'contain', background: '#000' });
     video.addEventListener('ended', () => this.onEvent(this, 'ended'));
+    video.addEventListener('waiting', () => this.onEvent(this, 'state', YT_BUFFERING));
+    video.addEventListener('playing', () => this.onEvent(this, 'state', YT_PLAYING));
     this.slot.appendChild(video);
     this.kind = 'file';
     this.player = video;
@@ -119,8 +173,9 @@ class Deck {
       const options = { videoId: media.youtubeId, startSeconds: at, endSeconds: part.end };
       if (play) {
         this.holdAt = null;
-        this.player.unMute?.();
+        this.applySound();
         this.player.loadVideoById(options);
+        this.applyRate();
       } else {
         this.holdAt = at;
         this.player.mute?.();
@@ -136,19 +191,24 @@ class Deck {
       };
       if (video.readyState >= 1) seek();
       else video.addEventListener('loadedmetadata', seek, { once: true });
-      video.muted = !play;
-      if (play) video.play().catch(() => this.onEvent(this, 'blocked'));
-      else video.pause();
+      this.applyRate();
+      if (play) {
+        this.applySound();
+        video.play().catch(() => this.onEvent(this, 'blocked'));
+      } else {
+        video.muted = true;
+        video.pause();
+      }
     }
   }
 
   play() {
+    this.applySound();
+    this.applyRate();
     if (this.kind === 'youtube') {
       this.holdAt = null;
-      this.player?.unMute?.();
       this.player?.playVideo?.();
     } else if (this.kind === 'file') {
-      this.player.muted = false;
       this.player.play().catch(() => this.onEvent(this, 'blocked'));
     }
   }
@@ -189,11 +249,11 @@ class Deck {
 
 // ── The reel ────────────────────────────────────────────────────
 
-export function createReelEngine({ host, timeline, onTime, onPart, onState }) {
+export function createReelEngine({ host, timeline, onTime, onPart, onState, onBuffer }) {
   const { parts, total } = timeline;
   const decks = [
-    new Deck(host, 'a', (deck, kind) => handle(deck, kind)),
-    new Deck(host, 'b', (deck, kind) => handle(deck, kind)),
+    new Deck(host, 'a', (deck, kind, data) => handle(deck, kind, data)),
+    new Deck(host, 'b', (deck, kind, data) => handle(deck, kind, data)),
   ];
   let active = decks[0];
   let standby = decks[1];
@@ -204,11 +264,21 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState }) {
   let timer = null;
   let destroyed = false;
   let lastTime = 0;
+  // Waiting for the video to load while it should be playing
+  let waiting = false;
+  let loop = false;
 
-  const report = () => onState?.({ playing, ended, started });
+  const report = () => onState?.({ playing, ended, started, waiting: playing && waiting });
 
-  const handle = (deck, kind) => {
+  const handle = (deck, kind, data) => {
     if (destroyed || deck !== active) return;
+    if (kind === 'state' && (data === YT_BUFFERING || data === YT_PLAYING)) {
+      const now = data === YT_BUFFERING;
+      if (now !== waiting) {
+        waiting = now;
+        report();
+      }
+    }
     // Only the end of the part now playing moves on, not a late signal from the part before
     if (kind === 'ended' && playing && active.time() >= parts[index].end - 1) advance();
     if (kind === 'blocked') {
@@ -248,6 +318,11 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState }) {
   };
 
   const finish = () => {
+    // A looping reel starts again from its first part
+    if (loop && playing) {
+      switchTo(0);
+      return;
+    }
     playing = false;
     ended = true;
     active.pause();
@@ -271,6 +346,8 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState }) {
     if (local < part.start - 1 || local > part.end + 1) return;
     lastTime = reelTimeOf(timeline, index, local);
     onTime?.(lastTime);
+    const loaded = active.loadedTo();
+    if (Number.isFinite(loaded)) onBuffer?.(reelTimeOf(timeline, index, Math.max(loaded, local)));
     if (playing && local >= part.end - END_SLACK) advance();
   };
 
@@ -283,14 +360,17 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState }) {
   };
 
   const engine = {
-    // Loads the first part (and the second, ahead), waiting at the start
-    async prepare() {
+    // Loads the part to start with (and the one after, ahead), waiting at its start
+    async prepare(first = 0) {
       if (parts.length === 0) return;
-      await active.load(parts[0], { play: false });
+      index = Math.min(Math.max(Number(first) || 0, 0), parts.length - 1);
+      await active.load(parts[index], { play: false });
+      if (destroyed) return;
       active.show(true);
-      preload(1);
-      onPart?.(0);
-      onTime?.(0);
+      preload(index + 1);
+      onPart?.(index);
+      lastTime = parts[index].from;
+      onTime?.(lastTime);
     },
     play() {
       if (destroyed || parts.length === 0) return;
@@ -309,6 +389,7 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState }) {
     },
     pause() {
       playing = false;
+      waiting = false;
       active.pause();
       stopTicking();
       report();
@@ -339,6 +420,36 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState }) {
       // Back to the start of this part, or to the part before when already near its start
       const target = lastTime - part.from > 2 || index === 0 ? part.from : parts[index - 1].from;
       engine.seek(target);
+    },
+    // Plays one part of the reel from its start, as a click on a playlist row does
+    playPart(target) {
+      if (!parts[target]) return;
+      engine.seek(parts[target].from);
+      if (!playing) engine.play();
+    },
+    // 0 to 100
+    setVolume(value) {
+      const volume = Math.min(Math.max(Math.round(Number(value) || 0), 0), 100);
+      decks.forEach((deck) => {
+        deck.volume = volume;
+      });
+      // Before the first play the part waits silently at its start
+      if (started) active.applySound();
+    },
+    setMuted(muted) {
+      decks.forEach((deck) => {
+        deck.userMuted = Boolean(muted);
+      });
+      if (started) active.applySound();
+    },
+    setRate(rate) {
+      decks.forEach((deck) => {
+        deck.rate = Number(rate) || 1;
+        deck.applyRate();
+      });
+    },
+    setLoop(value) {
+      loop = Boolean(value);
     },
     destroy() {
       destroyed = true;

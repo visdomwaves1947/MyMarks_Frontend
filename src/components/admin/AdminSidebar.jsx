@@ -12,6 +12,7 @@ import {
   PanelsTopLeft,
   CreditCard,
   Clapperboard,
+  ListChecks,
 } from "lucide-react";
 
 export default function AdminSidebar({
@@ -50,6 +51,11 @@ export default function AdminSidebar({
       id: "highlights",
       label: "Highlights",
       icon: Clapperboard,
+    },
+    {
+      id: "assignments",
+      label: "Assignments",
+      icon: ListChecks,
     },
     {
       id: "payments",

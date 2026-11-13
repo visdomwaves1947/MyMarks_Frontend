@@ -21,6 +21,7 @@ import {
 import { courseImage, formatPrice, showDefaultImage } from '../../utils/courseImage';
 import { formatClock, lessonKeysOf, savedFor, watchedPercent } from '../../utils/watchTime';
 import CourseLecturePlayer from './CourseLecturePlayer';
+import CourseAssignments from './CourseAssignments';
 import { firstLessonIn, flattenChapters, isVideoLesson, withExtraLessons } from './curriculumTree';
 
 const normalize = (value) =>
@@ -75,12 +76,27 @@ const PROMPTS = {
     button: (course) => `Buy for ${formatPrice(course.price)}`,
     Icon: ShoppingCart,
   },
+  // A chapter assignment pressed by a visitor, or by a student without the course
+  'sign-in-assignment': {
+    label: 'Sign in required',
+    title: 'Sign In to Take It',
+    text: (course) => `Please sign in to take the ${course.name} chapter assignments.`,
+    button: () => 'Sign In',
+    Icon: LogIn,
+  },
+  'buy-assignment': {
+    label: 'Buy this course',
+    title: 'Buy to Take It',
+    text: (course) => `The chapter assignments open once you buy ${course.name}.`,
+    button: (course) => `Buy for ${formatPrice(course.price)}`,
+    Icon: ShoppingCart,
+  },
 };
 
 export function LessonPrompt({ prompt, course, onClose, onSignIn, onEnroll, onBuy, buying = false }) {
   const shown = PROMPTS[prompt] || PROMPTS.enroll;
-  const isSignIn = prompt === 'sign-in' || prompt === 'sign-in-to-buy';
-  const act = isSignIn ? onSignIn : prompt === 'buy' ? onBuy : onEnroll;
+  const isSignIn = prompt === 'sign-in' || prompt === 'sign-in-to-buy' || prompt === 'sign-in-assignment';
+  const act = isSignIn ? onSignIn : prompt === 'buy' || prompt === 'buy-assignment' ? onBuy : onEnroll;
   const { Icon } = shown;
 
   return (
@@ -402,7 +418,7 @@ export default function CourseCurriculum({
   const [selectedChapter, setSelectedChapter] = useState('all');
   const [search, setSearch] = useState('');
   const [playingId, setPlayingId] = useState(null);
-  const [prompt, setPrompt] = useState(null); // 'sign-in' | 'sign-in-to-buy' | 'enroll' | 'buy'
+  const [prompt, setPrompt] = useState(null); // a key of PROMPTS, such as 'sign-in' or 'buy'
   // Sold online and not bought yet: every lesson is locked, and Buy replaces Enroll
   const mustBuy = Boolean(access.forSale && !access.owned);
 
@@ -725,6 +741,17 @@ export default function CourseCurriculum({
                 )}
               </div>
             </div>
+
+            {/* Each chapter's assignment, with the student's best result */}
+            {!isSearching && (
+              <CourseAssignments
+                course={course}
+                chapters={chapters}
+                selectedChapter={selectedChapter}
+                currentUser={currentUser}
+                onLocked={(reason) => setPrompt(reason === 'buy' ? 'buy-assignment' : 'sign-in-assignment')}
+              />
+            )}
 
             {visibleTopics.length === 0 ? (
               <div className="text-center py-16 px-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">

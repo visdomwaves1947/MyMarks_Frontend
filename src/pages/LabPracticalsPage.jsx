@@ -2,11 +2,14 @@ import React, { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, FlaskConical, Sparkles, BookOpen, Layers } from "lucide-react";
 import LabPracticalHub from "../components/lab/LabPracticalHub";
+import useBoardCatalog from "../hooks/useBoardCatalog";
 
-export default function LabPracticalsPage({ onOpenBooking }) {
+export default function LabPracticalsPage({ onOpenBooking, currentUser }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const subjectParam = searchParams.get("subject") || "phy";
+  // A signed-in student sees only the labs of their board
+  const { labs, board } = useBoardCatalog(currentUser);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -27,7 +30,7 @@ export default function LabPracticalsPage({ onOpenBooking }) {
 
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/25 text-purple-700 dark:text-purple-300 text-xs font-black uppercase tracking-wider">
             <FlaskConical size={14} className="text-purple-500" />
-            <span>AP & TS Board Practical Curriculum (30 / 50 Marks)</span>
+            <span>{board ? `${board} Practical Curriculum` : "AP & TS Board Practical Curriculum (30 / 50 Marks)"}</span>
           </div>
         </div>
 
@@ -48,6 +51,7 @@ export default function LabPracticalsPage({ onOpenBooking }) {
         {/* Interactive Lab Practical Hub */}
         <div className="pt-2">
           <LabPracticalHub
+            labs={labs}
             initialSubjectId={subjectParam}
             onOpenBooking={onOpenBooking}
           />

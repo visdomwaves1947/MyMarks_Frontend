@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clapperboard, Lock, LogIn, ShoppingCart } from 'lucide-react';
-import ReelPlayer from '../components/highlights/ReelPlayer';
+import ReelWatch from '../components/highlights/ReelWatch';
 import NoticePanel from '../components/ui/NoticePanel';
 import useDocumentMeta from '../hooks/useDocumentMeta';
 import { fetchReel } from '../services/highlightsApi';
@@ -12,7 +12,8 @@ import SaveHighlightButton from '../components/highlights/SaveHighlightButton';
 const PANEL = 'bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm';
 
 /**
- * One highlight reel: its parts from different chapters played as one video, with what each part covers.
+ * One highlight reel: its parts from different chapters played as one video, with the list of parts
+ * beside the player and what the part now playing covers below it.
  * Visitors see what is in it and are asked to sign in; students without the course are asked to buy it,
  * unless the admin made the reel a free preview.
  */
@@ -56,50 +57,48 @@ export default function HighlightReelPage({ currentUser, onOpenSignIn }) {
       </NoticePanel>
     );
   } else {
-    const locked = !reel.playable;
-    body = (
+    const parts = `${reel.clipCount} ${reel.clipCount === 1 ? 'part' : 'parts'} · ${formatClock(reel.duration)}`;
+    body = reel.playable ? (
+      <ReelWatch clips={reel.clips} title={reel.name} subtitle={parts} currentUser={currentUser} onOpenSignIn={onOpenSignIn} />
+    ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
         <div className="lg:col-span-2 space-y-3">
-          {locked ? (
-            <div
-              data-testid="reel-locked"
-              className="aspect-video rounded-2xl bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 text-white flex flex-col items-center justify-center gap-3 p-6 text-center"
-            >
-              <span className="w-12 h-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center">
-                <Lock size={22} />
-              </span>
-              {reel.lockReason === 'sign-in' ? (
-                <>
-                  <p className="text-sm sm:text-base font-bold">Sign in to watch these highlights</p>
+          <div
+            data-testid="reel-locked"
+            className="aspect-video rounded-2xl bg-gradient-to-br from-slate-900 via-slate-950 to-indigo-950 text-white flex flex-col items-center justify-center gap-3 p-6 text-center"
+          >
+            <span className="w-12 h-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center">
+              <Lock size={22} />
+            </span>
+            {reel.lockReason === 'sign-in' ? (
+              <>
+                <p className="text-sm sm:text-base font-bold">Sign in to watch these highlights</p>
+                <button
+                  type="button"
+                  onClick={onOpenSignIn}
+                  className="px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <LogIn size={15} />
+                  <span>Sign In</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-sm sm:text-base font-bold">These highlights are part of the {course?.name || reel.subject} course</p>
+                <p className="text-xs text-slate-300 max-w-sm">Buy the course to watch every highlight and lesson.</p>
+                {course && (
                   <button
                     type="button"
-                    onClick={onOpenSignIn}
+                    onClick={() => navigate(`/checkout?course=${encodeURIComponent(course.slug)}`)}
                     className="px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
                   >
-                    <LogIn size={15} />
-                    <span>Sign In</span>
+                    <ShoppingCart size={15} />
+                    <span>Buy {course.name}</span>
                   </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-sm sm:text-base font-bold">These highlights are part of the {course?.name || reel.subject} course</p>
-                  <p className="text-xs text-slate-300 max-w-sm">Buy the course to watch every highlight and lesson.</p>
-                  {course && (
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/checkout?course=${encodeURIComponent(course.slug)}`)}
-                      className="px-4 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs sm:text-sm font-bold inline-flex items-center gap-2 cursor-pointer"
-                    >
-                      <ShoppingCart size={15} />
-                      <span>Buy {course.name}</span>
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          ) : (
-            <ReelPlayer clips={reel.clips} title={reel.name} />
-          )}
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         <aside className={`${PANEL} p-5 space-y-4`}>

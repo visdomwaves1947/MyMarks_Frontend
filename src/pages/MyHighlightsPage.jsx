@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bookmark, Lock, LogIn, Play, ShieldCheck, ShoppingCart, X } from 'lucide-react';
-import ReelPlayer from '../components/highlights/ReelPlayer';
+import { Bookmark, Lock, LogIn, Play, ShieldCheck, ShoppingCart } from 'lucide-react';
+import ReelWatch from '../components/highlights/ReelWatch';
 import SaveHighlightButton from '../components/highlights/SaveHighlightButton';
 import NoticePanel from '../components/ui/NoticePanel';
 import useDocumentMeta from '../hooks/useDocumentMeta';
@@ -11,18 +11,32 @@ import { partLabel } from '../utils/reelTimeline';
 
 const PANEL = 'bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm';
 
+const sameList = (one, other) => one.length === other.length && one.every((clip, index) => clip._id === other[index]._id);
+
 /**
  * My Highlights: the highlights a student saved, one section per subject. Play all plays a subject's
- * saved highlights back to back as one video, chapter by chapter. Highlights of a course the student
- * does not have (and that are not free previews) show Buy and are left out of Play all.
+ * saved highlights back to back as one video, chapter by chapter, with the list beside the player;
+ * Play on one highlight starts the same list from that highlight. Highlights of a course the student
+ * does not have (and that are not free previews) show Buy and are left out of the list that plays.
  */
 export default function MyHighlightsPage({ currentUser, onOpenSignIn }) {
   const navigate = useNavigate();
   const saved = useSavedHighlights(currentUser);
   const [filter, setFilter] = useState('all');
-  // { subject, clips, title }: what the player of a section is playing
+  // { subject, clips, title, startAt, startKey }: the list a section's player plays, and where it starts
   const [playing, setPlaying] = useState(null);
   useDocumentMeta({ title: 'My Highlights | MyMarks', description: 'The highlights you saved, to watch again subject by subject.' });
+
+  // Plays a subject's saved highlights as one list, from the highlight picked
+  const playFrom = (group, clips, index) =>
+    setPlaying((before) => ({
+      subject: group.subject,
+      // The list already playing stays, so the player jumps instead of starting over
+      clips: before?.subject === group.subject && sameList(before.clips, clips) ? before.clips : clips,
+      title: `${group.subject}: my highlights`,
+      startAt: Math.max(index, 0),
+      startKey: Date.now(),
+    }));
 
   let body;
   if (!currentUser) {
@@ -111,7 +125,7 @@ export default function MyHighlightsPage({ currentUser, onOpenSignIn }) {
                   <button
                     type="button"
                     data-testid="saved-play-all"
-                    onClick={() => setPlaying({ subject: group.subject, clips: playable, title: `${group.subject}: my highlights` })}
+                    onClick={() => playFrom(group, playable, 0)}
                     className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold inline-flex items-center gap-2 cursor-pointer shrink-0"
                   >
                     <Play size={15} fill="currentColor" />
@@ -121,13 +135,18 @@ export default function MyHighlightsPage({ currentUser, onOpenSignIn }) {
               </div>
 
               {here && (
-                <div className="space-y-2">
-                  <ReelPlayer key={here.clips.map((clip) => clip._id).join('|')} clips={here.clips} title={here.title} autoPlay />
-                  <button type="button" onClick={() => setPlaying(null)} className="text-xs font-semibold text-slate-600 dark:text-slate-300 inline-flex items-center gap-1.5 cursor-pointer">
-                    <X size={13} />
-                    <span>Close the player</span>
-                  </button>
-                </div>
+                <ReelWatch
+                  key={here.clips.map((clip) => clip._id).join('|')}
+                  clips={here.clips}
+                  title={here.title}
+                  subtitle={`${here.clips.length} ${here.clips.length === 1 ? 'highlight' : 'highlights'}`}
+                  autoPlay
+                  startAt={here.startAt}
+                  startKey={here.startKey}
+                  currentUser={currentUser}
+                  onOpenSignIn={onOpenSignIn}
+                  onClose={() => setPlaying(null)}
+                />
               )}
 
               {locked.length > 0 && group.course && (
@@ -162,7 +181,7 @@ export default function MyHighlightsPage({ currentUser, onOpenSignIn }) {
                         <button
                           type="button"
                           data-testid="saved-play-one"
-                          onClick={() => setPlaying({ subject: group.subject, clips: [clip], title: clip.title })}
+                          onClick={() => playFrom(group, playable, playable.findIndex((item) => item._id === clip._id))}
                           className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-700 text-white text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
                         >
                           <Play size={12} fill="currentColor" />
@@ -193,7 +212,7 @@ export default function MyHighlightsPage({ currentUser, onOpenSignIn }) {
 
   return (
     <div data-testid="my-highlights-page" className="min-h-[calc(100vh-86px)] bg-[#EBF0F7] dark:bg-[#070B14] text-slate-900 dark:text-slate-100 py-6 sm:py-10 px-3 sm:px-6 lg:px-8">
-      <div className="max-w-5xl mx-auto space-y-5">
+      <div className="max-w-6xl mx-auto space-y-5">
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-950 dark:text-white inline-flex items-center gap-2">
             <Bookmark size={26} className="text-blue-600" />

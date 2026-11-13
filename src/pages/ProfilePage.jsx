@@ -19,7 +19,7 @@ import {
   Check,
   Lock,
 } from 'lucide-react';
-import useCatalog from '../hooks/useCatalog';
+import useBoardCatalog from '../hooks/useBoardCatalog';
 import MyCourses from '../components/profile/MyCourses';
 import { fetchMyProfileApi } from '../services/api';
 import { courseImage, courseTag, isOutsideLink } from '../utils/courseImage';
@@ -35,10 +35,11 @@ export default function ProfilePage({
   onOpenSignUp
 }) {
   const navigate = useNavigate();
-  const { courses } = useCatalog();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [copiedRoll, setCopiedRoll] = useState(false);
   const [latest, setLatest] = useState(null);
+  // The subjects of the student's own board, by the latest board saved on the account
+  const { courses } = useBoardCatalog(currentUser ? { ...currentUser, ...(latest || {}) } : null);
 
   // The details saved at sign-in can be old, so the page asks the server for the latest
   const token = currentUser?.token;

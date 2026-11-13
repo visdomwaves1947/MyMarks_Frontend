@@ -13,6 +13,7 @@ import HighlightReelPage from './pages/HighlightReelPage';
 import SearchPage from './pages/SearchPage';
 import MyHighlightsPage from './pages/MyHighlightsPage';
 import MyNotesPage from './pages/MyNotesPage';
+import AssignmentPage from './pages/AssignmentPage';
 import ExamPlannerModal from './components/exam-planner/ExamPlannerModal';
 import MathsPage from './pages/MathsPage';
 import DemoPage from './pages/DemoPage';
@@ -843,8 +844,9 @@ export default function App() {
           <Route 
             path="/practicals" 
             element={
-              <LabPracticalsPage 
+              <LabPracticalsPage
                 onOpenBooking={handleOpenBooking}
+                currentUser={currentUser}
               />
             } 
           />
@@ -878,6 +880,7 @@ export default function App() {
           <Route path="/search" element={<SearchPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} />} />
           <Route path="/my-highlights" element={<MyHighlightsPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} />} />
           <Route path="/my-notes" element={<MyNotesPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} />} />
+          <Route path="/assignments/:id" element={<AssignmentPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} />} />
           <Route
             path="/checkout"
             element={<CheckoutPage currentUser={currentUser} onOpenSignIn={handleOpenSignIn} onOpenSignUp={handleOpenSignUp} />}

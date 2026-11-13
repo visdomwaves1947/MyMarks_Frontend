@@ -12,7 +12,7 @@ const FAKE_YOUTUBE_API = `
 window.__yt = { players: [] };
 function FakePlayer(element, options) {
   var self = this;
-  var p = { videoId: options.videoId || '', time: 0, state: -1, muted: false, end: null, destroyed: false };
+  var p = { videoId: options.videoId || '', time: 0, state: -1, muted: false, volume: 100, rate: 1, end: null, destroyed: false };
   window.__yt.players.push(p);
   var frame = document.createElement('div');
   frame.setAttribute('data-fake-youtube', '');
@@ -36,6 +36,10 @@ function FakePlayer(element, options) {
   this.mute = function () { p.muted = true; };
   this.unMute = function () { p.muted = false; };
   this.isMuted = function () { return p.muted; };
+  this.setVolume = function (volume) { p.volume = volume; };
+  this.getVolume = function () { return p.volume; };
+  this.setPlaybackRate = function (rate) { p.rate = rate; };
+  this.getPlaybackRate = function () { return p.rate; };
   this.destroy = function () { p.destroyed = true; };
   setTimeout(function () { if (options.events && options.events.onReady) options.events.onReady({ target: self }); }, 0);
 }
@@ -52,6 +56,11 @@ window.__ytHeard = function () {
     .filter(function (p) { return p.state === 1 && !p.muted && !p.destroyed; })
     .map(function (p) { return { videoId: p.videoId, time: p.time }; });
 };
+window.__ytSound = function () {
+  return window.__yt.players
+    .filter(function (p) { return p.state === 1 && !p.destroyed; })
+    .map(function (p) { return { muted: p.muted, volume: p.volume, rate: p.rate }; });
+};
 if (window.onYouTubeIframeAPIReady) window.onYouTubeIframeAPIReady();`;
 
 const fakeYouTube = (page) =>
@@ -66,6 +75,8 @@ const play = async (page, seconds) => {
   }
 };
 const heard = (page) => page.evaluate(() => window.__ytHeard());
+// The sound and speed of the video that is playing
+const sound = (page) => page.evaluate(() => window.__ytSound());
 
 const headersFor = async (request) => ({ Authorization: `Bearer ${await getAdminToken(request)}` });
 
@@ -222,6 +233,8 @@ test('a reel asks a visitor to sign in, a student to buy the course, and plays f
     const player = page.getByTestId('reel-player');
     await expect(player.getByTestId('reel-time')).toHaveText('0:00 / 0:40');
     await expect(player.getByTestId('reel-segment')).toHaveCount(2);
+    await expect(page.getByTestId('playlist-item')).toHaveText([/What is trigonometry[\s\S]*Ch 1 · Trigonometry/, /Heights and distances[\s\S]*Ch 5 · Applications/]);
+    await expect(page.getByTestId('now-playing')).toContainText('Sides and angles of triangles.');
     await player.getByTestId('reel-play').click();
     await play(page, 5);
     await expect(player.getByTestId('reel-time')).toHaveText('0:05 / 0:40');
@@ -563,6 +576,108 @@ test('a student saves highlights from a lesson and from the search, and My Highl
     await section.getByTestId('saved-highlight').filter({ hasText: 'Heights and distances' }).getByTestId('save-highlight').click();
     await expect(section.getByTestId('saved-highlight')).toHaveCount(1);
     await expect(section.getByTestId('saved-subject-stats')).toContainText('1 highlight · 0:20 to play');
+  } finally {
+    await cleanUp();
+  }
+});
+
+test('My Highlights plays like a playlist: rows beside the player that jump, with mute, volume, speed, keys and loop', async ({ page, request }, testInfo) => {
+  const { subject, course, lessons, cleanUp } = await addCourseWithHighlight(request, testInfo);
+  const headers = await headersFor(request);
+  try {
+    const later = await request.post(`${API_URL}/api/admin/highlights`, {
+      headers,
+      data: { videoId: lessons.ch5._id, start: '7:10', end: '7:30', title: 'Heights and distances', summary: 'Using tan to find a height.', points: 'Angle of elevation' },
+    });
+    expect(later.ok(), await later.text()).toBeTruthy();
+    const student = await signInStudent(request);
+    const given = await request.post(`${API_URL}/api/admin/users/${(student.user || student)._id}/purchases`, {
+      headers,
+      data: { courseId: course._id, note: 'Playlist test' },
+    });
+    expect(given.ok(), await given.text()).toBeTruthy();
+    const { clips } = await (await request.get(`${API_URL}/api/admin/highlights?subject=${encodeURIComponent(subject)}`, { headers })).json();
+    expect(clips).toHaveLength(2);
+    for (const clip of clips) {
+      const saved = await request.put(`${API_URL}/api/saved-highlights/${clip._id}`, { headers: { Authorization: `Bearer ${student.token}` } });
+      expect(saved.ok(), await saved.text()).toBeTruthy();
+    }
+
+    await fakeYouTube(page);
+    await openAsStudent(page, request);
+    // The volume and speed of an earlier visit are not carried into this test
+    await page.addInitScript(() => localStorage.removeItem('mymarks_player'));
+    await page.goto('/my-highlights');
+    const section = page.getByTestId('saved-subject').filter({ hasText: subject });
+
+    // Play on the second highlight opens the whole list, playing from that highlight
+    await section.getByTestId('saved-highlight').filter({ hasText: 'Heights and distances' }).getByTestId('saved-play-one').click();
+    const watch = section.getByTestId('reel-watch');
+    const player = watch.getByTestId('reel-player');
+    const rows = watch.getByTestId('playlist-item');
+    await expect(rows).toHaveText([/What is trigonometry[\s\S]*Ch 1 · Trigonometry/, /Heights and distances[\s\S]*Ch 5 · Applications/]);
+    await expect(player).toHaveAttribute('data-state', 'playing');
+    await expect(watch.getByTestId('playlist-position')).toHaveText('2 / 2');
+    await expect(rows.nth(1)).toHaveAttribute('aria-current', 'true');
+    await expect(watch.getByTestId('now-playing-title')).toHaveText('Heights and distances');
+    await expect(watch.getByTestId('now-playing')).toContainText('Using tan to find a height.');
+    await expect(watch.getByTestId('now-playing')).toContainText('Angle of elevation');
+    await expect(player.getByTestId('reel-time')).toHaveText('0:20 / 0:40');
+    await expect.poll(() => heard(page)).toEqual([{ videoId: CH5, time: 430 }]);
+
+    // A click on the first row plays from that highlight
+    await rows.first().click();
+    await expect(watch.getByTestId('playlist-position')).toHaveText('1 / 2');
+    await expect(rows.first()).toHaveAttribute('aria-current', 'true');
+    await expect(watch.getByTestId('now-playing-title')).toHaveText('What is trigonometry');
+    await expect.poll(() => heard(page)).toEqual([{ videoId: CH1, time: 120 }]);
+
+    // While it plays the controls leave with the pointer, and come back with it
+    await page.mouse.move(2, 2);
+    await expect(player).toHaveAttribute('data-controls', 'hidden');
+    await player.hover();
+    await expect(player).toHaveAttribute('data-controls', 'shown');
+
+    // The speaker mutes the video that is playing; the down arrow turns the volume down
+    await player.getByTestId('reel-mute').click();
+    await expect.poll(() => sound(page)).toEqual([{ muted: true, volume: 100, rate: 1 }]);
+    await player.hover();
+    await player.getByTestId('reel-mute').click();
+    await expect.poll(() => sound(page)).toEqual([{ muted: false, volume: 100, rate: 1 }]);
+    await player.press('ArrowDown');
+    await expect.poll(() => sound(page)).toEqual([{ muted: false, volume: 95, rate: 1 }]);
+
+    // The gear sets the speed
+    await player.hover();
+    await player.getByTestId('reel-settings').click();
+    await player.getByTestId('reel-speed-menu').getByRole('menuitemradio', { name: '1.5', exact: true }).click();
+    await expect(player.getByTestId('reel-speed-menu')).toHaveCount(0);
+    await expect.poll(() => sound(page)).toEqual([{ muted: false, volume: 95, rate: 1.5 }]);
+
+    // Keys: K pauses and plays, the right arrow skips 5 seconds, Shift+N goes to the next highlight
+    await player.press('k');
+    await expect(player).toHaveAttribute('data-state', 'paused');
+    await player.press('k');
+    await expect(player).toHaveAttribute('data-state', 'playing');
+    await player.press('ArrowRight');
+    await expect(player.getByTestId('reel-time')).toHaveText('0:05 / 0:40');
+    await player.press('Shift+N');
+    await expect(watch.getByTestId('playlist-position')).toHaveText('2 / 2');
+    await expect.poll(async () => (await heard(page)).map((video) => video.videoId)).toEqual([CH5]);
+    // The volume and speed stay with the next highlight
+    await expect.poll(() => sound(page)).toEqual([{ muted: false, volume: 95, rate: 1.5 }]);
+
+    // With Loop on, the list starts again after its last highlight
+    await watch.getByTestId('playlist-loop').click();
+    await expect(watch.getByTestId('playlist-loop')).toHaveAttribute('aria-pressed', 'true');
+    await play(page, 21);
+    await expect(watch.getByTestId('playlist-position')).toHaveText('1 / 2');
+    await expect(player).toHaveAttribute('data-state', 'playing');
+    await expect.poll(async () => (await heard(page)).map((video) => video.videoId)).toEqual([CH1]);
+
+    // Closing the list takes the player away
+    await watch.getByRole('button', { name: 'Close the player' }).click();
+    await expect(section.getByTestId('reel-player')).toHaveCount(0);
   } finally {
     await cleanUp();
   }

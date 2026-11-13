@@ -11,8 +11,7 @@ import {
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import LabPracticalHub from "./lab/LabPracticalHub";
 import CourseCard from "./course/CourseCard";
-import { LAB_SUBJECTS } from "../data/labPracticalsData";
-import useCatalog from "../hooks/useCatalog";
+import useBoardCatalog from "../hooks/useBoardCatalog";
 import useMyCourses, { continueLink } from "../hooks/useMyCourses";
 import useLikes from "../hooks/useLikes";
 import { isOutsideLink } from "../utils/courseImage";
@@ -25,7 +24,8 @@ export default function IntermediateSubjects({
   onOpenSignIn,
   onOpenSignUp,
 }) {
-  const { courses, streams, isLoading, error, retry } = useCatalog();
+  // A signed-in student sees only the subjects and labs of their own board
+  const { courses, labs, board, streams, isLoading, error, retry } = useBoardCatalog(currentUser);
   const [lockedSubject, setLockedSubject] = useState(null);
   const [selectedStream, setSelectedStream] = useState("all");
   const [activeLabModalSubject, setActiveLabModalSubject] = useState(null);
@@ -262,7 +262,7 @@ export default function IntermediateSubjects({
           ) : (
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-950/80 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold mb-3">
               <Sparkles size={12} className="text-blue-600 dark:text-blue-400" />
-              <span>AP/TS Board Curriculum</span>
+              <span data-testid="board-pill">{board ? `${board} Curriculum` : "AP/TS Board Curriculum"}</span>
             </div>
           )}
 
@@ -270,7 +270,9 @@ export default function IntermediateSubjects({
             Intermediate Subjects
           </h2>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-normal mt-1 leading-relaxed">
-            Complete subject-wise curriculum for AP & Telangana Intermediate students. Select your subject to explore interactive classes, notes, and simulators.
+            {board
+              ? `The subjects and labs for your board, ${board}. Select your subject to explore interactive classes, notes, and simulators.`
+              : "Complete subject-wise curriculum for AP & Telangana Intermediate students. Select your subject to explore interactive classes, notes, and simulators."}
           </p>
         </div>
 
@@ -322,7 +324,7 @@ export default function IntermediateSubjects({
               }`}
             >
               <FlaskConical size={13} />
-              <span>Lab / Practicals ({LAB_SUBJECTS.length})</span>
+              <span>Lab / Practicals ({labs.length})</span>
             </button>
             {streams.map((stream) => (
               <button
@@ -345,7 +347,12 @@ export default function IntermediateSubjects({
         {/* Course Cards */}
         {activeStream === "labs" ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6 mb-16">
-            {LAB_SUBJECTS.map(renderPracticalCard)}
+            {labs.map(renderPracticalCard)}
+            {labs.length === 0 && (
+              <p className="col-span-full text-center text-sm text-slate-600 dark:text-slate-400">
+                Labs for your board are being added. Please check back soon.
+              </p>
+            )}
           </div>
         ) : isLoading ? (
           <div
@@ -427,6 +434,7 @@ export default function IntermediateSubjects({
             </div>
 
             <LabPracticalHub
+              labs={labs}
               initialSubjectId={activeLabModalSubject}
               onOpenBooking={(topic) => {
                 setActiveLabModalSubject(null);

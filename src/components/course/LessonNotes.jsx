@@ -5,18 +5,14 @@ import NoteText, { timesIn } from '../notes/NoteText';
 import useCourseNotes, { chapterNoteId, rememberNote, videoNoteId } from '../../hooks/useCourseNotes';
 import { saveNoteRequest, saveVideoNoteRequest } from '../../services/learningApi';
 import { formatClock, lessonKeyOf } from '../../utils/watchTime';
+import { chapterKeyOf, chapterNameOf } from '../../utils/chapters';
 
 const MAX_TEXT = 20000;
 // Saved this long after the student stops typing
 const SAVE_AFTER_MS = 800;
 
-// A chapter's notes are grouped under its number (or its name when it has none)
-export const chapterKeyOf = (chapter) =>
-  String(chapter?.number || chapter?.name || 'lessons')
-    .trim()
-    .toLowerCase()
-    .slice(0, 80);
-export const chapterNameOf = (chapter) => (chapter?.number ? `Chapter ${chapter.number}: ${chapter.name}` : chapter?.name || 'More lessons');
+// A chapter's notes are grouped under its key: its number (or its name when it has none)
+export { chapterKeyOf, chapterNameOf };
 const titleOf = (code, title) => (code ? `${code} · ${title}` : title);
 const firstLine = (text) => String(text || '').split('\n').find((line) => line.trim()) || '';
 

@@ -94,6 +94,7 @@ import { TOPICS_DATA } from "../components/maths/MathsCurriculum";
 import AdminNavbar from "../components/admin/AdminNavbar";
 import AdminSidebar from "../components/admin/AdminSidebar";
 import HighlightsPanel from "../components/admin/highlights/HighlightsPanel";
+import AssignmentsPanel from "../components/admin/assignments/AssignmentsPanel";
 import ClipEditor from "../components/admin/highlights/ClipEditor";
 import VideoHighlights from "../components/admin/highlights/VideoHighlights";
 import AdminTabSkeleton from "../components/admin/AdminSkeleton";
@@ -107,7 +108,7 @@ import useDialog from "../hooks/useDialog";
 import StudentLearning from "../components/admin/students/StudentLearning";
 
 // Every admin tab; /admin/<tab> opens that tab directly
-const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "highlights", "payments", "bookings", "pages", "navigation", "settings"];
+const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "highlights", "assignments", "payments", "bookings", "pages", "navigation", "settings"];
 
 // Used for videos until the courses are in the database
 const DEFAULT_VIDEO_SUBJECTS = [
@@ -3061,6 +3062,7 @@ export default function AdminPage({
 
           {activeTab === "payments" && <PaymentsTab showToast={showToast} />}
           {!isFirstLoad && activeTab === "highlights" && <HighlightsPanel showToast={showToast} />}
+          {!isFirstLoad && activeTab === "assignments" && <AssignmentsPanel showToast={showToast} />}
 
           {activeTab === "navigation" && <NavigationTab showToast={showToast} />}
 

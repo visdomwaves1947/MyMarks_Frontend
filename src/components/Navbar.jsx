@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { VisdomBrand } from "./VisdomBrand";
 import useDialog from "../hooks/useDialog";
-import useCatalog from "../hooks/useCatalog";
+import useBoardCatalog from "../hooks/useBoardCatalog";
 import useNavigationMenu from "../hooks/useNavigationMenu";
 import useCart from "../hooks/useCart";
 import useLikes from "../hooks/useLikes";
@@ -49,7 +49,8 @@ export default function Navbar({
   const navigate = useNavigate();
   const { confirm } = useDialog();
   const location = useLocation();
-  const { courses, streams } = useCatalog();
+  // A signed-in student's menus list only the subjects of their board
+  const { courses, streams } = useBoardCatalog(currentUser);
   const navigation = useNavigationMenu();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // The avatar opens a small menu: View Profile, and My Courses (students) or Admin Panel (admins)

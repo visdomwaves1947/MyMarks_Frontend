@@ -39,3 +39,18 @@ export function partLabel(part) {
   const number = part.chapter?.number;
   return number !== null && number !== undefined && number !== '' ? `Ch ${number} · ${part.title}` : part.title;
 }
+
+// The picture of a part's video, for a playlist row or before the first play ('' when it has none)
+export function thumbnailOf(clip, size = 'mqdefault') {
+  const media = clip?.media;
+  return media?.kind === 'youtube' && media.youtubeId ? `https://img.youtube.com/vi/${media.youtubeId}/${size}.jpg` : '';
+}
+
+// "Ch 1 · Trigonometry", or just the chapter name or number that is known
+export function chapterLine(clip) {
+  const number = clip?.chapter?.number;
+  const name = clip?.chapter?.name || '';
+  const numbered = number !== null && number !== undefined && number !== '';
+  if (numbered && name) return `Ch ${number} · ${name}`;
+  return numbered ? `Chapter ${number}` : name;
+}

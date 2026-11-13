@@ -37,6 +37,8 @@ import {
 export default function LabPracticalHub({
   initialSubjectId = "phy",
   onOpenBooking,
+  // The labs to offer: a signed-in student gets only the labs of their board
+  labs = LAB_SUBJECTS,
 }) {
   const [selectedSubjectId, setSelectedSubjectId] = useState(initialSubjectId);
   const [activeTab, setActiveTab] = useState("simulator"); // 'simulator' | 'experiments' | 'viva' | 'marking'
@@ -44,8 +46,15 @@ export default function LabPracticalHub({
   const [expandedExpId, setExpandedExpId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const currentSubject =
-    LAB_SUBJECTS.find((s) => s.id === selectedSubjectId) || LAB_SUBJECTS[0];
+  const currentSubject = labs.find((s) => s.id === selectedSubjectId) || labs[0];
+
+  if (!currentSubject) {
+    return (
+      <p className="py-16 text-center text-sm font-semibold text-slate-600 dark:text-slate-400">
+        Labs for your board are being added. Please check back soon.
+      </p>
+    );
+  }
 
   const getSubjectIcon = (id, size = 20) => {
     switch (id) {
@@ -121,7 +130,7 @@ export default function LabPracticalHub({
       {/* Subject Selector Bar (Horizontal scroll on mobile) */}
       <div className="mb-8">
         <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-slate-300 dark:scrollbar-thumb-slate-700">
-          {LAB_SUBJECTS.map((sub) => {
+          {labs.map((sub) => {
             const isSelected = sub.id === currentSubject.id;
             return (
               <button
