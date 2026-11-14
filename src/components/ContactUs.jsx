@@ -12,6 +12,7 @@ import {
   Check,
 } from 'lucide-react';
 import { submitContactMessage } from '../services/api';
+import { sendContactAcknowledgementEmail } from '../services/emailService';
 import NightSkyHeroBackground from './NightSkyHeroBackground';
 
 export default function ContactUs() {
@@ -189,7 +190,16 @@ export default function ContactUs() {
 
     setSubmitting(true);
     try {
+      // 1. Save contact message to MongoDB Atlas database
       await submitContactMessage(formData);
+
+      // 2. Once saved successfully, trigger acknowledgement email via EmailJS
+      try {
+        await sendContactAcknowledgementEmail(formData);
+      } catch (emailErr) {
+        console.warn('[ContactUs] Email acknowledgment notice:', emailErr.message);
+      }
+
       showToast('Your message has been sent successfully! Our advisors will reply soon.', 'success');
       setFormData({
         name: '',
