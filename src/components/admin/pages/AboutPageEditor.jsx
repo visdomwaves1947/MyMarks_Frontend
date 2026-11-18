@@ -49,18 +49,24 @@ const editable = (about) => ({
     heading: about.hero?.heading || '',
     subheading: about.hero?.subheading || '',
   },
-  leaders: (about.leaders || []).map((leader) => ({
-    name: leader.name || '',
-    role: leader.role || '',
-    icon: leader.icon || 'award',
-    image: leader.image || '',
-    link: leader.link || '',
-    tagline: leader.tagline || '',
-    bio: leader.bio || '',
-    tags: leader.tags || [],
-    highlights: leader.highlights || [],
-    visible: leader.visible !== false,
-  })),
+  leaders: (about.leaders || []).map((leader) => {
+    let image = leader.image || '';
+    if ((leader.name || '').toLowerCase().includes('raju') && (image.includes('localhost') || !image)) {
+      image = '/leaders/Raju.jpeg';
+    }
+    return {
+      name: leader.name || '',
+      role: leader.role || '',
+      icon: leader.icon || 'award',
+      image,
+      link: leader.link || '',
+      tagline: leader.tagline || '',
+      bio: leader.bio || '',
+      tags: leader.tags || [],
+      highlights: leader.highlights || [],
+      visible: leader.visible !== false,
+    };
+  }),
   inspirations: {
     badge: about.inspirations?.badge || '',
     heading: about.inspirations?.heading || '',
