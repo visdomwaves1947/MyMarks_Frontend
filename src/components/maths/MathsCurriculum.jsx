@@ -727,7 +727,7 @@ function CollapsibleTopicNode({
   return (
     <div className="flex flex-col select-none">
       <div
-        className={`group flex items-center justify-between gap-2.5 py-2 px-3 rounded-xl border transition-all duration-150 cursor-pointer ${cardBg}`}
+        className={`group flex items-center justify-between gap-2 py-2 px-3 rounded-xl border transition-all duration-150 cursor-pointer ${cardBg}`}
         onClick={() => {
           onSelectLesson(node);
           if (hasChildren && !isExpanded) {
@@ -735,7 +735,7 @@ function CollapsibleTopicNode({
           }
         }}
       >
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {/* Chevron expand/collapse toggle */}
           {hasChildren ? (
             <button
@@ -765,24 +765,27 @@ function CollapsibleTopicNode({
           )}
 
           {/* Dynamic Code Badge */}
-          <span className={`font-mono text-xs px-2 py-0.5 rounded-md border shrink-0 tracking-tight ${badgeStyle}`}>
+          <span className={`font-mono text-[11px] sm:text-xs px-1.5 py-0.5 rounded-md border shrink-0 tracking-tight ${badgeStyle}`}>
             {node.code}
           </span>
 
           {/* Title */}
-          <span className={`text-xs sm:text-[13px] leading-snug break-words ${
-            isSelected 
-              ? 'text-white font-black' 
-              : isRoot 
-                ? 'text-white font-bold' 
-                : 'text-slate-200 font-medium group-hover:text-white'
-          }`}>
+          <span
+            title={node.title}
+            className={`text-xs sm:text-[13px] leading-snug break-normal line-clamp-2 min-w-0 ${
+              isSelected 
+                ? 'text-white font-black' 
+                : isRoot 
+                  ? 'text-white font-bold' 
+                  : 'text-slate-200 font-medium group-hover:text-white'
+            }`}
+          >
             {node.title}
           </span>
         </div>
 
         {/* Right Status Badge */}
-        <div className="shrink-0 flex items-center gap-1.5 ml-2">
+        <div className="shrink-0 flex items-center gap-1.5 ml-1.5">
           {isSelected ? (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold text-white tracking-wider shadow-xs">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -798,11 +801,11 @@ function CollapsibleTopicNode({
 
       {/* Recursive Children with Tree Connector Branch Guides */}
       {hasChildren && isExpanded && (
-        <div className="relative ml-5 pl-4 border-l-2 border-indigo-500/25 space-y-1.5 my-1.5">
+        <div className="relative ml-2.5 sm:ml-3 pl-2 sm:pl-2.5 border-l-2 border-indigo-500/25 space-y-1.5 my-1.5">
           {node.children.map((child) => (
             <div 
               key={child.id} 
-              className="relative before:absolute before:-left-4 before:top-4 before:w-3.5 before:h-0.5 before:bg-indigo-500/25 before:rounded-full"
+              className="relative before:absolute before:-left-2.5 sm:before:-left-3 before:top-4 before:w-2.5 sm:before:w-3 before:h-0.5 before:bg-indigo-500/25 before:rounded-full"
             >
               <CollapsibleTopicNode
                 node={child}
@@ -860,6 +863,53 @@ function FullPageLecturePlayer({ initialVideo, onClose, onEnroll, topicsData = [
   });
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mymarks_lecture_sidebar_width');
+      const parsed = saved ? parseInt(saved, 10) : 440;
+      return !isNaN(parsed) && parsed >= 380 && parsed <= 800 ? parsed : 440;
+    } catch {
+      return 440;
+    }
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const startResizing = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+
+    const onPointerMove = (moveEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const maxAllowed = Math.min(800, Math.round(window.innerWidth * 0.65));
+      const newWidth = Math.max(380, Math.min(maxAllowed, startWidth + delta));
+      setSidebarWidth(newWidth);
+    };
+
+    const onPointerUp = (upEvent) => {
+      setIsResizing(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      const finalDelta = upEvent.clientX - startX;
+      const maxAllowed = Math.min(800, Math.round(window.innerWidth * 0.65));
+      const finalWidth = Math.max(380, Math.min(maxAllowed, startWidth + finalDelta));
+      try {
+        localStorage.setItem('mymarks_lecture_sidebar_width', String(finalWidth));
+      } catch {}
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  }, [sidebarWidth]);
   const [searchFilter, setSearchFilter] = useState('');
 
   // Expand map for collapse method
@@ -1003,13 +1053,13 @@ function FullPageLecturePlayer({ initialVideo, onClose, onEnroll, topicsData = [
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
               sidebarOpen 
-                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30' 
+                ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/80' 
                 : 'bg-slate-800 hover:bg-slate-700 text-slate-200'
             }`}
-            title={sidebarOpen ? 'Hide Syllabus Sidebar' : 'Show Syllabus Sidebar'}
+            title={sidebarOpen ? 'Collapse Syllabus Sidebar' : 'Expand Syllabus Sidebar'}
           >
-            <ListTree size={14} />
-            <span className="hidden md:inline">{sidebarOpen ? 'Hide Syllabus' : 'Show Syllabus'}</span>
+            <ListTree size={14} className={sidebarOpen ? 'text-blue-600 dark:text-blue-400' : ''} />
+            <span className="hidden md:inline">{sidebarOpen ? 'Collapse Syllabus' : 'Expand Syllabus'}</span>
           </button>
 
           <a
@@ -1034,8 +1084,185 @@ function FullPageLecturePlayer({ initialVideo, onClose, onEnroll, topicsData = [
 
       {/* Main Full Page Workspace */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-        {/* Left Side: Video Theater Player & Detailed Lesson Notes */}
-        <div className="flex-1 flex flex-col overflow-y-auto bg-black/40 scrollbar-thin scrollbar-thumb-slate-800">
+        {/* Dragging shield overlay to prevent iframe/video stealing pointer events */}
+        {isResizing && (
+          <div
+            className="fixed inset-0 z-50 cursor-col-resize select-none bg-transparent"
+            style={{ pointerEvents: 'all' }}
+          />
+        )}
+
+        {/* Left Side (on desktop): Dedicated Syllabus Hierarchy Sidebar (The Collapse Method) */}
+        {sidebarOpen ? (
+          <aside
+            style={isDesktop ? { width: `${sidebarWidth}px`, minWidth: '380px', maxWidth: '65vw' } : undefined}
+            className={`w-full bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col shrink-0 overflow-hidden shadow-2xl z-20 relative order-2 lg:order-1 ${
+              isResizing ? 'select-none' : 'transition-[width] duration-75'
+            }`}
+          >
+            {/* Draggable Sidebar Resizer Divider with Small Drag Handle (||) */}
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Drag to resize sidebar"
+              onPointerDown={startResizing}
+              className={`hidden lg:flex flex-col items-center justify-center absolute -right-2 top-0 bottom-0 w-4 cursor-col-resize z-30 select-none group ${
+                isResizing ? 'bg-blue-500/20' : 'hover:bg-blue-400/10'
+              }`}
+              title="Drag to resize sidebar width"
+            >
+              {/* Vertical resizer line */}
+              <div
+                className={`w-[2px] h-full transition-colors ${
+                  isResizing ? 'bg-blue-500 shadow-xs shadow-blue-500/50' : 'bg-transparent group-hover:bg-blue-400'
+                }`}
+              />
+
+              {/* Small Drag Handle (||) */}
+              <div
+                className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-3.5 h-8 rounded-full border shadow-xs flex items-center justify-center gap-[2px] transition-all pointer-events-none ${
+                  isResizing
+                    ? 'bg-blue-100 border-blue-400 dark:bg-blue-900 dark:border-blue-500'
+                    : 'bg-blue-50/95 group-hover:bg-blue-100 border-blue-200/90 group-hover:border-blue-400/80 dark:bg-slate-800 dark:border-slate-700 dark:group-hover:bg-slate-700'
+                }`}
+              >
+                <span className="w-[1.5px] h-3 rounded-full bg-blue-500 dark:bg-blue-400" />
+                <span className="w-[1.5px] h-3 rounded-full bg-blue-500 dark:bg-blue-400" />
+              </div>
+            </div>
+
+            {/* Sidebar Header */}
+            <div className="p-4 bg-slate-900/95 border-b border-slate-800 space-y-3 shrink-0">
+              {/* Header Title & Lesson Count */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                  <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-indigo-400">
+                    Topic Hierarchy
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 font-mono text-xs font-bold border border-indigo-800/60 shadow-xs">
+                    {allLessons.length} {allLessons.length === 1 ? 'Lesson' : 'Lessons'}
+                  </span>
+                  {/* Topic Hierarchy Edge Button (2nd image reference) */}
+                  <button
+                    type="button"
+                    onClick={() => setSidebarOpen(false)}
+                    className="hidden lg:flex items-center justify-center w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white border border-blue-600 hover:border-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-sm transition-all cursor-pointer shrink-0"
+                    title="Collapse syllabus sidebar"
+                    aria-label="Collapse syllabus sidebar"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
+                  <span className="text-indigo-400 font-mono">{rootTopic?.code}:</span>
+                  <span>{rootTopic?.title}</span>
+                </h2>
+                
+                {/* Now Playing pill */}
+                <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300">
+                  <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-emerald-400 shrink-0">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    Playing:
+                  </span>
+                  <span className="font-mono font-bold text-indigo-300 shrink-0">{currentLesson.code}</span>
+                  <span className="truncate font-medium text-white">{currentLesson.title}</span>
+                </div>
+              </div>
+
+              {/* Action Toolbar: Collapse/Expand + Search */}
+              <div className="flex items-center justify-between gap-2 pt-1">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleCollapseAll}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-700/60 flex items-center gap-1 shadow-xs"
+                    title="Collapse all subtopics"
+                  >
+                    <span>−</span>
+                    <span>Collapse All</span>
+                  </button>
+                  <button
+                    onClick={handleExpandAll}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-700/60 flex items-center gap-1 shadow-xs"
+                    title="Expand all subtopics"
+                  >
+                    <span>+</span>
+                    <span>Expand All</span>
+                  </button>
+                </div>
+
+                <div className="relative flex-1 max-w-[190px]">
+                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search subtopic..."
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                    className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-800/90 text-white text-xs border border-slate-700/70 focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-500 transition-all"
+                  />
+                  {searchFilter && (
+                    <button
+                      onClick={() => setSearchFilter('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Collapsible Hierarchy Syllabus Tree Body - ONLY rootTopic and its nested subtopics */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-indigo-500/30">
+              {rootTopic && (
+                <CollapsibleTopicNode
+                  key={rootTopic.id}
+                  node={rootTopic}
+                  depth={0}
+                  activeId={currentLesson.id}
+                  onSelectLesson={handleSelectLesson}
+                  expandedMap={expandedMap}
+                  toggleExpand={toggleExpand}
+                  searchFilter={searchFilter}
+                />
+              )}
+            </div>
+          </aside>
+        ) : (
+          /* Slim vertical collapse bar when sidebar is collapsed on desktop */
+          <aside
+            aria-label="Collapsed syllabus bar"
+            className="hidden lg:flex flex-col items-center py-4 bg-blue-50/70 dark:bg-slate-900 border-r border-blue-200/80 dark:border-slate-800 w-12 shrink-0 z-20 shadow-sm transition-all order-1"
+          >
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="w-9 h-9 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-700 border border-blue-300 dark:bg-blue-950/70 dark:text-blue-300 dark:border-blue-800 flex items-center justify-center transition-colors cursor-pointer shadow-xs group"
+              title="Expand Syllabus (Show Sidebar)"
+              aria-label="Expand Syllabus"
+            >
+              <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+            </button>
+            <div
+              onClick={() => setSidebarOpen(true)}
+              className="mt-6 flex-1 flex items-center justify-center cursor-pointer group select-none"
+              title="Expand Syllabus (Show Sidebar)"
+            >
+              <span className="text-[11px] font-black uppercase tracking-widest text-blue-600/80 group-hover:text-blue-800 dark:text-blue-400 dark:group-hover:text-blue-300 transition-colors [writing-mode:vertical-lr] rotate-180 flex items-center gap-2">
+                <ListTree size={12} className="rotate-90 text-blue-600 dark:text-blue-400" />
+                <span>Syllabus · {allLessons.length} Lessons</span>
+              </span>
+            </div>
+          </aside>
+        )}
+
+        {/* Right Side (on desktop): Video Theater Player & Detailed Lesson Notes */}
+        <div className="flex-1 flex flex-col overflow-y-auto bg-black/40 scrollbar-thin scrollbar-thumb-slate-800 min-w-0 order-1 lg:order-2">
           {/* Responsive 16:9 Video Container */}
           <div className="relative w-full aspect-video max-h-[64vh] bg-black flex items-center justify-center shadow-2xl">
             {displayVideoId ? (
@@ -1129,101 +1356,6 @@ function FullPageLecturePlayer({ initialVideo, onClose, onEnroll, topicsData = [
             </div>
           </div>
         </div>
-
-        {/* Right Side: Dedicated Syllabus Hierarchy Sidebar (The Collapse Method) */}
-        {sidebarOpen && (
-          <aside className="w-full lg:w-[420px] xl:w-[460px] bg-slate-900 border-l border-slate-800 flex flex-col shrink-0 overflow-hidden shadow-2xl">
-            {/* Sidebar Header */}
-            <div className="p-4 bg-slate-900/95 border-b border-slate-800 space-y-3 shrink-0">
-              {/* Header Title & Lesson Count */}
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                  <span className="text-[11px] font-mono font-extrabold uppercase tracking-wider text-indigo-400">
-                    Topic Hierarchy
-                  </span>
-                </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-indigo-950 text-indigo-300 font-mono text-xs font-bold border border-indigo-800/60 shadow-xs">
-                  {allLessons.length} {allLessons.length === 1 ? 'Lesson' : 'Lessons'}
-                </span>
-              </div>
-
-              <div>
-                <h2 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                  <span className="text-indigo-400 font-mono">{rootTopic?.code}:</span>
-                  <span>{rootTopic?.title}</span>
-                </h2>
-                
-                {/* Now Playing pill */}
-                <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-300">
-                  <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-emerald-400 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                    Playing:
-                  </span>
-                  <span className="font-mono font-bold text-indigo-300 shrink-0">{currentLesson.code}</span>
-                  <span className="truncate font-medium text-white">{currentLesson.title}</span>
-                </div>
-              </div>
-
-              {/* Action Toolbar: Collapse/Expand + Search */}
-              <div className="flex items-center justify-between gap-2 pt-1">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={handleCollapseAll}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-700/60 flex items-center gap-1 shadow-xs"
-                    title="Collapse all subtopics"
-                  >
-                    <span>−</span>
-                    <span>Collapse All</span>
-                  </button>
-                  <button
-                    onClick={handleExpandAll}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-700/60 flex items-center gap-1 shadow-xs"
-                    title="Expand all subtopics"
-                  >
-                    <span>+</span>
-                    <span>Expand All</span>
-                  </button>
-                </div>
-
-                <div className="relative flex-1 max-w-[190px]">
-                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    placeholder="Search subtopic..."
-                    value={searchFilter}
-                    onChange={(e) => setSearchFilter(e.target.value)}
-                    className="w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-800/90 text-white text-xs border border-slate-700/70 focus:outline-none focus:ring-1 focus:ring-indigo-500 placeholder:text-slate-500 transition-all"
-                  />
-                  {searchFilter && (
-                    <button
-                      onClick={() => setSearchFilter('')}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Collapsible Hierarchy Syllabus Tree Body - ONLY rootTopic and its nested subtopics */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-indigo-500/30">
-              {rootTopic && (
-                <CollapsibleTopicNode
-                  key={rootTopic.id}
-                  node={rootTopic}
-                  depth={0}
-                  activeId={currentLesson.id}
-                  onSelectLesson={handleSelectLesson}
-                  expandedMap={expandedMap}
-                  toggleExpand={toggleExpand}
-                  searchFilter={searchFilter}
-                />
-              )}
-            </div>
-          </aside>
-        )}
       </div>
     </div>
   );

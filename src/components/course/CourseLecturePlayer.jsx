@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowRight,
   Check,
@@ -239,7 +239,7 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
           lesson || hasChildren ? 'cursor-pointer' : 'cursor-default opacity-60'
         } ${rowStyle}`}
       >
-        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           {hasChildren ? (
             <button
               type="button"
@@ -280,7 +280,7 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
 
           {node.code && (
             <span
-              className={`font-mono text-xs px-2 py-0.5 rounded-md border shrink-0 tracking-tight ${
+              className={`font-mono text-[11px] sm:text-xs px-1.5 py-0.5 rounded-md border shrink-0 tracking-tight ${
                 isSelected ? 'bg-white/20 text-white border-white/30 font-black' : `${player.soft} font-bold`
               }`}
             >
@@ -289,7 +289,8 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
           )}
 
           <span
-            className={`text-xs sm:text-[13px] leading-snug break-words ${
+            title={node.title}
+            className={`text-xs sm:text-[13px] leading-snug break-normal line-clamp-2 min-w-0 ${
               isSelected
                 ? 'text-white font-black'
                 : depth === 0
@@ -301,7 +302,7 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
           </span>
         </div>
 
-        <div className="shrink-0 flex items-center gap-1.5 ml-2">
+        <div className="shrink-0 flex items-center gap-1.5 ml-1.5">
           {isSelected ? (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 text-[9px] font-extrabold text-white tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -322,11 +323,11 @@ function TopicNode({ node, depth, currentId, expanded, onToggle, onSelect, playe
       </div>
 
       {hasChildren && isExpanded && (
-        <div className={`relative ml-5 pl-4 border-l-2 ${player.line} space-y-1.5 my-1.5`}>
+        <div className={`relative ml-2.5 sm:ml-3 pl-2 sm:pl-2.5 border-l-2 ${player.line} space-y-1.5 my-1.5`}>
           {node.children.map((child) => (
             <div
               key={child.nodeId}
-              className={`relative before:absolute before:-left-4 before:top-4 before:w-3.5 before:h-0.5 ${player.branch} before:rounded-full`}
+              className={`relative before:absolute before:-left-2.5 sm:before:-left-3 before:top-4 before:w-2.5 sm:before:w-3 before:h-0.5 ${player.branch} before:rounded-full`}
             >
               <TopicNode
                 node={child}
@@ -409,6 +410,53 @@ export default function CourseLecturePlayer({
     return opened;
   });
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mymarks_lecture_sidebar_width');
+      const parsed = saved ? parseInt(saved, 10) : 440;
+      return !isNaN(parsed) && parsed >= 380 && parsed <= 800 ? parsed : 440;
+    } catch {
+      return 440;
+    }
+  });
+  const [isResizing, setIsResizing] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
+
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth >= 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const startResizing = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+
+    const onPointerMove = (moveEvent) => {
+      const delta = moveEvent.clientX - startX;
+      const maxAllowed = Math.min(800, Math.round(window.innerWidth * 0.65));
+      const newWidth = Math.max(380, Math.min(maxAllowed, startWidth + delta));
+      setSidebarWidth(newWidth);
+    };
+
+    const onPointerUp = (upEvent) => {
+      setIsResizing(false);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      const finalDelta = upEvent.clientX - startX;
+      const maxAllowed = Math.min(800, Math.round(window.innerWidth * 0.65));
+      const finalWidth = Math.max(380, Math.min(maxAllowed, startWidth + finalDelta));
+      try {
+        localStorage.setItem('mymarks_lecture_sidebar_width', String(finalWidth));
+      } catch {}
+    };
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  }, [sidebarWidth]);
   // The right panel: the lessons, or the student's notes for the chapter
   const [panel, setPanel] = useState('lessons');
   // Once opened, My Notes stays in place (hidden on the Lessons tab), so switching back is instant
@@ -605,13 +653,13 @@ export default function CourseLecturePlayer({
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer ${
               sidebarOpen
-                ? player.toggle
+                ? 'bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:border-blue-800/80'
                 : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200'
             }`}
-            title={sidebarOpen ? 'Hide Syllabus Sidebar' : 'Show Syllabus Sidebar'}
+            title={sidebarOpen ? 'Collapse Syllabus Sidebar' : 'Expand Syllabus Sidebar'}
           >
-            <ListTree size={14} />
-            <span className="hidden md:inline">{sidebarOpen ? 'Hide Syllabus' : 'Show Syllabus'}</span>
+            <ListTree size={14} className={sidebarOpen ? 'text-blue-600 dark:text-blue-400' : ''} />
+            <span className="hidden md:inline">{sidebarOpen ? 'Collapse Syllabus' : 'Expand Syllabus'}</span>
           </button>
 
           {lesson.url && (
@@ -637,9 +685,265 @@ export default function CourseLecturePlayer({
       </div>
 
       {/* Workspace: one scrolling page on phones, side by side on large screens */}
-      <div ref={workspaceRef} className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
-        {/* Left side: video and lesson notes */}
-        <div className="lg:flex-1 flex flex-col lg:overflow-y-auto bg-slate-50 dark:bg-black/40 shrink-0 lg:shrink">
+      <div ref={workspaceRef} className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden relative">
+        {/* Dragging shield overlay to prevent iframe/video stealing pointer events */}
+        {isResizing && (
+          <div
+            className="fixed inset-0 z-50 cursor-col-resize select-none bg-transparent"
+            style={{ pointerEvents: 'all' }}
+          />
+        )}
+
+        {/* Left side (on desktop): topic hierarchy with collapsible subtopics */}
+        {sidebarOpen ? (
+          <aside
+            aria-label="Topic hierarchy"
+            style={isDesktop ? { width: `${sidebarWidth}px`, minWidth: '380px', maxWidth: '65vw' } : undefined}
+            className={`w-full bg-white dark:bg-slate-900 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 lg:overflow-hidden shadow-xl z-20 relative order-2 lg:order-1 ${
+              isResizing ? 'select-none' : 'transition-[width] duration-75'
+            }`}
+          >
+            {/* Draggable Sidebar Resizer Divider with Small Drag Handle (||) */}
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Drag to resize sidebar"
+              onPointerDown={startResizing}
+              className={`hidden lg:flex flex-col items-center justify-center absolute -right-2 top-0 bottom-0 w-4 cursor-col-resize z-30 select-none group ${
+                isResizing ? 'bg-blue-500/20' : 'hover:bg-blue-400/10'
+              }`}
+              title="Drag to resize sidebar width"
+            >
+              {/* Vertical resizer line */}
+              <div
+                className={`w-[2px] h-full transition-colors ${
+                  isResizing ? 'bg-blue-500 shadow-xs shadow-blue-500/50' : 'bg-transparent group-hover:bg-blue-400'
+                }`}
+              />
+
+              {/* Small Drag Handle (||) */}
+              <div
+                className={`absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2 w-3.5 h-8 rounded-full border shadow-xs flex items-center justify-center gap-[2px] transition-all pointer-events-none ${
+                  isResizing
+                    ? 'bg-blue-100 border-blue-400 dark:bg-blue-900 dark:border-blue-500'
+                    : 'bg-blue-50/95 group-hover:bg-blue-100 border-blue-200/90 group-hover:border-blue-400/80 dark:bg-slate-800 dark:border-slate-700 dark:group-hover:bg-slate-700'
+                }`}
+              >
+                <span className="w-[1.5px] h-3 rounded-full bg-blue-500 dark:bg-blue-400" />
+                <span className="w-[1.5px] h-3 rounded-full bg-blue-500 dark:bg-blue-400" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1.5 p-1.5 m-3 mb-0 rounded-xl bg-slate-100 dark:bg-slate-800/80 shrink-0">
+              <div role="tablist" aria-label="Side panel" className="grid grid-cols-2 gap-1 flex-1">
+                {[
+                  { key: 'lessons', label: 'Lessons' },
+                  { key: 'notes', label: 'My Notes' },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    role="tab"
+                    data-testid={`panel-${tab.key}`}
+                    aria-selected={panel === tab.key}
+                    onClick={() => {
+                      setPanel(tab.key);
+                      if (tab.key === 'notes') setNotesOpened(true);
+                    }}
+                    className={`py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                      panel === tab.key
+                        ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setSidebarOpen(false)}
+                className="hidden lg:flex items-center justify-center w-8 h-8 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white border border-blue-600 hover:border-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-sm transition-all cursor-pointer shrink-0"
+                title="Collapse syllabus sidebar"
+                aria-label="Collapse syllabus sidebar"
+              >
+                <ChevronLeft size={16} />
+              </button>
+            </div>
+
+            {notesOpened && (
+              <div className={panel === 'notes' ? 'contents' : 'hidden'}>
+                <LessonNotes
+                  course={course}
+                  current={current}
+                  currentChapter={chapters.find((chapter) => chapter.chapterId === current.chapterId)}
+                  currentUser={currentUser}
+                  onOpenSignIn={onOpenSignIn}
+                  getTime={() => videoTime.current}
+                  getLength={() => videoLength.current}
+                  onSeek={seekTo}
+                  onOpenLesson={openLessonAt}
+                  player={player}
+                />
+              </div>
+            )}
+            <div className={panel === 'lessons' ? 'contents' : 'hidden'}>
+              <div className="p-4 bg-white/95 border-b border-slate-200 dark:bg-slate-900/95 dark:border-slate-800 space-y-3 shrink-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full ${player.dot} animate-pulse`}></span>
+                    <span className={`text-[11px] font-mono font-extrabold uppercase tracking-wider ${player.text}`}>
+                      Topic Hierarchy
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {tracking.enabled && finishedCount > 0 && (
+                      <span
+                        data-testid="hierarchy-finished"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/70 dark:bg-emerald-950/40 dark:text-emerald-300 font-mono text-xs font-bold"
+                      >
+                        <Check size={11} strokeWidth={3} />
+                        {finishedCount} of {playable.length} finished
+                      </span>
+                    )}
+                    <span className={`px-2.5 py-0.5 rounded-full ${player.soft} font-mono text-xs font-bold border shrink-0`}>
+                      {lessonCount} {lessonCount === 1 ? 'Lesson' : 'Lessons'}
+                      {lessonCount > playable.length ? ` · ${lessonCount - playable.length} locked` : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-start gap-2">
+                    {scope.code && <span className={`${player.text} font-mono shrink-0`}>{scope.code}:</span>}
+                    <span>{scope.title}</span>
+                  </h2>
+
+                  <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600 dark:bg-slate-800/80 dark:border-slate-700/60 dark:text-slate-300">
+                    <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      Playing:
+                    </span>
+                    {current.code && <span className={`font-mono font-bold ${player.text} shrink-0`}>{current.code}</span>}
+                    <span className="truncate font-medium text-slate-900 dark:text-white">{current.title}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-1">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => setExpanded({})}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-200 dark:border-slate-700/60"
+                      title="Collapse all subtopics"
+                    >
+                      − Collapse All
+                    </button>
+                    <button
+                      onClick={expandAll}
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-200 dark:border-slate-700/60"
+                      title="Expand all subtopics"
+                    >
+                      + Expand All
+                    </button>
+                  </div>
+
+                  <div className="relative flex-1 max-w-[190px]">
+                    <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
+                    <input
+                      type="text"
+                      aria-label="Search subtopics"
+                      placeholder="Search subtopic..."
+                      value={filter}
+                      onChange={(event) => setFilter(event.target.value)}
+                      className={`w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-50 text-slate-900 border-slate-200 dark:bg-slate-800/90 dark:text-white dark:border-slate-700/70 text-xs border focus:outline-none focus:ring-1 ${player.ring} placeholder:text-slate-500`}
+                    />
+                    {filter && (
+                      <button
+                        onClick={() => setFilter('')}
+                        aria-label="Clear subtopic search"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div ref={listRef} className="lg:flex-1 lg:overflow-y-auto p-3 space-y-1.5">
+                {filter.trim() ? (
+                  filtered.length === 0 ? (
+                    <p className="text-center text-xs text-slate-500 py-6">No subtopic matches "{filter}"</p>
+                  ) : (
+                    filtered.map((entry) => (
+                      <div key={entry.nodeId}>
+                        <TopicNode
+                          node={{ ...entry, children: [] }}
+                          depth={0}
+                          currentId={current.nodeId}
+                          expanded={expanded}
+                          onToggle={toggle}
+                          onSelect={select}
+                          player={player}
+                          savedOf={savedOf}
+                        />
+                        {entry.trail.length > 0 && (
+                          <div className="flex items-center gap-1 mt-1 ml-2 text-[10px] text-slate-500 truncate">
+                            <Tag size={10} className="shrink-0" />
+                            <span className="truncate">{entry.trail.map((step) => step.title).join(' / ')}</span>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )
+                ) : (
+                  scope.nodes.map((node) => (
+                    <TopicNode
+                      key={node.nodeId}
+                      node={node}
+                      depth={0}
+                      currentId={current.nodeId}
+                      expanded={expanded}
+                      onToggle={toggle}
+                      onSelect={select}
+                      player={player}
+                      savedOf={savedOf}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          </aside>
+        ) : (
+          /* Slim vertical collapse bar when sidebar is collapsed on desktop */
+          <aside
+            aria-label="Collapsed syllabus bar"
+            className="hidden lg:flex flex-col items-center py-4 bg-blue-50/70 dark:bg-slate-900 border-r border-blue-200/80 dark:border-slate-800 w-12 shrink-0 z-20 shadow-sm transition-all order-1"
+          >
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white border border-blue-600 hover:border-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 shadow-sm flex items-center justify-center transition-all cursor-pointer group"
+              title="Expand Syllabus (Show Sidebar)"
+              aria-label="Expand Syllabus"
+            >
+              <ChevronRight size={18} className="group-hover:translate-x-0.5 transition-transform" />
+            </button>
+            <div
+              onClick={() => setSidebarOpen(true)}
+              className="mt-6 flex-1 flex items-center justify-center cursor-pointer group select-none"
+              title="Expand Syllabus (Show Sidebar)"
+            >
+              <span className="text-[11px] font-black uppercase tracking-widest text-blue-600/80 group-hover:text-blue-800 dark:text-blue-400 dark:group-hover:text-blue-300 transition-colors [writing-mode:vertical-lr] rotate-180 flex items-center gap-2">
+                <ListTree size={12} className="rotate-90 text-blue-600 dark:text-blue-400" />
+                <span>Syllabus · {lessonCount} Lessons</span>
+              </span>
+            </div>
+          </aside>
+        )}
+
+        {/* Right side (on desktop): video and lesson notes */}
+        <div className="lg:flex-1 flex flex-col lg:overflow-y-auto bg-slate-50 dark:bg-black/40 shrink-0 lg:shrink min-w-0 order-1 lg:order-2">
           <div className="relative w-full aspect-video lg:max-h-[64vh] bg-black flex items-center justify-center shadow-2xl shrink-0">
             {lesson.youtubeId ? (
               <YouTubeLesson
@@ -861,183 +1165,6 @@ export default function CourseLecturePlayer({
             </div>
           </div>
         </div>
-
-        {/* Right side: topic hierarchy with collapsible subtopics */}
-        {sidebarOpen && (
-          <aside
-            aria-label="Topic hierarchy"
-            className="w-full lg:w-[420px] xl:w-[460px] bg-white dark:bg-slate-900 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800 flex flex-col shrink-0 lg:overflow-hidden shadow-2xl"
-          >
-            <div role="tablist" aria-label="Side panel" className="grid grid-cols-2 gap-1 p-1.5 m-3 mb-0 rounded-xl bg-slate-100 dark:bg-slate-800/80 shrink-0">
-              {[
-                { key: 'lessons', label: 'Lessons' },
-                { key: 'notes', label: 'My Notes' },
-              ].map((tab) => (
-                <button
-                  key={tab.key}
-                  type="button"
-                  role="tab"
-                  data-testid={`panel-${tab.key}`}
-                  aria-selected={panel === tab.key}
-                  onClick={() => {
-                    setPanel(tab.key);
-                    if (tab.key === 'notes') setNotesOpened(true);
-                  }}
-                  className={`py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
-                    panel === tab.key
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-
-            {notesOpened && (
-              <div className={panel === 'notes' ? 'contents' : 'hidden'}>
-                <LessonNotes
-                  course={course}
-                  current={current}
-                  currentChapter={chapters.find((chapter) => chapter.chapterId === current.chapterId)}
-                  currentUser={currentUser}
-                  onOpenSignIn={onOpenSignIn}
-                  getTime={() => videoTime.current}
-                  getLength={() => videoLength.current}
-                  onSeek={seekTo}
-                  onOpenLesson={openLessonAt}
-                  player={player}
-                />
-              </div>
-            )}
-            <div className={panel === 'lessons' ? 'contents' : 'hidden'}>
-            <div className="p-4 bg-white/95 border-b border-slate-200 dark:bg-slate-900/95 dark:border-slate-800 space-y-3 shrink-0">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${player.dot} animate-pulse`}></span>
-                  <span className={`text-[11px] font-mono font-extrabold uppercase tracking-wider ${player.text}`}>
-                    Topic Hierarchy
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {tracking.enabled && finishedCount > 0 && (
-                    <span
-                      data-testid="hierarchy-finished"
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-700/70 dark:bg-emerald-950/40 dark:text-emerald-300 font-mono text-xs font-bold"
-                    >
-                      <Check size={11} strokeWidth={3} />
-                      {finishedCount} of {playable.length} finished
-                    </span>
-                  )}
-                  <span className={`px-2.5 py-0.5 rounded-full ${player.soft} font-mono text-xs font-bold border shrink-0`}>
-                    {lessonCount} {lessonCount === 1 ? 'Lesson' : 'Lessons'}
-                    {lessonCount > playable.length ? ` · ${lessonCount - playable.length} locked` : ''}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-start gap-2">
-                  {scope.code && <span className={`${player.text} font-mono shrink-0`}>{scope.code}:</span>}
-                  <span>{scope.title}</span>
-                </h2>
-
-                <div className="mt-2 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600 dark:bg-slate-800/80 dark:border-slate-700/60 dark:text-slate-300">
-                  <span className="flex items-center gap-1 text-[10px] font-extrabold uppercase text-emerald-600 dark:text-emerald-400 shrink-0">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                    Playing:
-                  </span>
-                  {current.code && <span className={`font-mono font-bold ${player.text} shrink-0`}>{current.code}</span>}
-                  <span className="truncate font-medium text-slate-900 dark:text-white">{current.title}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-2 pt-1">
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    onClick={() => setExpanded({})}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-200 dark:border-slate-700/60"
-                    title="Collapse all subtopics"
-                  >
-                    − Collapse All
-                  </button>
-                  <button
-                    onClick={expandAll}
-                    className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 dark:hover:text-white text-[11px] font-bold transition-all cursor-pointer border border-slate-200 dark:border-slate-700/60"
-                    title="Expand all subtopics"
-                  >
-                    + Expand All
-                  </button>
-                </div>
-
-                <div className="relative flex-1 max-w-[190px]">
-                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
-                  <input
-                    type="text"
-                    aria-label="Search subtopics"
-                    placeholder="Search subtopic..."
-                    value={filter}
-                    onChange={(event) => setFilter(event.target.value)}
-                    className={`w-full pl-8 pr-7 py-1.5 rounded-xl bg-slate-50 text-slate-900 border-slate-200 dark:bg-slate-800/90 dark:text-white dark:border-slate-700/70 text-xs border focus:outline-none focus:ring-1 ${player.ring} placeholder:text-slate-500`}
-                  />
-                  {filter && (
-                    <button
-                      onClick={() => setFilter('')}
-                      aria-label="Clear subtopic search"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
-                    >
-                      <X size={12} />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div ref={listRef} className="lg:flex-1 lg:overflow-y-auto p-3 space-y-1.5">
-              {filter.trim() ? (
-                filtered.length === 0 ? (
-                  <p className="text-center text-xs text-slate-500 py-6">No subtopic matches "{filter}"</p>
-                ) : (
-                  filtered.map((entry) => (
-                    <div key={entry.nodeId}>
-                      <TopicNode
-                        node={{ ...entry, children: [] }}
-                        depth={0}
-                        currentId={current.nodeId}
-                        expanded={expanded}
-                        onToggle={toggle}
-                        onSelect={select}
-                        player={player}
-                        savedOf={savedOf}
-                      />
-                      {entry.trail.length > 0 && (
-                        <div className="flex items-center gap-1 mt-1 ml-2 text-[10px] text-slate-500 truncate">
-                          <Tag size={10} className="shrink-0" />
-                          <span className="truncate">{entry.trail.map((step) => step.title).join(' / ')}</span>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )
-              ) : (
-                scope.nodes.map((node) => (
-                  <TopicNode
-                    key={node.nodeId}
-                    node={node}
-                    depth={0}
-                    currentId={current.nodeId}
-                    expanded={expanded}
-                    onToggle={toggle}
-                    onSelect={select}
-                    player={player}
-                    savedOf={savedOf}
-                  />
-                ))
-              )}
-            </div>
-            </div>
-          </aside>
-        )}
       </div>
     </div>
   );

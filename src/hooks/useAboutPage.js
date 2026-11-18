@@ -13,10 +13,20 @@ const subscribers = new Set();
 
 const shown = (items) => (items || []).filter((item) => item.visible !== false);
 
+const normalizeLeader = (leader) => {
+  if (!leader) return leader;
+  let image = leader.image || '';
+  const isRaju = (leader.name || '').toLowerCase().includes('raju');
+  if (isRaju && (image.includes('localhost') || !image || image.includes('thumbnails/Raju'))) {
+    image = '/leaders/Raju.jpeg';
+  }
+  return { ...leader, image };
+};
+
 const publish = (next) => {
   about = {
     ...next,
-    leaders: shown(next.leaders),
+    leaders: shown(next.leaders).map(normalizeLeader),
     inspirations: { ...next.inspirations, items: shown(next.inspirations?.items) },
   };
   subscribers.forEach((update) => update());

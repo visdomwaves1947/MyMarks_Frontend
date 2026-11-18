@@ -37,20 +37,33 @@ const iconOf = (leader) => LEADER_ICONS[leader.icon] || Award;
 // Executive portrait, or the leader's initials when there is no photo or it fails to load
 function Portrait({ leader }) {
   const [failedImage, setFailedImage] = useState('');
-  const hasPhoto = Boolean(leader.image) && failedImage !== leader.image;
+  const isRaju = (leader?.name || '').toLowerCase().includes('raju');
+  const photoSrc = isRaju && (!leader?.image || leader.image.includes('localhost'))
+    ? '/leaders/Raju.jpeg'
+    : (leader?.image || (isRaju ? '/leaders/Raju.jpeg' : ''));
+
+  const hasPhoto = Boolean(photoSrc) && failedImage !== photoSrc;
+
+  const handleImageError = () => {
+    if (isRaju && photoSrc !== '/leaders/Raju.jpeg') {
+      leader.image = '/leaders/Raju.jpeg';
+    } else {
+      setFailedImage(photoSrc);
+    }
+  };
 
   return (
     <div className="shrink-0">
       <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden border-2 border-sky-400 shadow-md bg-white flex items-center justify-center">
         {hasPhoto ? (
           <img
-            src={leader.image}
+            src={photoSrc}
             alt={leader.name}
             width="112"
             height="112"
             loading="eager"
             decoding="async"
-            onError={() => setFailedImage(leader.image)}
+            onError={handleImageError}
             className="w-full h-full object-cover object-top"
           />
         ) : (
