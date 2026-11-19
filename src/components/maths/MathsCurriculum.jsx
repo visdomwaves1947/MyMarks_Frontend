@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { 
   Play, 
   ExternalLink, 
@@ -1767,6 +1767,17 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
   const [roadmapModalTopic, setRoadmapModalTopic] = useState(null);
   const [dbVideos, setDbVideos] = useState([]);
   const [isLoadingDb, setIsLoadingDb] = useState(false);
+  const chaptersScrollRef = useRef(null);
+
+  const scrollChapters = (direction) => {
+    if (chaptersScrollRef.current) {
+      const scrollAmount = 300;
+      chaptersScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Fetch published videos for Mathematics matching board & year
   const loadDbVideos = useCallback(() => {
@@ -2356,47 +2367,77 @@ export default function MathsCurriculum({ onEnroll, currentUser }) {
 
 
         {/* Filter Controls: Topic Tabs & Smart Keyword Search Bar */}
-        <div className="mb-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+        <div className="mb-6 space-y-4">
           
-          {/* Topic Selector Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none">
+          {/* Topic Selector Row: All Topics (Fixed) + Starting Arrow (<) + Scrollable Chapters + Ending Arrow (>) */}
+          <div className="flex items-center gap-2 w-full">
+            {/* All Topics - Fixed, does not move */}
             <button
               onClick={() => setSelectedTopicId('all')}
-              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${
                 selectedTopicId === 'all' && !isSearching
-                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-[1.02]'
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25 scale-[1.02]'
                   : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
               All Topics ({allVideos.length})
             </button>
-            {topicsData.map((topic) => {
-              const isActive = selectedTopicId === topic.id && !isSearching;
-              return (
-                <button
-                  key={topic.id}
-                  onClick={() => setSelectedTopicId(topic.id)}
-                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                    isActive
-                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/25 scale-[1.02]'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  {topic.chapterTitle || `${topic.number}. ${topic.name}`} ({topic.videos.length})
-                </button>
-              );
-            })}
+
+            {/* Starting Navigation Arrow (<) */}
+            <button
+              type="button"
+              onClick={() => scrollChapters('left')}
+              aria-label="Scroll chapters left"
+              title="Scroll chapters left"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50/80 hover:bg-blue-100 active:scale-95 text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-400 border border-blue-200/80 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
+            >
+              <ChevronLeft size={18} strokeWidth={2.5} />
+            </button>
+
+            {/* Scrollable Chapter Pills Container (All chapters in one line) */}
+            <div
+              ref={chaptersScrollRef}
+              className="flex items-center gap-2 overflow-x-auto scroll-smooth scrollbar-none py-1 min-w-0 flex-1"
+            >
+              {topicsData.map((topic) => {
+                const isActive = selectedTopicId === topic.id && !isSearching;
+                return (
+                  <button
+                    key={topic.id}
+                    onClick={() => setSelectedTopicId(topic.id)}
+                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/25 scale-[1.02]'
+                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    {topic.chapterTitle || `${topic.number}. ${topic.name}`} ({topic.videos.length})
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Ending Navigation Arrow (>) */}
+            <button
+              type="button"
+              onClick={() => scrollChapters('right')}
+              aria-label="Scroll chapters right"
+              title="Scroll chapters right"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50/80 hover:bg-blue-100 active:scale-95 text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-400 border border-blue-200/80 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
+            >
+              <ChevronRight size={18} strokeWidth={2.5} />
+            </button>
           </div>
 
-          {/* Smart Keyword Search Bar */}
-          <div className="relative w-full lg:w-96 shrink-0">
+          {/* Smart Keyword Search Bar (Positioned down below chapter names) */}
+          <div className="relative w-full">
             <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Search topic or code (e.g. 1.0.0.0.0, Meaning and Notation, Cartesian...)"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-400 shadow-xs"
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400 shadow-xs"
             />
             {searchQuery && (
               <button 

@@ -93,35 +93,6 @@ export default function LegalTermsModal({
           </button>
         </div>
 
-        {/* Tab Switcher */}
-        <div className="px-4 sm:px-6 pt-3 pb-2 border-b border-slate-200 dark:border-slate-800/60 bg-white dark:bg-[#111827] flex gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={() => setActiveTab('terms')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
-              activeTab === 'terms'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            <FileText size={15} />
-            <span>Terms of Service</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveTab('privacy')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all cursor-pointer ${
-              activeTab === 'privacy'
-                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'bg-slate-100 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800'
-            }`}
-          >
-            <Lock size={15} />
-            <span>Privacy Policy</span>
-          </button>
-        </div>
-
         {/* Scrollable Content Body */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-6 text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300 select-text">
           {activeTab === 'terms' ? (
