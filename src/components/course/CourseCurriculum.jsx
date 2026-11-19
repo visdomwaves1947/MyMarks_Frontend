@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   Layers,
   ListTree,
@@ -419,6 +421,17 @@ export default function CourseCurriculum({
   const [search, setSearch] = useState('');
   const [playingId, setPlayingId] = useState(null);
   const [prompt, setPrompt] = useState(null); // a key of PROMPTS, such as 'sign-in' or 'buy'
+  const chaptersScrollRef = useRef(null);
+
+  const scrollChapters = (direction) => {
+    if (chaptersScrollRef.current) {
+      const scrollAmount = 300;
+      chaptersScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
   // Sold online and not bought yet: every lesson is locked, and Buy replaces Enroll
   const mustBuy = Boolean(access.forSale && !access.owned);
 
@@ -700,27 +713,69 @@ export default function CourseCurriculum({
                 </div>
             )}
 
-            <div className="mb-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none min-w-0">
-                {[{ chapterId: 'all', label: `All Topics (${topLevelCount})` }, ...chapters.map((chapter) => ({
-                  chapterId: chapter.chapterId,
-                  label: `${chapter.number ? `${chapter.number}. ` : ''}${chapter.name} (${chapter.topics.length})`,
-                }))].map((item) => (
-                  <button
-                    key={item.chapterId}
-                    onClick={() => setSelectedChapter(item.chapterId)}
-                    className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                      selectedChapter === item.chapterId
-                        ? `${theme.solid} shadow-md`
-                        : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+            <div className="mb-6 space-y-4">
+              {/* Topic Selector Row: All Topics (Fixed) + Starting Arrow (<) + Scrollable Chapters + Ending Arrow (>) */}
+              <div className="flex items-center gap-2 w-full">
+                {/* All Topics - Fixed, does not move */}
+                <button
+                  onClick={() => setSelectedChapter('all')}
+                  className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${
+                    selectedChapter === 'all'
+                      ? `${theme.solid} shadow-md`
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  All Topics ({topLevelCount})
+                </button>
+
+                {/* Starting Navigation Arrow (<) */}
+                <button
+                  type="button"
+                  onClick={() => scrollChapters('left')}
+                  aria-label="Scroll chapters left"
+                  title="Scroll chapters left"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50/80 hover:bg-blue-100 active:scale-95 text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-400 border border-blue-200/80 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
+                >
+                  <ChevronLeft size={18} strokeWidth={2.5} />
+                </button>
+
+                {/* Scrollable Chapter Pills Container (All chapters in one line) */}
+                <div
+                  ref={chaptersScrollRef}
+                  className="flex items-center gap-2 overflow-x-auto scroll-smooth scrollbar-none py-1 min-w-0 flex-1"
+                >
+                  {chapters.map((chapter) => {
+                    const isSelected = selectedChapter === chapter.chapterId;
+                    const label = `${chapter.number ? `${chapter.number}. ` : ''}${chapter.name} (${chapter.topics.length})`;
+                    return (
+                      <button
+                        key={chapter.chapterId}
+                        onClick={() => setSelectedChapter(chapter.chapterId)}
+                        className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap shrink-0 transition-all duration-200 cursor-pointer ${
+                          isSelected
+                            ? `${theme.solid} shadow-md`
+                            : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Ending Navigation Arrow (>) */}
+                <button
+                  type="button"
+                  onClick={() => scrollChapters('right')}
+                  aria-label="Scroll chapters right"
+                  title="Scroll chapters right"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center shrink-0 bg-blue-50/80 hover:bg-blue-100 active:scale-95 text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-400 border border-blue-200/80 dark:border-slate-700 transition-all cursor-pointer shadow-xs"
+                >
+                  <ChevronRight size={18} strokeWidth={2.5} />
+                </button>
               </div>
 
-              <div className="relative w-full lg:w-96 shrink-0">
+              <div className="relative w-full">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
