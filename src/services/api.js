@@ -1,7 +1,8 @@
 import { courses as fallbackCourses } from '../data/coursesData';
 import { quickMathChallenges as fallbackChallenges } from '../data/quizData';
 
-export const LOCAL_API_URL = 'http://localhost:5001';
+// A local .env.development.local can point at another port, so MyMarks runs beside other projects
+export const LOCAL_API_URL = (import.meta.env.VITE_LOCAL_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 export const CLOUD_API_URL = 'https://mymarks-backend-six.vercel.app';
 
 // Dynamic cache of working API URL
