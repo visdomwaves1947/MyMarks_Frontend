@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { API_URL, getAdminToken, newVisitorPage, closeVisitorPages, openAsAdmin, openAsStudent, signInStudent } from './helpers';
-import { fakeYouTube, heard, play } from './fakeYouTube';
+import { fakeYouTube, heard, play, sound } from './fakeYouTube';
 
 // Study roadmaps made of video parts: the admin picks lessons from the syllabus for each day and sets the
 // stretch of each video with its summary; students play only those stretches. Zoology and Telugu are used only here.
@@ -254,6 +254,12 @@ test('a student plays only the part, a part watched to its end ticks itself, and
   await expect(player.getByTestId('now-playing-title')).toContainText(nodes[0].title);
   await expect.poll(async () => (await heard(page))[0]).toEqual({ videoId: nodes[0].youtubeId, time: 120 });
   await expect(player.getByTestId('save-highlight')).toHaveCount(0);
+  // Captions can be turned off, and back on; the choice is kept for the next video
+  await player.getByTestId('reel-captions').click();
+  await expect(player.getByTestId('reel-captions')).toHaveAttribute('aria-pressed', 'false');
+  await expect.poll(async () => (await sound(page))[0]?.captions).toBe(false);
+  await player.getByTestId('reel-captions').click();
+  await expect.poll(async () => (await sound(page))[0]?.captions).toBe(true);
   await play(page, 16);
   await expect.poll(async () => (await heard(page))[0]?.videoId).toBe(nodes[1].youtubeId);
   await player.getByRole('button', { name: 'Close the player' }).click();

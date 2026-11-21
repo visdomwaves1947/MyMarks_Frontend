@@ -42,6 +42,23 @@ class Deck {
     this.volume = 100;
     this.userMuted = false;
     this.rate = 1;
+    // Captions: 'auto' leaves them to YouTube, 'off' hides them, 'on' shows them
+    this.captions = 'auto';
+  }
+
+  // YouTube's captions on or off; nothing to do for a video file, which has none
+  applyCaptions() {
+    if (this.kind !== 'youtube' || this.captions === 'auto') return;
+    try {
+      if (this.captions === 'off') {
+        this.player?.unloadModule?.('captions');
+        this.player?.unloadModule?.('cc');
+      } else {
+        this.player?.loadModule?.('captions');
+      }
+    } catch {
+      // Not ready yet
+    }
   }
 
   // The sound of the part being watched: the viewer's volume, and silent only when they muted it
@@ -134,6 +151,7 @@ class Deck {
             } else if (event.data === YT_PLAYING) {
               this.loaded = true;
               this.applyRate();
+              this.applyCaptions();
             }
             this.onEvent(this, event.data === YT_ENDED ? 'ended' : 'state', event.data);
           },
@@ -452,6 +470,13 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState, onBu
     },
     setLoop(value) {
       loop = Boolean(value);
+    },
+    // 'auto', 'off' or 'on'
+    setCaptions(mode) {
+      decks.forEach((deck) => {
+        deck.captions = ['off', 'on'].includes(mode) ? mode : 'auto';
+        deck.applyCaptions();
+      });
     },
     destroy() {
       destroyed = true;

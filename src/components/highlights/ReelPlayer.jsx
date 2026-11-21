@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import {
+  Captions,
+  CaptionsOff,
   Check,
   FastForward,
   Maximize,
@@ -45,9 +47,10 @@ const readPrefs = () => {
       volume: Number.isFinite(saved.volume) ? clamp(Math.round(saved.volume), 0, 100) : 100,
       muted: saved.muted === true,
       rate: SPEEDS.includes(saved.rate) ? saved.rate : 1,
+      captions: ['off', 'on'].includes(saved.captions) ? saved.captions : 'auto',
     };
   } catch {
-    return { volume: 100, muted: false, rate: 1 };
+    return { volume: 100, muted: false, rate: 1, captions: 'auto' };
   }
 };
 const savePrefs = (prefs) => {
@@ -194,6 +197,7 @@ export default function ReelPlayer({
     reel.setVolume(prefsNow.current.volume);
     reel.setMuted(prefsNow.current.muted);
     reel.setRate(prefsNow.current.rate);
+    reel.setCaptions(prefsNow.current.captions);
     reel.setLoop(loopNow.current);
     reel
       .prepare(start)
@@ -284,6 +288,8 @@ export default function ReelPlayer({
   const { parts, total } = timeline;
   const current = parts[part] || parts[0];
   const many = parts.length > 1;
+  // Captions can be turned off for YouTube videos; uploaded video files have none
+  const hasYouTube = parts.some((item) => item.media?.kind === 'youtube');
   const shownTime = scrub ?? time;
   const shown = !state.playing || active || menu || scrub !== null;
   const big = full || pseudo;
@@ -316,7 +322,14 @@ export default function ReelPlayer({
     engine.current?.setVolume(updated.volume);
     engine.current?.setMuted(updated.muted);
     engine.current?.setRate(updated.rate);
+    engine.current?.setCaptions(updated.captions);
     return updated;
+  };
+  // Captions off, or back on; the first press turns off what YouTube showed
+  const toggleCaptions = () => {
+    const off = prefsNow.current.captions !== 'off';
+    changePrefs({ captions: off ? 'off' : 'on' });
+    flashNow('text', off ? 'Captions off' : 'Captions on');
   };
   const setVolume = (value) => {
     const volume = clamp(Math.round(value), 0, 100);
@@ -410,6 +423,7 @@ export default function ReelPlayer({
       flashNow('text', `${clamp(sound - 5, 0, 100)}%`);
     } else if (lower === 'm') toggleMute();
     else if (lower === 'f') toggleFull();
+    else if (lower === 'c' && hasYouTube) toggleCaptions();
     else if (name === 'Home') seekTo(0);
     else if (name === 'End') seekTo(total);
     else if (/^[0-9]$/.test(name)) seekTo((total * Number(name)) / 10);
@@ -667,6 +681,17 @@ export default function ReelPlayer({
               </span>
             )}
             <span className="ml-auto" />
+            {hasYouTube && (
+              <Control
+                label={prefs.captions === 'off' ? 'Turn captions on' : 'Turn captions off'}
+                hint={`${prefs.captions === 'off' ? 'Captions on' : 'Captions off'} (c)`}
+                aria-pressed={prefs.captions !== 'off'}
+                onClick={toggleCaptions}
+                data-testid="reel-captions"
+              >
+                {prefs.captions === 'off' ? <CaptionsOff size={20} /> : <Captions size={20} />}
+              </Control>
+            )}
             <span ref={gear} className="flex">
               <Control
                 label="Playback speed"

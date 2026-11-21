@@ -6,7 +6,7 @@ export const FAKE_YOUTUBE_API = `
 window.__yt = { players: [] };
 function FakePlayer(element, options) {
   var self = this;
-  var p = { videoId: options.videoId || '', time: 0, state: -1, muted: false, volume: 100, rate: 1, end: null, destroyed: false };
+  var p = { videoId: options.videoId || '', time: 0, state: -1, muted: false, volume: 100, rate: 1, end: null, destroyed: false, captions: true };
   window.__yt.players.push(p);
   var frame = document.createElement('div');
   frame.setAttribute('data-fake-youtube', '');
@@ -34,6 +34,8 @@ function FakePlayer(element, options) {
   this.getVolume = function () { return p.volume; };
   this.setPlaybackRate = function (rate) { p.rate = rate; };
   this.getPlaybackRate = function () { return p.rate; };
+  this.loadModule = function (name) { if (name === 'captions' || name === 'cc') p.captions = true; };
+  this.unloadModule = function (name) { if (name === 'captions' || name === 'cc') p.captions = false; };
   this.destroy = function () { p.destroyed = true; };
   setTimeout(function () { if (options.events && options.events.onReady) options.events.onReady({ target: self }); }, 0);
 }
@@ -53,7 +55,7 @@ window.__ytHeard = function () {
 window.__ytSound = function () {
   return window.__yt.players
     .filter(function (p) { return p.state === 1 && !p.destroyed; })
-    .map(function (p) { return { muted: p.muted, volume: p.volume, rate: p.rate }; });
+    .map(function (p) { return { muted: p.muted, volume: p.volume, rate: p.rate, captions: p.captions }; });
 };
 if (window.onYouTubeIframeAPIReady) window.onYouTubeIframeAPIReady();`;
 
