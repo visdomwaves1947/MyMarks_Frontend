@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, ExternalLink, ListChecks, Pencil, Plus, Trash2, X } from 'lucide-react';
 import AssignmentEditor from './AssignmentEditor';
 import useDialog from '../../../hooks/useDialog';
@@ -117,11 +117,15 @@ export default function AssignmentsPanel({ showToast }) {
       .catch(() => setStatus('error'));
   }, []);
 
+  // Only the latest load counts: switching courses while one loads must not show the old course's chapters
+  const latestLoad = useRef(0);
   const load = useCallback(async () => {
     if (!course) return;
+    const ticket = ++latestLoad.current;
     setStatus('loading');
     try {
       const [page, list] = await Promise.all([fetchCoursePage(course.slug), fetchAdminAssignments(course._id)]);
+      if (ticket !== latestLoad.current) return;
       // The chapters students see on the course page; two with the same key share one assignment
       const seen = new Set();
       const rows = [];
@@ -135,7 +139,7 @@ export default function AssignmentsPanel({ showToast }) {
       setAssignments(list);
       setStatus('ready');
     } catch {
-      setStatus('error');
+      if (ticket === latestLoad.current) setStatus('error');
     }
   }, [course]);
   useEffect(() => {

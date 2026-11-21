@@ -106,6 +106,8 @@ import PaymentsTab from "../components/admin/payments/PaymentsTab";
 import VideosByStream from "../components/admin/videos/VideosByStream";
 import useDialog from "../hooks/useDialog";
 import StudentLearning from "../components/admin/students/StudentLearning";
+import PhoneField from "../components/ui/PhoneField";
+import { formatPhone, phoneProblem } from "../utils/phone";
 
 // Every admin tab; /admin/<tab> opens that tab directly
 const ADMIN_TABS = ["dashboard", "students", "courses", "roadmaps", "videos", "highlights", "assignments", "payments", "bookings", "pages", "navigation", "settings"];
@@ -1327,6 +1329,12 @@ export default function AdminPage({
 
   const handleSaveUser = async (e) => {
     e.preventDefault();
+    // 10 digits in India, or a number for the chosen country
+    const mobileIssue = phoneProblem(userForm.mobileNumber);
+    if (mobileIssue) {
+      showToast(mobileIssue, "error");
+      return;
+    }
     setIsLoading(true);
 
     try {
@@ -2687,7 +2695,7 @@ export default function AdminPage({
                               </h4>
                               <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
                                 {user.email} •{" "}
-                                {user.mobileNumber || user.phone || "No Phone"}
+                                {formatPhone(user.mobileNumber || user.phone) || "No Phone"}
                               </p>
                             </div>
                           </div>
@@ -2946,7 +2954,7 @@ export default function AdminPage({
                               {user.email}
                             </div>
                             <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                              {user.mobileNumber || user.phone || "—"}
+                              {formatPhone(user.mobileNumber || user.phone) || "—"}
                             </div>
                           </td>
 
@@ -4416,15 +4424,14 @@ export default function AdminPage({
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                     Mobile Number *
                   </label>
-                  <input
-                    type="tel"
-                    required
+                  <PhoneField
                     value={userForm.mobileNumber}
-                    onChange={(e) =>
-                      setUserForm({ ...userForm, mobileNumber: e.target.value })
-                    }
+                    onChange={(mobileNumber) => setUserForm((form) => ({ ...form, mobileNumber }))}
                     placeholder="9876543210"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
+                    ariaLabel="Mobile Number"
+                    buttonClassName="bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800"
+                    inputProps={{ required: true }}
+                    inputClassName="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 font-medium focus:bg-white dark:focus:bg-slate-950"
                   />
                 </div>
 
@@ -8134,7 +8141,7 @@ export default function AdminPage({
                   Primary Mobile Phone:
                 </span>
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {viewUserDetail.mobileNumber || viewUserDetail.phone || "—"}
+                  {formatPhone(viewUserDetail.mobileNumber || viewUserDetail.phone) || "—"}
                 </span>
               </div>
 

@@ -20,6 +20,7 @@ import {
   Lock,
 } from 'lucide-react';
 import useBoardCatalog from '../hooks/useBoardCatalog';
+import { formatPhone, telLink } from '../utils/phone';
 import MyCourses from '../components/profile/MyCourses';
 import { fetchMyProfileApi } from '../services/api';
 import { courseImage, courseTag, isOutsideLink } from '../utils/courseImage';
@@ -62,7 +63,8 @@ export default function ProfilePage({
     initials: displayName.split(/\s+/).map((part) => part[0]).slice(0, 2).join('').toUpperCase(),
     name: displayName,
     email: profile?.email || notProvided,
-    mobile: profile?.mobile || profile?.mobileNumber || notProvided,
+    mobile: formatPhone(profile?.mobile || profile?.mobileNumber) || notProvided,
+    mobileLink: telLink(profile?.mobile || profile?.mobileNumber),
     role: profile?.role || 'student',
     board: profile?.board || notProvided,
     year: profile?.year || notProvided,
@@ -70,7 +72,8 @@ export default function ProfilePage({
     hallTicketNumber: profile?.hallTicketNumber || notProvided,
     studyMonthYear: profile?.studyMonthYear || notProvided,
     fatherName: profile?.fatherName || notProvided,
-    fatherMobile: profile?.fatherMobile || notProvided,
+    fatherMobile: formatPhone(profile?.fatherMobile) || notProvided,
+    fatherMobileLink: telLink(profile?.fatherMobile),
     relationship: profile?.relationship || 'Guardian',
     status: 'Active Student',
     avatarUrl: profile?.avatarUrl || ''
@@ -226,7 +229,7 @@ export default function ProfilePage({
                     <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
 
                     <a 
-                      href={`tel:${studentData.mobile}`}
+                      href={studentData.mobileLink || undefined}
                       className="flex items-center gap-1.5 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
                     >
                       <Phone size={13.5} className="text-emerald-500 shrink-0" />
@@ -367,7 +370,7 @@ export default function ProfilePage({
                     </span>
                   </div>
                   <a
-                    href={`tel:${studentData.fatherMobile}`}
+                    href={studentData.fatherMobileLink || undefined}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-cyan-400 font-semibold text-xs border border-blue-200 dark:border-slate-700 hover:bg-blue-100 dark:hover:bg-slate-700 transition-colors self-start sm:self-center shadow-2xs"
                   >
                     <Phone size={12} />

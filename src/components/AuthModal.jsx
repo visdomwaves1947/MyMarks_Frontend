@@ -5,12 +5,13 @@ import { loginUser, loginWithGoogle, registerUser, registerWithGoogle } from '..
 import useDialog from '../hooks/useDialog';
 import LegalTermsModal from './LegalTermsModal';
 import GoogleSignInButton from './GoogleSignInButton';
+import PhoneField from './ui/PhoneField';
+import { formatPhone, phoneProblem, signInValue } from '../utils/phone';
 import {
   X,
   Lock,
   Mail,
   User,
-  Phone,
   Calendar,
   GraduationCap,
   Building2,
@@ -286,9 +287,10 @@ export default function AuthModal({
         errors.signInInput = 'Please enter a valid email address (e.g. student@example.com)';
       }
     } else {
-      const digitsOnly = cleanInput.replace(/\D/g, '');
-      if (digitsOnly.length !== 10) {
-        errors.signInInput = 'Please enter a valid 10-digit mobile number';
+      // An Indian mobile is 10 digits; one from another country is typed with its code, such as +971…
+      const typed = signInValue(cleanInput);
+      if (typed.startsWith('+') ? phoneProblem(typed) : typed.replace(/\D/g, '').length !== 10) {
+        errors.signInInput = 'Please enter a valid 10-digit mobile number (outside India, start with + and the country code)';
       }
     }
 
@@ -314,12 +316,11 @@ export default function AuthModal({
         errors.fullName = 'Full Name must be at least 2 characters';
       }
 
-      // Mobile Number validation (10 digits)
-      const cleanMobile = formData.mobileNumber.replace(/\D/g, '');
+      // Mobile Number validation: 10 digits in India, or a number for the chosen country
       if (!formData.mobileNumber.trim()) {
         errors.mobileNumber = 'Mobile Number is required';
-      } else if (cleanMobile.length !== 10) {
-        errors.mobileNumber = 'Enter a valid 10-digit mobile number';
+      } else if (phoneProblem(formData.mobileNumber)) {
+        errors.mobileNumber = phoneProblem(formData.mobileNumber);
       }
 
       // Email Address validation
@@ -341,11 +342,10 @@ export default function AuthModal({
         errors.fatherName = `Enter valid ${formData.relationship} name`;
       }
 
-      const cleanParentMobile = formData.fatherMobile.replace(/\D/g, '');
       if (!formData.fatherMobile.trim()) {
         errors.fatherMobile = `${formData.relationship} Mobile is required`;
-      } else if (cleanParentMobile.length !== 10) {
-        errors.fatherMobile = 'Enter a valid 10-digit mobile number';
+      } else if (phoneProblem(formData.fatherMobile)) {
+        errors.fatherMobile = phoneProblem(formData.fatherMobile);
       }
 
       // Hall Ticket validation if Second Year
@@ -441,7 +441,7 @@ export default function AuthModal({
     setSignUpSuccessMsg('');
 
     try {
-      const resultAction = await dispatch(loginUser({ signInInput, signInPassword }));
+      const resultAction = await dispatch(loginUser({ signInInput: signInValue(signInInput), signInPassword }));
       if (loginUser.fulfilled.match(resultAction)) {
         const user = resultAction.payload;
         if (user && user.role === 'admin') {
@@ -1021,17 +1021,15 @@ export default function AuthModal({
                           <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
                             Mobile Number <span className="text-rose-500 dark:text-rose-400">*</span>
                           </label>
-                          <div className="relative">
-                            <Phone size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400" />
-                            <input
-                              type="tel"
-                              maxLength={10}
-                              placeholder="10-digit phone"
-                              value={formData.mobileNumber}
-                              onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-                              className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
-                            />
-                          </div>
+                          <PhoneField
+                            value={formData.mobileNumber}
+                            onChange={(value) => handleInputChange('mobileNumber', value)}
+                            placeholder="10-digit phone"
+                            ariaLabel="Mobile Number"
+                            invalid={Boolean(formErrors.mobileNumber)}
+                            buttonClassName="py-1.5"
+                            inputClassName="w-full px-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                          />
                           {formErrors.mobileNumber && (
                             <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.mobileNumber}</p>
                           )}
@@ -1090,7 +1088,7 @@ export default function AuthModal({
                           <span>Parent / Guardian Details</span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-[0.8fr_1fr_1.35fr] gap-2">
                           <div>
                             <label className="block text-slate-600 dark:text-slate-300 font-bold mb-0.5 text-[10px]">
                               Relationship <span className="text-rose-500 dark:text-rose-400">*</span>
@@ -1126,13 +1124,14 @@ export default function AuthModal({
                             <label className="block text-slate-600 dark:text-slate-300 font-bold mb-0.5 text-[10px]">
                               {formData.relationship} Mobile <span className="text-rose-500 dark:text-rose-400">*</span>
                             </label>
-                            <input
-                              type="tel"
-                              maxLength={10}
-                              placeholder="10-digit mobile"
+                            <PhoneField
                               value={formData.fatherMobile}
-                              onChange={(e) => handleInputChange('fatherMobile', e.target.value)}
-                              className="w-full px-2 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-lg font-medium text-xs focus:outline-none"
+                              onChange={(value) => handleInputChange('fatherMobile', value)}
+                              placeholder="10-digit mobile"
+                              ariaLabel={`${formData.relationship} Mobile`}
+                              invalid={Boolean(formErrors.fatherMobile)}
+                              buttonClassName="py-1.5 rounded-lg px-2"
+                              inputClassName="w-full px-2 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:placeholder:text-slate-500 border border-slate-300 dark:border-slate-700 rounded-lg font-medium text-xs focus:outline-none"
                             />
                             {formErrors.fatherMobile && (
                               <p className="text-rose-600 dark:text-rose-400 text-[9.5px] font-semibold mt-0.5">{formErrors.fatherMobile}</p>
@@ -1518,7 +1517,7 @@ export default function AuthModal({
                         </div>
                         <div className="min-w-0">
                           <strong className="text-slate-900 dark:text-white text-xs block truncate">{formData.fullName}</strong>
-                          <span className="text-slate-500 dark:text-slate-400 text-[10px] truncate block">{formData.email} • {formData.mobileNumber}</span>
+                          <span className="text-slate-500 dark:text-slate-400 text-[10px] truncate block">{formData.email} • {formatPhone(formData.mobileNumber)}</span>
                         </div>
                       </div>
 
@@ -1535,7 +1534,7 @@ export default function AuthModal({
                         </div>
                         <div className="col-span-2 pt-1 border-t border-slate-200 dark:border-white/10">
                           <span className="text-slate-500 dark:text-slate-400">Guardian ({formData.relationship}):</span>{' '}
-                          <strong className="text-slate-900 dark:text-white">{formData.fatherName}</strong> ({formData.fatherMobile})
+                          <strong className="text-slate-900 dark:text-white">{formData.fatherName}</strong> ({formatPhone(formData.fatherMobile)})
                         </div>
                       </div>
                     </div>

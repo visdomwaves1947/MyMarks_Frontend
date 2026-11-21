@@ -25,6 +25,8 @@ import useCatalog from '../hooks/useCatalog';
 import useCourseCheckout from '../hooks/useCourseCheckout';
 import useMyCourses from '../hooks/useMyCourses';
 import { formatPrice } from '../utils/courseImage';
+import PhoneField from './ui/PhoneField';
+import { formatPhone, parsePhone, phoneProblem, phoneValue } from '../utils/phone';
 
 // Used only when the form opens from an old subject page with no course behind it
 const DEFAULT_PRICE = 299;
@@ -38,8 +40,10 @@ const GRADES = {
 
 const accountDetails = (user) => {
   if (!user || user.role === 'admin') return null;
-  const digits = String(user.mobileNumber || user.mobile || user.phone || '').replace(/\D/g, '');
-  const phone = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+  // The account's mobile as the form keeps it: 10 digits in India, +code and number elsewhere
+  const saved = String(user.mobileNumber || user.mobile || user.phone || '');
+  const parsed = parsePhone(saved);
+  const phone = phoneProblem(saved) ? '' : phoneValue(parsed.country, parsed.number);
   const year = String(user.year || '').toLowerCase();
   let gradeLevel = '';
   if (/2nd|second/.test(year)) gradeLevel = GRADES.second;
@@ -47,7 +51,7 @@ const accountDetails = (user) => {
   return {
     studentName: user.fullName || user.name || '',
     parentEmail: user.email || '',
-    parentPhone: phone.length === 10 ? phone : '',
+    parentPhone: phone,
     gradeLevel,
   };
 };
@@ -204,7 +208,9 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
   // Saves the request for the team to follow up. No payment is taken here.
   const handleSubmitRequest = async (e) => {
     e.preventDefault();
-    if (formData.parentPhone.length !== 10) {
+    const phoneIssue = phoneProblem(formData.parentPhone, { strictIndia: true });
+    if (phoneIssue) {
+      setSubmitError(phoneIssue);
       return;
     }
     setSubmitError('');
@@ -223,15 +229,9 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
     }
   };
 
-  const handlePhoneChange = (e) => {
-    let val = e.target.value.replace(/\D/g, '');
-    if (val.length > 10 && val.startsWith('91')) {
-      val = val.slice(2);
-    } else if (val.length > 10 && val.startsWith('0')) {
-      val = val.slice(1);
-    }
-    val = val.slice(0, 10);
-    setFormData(prev => ({ ...prev, parentPhone: val }));
+  const handlePhoneChange = (value) => {
+    setSubmitError('');
+    setFormData(prev => ({ ...prev, parentPhone: value }));
   };
 
   const handleResetAndClose = () => {
@@ -570,21 +570,19 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
                             <span>Phone / WhatsApp</span>
                           </span>
                           <span className="text-[10px] text-slate-500 dark:!text-slate-400 font-normal">
-                            {formData.parentPhone ? `${formData.parentPhone.length}/10` : '10 digits'}
+                            {parsePhone(formData.parentPhone).country.code === 'IN'
+                              ? formData.parentPhone ? `${formData.parentPhone.length}/10` : '10 digits'
+                              : parsePhone(formData.parentPhone).country.name}
                           </span>
                         </label>
-                        <input
-                          type="tel"
-                          required
-                          inputMode="numeric"
-                          maxLength={10}
-                          minLength={10}
-                          pattern="[0-9]{10}"
-                          title="Please enter exactly 10 digits"
-                          placeholder="10-digit mobile number"
+                        <PhoneField
                           value={formData.parentPhone}
                           onChange={handlePhoneChange}
-                          className="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:placeholder:text-slate-500 dark:focus:!bg-slate-900 dark:focus:ring-blue-500/50 dark:focus:border-blue-500 transition-all text-xs sm:text-sm shadow-2xs"
+                          placeholder="10-digit mobile number"
+                          ariaLabel="Phone / WhatsApp"
+                          buttonClassName="bg-[#D2DFEE] border-[#B8CADF] dark:!bg-slate-900/90 dark:!border-slate-700/80"
+                          inputClassName="w-full px-3.5 sm:px-4 py-2 sm:py-2.5 bg-[#D2DFEE] border border-[#B8CADF] rounded-xl text-slate-950 placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-600 focus:bg-white dark:!bg-slate-900/90 dark:!border-slate-700/80 dark:!text-white dark:placeholder:text-slate-500 dark:focus:!bg-slate-900 dark:focus:ring-blue-500/50 dark:focus:border-blue-500 transition-all text-xs sm:text-sm shadow-2xs"
+                          inputProps={{ required: true }}
                         />
                       </div>
                     </div>
@@ -741,7 +739,7 @@ export default function BookingModal({ isOpen, onClose, preselectedTrack = '', c
                   Request Received, {formData.studentName || 'Student'}!
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-700 dark:!text-slate-300 mt-1 font-medium">
-                  Our team will contact you on {formData.parentPhone} with the next steps for {detectedSubject.name}.
+                  Our team will contact you on {formatPhone(formData.parentPhone)} with the next steps for {detectedSubject.name}.
                 </p>
               </div>
               <p className="p-3 rounded-xl bg-[#D2DFEE]/90 border border-[#BAC9DC] dark:!bg-slate-900/90 dark:!border-slate-800 text-xs text-slate-700 dark:!text-slate-300 font-medium">

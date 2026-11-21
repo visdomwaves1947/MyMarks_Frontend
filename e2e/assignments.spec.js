@@ -139,6 +139,31 @@ test('the admin types the questions of a chapter, marks the right answers and pu
   }
 });
 
+test('choosing another course while the first one still loads shows the chosen course\'s chapters', async ({ page, request }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'The admin panel is used on a laptop');
+  const { course, cleanUp } = await addCourse(request, testInfo, 'Assignment Switch');
+  try {
+    // The course the page opens on answers late, after the chosen one
+    const { courses } = await (await request.get(`${API_URL}/api/admin/courses`, { headers: await headersFor(request) })).json();
+    const first = courses.find((item) => item.status !== 'archived');
+    await page.route(`**/api/courses/${first.slug}`, async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+      await route.continue();
+    });
+    await openAsAdmin(page, request);
+    await page.goto('/admin/assignments');
+    const panel = page.getByTestId('assignments-panel');
+    await panel.getByTestId('assignment-course-select').selectOption({ label: course.name });
+    const rows = panel.getByTestId('assignment-chapter');
+    await expect(rows).toHaveText([/Chapter 1: Trigonometry/, /Chapter 2: Matrices/]);
+    // Still the chosen course once the late answer has come in
+    await page.waitForTimeout(3500);
+    await expect(rows).toHaveText([/Chapter 1: Trigonometry/, /Chapter 2: Matrices/]);
+  } finally {
+    await cleanUp();
+  }
+});
+
 test('a right answer celebrates, a wrong one shows the right answer and why, and the best result is kept', async ({ page, request }, testInfo) => {
   const { course, cleanUp } = await addCourse(request, testInfo, 'Assignment Take');
   try {

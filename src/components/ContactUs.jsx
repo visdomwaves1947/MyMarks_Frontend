@@ -12,6 +12,8 @@ import {
   Check,
 } from 'lucide-react';
 import { submitContactMessage } from '../services/api';
+import PhoneField from './ui/PhoneField';
+import { parsePhone, phoneProblem, phoneValue } from '../utils/phone';
 import NightSkyHeroBackground from './NightSkyHeroBackground';
 
 export default function ContactUs() {
@@ -122,11 +124,11 @@ export default function ContactUs() {
     }, 300);
 
     setTimeout(() => {
+      // The dial adds to the number in the chosen country (India unless another is picked)
       setFormData((prev) => {
-        const clean = prev.phone.replace(/\D/g, '');
-        return clean.length >= 10
-          ? { ...prev, phone: String(digit) }
-          : { ...prev, phone: clean + String(digit) };
+        const { country, number } = parsePhone(prev.phone);
+        const full = number.length >= (country.code === 'IN' ? 10 : 13);
+        return { ...prev, phone: phoneValue(country, full ? String(digit) : number + String(digit)) };
       });
     }, 350);
 
@@ -140,8 +142,8 @@ export default function ContactUs() {
 
   // Trigger celebration spin when 10 digits are filled
   useEffect(() => {
-    const cleanPhone = formData.phone.replace(/\D/g, '');
-    if (cleanPhone.length === 10 && !isCelebrationDialing) {
+    const { country, number } = parsePhone(formData.phone);
+    if (country.code === 'IN' && number.length === 10 && !isCelebrationDialing) {
       setIsCelebrationDialing(true);
       showToast('Phone number fully dialed! 📞', 'success');
       setDialAngle(720);
@@ -167,9 +169,12 @@ export default function ContactUs() {
       return;
     }
 
-    const cleanPhone = formData.phone ? formData.phone.replace(/\D/g, '') : '';
-    if (!formData.phone || cleanPhone.length !== 10 || !/^[6-9]\d{9}$/.test(cleanPhone)) {
-      showToast('Please enter a valid 10-digit mobile number (e.g. 9876543210).', 'error');
+    const phoneIssue = phoneProblem(formData.phone, { strictIndia: true });
+    if (phoneIssue) {
+      showToast(
+        parsePhone(formData.phone).country.code === 'IN' ? 'Please enter a valid 10-digit mobile number (e.g. 9876543210).' : `${phoneIssue}.`,
+        'error'
+      );
       return;
     }
 
@@ -723,19 +728,21 @@ export default function ContactUs() {
                               <label className="text-[9.5px] font-bold uppercase tracking-wider text-sky-100 block mb-0.5 drop-shadow-xs">
                                 Phone Number <span className="text-red-400">*</span>
                               </label>
-                              <input
-                                type="tel"
-                                name="phone"
-                                maxLength={10}
+                              <PhoneField
                                 value={formData.phone}
-                                onFocus={() => setFocusedField('phone')}
-                                onBlur={() => setFocusedField(null)}
-                                onChange={handleChange}
-                                required
-                                autoComplete="off"
-                                spellCheck="false"
+                                onChange={(phone) => setFormData((prev) => ({ ...prev, phone }))}
                                 placeholder="10-digit mobile number"
-                                className={`w-full text-xs bg-white/95 dark:bg-slate-900/80 backdrop-blur-sm border rounded-xl px-3 py-2 text-slate-900 dark:text-white dark:placeholder:text-slate-500 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs ${
+                                ariaLabel="Phone Number"
+                                buttonClassName="bg-white/95 dark:bg-slate-900/80 border-white/60 dark:border-slate-600 py-2"
+                                inputProps={{
+                                  name: 'phone',
+                                  required: true,
+                                  autoComplete: 'off',
+                                  spellCheck: 'false',
+                                  onFocus: () => setFocusedField('phone'),
+                                  onBlur: () => setFocusedField(null),
+                                }}
+                                inputClassName={`w-full text-xs bg-white/95 dark:bg-slate-900/80 backdrop-blur-sm border rounded-xl px-3 py-2 text-slate-900 dark:text-white dark:placeholder:text-slate-500 font-semibold focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-300/50 transition-all shadow-xs ${
                                   highlightPhoneInput
                                     ? 'border-cyan-400 ring-2 ring-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.8)] scale-[1.01]'
                                     : 'border-white/60 dark:border-slate-600'
