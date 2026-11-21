@@ -13,8 +13,8 @@ const INPUT =
   'w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40';
 const LABEL = 'block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1';
 
-// The whole lesson video with its own controls, to find where the highlight starts and ends
-const SourcePlayer = forwardRef(function SourcePlayer({ media, onTime }, ref) {
+// The whole lesson video with its own controls, to find where a highlight (or a roadmap part) starts and ends
+export const SourcePlayer = forwardRef(function SourcePlayer({ media, onTime }, ref) {
   const box = useRef(null);
   const player = useRef(null);
   const file = useRef(null);
@@ -32,6 +32,9 @@ const SourcePlayer = forwardRef(function SourcePlayer({ media, onTime }, ref) {
         if (media.kind === 'youtube') player.current?.seekTo?.(seconds, true);
         else if (file.current) file.current.currentTime = seconds;
       },
+      // The whole video's length once it is known, else 0
+      duration: () =>
+        media.kind === 'youtube' ? Number(player.current?.getDuration?.()) || 0 : Number(file.current?.duration) || 0,
     }),
     [media]
   );

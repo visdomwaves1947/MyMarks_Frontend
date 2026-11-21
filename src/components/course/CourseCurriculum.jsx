@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
@@ -22,6 +22,8 @@ import { courseImage, formatPrice, showDefaultImage } from '../../utils/courseIm
 import { formatClock, lessonKeysOf, savedFor, watchedPercent } from '../../utils/watchTime';
 import CourseLecturePlayer from './CourseLecturePlayer';
 import CourseAssignments from './CourseAssignments';
+import LessonPagination from './LessonPagination';
+import { LESSONS_PER_PAGE } from './lessonPages';
 import { firstLessonIn, flattenChapters, isVideoLesson, withExtraLessons } from './curriculumTree';
 
 const normalize = (value) =>
@@ -407,6 +409,7 @@ export default function CourseCurriculum({
   cart = null,
   tracking = NO_TRACKING,
   currentUser = null,
+  belowLessons = null,
 }) {
   const intro = course.page?.curriculumIntro || {};
   const modules = course.page?.modules || [];
@@ -417,6 +420,8 @@ export default function CourseCurriculum({
   );
   const [selectedChapter, setSelectedChapter] = useState('all');
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const lessonsTop = useRef(null);
   const [playingId, setPlayingId] = useState(null);
   const [prompt, setPrompt] = useState(null); // a key of PROMPTS, such as 'sign-in' or 'buy'
   // Sold online and not bought yet: every lesson is locked, and Buy replaces Enroll
@@ -439,6 +444,23 @@ export default function CourseCurriculum({
       (topic) => topic.trail.length === 0 && (selectedChapter === 'all' || topic.chapterId === selectedChapter)
     );
   }, [allTopics, isSearching, query, selectedChapter]);
+
+  // 15 topic cards a page; a new chapter or search starts again at page 1
+  const pageCount = Math.max(1, Math.ceil(visibleTopics.length / LESSONS_PER_PAGE));
+  const shownPage = Math.min(page, pageCount);
+  const pageTopics = visibleTopics.slice((shownPage - 1) * LESSONS_PER_PAGE, shownPage * LESSONS_PER_PAGE);
+  const pickChapter = (chapterId) => {
+    setSelectedChapter(chapterId);
+    setPage(1);
+  };
+  const changeSearch = (value) => {
+    setSearch(value);
+    setPage(1);
+  };
+  const goToPage = (number) => {
+    setPage(Math.min(Math.max(1, number), pageCount));
+    lessonsTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // Opens the full-page player at this topic, or at the first lesson inside it
   const openLecture = (topic) => {
@@ -700,7 +722,7 @@ export default function CourseCurriculum({
                 </div>
             )}
 
-            <div className="mb-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+            <div ref={lessonsTop} className="mb-8 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 scroll-mt-36">
               <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 scrollbar-none min-w-0">
                 {[{ chapterId: 'all', label: `All Topics (${topLevelCount})` }, ...chapters.map((chapter) => ({
                   chapterId: chapter.chapterId,
@@ -708,7 +730,7 @@ export default function CourseCurriculum({
                 }))].map((item) => (
                   <button
                     key={item.chapterId}
-                    onClick={() => setSelectedChapter(item.chapterId)}
+                    onClick={() => pickChapter(item.chapterId)}
                     className={`px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 cursor-pointer ${
                       selectedChapter === item.chapterId
                         ? `${theme.solid} shadow-md`
@@ -727,12 +749,12 @@ export default function CourseCurriculum({
                   aria-label="Search topics"
                   placeholder={intro.searchHint || 'Search topic or code'}
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => changeSearch(event.target.value)}
                   className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-slate-400 shadow-xs"
                 />
                 {search && (
                   <button
-                    onClick={() => setSearch('')}
+                    onClick={() => changeSearch('')}
                     aria-label="Clear search"
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer p-0.5"
                   >
@@ -759,8 +781,8 @@ export default function CourseCurriculum({
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">No matching topics found</h3>
                 <button
                   onClick={() => {
-                    setSearch('');
-                    setSelectedChapter('all');
+                    changeSearch('');
+                    pickChapter('all');
                   }}
                   className={`mt-3 px-4 py-2 rounded-xl ${theme.solid} text-xs font-bold transition-colors cursor-pointer`}
                 >
@@ -768,25 +790,31 @@ export default function CourseCurriculum({
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {visibleTopics.map((topic) => (
-                  <TopicCard
-                    key={topic.nodeId}
-                    topic={topic}
-                    theme={theme}
-                    isSearching={isSearching}
-                    onOpen={openLecture}
-                    fallbackImage={course.thumbnail}
-                    lockedLabel={mustBuy ? 'Buy to Watch' : 'Locked'}
-                    showFree={mustBuy}
-                    saved={savedFor(tracking.progress.lessons, topic.lesson ? topic : firstLessonIn(topic))}
-                    progress={topicProgressOf(topic, tracking.progress.lessons)}
-                  />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-testid="course-topic-grid">
+                  {pageTopics.map((topic) => (
+                    <TopicCard
+                      key={topic.nodeId}
+                      topic={topic}
+                      theme={theme}
+                      isSearching={isSearching}
+                      onOpen={openLecture}
+                      fallbackImage={course.thumbnail}
+                      lockedLabel={mustBuy ? 'Buy to Watch' : 'Locked'}
+                      showFree={mustBuy}
+                      saved={savedFor(tracking.progress.lessons, topic.lesson ? topic : firstLessonIn(topic))}
+                      progress={topicProgressOf(topic, tracking.progress.lessons)}
+                    />
+                  ))}
+                </div>
+                <LessonPagination page={shownPage} pageCount={pageCount} total={visibleTopics.length} theme={theme} onChange={goToPage} />
+              </>
             )}
           </>
         )}
+
+        {/* The course's study roadmaps, right under its lessons */}
+        {belowLessons}
 
         <div className="mt-16 bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-10 border border-blue-700/30 text-white shadow-xl flex flex-col lg:flex-row items-center justify-between gap-6">
           <div className="text-center lg:text-left">

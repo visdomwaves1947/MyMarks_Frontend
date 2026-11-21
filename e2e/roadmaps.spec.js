@@ -1,184 +1,311 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, closeVisitorPages, newVisitorPage, openAsAdmin, openAsStudent } from './helpers';
+import { API_URL, getAdminToken, newVisitorPage, closeVisitorPages, openAsAdmin, openAsStudent, signInStudent } from './helpers';
+import { fakeYouTube, heard, play } from './fakeYouTube';
 
-// Zoology and Telugu are used only here, so the other files keep their roadmaps as loaded
+// Study roadmaps made of video parts: the admin picks lessons from the syllabus for each day and sets the
+// stretch of each video with its summary; students play only those stretches. Zoology and Telugu are used only here.
+
+test.afterEach(closeVisitorPages);
+
+const headersFor = async (request) => ({ Authorization: `Bearer ${await getAdminToken(request)}` });
+
+// Summary videos made by a test, removed with their highlights and reels after it
+const madeVideos = [];
+test.afterEach(async ({ request }) => {
+  if (madeVideos.length === 0) return;
+  const headers = await headersFor(request);
+  const { reels = [], clips = [] } = await (await request.get(`${API_URL}/api/admin/highlights?subject=Zoology`, { headers })).json();
+  for (const reel of reels) await request.delete(`${API_URL}/api/admin/highlight-reels/${reel._id}`, { headers });
+  for (const clip of clips) await request.delete(`${API_URL}/api/admin/highlights/${clip._id}`, { headers });
+  for (const id of madeVideos.splice(0)) await request.delete(`${API_URL}/api/videos/${id}`, { headers });
+});
 
 // The page opens with no subject chosen, and the subject list has a search box
 const openRoadmapsFor = async (page, request, name) => {
   await openAsAdmin(page, request);
   await page.goto('/admin/roadmaps');
   await expect(page.getByRole('heading', { name: 'Study Roadmaps' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Subject Choose a subject' })).toBeVisible();
-  await expect(page.getByTestId('admin-roadmap')).toHaveCount(0);
-
   await page.getByRole('button', { name: /^Subject/ }).click();
   await page.getByLabel('Search subjects').fill(name.slice(0, 4));
-  await expect(page.getByRole('listbox', { name: 'Subjects' }).getByRole('option')).toHaveCount(1);
   await page.getByRole('option', { name: new RegExp(`^${name}`) }).click();
-  await expect(page.getByRole('button', { name: new RegExp(`^Subject ${name}`) })).toBeVisible();
   await expect(page.getByTestId('admin-roadmap').first()).toBeVisible();
 };
 
-const addRoadmap = async (page, days) => {
-  const rows = page.getByTestId('admin-roadmap');
-  const count = await rows.count();
-  await page.getByRole('group', { name: 'Add a roadmap' }).getByRole('button', { name: days, exact: true }).click();
-  await expect(rows).toHaveCount(count + 1);
-  return rows.last();
+// The course's lesson videos as the admin sees them (every lesson open), in syllabus order
+const lessonsOf = async (request, slug) => {
+  const res = await request.get(`${API_URL}/api/courses/${slug}`, { headers: await headersFor(request) });
+  const { course, curriculum } = await res.json();
+  const nodes = [];
+  const visit = (node, chapter) => {
+    if (node.lesson?.youtubeId) nodes.push({ nodeId: node.nodeId, title: node.title, code: node.code, youtubeId: node.lesson.youtubeId, chapter });
+    (node.children || []).forEach((child) => visit(child, chapter));
+  };
+  curriculum.chapters.forEach((chapter) => (chapter.topics || []).forEach((topic) => visit(topic, chapter.name)));
+  return { course, nodes };
 };
 
-const saveRoadmaps = async (page) => {
+const part = (lesson, start, end, summary, points = []) => ({
+  time: '',
+  title: `${lesson.code} ${lesson.title}`.trim(),
+  desc: '',
+  resources: [{ kind: 'part', text: `${lesson.code} ${lesson.title}`.trim(), nodeId: lesson.nodeId, start, end, summary, points }],
+});
+
+// Adds a roadmap through the admin API, keeping the course's other roadmaps
+const addRoadmapByApi = async (request, course, roadmap) => {
+  const headers = await headersFor(request);
+  const current = await (await request.get(`${API_URL}/api/admin/courses/${course._id}/roadmaps`, { headers })).json();
+  const items = current.roadmaps.items.filter((item) => item.title !== roadmap.title && item.days.length !== roadmap.days.length);
+  const saved = await request.put(`${API_URL}/api/admin/courses/${course._id}/roadmaps`, {
+    headers,
+    data: { ...current.roadmaps, isShown: true, items: [...items, roadmap] },
+  });
+  expect(saved.ok(), await saved.text()).toBeTruthy();
+  return (await saved.json()).roadmaps.items.find((item) => item.title === roadmap.title);
+};
+
+const openPlan = async (page, slug, title) => {
+  await page.goto(`/courses/${slug}`);
+  const card = page.getByTestId('course-roadmap').filter({ hasText: title });
+  await card.scrollIntoViewIfNeeded();
+  await card.getByRole('button', { name: 'Select Roadmap' }).click();
+  await expect(page.getByText('Smart Exam Planner')).toBeVisible();
+};
+
+test('an admin plans a 10 day roadmap from the summaries under each subtopic, and cuts parts of videos with none, never whole videos', async ({ page, request }, testInfo) => {
+  test.skip(testInfo.project.name === 'phone', 'The admin panel is used on a laptop');
+  await fakeYouTube(page);
+
+  // A summary of the first Zoology lesson, made in Highlights: 1:00 to 1:20 of its video, with its summary.
+  // Its video record stays a draft, so the course gets no extra lesson.
+  const adminHeaders = await headersFor(request);
+  const { nodes } = await lessonsOf(request, 'zoology');
+  const made = await request.post(`${API_URL}/api/videos`, {
+    headers: adminHeaders,
+    data: { title: 'Zoology summary source', url: `https://www.youtube.com/watch?v=${nodes[0].youtubeId}`, subject: 'Zoology', status: 'draft' },
+  });
+  expect(made.ok(), await made.text()).toBeTruthy();
+  const madeBody = await made.json();
+  const videoId = (madeBody.data || madeBody.video || madeBody)._id;
+  madeVideos.push(videoId);
+  const highlight = await request.post(`${API_URL}/api/admin/highlights`, {
+    headers: adminHeaders,
+    data: {
+      videoId,
+      start: '1:00',
+      end: '1:20',
+      title: 'Cells at a glance',
+      summary: 'Every living thing is made of cells.',
+      points: ['Cell theory'],
+      newReel: { name: 'Zoology summaries' },
+    },
+  });
+  expect(highlight.ok(), await highlight.text()).toBeTruthy();
+
+  await openRoadmapsFor(page, request, 'Zoology');
+
+  // 1 Day and 30 Days are taken by Zoology's own roadmaps; 10 Days opens the new roadmap's page
+  const adding = page.getByRole('group', { name: 'Add a roadmap' });
+  await expect(adding.getByRole('button', { name: '1 Day', exact: true })).toBeDisabled();
+  await expect(adding.getByRole('button', { name: '2 Days', exact: true })).toBeEnabled();
+  await adding.getByRole('button', { name: '10 Days', exact: true }).click();
+  const roadmap = page.getByTestId('roadmap-page');
+  await expect(roadmap).toBeVisible();
+  await roadmap.getByRole('textbox', { name: /^Title/ }).fill('10 Days Zoology Sprint');
+  await expect(roadmap.getByRole('tablist', { name: 'Days' }).getByRole('tab')).toHaveCount(10);
+
+  // Day 1: the picker lists the summaries under each subtopic, and shows only summaries at first
+  await roadmap.getByRole('button', { name: 'Add summaries from the syllabus' }).click();
+  const picker = page.getByTestId('syllabus-picker');
+  const onlySummaries = picker.getByRole('switch', { name: 'Only summaries' });
+  await expect(onlySummaries).toHaveAttribute('aria-checked', 'true');
+  const summary = picker.getByTestId('picker-summary').filter({ hasText: 'Cells at a glance' });
+  await expect(summary).toHaveCount(1);
+  await expect(summary.getByTestId('picker-summary-times')).toContainText('1:00–1:20 · 20 sec only');
+  await expect(summary.getByTestId('picker-summary-text')).toHaveText('Every living thing is made of cells.');
+  await summary.getByRole('checkbox').click();
+  await expect(picker.getByTestId('picker-count')).toHaveText('Ticked: 1 summary');
+  await picker.getByRole('button', { name: 'Add 1 to Day 1' }).click();
+  const parts = roadmap.getByTestId('roadmap-part');
+  await expect(parts).toHaveCount(1);
+  // A summary comes in ready: only its stretch plays, with its summary
+  await expect(parts.first().getByTestId('part-times')).toHaveText('1:00–1:20 · 20 sec');
+
+  // Videos with no summary yet: with "Only summaries" off a whole chapter is ticked, leaving out the summary already in the day
+  await roadmap.getByRole('button', { name: 'Add summaries from the syllabus' }).click();
+  await expect(summary.getByText('In Day 1')).toBeVisible();
+  await onlySummaries.click();
+  await expect(onlySummaries).toHaveAttribute('aria-checked', 'false');
+  await picker.getByTestId('picker-chapter').first().getByRole('checkbox').first().click();
+  await expect(picker.getByTestId('picker-count')).toContainText('videos to cut');
+  const ticked = Number((await picker.getByTestId('picker-count').innerText()).match(/\d+/)[0]);
+  expect(ticked).toBeGreaterThan(1);
+  await picker.getByRole('button', { name: new RegExp(`^Add ${ticked} to Day 1`) }).click();
+  await expect(parts).toHaveCount(ticked + 1);
+  await expect(parts.nth(1).getByTestId('part-times')).toHaveText('Needs times');
+
+  // A part cut by the admin is a stretch: the whole video is refused, a short stretch with a summary is kept
+  await parts.nth(1).getByTestId('part-edit').click();
+  const editor = page.getByTestId('part-editor');
+  await editor.getByTestId('part-start').fill('0:00');
+  await editor.getByTestId('part-end').fill('15:00');
+  await expect(editor.getByTestId('part-time-note')).toContainText('This is the whole video');
+  await expect(editor.getByTestId('part-save')).toBeDisabled();
+  await editor.getByTestId('part-start').fill('2:00');
+  await editor.getByTestId('part-end').fill('2:30');
+  await expect(editor.getByTestId('part-time-note')).toContainText('Students watch 2:00 to 2:30 only');
+  await editor.getByTestId('part-summary').fill('A cell is the smallest unit of life.');
+  await editor.getByTestId('part-points').fill('Cell theory\nPlant and animal cells');
+  await editor.getByTestId('part-save').click();
+  await expect(parts.nth(1).getByTestId('part-times')).toHaveText('2:00–2:30 · 30 sec');
+
+  // The next part's times come from where the video is when Set start and Set end are pressed
+  await parts.nth(2).getByTestId('part-edit').click();
+  await page.evaluate(() => {
+    window.__yt.players.at(-1).time = 65;
+  });
+  await editor.getByTestId('part-set-start').click();
+  await page.evaluate(() => {
+    window.__yt.players.at(-1).time = 95;
+  });
+  await editor.getByTestId('part-set-end').click();
+  await expect(editor.getByTestId('part-start')).toHaveValue('1:05');
+  await expect(editor.getByTestId('part-end')).toHaveValue('1:35');
+  await editor.getByTestId('part-summary').fill('The nucleus holds the cell\'s DNA.');
+  await editor.getByTestId('part-save').click();
+  await expect(parts.nth(2).getByTestId('part-times')).toHaveText('1:05–1:35 · 30 sec');
+
+  // Parts still without times are saved as unfinished; students do not see them yet
+  await expect(roadmap.getByTestId('roadmap-unfinished')).toHaveText(`${ticked - 2} not finished`);
+
+  // Day 2: a copy of Day 1, trimmed to one part; the empty last day is removed, back to 10 days
+  await roadmap.getByRole('button', { name: 'Copy Day 1' }).click();
+  await expect(roadmap.getByRole('tablist', { name: 'Days' }).getByRole('tab')).toHaveCount(11);
+  await expect(roadmap.getByRole('tab', { selected: true })).toContainText('Day 2');
+  for (let left = ticked + 1; left > 1; left -= 1) {
+    await parts.last().getByRole('button', { name: 'Remove part' }).click();
+    const confirm = page.getByRole('alertdialog');
+    if (await confirm.isVisible().catch(() => false)) await confirm.getByRole('button', { name: 'Remove' }).click();
+  }
+  await expect(parts).toHaveCount(1);
+  await roadmap.getByRole('tab', { name: /^Day 11/ }).click();
+  await roadmap.getByRole('button', { name: 'Remove Day 11' }).click();
+  await expect(roadmap.getByRole('tablist', { name: 'Days' }).getByRole('tab')).toHaveCount(10);
+
   await page.getByRole('button', { name: 'Save Roadmaps' }).first().click();
   await expect(page.getByText('Roadmaps saved.')).toBeVisible();
-};
 
-test.afterEach(closeVisitorPages);
+  // What was saved: Day 1 has the summary, the two parts cut and the unfinished ones; Day 2 the summary
+  const headers = adminHeaders;
+  const zoology = (await (await request.get(`${API_URL}/api/admin/roadmaps`, { headers })).json()).courses.find((item) => item.slug === 'zoology');
+  const saved = (await (await request.get(`${API_URL}/api/admin/courses/${zoology._id}/roadmaps`, { headers })).json()).roadmaps.items.find(
+    (item) => item.title === '10 Days Zoology Sprint'
+  );
+  const day1 = saved.days[0].steps.map((step) => step.resources[0]);
+  expect(saved.days[0].steps[0].title).toBe('Cells at a glance');
+  expect(day1.slice(0, 3).map(({ nodeId, start, end, summary }) => ({ nodeId, start, end, summary }))).toEqual([
+    { nodeId: nodes[0].nodeId, start: 60, end: 80, summary: 'Every living thing is made of cells.' },
+    { nodeId: day1[1].nodeId, start: 120, end: 150, summary: 'A cell is the smallest unit of life.' },
+    { nodeId: day1[2].nodeId, start: 65, end: 95, summary: "The nucleus holds the cell's DNA." },
+  ]);
+  expect(day1[0].points).toEqual(['Cell theory']);
+  expect(day1[1].points).toEqual(['Cell theory', 'Plant and animal cells']);
+  expect(day1.slice(3).every((resource) => resource.start === null)).toBe(true);
+  expect(saved.days[1].steps.map((step) => step.resources[0].start)).toEqual([60]);
 
-test('an admin builds a 10 day roadmap, and a visitor follows it day by day', async ({ page, request }) => {
-  await openRoadmapsFor(page, request, 'Zoology');
-  await expect(page.getByTestId('admin-roadmap')).toHaveCount(6);
+  // Students get only the finished parts
+  const publicPlan = (await (await request.get(`${API_URL}/api/courses/zoology`)).json()).course.page.roadmaps.items.find(
+    (item) => item.title === '10 Days Zoology Sprint'
+  );
+  expect(publicPlan.days.map((day) => day.steps.length).slice(0, 3)).toEqual([3, 1, 0]);
+});
 
-  // Zoology already has 1, 3, 5, 7, 15 and 30 day roadmaps, and a second one of the same length is refused
-  const adding = page.getByRole('group', { name: 'Add a roadmap' });
-  await expect(adding.getByRole('button', { name: '5 Days', exact: true })).toBeDisabled();
-  await page.getByLabel('Days for a new roadmap').fill('7');
-  await adding.getByRole('button', { name: 'Add', exact: true }).click();
-  await expect(page.getByText('Zoology already has a roadmap of 7 days. Each roadmap needs its own number of days.')).toBeVisible();
-  await expect(page.getByTestId('admin-roadmap')).toHaveCount(6);
+test('a student plays only the part, a part watched to its end ticks itself, and the progress follows the account', async ({ page, request, browser }, testInfo) => {
+  const { course, nodes } = await lessonsOf(request, 'zoology');
+  const days = testInfo.project.name === 'phone' ? 6 : 4;
+  const title = `${days} Days Zoology Parts`;
+  await addRoadmapByApi(request, course, {
+    title,
+    days: [
+      { title: 'Cells', steps: [part(nodes[0], 120, 135, 'A cell is the unit of life.', ['Cell theory']), part(nodes[1], 30, 40, 'Cells make cells.')] },
+      ...Array.from({ length: days - 1 }, () => ({ title: '', steps: [] })),
+    ],
+  });
+  // The student has the course, so every part plays
+  const student = await signInStudent(request);
+  await request.post(`${API_URL}/api/admin/users/${(student.user || student)._id}/purchases`, {
+    headers: await headersFor(request),
+    data: { courseId: course._id, note: 'Roadmap parts test' },
+  });
 
-  const editor = await addRoadmap(page, '10 Days');
-  await expect(editor.getByLabel('Title *', { exact: true })).toHaveValue('10 Days Zoology Plan');
-  await expect(adding.getByRole('button', { name: '10 Days', exact: true })).toBeDisabled();
+  await fakeYouTube(page);
+  await openAsStudent(page, request);
+  await openPlan(page, 'zoology', title);
+  const cards = page.getByTestId('plan-part');
+  await expect(cards).toHaveCount(2);
+  await expect(cards.first().getByTestId('plan-part-summary')).toHaveText('A cell is the unit of life.');
+  await expect(cards.first()).toContainText('2:00–2:15');
+  await expect(cards.first()).toContainText('Cell theory');
 
-  // A missing title is shown and blocks saving until it is fixed
-  await editor.getByLabel('Title *', { exact: true }).fill('');
-  await expect(page.getByTestId('roadmap-problems')).toContainText('Add a title.');
-  await expect(page.getByRole('button', { name: 'Save Roadmaps' }).first()).toBeDisabled();
-  await editor.getByLabel('Title *', { exact: true }).fill('10 Days Zoology Plan');
-  await expect(page.getByTestId('roadmap-problems')).toHaveCount(0);
+  // Play part: only 2:00 to 2:15 of the lesson, and the part ticks itself at its end
+  await cards.first().getByTestId('plan-play-part').click();
+  const player = page.getByTestId('roadmap-player');
+  await expect(player).toBeVisible();
+  await expect(player.getByTestId('now-playing-title')).toContainText(nodes[0].title);
+  await expect.poll(async () => (await heard(page))[0]).toEqual({ videoId: nodes[0].youtubeId, time: 120 });
+  await expect(player.getByTestId('save-highlight')).toHaveCount(0);
+  await play(page, 16);
+  await expect.poll(async () => (await heard(page))[0]?.videoId).toBe(nodes[1].youtubeId);
+  await player.getByRole('button', { name: 'Close the player' }).click();
+  await expect(cards.first().getByRole('button', { name: 'Part 01 done' })).toBeVisible();
 
-  // The number of days cannot change to one another roadmap has
-  await editor.getByLabel('Number of days').fill('15');
-  await editor.getByRole('button', { name: 'Set Days' }).click();
-  await expect(editor.getByText('Zoology already has a roadmap of 15 days.')).toBeVisible();
-  await editor.getByLabel('Number of days').fill('10');
-  await editor.getByLabel('Level').fill('HARD');
-  await editor.getByLabel('Expected score').fill('55-60 / 60');
-  await expect(editor.getByRole('group', { name: 'Choose a day' }).getByRole('button')).toHaveCount(10);
+  // Play the day: both parts in one list
+  await page.getByTestId('plan-play-day').click();
+  await expect(player.getByTestId('playlist-item')).toHaveCount(2);
+  await player.getByRole('button', { name: 'Close the player' }).click();
 
-  // Day 1: a lesson and a notes link
-  await editor.getByLabel('Day title').fill('Cell structure');
-  await editor.getByRole('button', { name: 'Add Step' }).click();
-  await expect(page.getByTestId('roadmap-problems')).toContainText('Day 1, step 1 needs a title.');
-  await editor.getByLabel('Time').fill('2 hours');
-  await editor.getByLabel('Title', { exact: true }).fill('Parts of a cell');
-  await editor.getByRole('button', { name: 'Add Resource' }).click();
-  await editor.getByRole('combobox', { name: 'Lesson', exact: true }).selectOption({ index: 1 });
-  await expect(editor.getByRole('textbox', { name: 'Label', exact: true }).first()).not.toHaveValue('');
-  await editor.getByRole('button', { name: 'Add Resource' }).click();
-  await editor.getByRole('combobox', { name: 'Kind', exact: true }).nth(1).selectOption('notes');
-  await editor.getByRole('textbox', { name: 'Label', exact: true }).nth(1).fill('Cell diagram sheet');
-  await editor.getByRole('textbox', { name: 'Link', exact: true }).fill('javascript:alert(1)');
-  await expect(editor.getByText('The link must start with https:// or be a page on this site')).toBeVisible();
-  await editor.getByRole('textbox', { name: 'Link', exact: true }).fill('https://notes.example.com/cell.pdf');
-  await expect(page.getByTestId('roadmap-problems')).toHaveCount(0);
+  // The tick is on the account: a new browser with nothing saved shows it too
+  const plans = await (
+    await request.get(`${API_URL}/api/roadmaps/${course._id}/progress`, { headers: { Authorization: `Bearer ${student.token}` } })
+  ).json();
+  expect(plans.plans.find((item) => item.planKey === title.toLowerCase().replace(/\s+/g, '-'))?.done).toContain('0-0');
+  const other = await browser.newContext(testInfo.project.use.viewport ? { viewport: testInfo.project.use.viewport } : {});
+  const elsewhere = await other.newPage();
+  await openAsStudent(elsewhere, request);
+  await openPlan(elsewhere, 'zoology', title);
+  await expect(elsewhere.getByTestId('plan-part').first().getByRole('button', { name: 'Part 01 done' })).toBeVisible();
+  await other.close();
+});
 
-  // Day 2: one plain step
-  await editor.getByRole('button', { name: 'Day 2', exact: true }).click();
-  await expect(editor.getByText('Day 2 of 10')).toBeVisible();
-  await editor.getByLabel('Day title').fill('Genetics');
-  await editor.getByRole('button', { name: 'Add Step' }).click();
-  await editor.getByLabel('Title', { exact: true }).fill("Mendel's laws");
-
-  await editor.getByRole('button', { name: 'Count from Plan' }).click();
-  await expect(editor.getByLabel('Modules')).toHaveValue('2');
-  await expect(editor.getByLabel('Videos')).toHaveValue('1');
-  await expect(editor.getByLabel('Notes')).toHaveValue('1');
-  await saveRoadmaps(page);
-  await expect(page.getByText('You have unsaved changes')).toHaveCount(0);
+test('a visitor sees the parts and is asked to sign in; a student without the course is asked to buy a locked part', async ({ page, request }, testInfo) => {
+  const { course, nodes } = await lessonsOf(request, 'telugu');
+  const days = testInfo.project.name === 'phone' ? 6 : 4;
+  const title = `${days} Days Telugu Parts`;
+  // The first lessons are free to try; a later one is locked until the course is bought
+  const locked = nodes[nodes.length - 1];
+  await addRoadmapByApi(request, course, {
+    title,
+    days: [
+      { title: 'Poems', steps: [part(nodes[0], 10, 20, 'The poem begins.'), part(locked, 30, 45, 'The last lesson, in short.')] },
+      ...Array.from({ length: days - 1 }, () => ({ title: '', steps: [] })),
+    ],
+  });
 
   const visitor = await newVisitorPage(page);
-  await visitor.goto('/courses/zoology');
-  const card = visitor.getByTestId('course-roadmap').filter({ hasText: '10 Days Zoology Plan' });
-  await expect(card).toContainText('HARD');
-  await expect(card).toContainText('55-60 / 60');
-  await card.getByRole('button', { name: 'Select Roadmap' }).click();
+  await openPlan(visitor, 'telugu', title);
+  const cards = visitor.getByTestId('plan-part');
+  await expect(cards).toHaveCount(2);
+  await expect(cards.nth(1).getByTestId('plan-part-summary')).toHaveText('The last lesson, in short.');
+  await cards.first().getByTestId('plan-play-part').click();
+  await expect(visitor.getByRole('dialog', { name: 'Sign in required' })).toBeVisible();
 
-  await expect(visitor.getByText('10 DAYS PLAN • HARD')).toBeVisible();
-  await expect(visitor.getByRole('tablist', { name: 'Days' }).getByRole('tab')).toHaveCount(10);
-  await expect(visitor.getByRole('heading', { name: 'Cell structure' })).toBeVisible();
-  const step = visitor.getByTestId('plan-step').first();
-  await expect(step.getByRole('button', { name: 'Cell diagram sheet' })).toBeVisible();
-
-  await step.getByRole('button', { name: 'Mark step 01 done', exact: true }).click();
-  await expect(visitor.getByTestId('plan-progress')).toContainText('1 of 2 steps done');
-
-  // A visitor is asked to sign in before a lesson plays
-  await step.getByRole('button', { name: 'Start Step 01' }).click();
-  const signIn = visitor.getByRole('dialog', { name: 'Sign in required' });
-  await expect(signIn).toBeVisible();
-  await signIn.getByRole('button', { name: 'Close' }).click();
-
-  await visitor.getByRole('tab', { name: /^Day 2\b/ }).click();
-  await expect(visitor.getByRole('heading', { name: "Mendel's laws" })).toBeVisible();
-  await expect(visitor.getByRole('button', { name: 'Mark Step 01 Done', exact: true })).toBeVisible();
-
-  // The ticks and the open day are kept when the plan opens again
-  await visitor.getByRole('button', { name: 'Close plan' }).click();
-  await card.getByRole('button', { name: 'Select Roadmap' }).click();
-  await expect(visitor.getByRole('heading', { name: "Mendel's laws" })).toBeVisible();
-  await expect(visitor.getByTestId('plan-progress')).toContainText('1 of 2 steps done');
-  await visitor.getByRole('tab', { name: /^Day 1\b/ }).click();
-  await expect(visitor.getByRole('button', { name: 'Step 01 done', exact: true })).toBeVisible();
-});
-
-test('a signed-in student opens the lesson of a step in the course player', async ({ page, request }) => {
+  await fakeYouTube(page);
   await openAsStudent(page, request);
-  await page.goto('/courses/zoology');
-  await page
-    .getByTestId('course-roadmap')
-    .filter({ hasText: '10 Days Zoology Plan' })
-    .getByRole('button', { name: 'Select Roadmap' })
-    .click();
-
-  await page.getByTestId('plan-step').first().getByRole('button', { name: 'Start Step 01' }).click();
-  await expect(page.getByTestId('lesson-player')).toBeVisible();
-  await expect(page.getByText('Topic Hierarchy')).toBeVisible();
-});
-
-test('filling the days from the lessons spreads the syllabus over a new 10 day roadmap', async ({ page, request }) => {
-  await openRoadmapsFor(page, request, 'Telugu');
-  const editor = await addRoadmap(page, '10 Days');
-
-  await editor.getByRole('button', { name: 'Fill Days from Lessons' }).click();
-  const days = editor.getByRole('group', { name: 'Choose a day' }).getByRole('button');
-  await expect(days).toHaveCount(10);
-  for (let index = 0; index < 10; index += 1) {
-    await expect(days.nth(index)).toHaveText(new RegExp(`^Day ${index + 1} · \\d+$`));
-  }
-
-  // Telugu has a 3 day roadmap already, and taking planned days away asks first
-  await editor.getByLabel('Number of days').fill('3');
-  await editor.getByRole('button', { name: 'Set Days' }).click();
-  await expect(editor.getByText('Telugu already has a roadmap of 3 days.')).toBeVisible();
-  await expect(days).toHaveCount(10);
-  await editor.getByLabel('Number of days').fill('2');
-  await editor.getByRole('button', { name: 'Set Days' }).click();
-  await expect(page.getByRole('alertdialog')).toContainText('Remove the last 8 days?');
-  await page.getByRole('button', { name: 'Remove Days' }).click();
-  await expect(days).toHaveCount(2);
-
-  await editor.getByRole('button', { name: 'Count from Plan' }).click();
-  await saveRoadmaps(page);
-
-  const res = await request.get(`${API_URL}/api/courses/telugu`);
-  const plan = (await res.json()).course.page.roadmaps.items.find((item) => item.title === '10 Days Telugu Plan');
-  expect(plan.duration).toBe(2);
-  expect(plan.stats.videos).toBeGreaterThan(0);
-  for (const day of plan.days) {
-    expect(day.title).not.toBe('');
-    expect(day.steps.length).toBeGreaterThan(0);
-    expect(day.steps[0].resources[0]).toMatchObject({ kind: 'video' });
-    expect(day.steps[0].resources[0].nodeId).not.toBe('');
-  }
+  await openPlan(page, 'telugu', title);
+  const studentCards = page.getByTestId('plan-part');
+  await expect(studentCards.nth(1).getByTestId('plan-play-part')).toHaveText('Buy to watch');
+  await studentCards.nth(1).getByTestId('plan-play-part').click();
+  await expect(page.getByRole('dialog', { name: 'Buy this course' })).toBeVisible();
+  await page.getByRole('dialog', { name: 'Buy this course' }).getByRole('button', { name: 'Close' }).first().click();
+  await expect(studentCards.first().getByTestId('plan-play-part')).toHaveText('Play part');
 });

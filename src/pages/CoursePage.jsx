@@ -178,6 +178,11 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
 
   const enroll = (track) => onOpenBooking(track, course);
 
+  // The study roadmaps sit right under the lessons; with the lessons hidden they are a section of their own
+  const roadmaps = isShown('roadmaps') ? (
+    <CourseRoadmaps data={page.roadmaps} theme={theme} onSelectRoadmap={setOpenPlan} embedded={isShown('curriculum')} />
+  ) : null;
+
   return (
     <>
       {course.status !== 'published' && (
@@ -225,12 +230,11 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           cart={cartButton}
           tracking={tracking}
           currentUser={currentUser}
+          belowLessons={roadmaps}
         />
       )}
 
-      {isShown('roadmaps') && (
-        <CourseRoadmaps data={page.roadmaps} theme={theme} onSelectRoadmap={setOpenPlan} />
-      )}
+      {!isShown('curriculum') && roadmaps}
 
       {openPlan && (
         <CourseRoadmapPlanner
@@ -239,6 +243,8 @@ export default function CoursePage({ currentUser, onOpenBooking, onOpenSignIn })
           curriculum={state.data.curriculum}
           theme={theme}
           isSignedIn={isSignedIn}
+          isStudent={isStudent}
+          currentUser={currentUser}
           onClose={() => setOpenPlan(null)}
           onEnroll={enroll}
           onOpenSignIn={onOpenSignIn}

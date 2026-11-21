@@ -50,6 +50,9 @@ export default function ReelWatch({
   currentUser,
   onOpenSignIn,
   onClose = null,
+  // Roadmap parts are not highlights, so they have no Save button
+  saveable = true,
+  onPartEnd = null,
 }) {
   const playable = useMemo(() => (clips || []).filter((clip) => clip.media), [clips]);
   const root = useRef(null);
@@ -105,6 +108,7 @@ export default function ReelWatch({
           control={control}
           onPart={setPart}
           onPlaying={setPlaying}
+          onPartEnd={onPartEnd}
           className="shadow-lg"
         />
       </div>
@@ -118,7 +122,7 @@ export default function ReelWatch({
             </h3>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">{about.join(' · ')}</p>
           </div>
-          <SaveHighlightButton highlight={current} currentUser={currentUser} onOpenSignIn={onOpenSignIn} />
+          {saveable && <SaveHighlightButton highlight={current} currentUser={currentUser} onOpenSignIn={onOpenSignIn} />}
         </div>
         {(current.summary || current.points?.length > 0) && (
           <div className="rounded-xl bg-slate-100 dark:bg-slate-800/70 px-3.5 py-3 text-sm text-slate-700 dark:text-slate-200">

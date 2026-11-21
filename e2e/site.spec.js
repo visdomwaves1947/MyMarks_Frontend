@@ -122,6 +122,53 @@ test('a topic card previews its subtopics', async ({ page }) => {
   await expect(card).toContainText(/\d+ Subtopics/);
 });
 
+test('a course page shows 15 topics a page, and its roadmaps right under the lessons', async ({ page, request }, testInfo) => {
+  const { course, curriculum } = await (await request.get(`${API_URL}/api/courses/maths`)).json();
+  const total = curriculum.chapters.reduce((sum, chapter) => sum + chapter.topics.length, 0) + (curriculum.extraLessons || []).length;
+  expect(total).toBeGreaterThan(15);
+  const pageCount = Math.ceil(total / 15);
+
+  await page.goto('/courses/maths');
+  const cards = page.getByTestId('course-topic-grid').getByTestId('course-topic');
+  const pages = page.getByTestId('course-pagination');
+  await expect(cards).toHaveCount(15);
+  await expect(pages.getByTestId('course-pagination-range')).toHaveText(`Showing 1–15 of ${total} topics`);
+  await expect(pages.getByRole('button', { name: 'Previous page' })).toBeDisabled();
+  const firstOnPage1 = await cards.first().innerText();
+
+  // The next page: the next 15 topics, scrolled back up to the chapter buttons
+  if (testInfo.project.name === 'phone') {
+    await pages.getByRole('button', { name: 'Next page' }).click();
+    await expect(pages.getByTestId('course-pagination-page')).toHaveText(`Page 2 of ${pageCount}`);
+  } else {
+    await pages.getByRole('button', { name: 'Page 2', exact: true }).click();
+    await expect(pages.getByRole('button', { name: 'Page 2', exact: true })).toHaveAttribute('aria-current', 'page');
+  }
+  await expect(pages.getByTestId('course-pagination-range')).toHaveText(`Showing 16–${Math.min(30, total)} of ${total} topics`);
+  expect(await cards.first().innerText()).not.toBe(firstOnPage1);
+  await expect.poll(() => page.getByRole('button', { name: /^All Topics/ }).evaluate((chip) => chip.getBoundingClientRect().top)).toBeLessThan(400);
+
+  // The last page holds what is left; a chapter or a search starts again at page 1
+  for (let at = 2; at < pageCount; at += 1) await pages.getByRole('button', { name: 'Next page' }).click();
+  await expect(cards).toHaveCount(total - 15 * (pageCount - 1));
+  await expect(pages.getByRole('button', { name: 'Next page' })).toBeDisabled();
+  await page.getByLabel('Search topics').fill('Ordered');
+  await expect(cards.first()).toBeVisible();
+  expect(await cards.count()).toBeLessThanOrEqual(15);
+  await page.getByLabel('Clear search').click();
+  await expect(pages.getByTestId('course-pagination-range')).toHaveText(`Showing 1–15 of ${total} topics`);
+
+  // The roadmaps come right after the lesson pages, before the help banner
+  if (course.sections?.roadmaps !== false && course.page?.roadmaps?.items?.length) {
+    const roadmaps = page.locator('#course-curriculum').getByTestId('course-roadmaps');
+    await expect(roadmaps.getByTestId('course-roadmap').first()).toBeVisible();
+    const top = async (locator) => (await locator.boundingBox()).y;
+    expect(await top(roadmaps)).toBeGreaterThan(await top(pages));
+    expect(await top(roadmaps)).toBeLessThan(await top(page.getByRole('heading', { name: /^Need Help with/ })));
+  }
+  await expectNoSideScroll(page);
+});
+
 test('11. a roadmap opens the plan of its own course, and one with no plan hides its button', async ({ page }) => {
   await page.goto('/courses/maths');
 

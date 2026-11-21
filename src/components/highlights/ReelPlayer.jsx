@@ -129,6 +129,7 @@ export default function ReelPlayer({
   control = null,
   onPart = null,
   onPlaying = null,
+  onPartEnd = null,
   className = '',
 }) {
   const playable = useMemo(() => (clips || []).filter((clip) => clip.media), [clips]);
@@ -149,8 +150,8 @@ export default function ReelPlayer({
   const first = useRef(startAt);
   first.current = startAt;
   const loopNow = useRef(loop);
-  const listeners = useRef({ onPart, onPlaying });
-  listeners.current = { onPart, onPlaying };
+  const listeners = useRef({ onPart, onPlaying, onPartEnd });
+  listeners.current = { onPart, onPlaying, onPartEnd };
 
   const [time, setTime] = useState(0);
   const [buffered, setBuffered] = useState(0);
@@ -180,6 +181,7 @@ export default function ReelPlayer({
       onPart: setPart,
       onState: setState,
       onBuffer: setBuffered,
+      onPartEnd: (index) => listeners.current.onPartEnd?.(index),
     });
     engine.current = reel;
     const start = clamp(Number(first.current) || 0, 0, timeline.parts.length - 1);

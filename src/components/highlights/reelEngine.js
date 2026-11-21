@@ -249,7 +249,7 @@ class Deck {
 
 // ── The reel ────────────────────────────────────────────────────
 
-export function createReelEngine({ host, timeline, onTime, onPart, onState, onBuffer }) {
+export function createReelEngine({ host, timeline, onTime, onPart, onState, onBuffer, onPartEnd }) {
   const { parts, total } = timeline;
   const decks = [
     new Deck(host, 'a', (deck, kind, data) => handle(deck, kind, data)),
@@ -332,7 +332,9 @@ export function createReelEngine({ host, timeline, onTime, onPart, onState, onBu
     report();
   };
 
+  // A part played to its end (not skipped or jumped from), then the next one, or the end of the reel
   const advance = () => {
+    onPartEnd?.(index);
     if (index + 1 < parts.length) switchTo(index + 1);
     else finish();
   };

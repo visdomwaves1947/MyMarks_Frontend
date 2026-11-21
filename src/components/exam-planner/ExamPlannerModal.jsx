@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import PlannerDashboard from './PlannerDashboard';
 
 // A course page also passes how to open its lessons, and a key that keeps the student's progress
-export default function ExamPlannerModal({ isOpen, onClose, selectedRoadmap, onOpenLesson, canOpenLesson, progressKey }) {
+export default function ExamPlannerModal({ isOpen, onClose, selectedRoadmap, onOpenLesson, canOpenLesson, progressKey, ...plannerProps }) {
   if (!isOpen || !selectedRoadmap) return null;
 
   return (
@@ -38,6 +38,7 @@ export default function ExamPlannerModal({ isOpen, onClose, selectedRoadmap, onO
             onOpenLesson={onOpenLesson}
             canOpenLesson={canOpenLesson}
             progressKey={progressKey}
+            {...plannerProps}
           />
         </div>
         

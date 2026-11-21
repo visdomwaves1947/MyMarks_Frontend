@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, ChevronDown, Eye, Plus, RefreshCw, Route, Save, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronRight, Eye, Plus, RefreshCw, Route, Save, Trash2 } from 'lucide-react';
 import useDialog from '../../../hooks/useDialog';
 import {
   fetchAdminCoursePage,
@@ -7,8 +7,9 @@ import {
   fetchAdminRoadmaps,
   saveAdminRoadmaps,
 } from '../../../services/courseApi';
+import { fetchAdminHighlights } from '../../../services/highlightsApi';
 import { withExtraLessons } from '../../course/curriculumTree';
-import { countPlan, daysLabel, hasPlan } from '../../course/roadmapPlan';
+import { daysLabel, hasPlan } from '../../course/roadmapPlan';
 import { SkeletonForm } from '../AdminSkeleton';
 import {
   ICON_BUTTON,
@@ -20,11 +21,19 @@ import {
   Toggle,
   moveItem,
 } from '../courses/fields';
-import RoadmapEditor from './RoadmapEditor';
+import RoadmapPage from './RoadmapPage';
 import SubjectPicker from './SubjectPicker';
-import { MAX_DAYS, dayCountProblem, editable, lessonOptions, newRoadmap, roadmapProblems } from './roadmapDrafts';
-
-const QUICK_DAYS = [1, 3, 5, 7, 10, 15, 30];
+import {
+  MAX_DAYS,
+  QUICK_DAYS,
+  dayCountProblem,
+  editable,
+  lessonIndex,
+  newRoadmap,
+  roadmapProblems,
+  summariesByLesson,
+  unfinishedParts,
+} from './roadmapDrafts';
 
 const CHIP_STYLE = 'shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide';
 
@@ -43,8 +52,8 @@ function LoadProblem({ message, onRetry }) {
 }
 
 /**
- * Admin page for the study roadmaps on each course page: 1 day, 5 days, 30 days
- * or any number, each planned day by day with lessons, notes and tests.
+ * Admin page for the study roadmaps on each course page: 1 day, 2 days, 10 days or any number. Each
+ * roadmap opens on its own page, where every day gets video parts picked from the syllabus.
  */
 export default function RoadmapsTab({ showToast }) {
   const { confirm } = useDialog();
@@ -56,7 +65,8 @@ export default function RoadmapsTab({ showToast }) {
   const [loadError, setLoadError] = useState('');
   const [draft, setDraft] = useState(null);
   const [savedCopy, setSavedCopy] = useState('');
-  const [openIndex, setOpenIndex] = useState(-1);
+  // The roadmap whose page is open, or null for the list
+  const [pageIndex, setPageIndex] = useState(null);
   const [customDays, setCustomDays] = useState('');
   const [addError, setAddError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -93,10 +103,15 @@ export default function RoadmapsTab({ showToast }) {
       .then(async (view) => {
         if (!isCurrent) return;
         showLoaded(view);
-        setLoaded({ course: view.course, chapters: [] });
-        // The lessons for the lesson picker. Without them the plan can still be written.
-        const curriculum = await fetchAdminCoursePage(view.course.slug).catch(() => null);
-        if (isCurrent && curriculum) setLoaded({ course: view.course, chapters: withExtraLessons(curriculum) });
+        setLoaded({ course: view.course, chapters: [], clips: [] });
+        // The lessons for the picker, and the summaries (highlights) cut from them. Without them the plan can still be written.
+        const [curriculum, highlights] = await Promise.all([
+          fetchAdminCoursePage(view.course.slug).catch(() => null),
+          fetchAdminHighlights(view.course.subject || view.course.name).catch(() => null),
+        ]);
+        if (isCurrent && curriculum) {
+          setLoaded({ course: view.course, chapters: withExtraLessons(curriculum), clips: highlights?.clips || [] });
+        }
       })
       .catch((error) => isCurrent && setLoadError(error.message));
 
@@ -105,8 +120,9 @@ export default function RoadmapsTab({ showToast }) {
     };
   }, [courseId, reloadCount, showLoaded]);
 
-  const lessons = useMemo(() => lessonOptions(loaded?.chapters || []), [loaded]);
-  const problems = useMemo(() => (draft ? roadmapProblems(draft.items) : []), [draft]);
+  const lessons = useMemo(() => lessonIndex(loaded?.chapters || []), [loaded]);
+  const summaries = useMemo(() => summariesByLesson(loaded?.clips || [], lessons), [loaded, lessons]);
+  const problems = useMemo(() => (draft ? roadmapProblems(draft.items, lessons) : []), [draft, lessons]);
 
   if (listError) return <LoadProblem message={listError} onRetry={retryList} />;
   if (!courses) return <SkeletonForm fields={5} label="Loading the roadmaps" />;
@@ -139,7 +155,7 @@ export default function RoadmapsTab({ showToast }) {
     setDraft(null);
     setLoaded(null);
     setLoadError('');
-    setOpenIndex(-1);
+    setPageIndex(null);
     setAddError('');
     setCustomDays('');
     setCourseId(id);
@@ -161,7 +177,8 @@ export default function RoadmapsTab({ showToast }) {
     setAddError(problem);
     if (problem) return false;
     setItems([...draft.items, newRoadmap(count, loaded.course.subject || loaded.course.name)]);
-    setOpenIndex(draft.items.length);
+    // The new roadmap opens on its own page, ready to plan day by day
+    setPageIndex(draft.items.length);
     return true;
   };
 
@@ -172,20 +189,20 @@ export default function RoadmapsTab({ showToast }) {
   const move = (index, direction) => {
     const target = index + direction;
     setItems(moveItem(draft.items, index, direction));
-    if (openIndex === index) setOpenIndex(target);
-    else if (openIndex === target) setOpenIndex(index);
+    if (pageIndex === index) setPageIndex(target);
+    else if (pageIndex === target) setPageIndex(index);
   };
 
   const remove = async (index) => {
     const ok = await confirm({
       title: `Delete "${draft.items[index].title || 'this roadmap'}"?`,
-      message: 'Its days and steps are removed when you save.',
+      message: 'Its days and parts are removed when you save.',
       confirmLabel: 'Delete',
       tone: 'danger',
     });
     if (!ok) return;
     setItems(draft.items.filter((_, itemIndex) => itemIndex !== index));
-    setOpenIndex(-1);
+    setPageIndex(null);
     setAddError('');
   };
 
@@ -223,7 +240,7 @@ export default function RoadmapsTab({ showToast }) {
             <span>Study Roadmaps</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-            Day-by-day study plans for each subject, such as 1, 5, 10 or 30 days. Students open them from the course page.
+            Day-by-day study plans for each subject, such as 1, 2 or 10 days, made of short video parts with their summaries. Students open them from the course page.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-end gap-2">
@@ -306,217 +323,225 @@ export default function RoadmapsTab({ showToast }) {
             </p>
           )}
 
-          <div className={`${PANEL_STYLE} space-y-3`}>
-            <Toggle
-              label="Show roadmaps on the course page"
-              hint="When this is off, students do not see the roadmaps section."
-              checked={draft.isShown}
-              onChange={(isShown) => setDraft((previous) => ({ ...previous, isShown }))}
+          {pageIndex !== null && draft.items[pageIndex] ? (
+            <RoadmapPage
+              key={`${courseId}-${pageIndex}`}
+              roadmap={draft.items[pageIndex]}
+              chapters={loaded.chapters}
+              lessons={lessons}
+              summaries={summaries}
+              problems={problems[pageIndex] || []}
+              takenDays={takenDays(pageIndex)}
+              subject={subject}
+              onChange={(next) => updateItem(pageIndex, next)}
+              onBack={() => setPageIndex(null)}
             />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <TextInput
-                label="Heading"
-                value={draft.heading}
-                onChange={(heading) => setDraft((previous) => ({ ...previous, heading }))}
-                placeholder={`${loaded.course.name} Revision Roadmaps`}
+          ) : (
+            <>
+            <div className={`${PANEL_STYLE} space-y-3`}>
+              <Toggle
+                label="Show roadmaps on the course page"
+                hint="When this is off, students do not see the roadmaps section."
+                checked={draft.isShown}
+                onChange={(isShown) => setDraft((previous) => ({ ...previous, isShown }))}
               />
-              <TextInput
-                label="Subheading"
-                value={draft.subheading}
-                onChange={(subheading) => setDraft((previous) => ({ ...previous, subheading }))}
-                placeholder="Choose a study plan that fits your time before the exam."
-              />
-            </div>
-          </div>
-
-          <div className={`${PANEL_STYLE} space-y-3`}>
-            <div>
-              <h3 className="text-sm font-black text-slate-900 dark:text-white">Roadmaps ({draft.items.length})</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                Shown on the course page in this order. A card gets its Select Roadmap button once a day has a step.
-              </p>
-            </div>
-
-            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
-              <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Add a roadmap">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mr-1">Add a roadmap:</span>
-                {QUICK_DAYS.map((count) => {
-                  const isTaken = dayCounts.includes(count);
-                  return (
-                    <button
-                      key={count}
-                      type="button"
-                      onClick={() => addRoadmap(count)}
-                      disabled={isTaken}
-                      title={isTaken ? `${subject} already has a roadmap of ${daysLabel(count).toLowerCase()}` : undefined}
-                      className={`${SECONDARY_BUTTON} ${NO_WRAP}`}
-                    >
-                      <Plus size={13} />
-                      <span>{daysLabel(count)}</span>
-                    </button>
-                  );
-                })}
-                <span className="inline-flex items-center gap-1.5 shrink-0">
-                  <input
-                    type="number"
-                    min="1"
-                    max={MAX_DAYS}
-                    value={customDays}
-                    onChange={(event) => {
-                      setCustomDays(event.target.value);
-                      setAddError('');
-                    }}
-                    onKeyDown={(event) => event.key === 'Enter' && customDays && addCustom()}
-                    placeholder="Other"
-                    aria-label="Days for a new roadmap"
-                    aria-invalid={addError ? true : undefined}
-                    className={`${INPUT_STYLE} !w-24 !py-2${addError ? ' !border-rose-400' : ''}`}
-                  />
-                  <button type="button" disabled={!customDays} onClick={addCustom} className={`${SECONDARY_BUTTON} ${NO_WRAP}`}>
-                    <Plus size={13} />
-                    <span>Add</span>
-                  </button>
-                </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <TextInput
+                  label="Heading"
+                  value={draft.heading}
+                  onChange={(heading) => setDraft((previous) => ({ ...previous, heading }))}
+                  placeholder={`${loaded.course.name} Revision Roadmaps`}
+                />
+                <TextInput
+                  label="Subheading"
+                  value={draft.subheading}
+                  onChange={(subheading) => setDraft((previous) => ({ ...previous, subheading }))}
+                  placeholder="Choose a study plan that fits your time before the exam."
+                />
               </div>
-              {addError ? (
-                <p role="alert" className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
-                  {addError}
+            </div>
+
+            <div className={`${PANEL_STYLE} space-y-3`}>
+              <div>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white">Roadmaps ({draft.items.length})</h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Shown on the course page in this order. Open a roadmap to plan its days. Students see a roadmap once a part is finished.
                 </p>
-              ) : (
-                <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                  Each roadmap needs its own number of days, so the ones {subject} already has are greyed out.
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+                <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Add a roadmap">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 mr-1">Add a roadmap:</span>
+                  {QUICK_DAYS.map((count) => {
+                    const isTaken = dayCounts.includes(count);
+                    return (
+                      <button
+                        key={count}
+                        type="button"
+                        onClick={() => addRoadmap(count)}
+                        disabled={isTaken}
+                        title={isTaken ? `${subject} already has a roadmap of ${daysLabel(count).toLowerCase()}` : undefined}
+                        className={`${SECONDARY_BUTTON} ${NO_WRAP}`}
+                      >
+                        <Plus size={13} />
+                        <span>{daysLabel(count)}</span>
+                      </button>
+                    );
+                  })}
+                  <span className="inline-flex items-center gap-1.5 shrink-0">
+                    <input
+                      type="number"
+                      min="1"
+                      max={MAX_DAYS}
+                      value={customDays}
+                      onChange={(event) => {
+                        setCustomDays(event.target.value);
+                        setAddError('');
+                      }}
+                      onKeyDown={(event) => event.key === 'Enter' && customDays && addCustom()}
+                      placeholder="Other"
+                      aria-label="Days for a new roadmap"
+                      aria-invalid={addError ? true : undefined}
+                      className={`${INPUT_STYLE} !w-24 !py-2${addError ? ' !border-rose-400' : ''}`}
+                    />
+                    <button type="button" disabled={!customDays} onClick={addCustom} className={`${SECONDARY_BUTTON} ${NO_WRAP}`}>
+                      <Plus size={13} />
+                      <span>Add</span>
+                    </button>
+                  </span>
+                </div>
+                {addError ? (
+                  <p role="alert" className="mt-2 text-xs font-semibold text-rose-600 dark:text-rose-400">
+                    {addError}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
+                    Each roadmap needs its own number of days, so the ones {subject} already has are greyed out.
+                  </p>
+                )}
+              </div>
+
+              {problemCount > 0 && (
+                <div
+                  role="alert"
+                  data-testid="roadmap-problems"
+                  className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200"
+                >
+                  <p className="text-xs font-bold mb-1">
+                    Fix {problemCount === 1 ? 'this problem' : `these ${problemCount} problems`} before saving:
+                  </p>
+                  <ul className="list-disc pl-4 space-y-0.5 text-xs">
+                    {problems.flatMap((list, index) =>
+                      list.map((problem) => (
+                        <li key={`${index}-${problem}`}>
+                          <button
+                            type="button"
+                            onClick={() => setPageIndex(index)}
+                            className="font-bold underline underline-offset-2 cursor-pointer"
+                          >
+                            {draft.items[index].title || `Roadmap ${index + 1}`}
+                          </button>
+                          : {problem}
+                        </li>
+                      ))
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {draft.items.length === 0 && (
+                <p className="text-center py-8 text-sm text-slate-500 dark:text-slate-400">
+                  No roadmaps for {loaded.course.name} yet. Add a 1, 2 or 10 day roadmap above, or any number of days.
                 </p>
               )}
-            </div>
 
-            {problemCount > 0 && (
-              <div
-                role="alert"
-                data-testid="roadmap-problems"
-                className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-200"
-              >
-                <p className="text-xs font-bold mb-1">
-                  Fix {problemCount === 1 ? 'this problem' : `these ${problemCount} problems`} before saving:
-                </p>
-                <ul className="list-disc pl-4 space-y-0.5 text-xs">
-                  {problems.flatMap((list, index) =>
-                    list.map((problem) => (
-                      <li key={`${index}-${problem}`}>
+              {draft.items.map((item, index) => {
+                const parts = item.days.reduce((sum, day) => sum + (day.steps || []).length, 0);
+                const unfinished = unfinishedParts(item);
+
+                return (
+                  <div
+                    key={index}
+                    data-testid="admin-roadmap"
+                    className="rounded-2xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800"
+                  >
+                    <div className="flex flex-wrap items-center gap-2 px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setPageIndex(index)}
+                        aria-label={`Open ${item.title || 'this roadmap'}`}
+                        className="flex-1 min-w-0 flex flex-wrap items-center gap-2 text-left cursor-pointer"
+                      >
+                        <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                          {item.title || 'Untitled roadmap'}
+                        </span>
+                        <span className={`${CHIP_STYLE} bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300`}>
+                          {daysLabel(item.days.length)}
+                        </span>
+                        {item.level && (
+                          <span className={`${CHIP_STYLE} bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300`}>
+                            {item.level}
+                          </span>
+                        )}
+                        <span
+                          className={`${CHIP_STYLE} ${
+                            parts > 0
+                              ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                              : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                          }`}
+                        >
+                          {parts > 0 ? `${parts} ${parts === 1 ? 'part' : 'parts'}` : 'No parts yet'}
+                        </span>
+                        {unfinished > 0 && (
+                          <span className={`${CHIP_STYLE} bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300`}>
+                            {unfinished} not finished
+                          </span>
+                        )}
+                        {problems[index]?.length > 0 && (
+                          <span className={`${CHIP_STYLE} bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300`}>
+                            {problems[index].length === 1 ? '1 problem' : `${problems[index].length} problems`}
+                          </span>
+                        )}
+                      </button>
+                      <div className="flex items-center shrink-0">
+                        <button type="button" onClick={() => setPageIndex(index)} className={`${SECONDARY_BUTTON} ${NO_WRAP} mr-1`}>
+                          <span>Plan days</span>
+                          <ChevronRight size={14} />
+                        </button>
                         <button
                           type="button"
-                          onClick={() => setOpenIndex(index)}
-                          className="font-bold underline underline-offset-2 cursor-pointer"
+                          aria-label="Move up"
+                          disabled={index === 0}
+                          onClick={() => move(index, -1)}
+                          className={ICON_BUTTON}
                         >
-                          {draft.items[index].title || `Roadmap ${index + 1}`}
+                          <ArrowUp size={14} />
                         </button>
-                        : {problem}
-                      </li>
-                    ))
-                  )}
-                </ul>
-              </div>
-            )}
-
-            {draft.items.length === 0 && (
-              <p className="text-center py-8 text-sm text-slate-500 dark:text-slate-400">
-                No roadmaps for {loaded.course.name} yet. Add a 1, 5, 10 or 30 day roadmap above.
-              </p>
-            )}
-
-            {draft.items.map((item, index) => {
-              const isOpen = openIndex === index;
-              const steps = countPlan(item).modules;
-
-              return (
-                <div
-                  key={index}
-                  data-testid="admin-roadmap"
-                  className="rounded-2xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800"
-                >
-                  <div className="flex items-center gap-2 px-3 py-2.5">
-                    <button
-                      type="button"
-                      aria-expanded={isOpen}
-                      onClick={() => setOpenIndex(isOpen ? -1 : index)}
-                      className="flex-1 min-w-0 flex flex-wrap items-center gap-2 text-left cursor-pointer"
-                    >
-                      <ChevronDown
-                        size={16}
-                        className={`shrink-0 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                      />
-                      <span className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                        {item.title || 'Untitled roadmap'}
-                      </span>
-                      <span className={`${CHIP_STYLE} bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300`}>
-                        {daysLabel(item.days.length)}
-                      </span>
-                      {item.level && (
-                        <span className={`${CHIP_STYLE} bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300`}>
-                          {item.level}
-                        </span>
-                      )}
-                      <span
-                        className={`${CHIP_STYLE} ${
-                          steps > 0
-                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
-                            : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                        }`}
-                      >
-                        {steps > 0 ? `${steps} ${steps === 1 ? 'step' : 'steps'}` : 'No plan yet'}
-                      </span>
-                      {problems[index]?.length > 0 && (
-                        <span className={`${CHIP_STYLE} bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300`}>
-                          {problems[index].length === 1 ? '1 problem' : `${problems[index].length} problems`}
-                        </span>
-                      )}
-                    </button>
-                    <div className="flex items-center shrink-0">
-                      <button
-                        type="button"
-                        aria-label="Move up"
-                        disabled={index === 0}
-                        onClick={() => move(index, -1)}
-                        className={ICON_BUTTON}
-                      >
-                        <ArrowUp size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Move down"
-                        disabled={index === draft.items.length - 1}
-                        onClick={() => move(index, 1)}
-                        className={ICON_BUTTON}
-                      >
-                        <ArrowDown size={14} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Delete roadmap"
-                        onClick={() => remove(index)}
-                        className={`${ICON_BUTTON} hover:!text-rose-500`}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                        <button
+                          type="button"
+                          aria-label="Move down"
+                          disabled={index === draft.items.length - 1}
+                          onClick={() => move(index, 1)}
+                          className={ICON_BUTTON}
+                        >
+                          <ArrowDown size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="Delete roadmap"
+                          onClick={() => remove(index)}
+                          className={`${ICON_BUTTON} hover:!text-rose-500`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-
-                  {isOpen && (
-                    <div className="px-3 pb-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-                      <RoadmapEditor
-                        key={`${courseId}-${index}`}
-                        roadmap={item}
-                        lessons={lessons}
-                        problems={problems[index] || []}
-                        takenDays={takenDays(index)}
-                        subject={subject}
-                        onChange={(next) => updateItem(index, next)}
-                      />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+            </>
+          )}
 
           {isChanged && (
             <div className="flex justify-end">

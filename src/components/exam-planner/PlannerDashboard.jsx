@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bookmark, X, Check, Video, FileText, CheckSquare, Tag, ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Play } from 'lucide-react';
-import { daysLabel, planDays } from '../course/roadmapPlan';
+import { Bookmark, X, Check, Video, FileText, CheckSquare, Tag, ArrowRight, ChevronLeft, ChevronRight, ExternalLink, Play, Lock, LogIn, ShoppingCart, ListVideo } from 'lucide-react';
+import { daysLabel, partLength, partOf, partsSummary, planDays } from '../course/roadmapPlan';
+import { formatClock } from '../../utils/watchTime';
+import { readProgress, writeProgress } from './plannerProgress';
 
 const RESOURCE_STYLES = {
   video: { icon: Video, color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-200 dark:border-rose-800' },
@@ -53,28 +55,6 @@ const FALLBACK_STEPS = [
   },
 ];
 
-// Ticked steps and the open day are kept in this browser, per course and roadmap
-const PROGRESS_PREFIX = 'mymarks_roadmap_';
-
-const readProgress = (key) => {
-  if (!key) return { done: [], day: 0 };
-  try {
-    const saved = JSON.parse(localStorage.getItem(PROGRESS_PREFIX + key) || '{}');
-    return { done: Array.isArray(saved.done) ? saved.done : [], day: Number(saved.day) || 0 };
-  } catch {
-    return { done: [], day: 0 };
-  }
-};
-
-const writeProgress = (key, progress) => {
-  if (!key) return;
-  try {
-    localStorage.setItem(PROGRESS_PREFIX + key, JSON.stringify(progress));
-  } catch {
-    // Private windows can block storage; the ticks then last until the plan is closed
-  }
-};
-
 const twoDigits = (number) => String(number).padStart(2, '0');
 
 // A day with nothing planned is left for revising the days before
@@ -82,7 +62,22 @@ const stepCountLabel = (count) => (count === 0 ? 'Revision' : `${count} ${count 
 
 const isLink = (resource) => (resource.kind === 'notes' || resource.kind === 'quiz') && Boolean(resource.url);
 
-export default function PlannerDashboard({ planData, onRestart, onOpenLesson, canOpenLesson = () => false, progressKey }) {
+/**
+ * A roadmap day by day. A course page passes how to play its parts (partInfo, onPlayPart, onPlayDay) and
+ * keeps the progress itself (progress, onProgressChange), so it can follow the student's account.
+ */
+export default function PlannerDashboard({
+  planData,
+  onRestart,
+  onOpenLesson,
+  canOpenLesson = () => false,
+  progressKey,
+  progress: givenProgress = null,
+  onProgressChange = null,
+  partInfo = null,
+  onPlayPart = null,
+  onPlayDay = null,
+}) {
   const days = useMemo(() => {
     const found = planDays(planData);
     return found.length > 0 ? found : [{ title: '', desc: '', steps: FALLBACK_STEPS }];
@@ -90,7 +85,8 @@ export default function PlannerDashboard({ planData, onRestart, onOpenLesson, ca
   const hasOwnDays = planDays(planData).length > 0;
   const dayTotal = hasOwnDays ? days.length : Number(planData?.duration) || 1;
 
-  const [progress, setProgress] = useState(() => readProgress(progressKey));
+  const [ownProgress, setOwnProgress] = useState(() => readProgress(progressKey));
+  const progress = givenProgress || ownProgress;
   const dayIndex = Math.min(progress.day, days.length - 1);
 
   // Keeps the open day's tab in view on a narrow screen, also when the arrows change the day
@@ -101,12 +97,17 @@ export default function PlannerDashboard({ planData, onRestart, onOpenLesson, ca
   const day = days[dayIndex];
   const done = useMemo(() => new Set(progress.done), [progress.done]);
 
-  const saveProgress = (changes) =>
-    setProgress((previous) => {
+  const saveProgress = (changes) => {
+    if (onProgressChange) {
+      onProgressChange({ ...progress, ...changes });
+      return;
+    }
+    setOwnProgress((previous) => {
       const next = { ...previous, ...changes };
       writeProgress(progressKey, next);
       return next;
     });
+  };
 
   const stepId = (dayNumber, stepNumber) => `${dayNumber}-${stepNumber}`;
   const toggleDone = (id) =>
@@ -118,6 +119,8 @@ export default function PlannerDashboard({ planData, onRestart, onOpenLesson, ca
     (sum, item, index) => sum + (item.steps || []).filter((_, stepIndex) => done.has(stepId(index, stepIndex))).length,
     0
   );
+  // A roadmap made only of video parts counts parts, not steps
+  const allParts = totalSteps > 0 && days.every((item) => (item.steps || []).every((step) => partOf(step)));
   const isDayDone = (index) =>
     (days[index].steps || []).length > 0 &&
     days[index].steps.every((_, stepIndex) => done.has(stepId(index, stepIndex)));
@@ -139,7 +142,9 @@ export default function PlannerDashboard({ planData, onRestart, onOpenLesson, ca
     title: step.title,
     desc: step.desc,
     resources: step.resources || [],
+    part: partOf(step),
   }));
+  const dayParts = planSteps.filter((step) => step.part);
 
   return (
     <div className="flex flex-col h-full bg-[#F8FAFC] dark:bg-[#0B0F19] overflow-y-auto overflow-x-hidden animate-in fade-in duration-500 pb-12">
@@ -170,7 +175,7 @@ export default function PlannerDashboard({ planData, onRestart, onOpenLesson, ca
           <div className="mt-5 max-w-md" data-testid="plan-progress">
             <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-blue-100 mb-1.5">
               <span>Your Progress</span>
-              <span>{doneSteps} of {totalSteps} steps done</span>
+              <span>{doneSteps} of {totalSteps} {allParts ? 'parts' : 'steps'} done</span>
             </div>
             <div className="h-2 rounded-full bg-white/20 overflow-hidden">
               <div
@@ -257,6 +262,27 @@ export default function PlannerDashboard({ planData, onRestart, onOpenLesson, ca
           </div>
         )}
 
+        {/* The day's video parts, played back to back */}
+        {dayParts.length > 0 && onPlayDay && (
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-3xl bg-white dark:bg-[#131927] border border-slate-200 dark:border-slate-800">
+            <div className="min-w-0">
+              <p className="text-sm font-extrabold text-slate-900 dark:text-white">
+                {days.length > 1 ? `Day ${dayIndex + 1}: ` : ''}
+                {partsSummary(dayParts.map((step) => ({ resources: [step.part] })))}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Each part plays only its own stretch of the lesson, with its summary beside it.</p>
+            </div>
+            <button
+              type="button"
+              data-testid="plan-play-day"
+              onClick={() => onPlayDay(dayIndex)}
+              className="shrink-0 px-5 py-3 rounded-[20px] bg-[#2A75D3] hover:bg-[#2366B9] text-white font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+            >
+              <ListVideo size={16} /> Play the day
+            </button>
+          </div>
+        )}
+
         {/* Timeline Visualizer */}
         {planSteps.length > 0 && (
           <div className="hidden sm:block relative mb-12 mt-4 px-10">
@@ -284,9 +310,88 @@ export default function PlannerDashboard({ planData, onRestart, onOpenLesson, ca
 
         {/* Horizontal Scrollable Cards */}
         <div className="flex overflow-x-auto gap-6 pb-8 snap-x snap-mandatory hide-scrollbar min-h-0 shrink-0 -mx-4 px-4 sm:mx-0 sm:px-0">
-          {planSteps.map((step) => {
+          {planSteps.map((step, stepIndex) => {
             const isDone = done.has(step.id);
             const firstAction = step.resources.find(canOpen);
+            if (step.part) {
+              const info = partInfo?.(step.part) || {};
+              const seconds = partLength(step.part);
+              const action =
+                info.state === 'sign-in'
+                  ? { label: 'Sign in to watch', icon: LogIn }
+                  : info.state === 'buy' || info.state === 'enroll'
+                    ? { label: info.state === 'buy' ? 'Buy to watch' : 'Enroll to watch', icon: ShoppingCart }
+                    : info.state === 'missing'
+                      ? null
+                      : { label: 'Play part', icon: Play };
+              const ActionIcon = action?.icon;
+              return (
+                <div
+                  key={step.id}
+                  data-testid="plan-part"
+                  className={`snap-center shrink-0 w-[85vw] sm:w-[350px] bg-white dark:bg-[#131927] border rounded-3xl overflow-hidden shadow-sm flex flex-col hover:shadow-md transition-shadow ${
+                    isDone ? 'border-emerald-200 dark:border-emerald-900/50' : 'border-cyan-100 dark:border-cyan-900/30'
+                  }`}
+                >
+                  <button
+                    type="button"
+                    disabled={!action}
+                    onClick={() => onPlayPart?.(dayIndex, stepIndex)}
+                    aria-label={action ? `${action.label}: ${step.title}` : step.title}
+                    className="relative aspect-video bg-slate-900 group cursor-pointer disabled:cursor-default"
+                  >
+                    {info.thumbnail && <img src={info.thumbnail} alt="" loading="lazy" className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100" />}
+                    <span className="absolute inset-0 flex items-center justify-center">
+                      <span className="w-12 h-12 rounded-full bg-black/60 text-white flex items-center justify-center">
+                        {info.state && info.state !== 'play' ? <Lock size={18} /> : <Play size={20} fill="currentColor" />}
+                      </span>
+                    </span>
+                    <span className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-black/75 text-white text-[11px] font-bold">
+                      {formatClock(step.part.start)}–{formatClock(step.part.end)}
+                    </span>
+                  </button>
+                  <div className="p-5 flex flex-col flex-1">
+                    <div className="flex justify-between items-start gap-3 mb-2">
+                      <div className="bg-cyan-50 dark:bg-cyan-900/20 text-cyan-600 dark:text-cyan-400 font-bold text-[10px] px-3 py-1.5 rounded-full uppercase tracking-wider">
+                        PART {twoDigits(step.number)} • {seconds < 60 ? `${Math.round(seconds)} SEC` : `${Math.round(seconds / 60)} MIN`}
+                      </div>
+                      <button
+                        onClick={() => toggleDone(step.id)}
+                        aria-pressed={isDone}
+                        aria-label={isDone ? `Part ${twoDigits(step.number)} done` : `Mark part ${twoDigits(step.number)} done`}
+                        className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+                          isDone ? 'bg-emerald-500 text-white' : 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-600 hover:text-emerald-500'
+                        }`}
+                      >
+                        <Check size={14} strokeWidth={3} />
+                      </button>
+                    </div>
+                    {info.chapterLine && <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">{info.chapterLine}</p>}
+                    <h3 className="text-[17px] font-extrabold text-slate-900 dark:text-white mb-2 leading-snug">{step.title || step.part.text}</h3>
+                    <p data-testid="plan-part-summary" className="text-[13px] text-slate-600 dark:text-slate-300 leading-relaxed mb-3">{step.part.summary}</p>
+                    {step.part.points?.length > 0 && (
+                      <ul className="list-disc pl-5 space-y-0.5 text-[12.5px] text-slate-600 dark:text-slate-400 mb-4">
+                        {step.part.points.map((point) => (
+                          <li key={point}>{point}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {action ? (
+                      <button
+                        type="button"
+                        data-testid="plan-play-part"
+                        onClick={() => onPlayPart?.(dayIndex, stepIndex)}
+                        className="mt-auto w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-sm py-3.5 rounded-[20px] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <ActionIcon size={14} /> {action.label}
+                      </button>
+                    ) : (
+                      <p className="mt-auto text-xs text-slate-500 dark:text-slate-400">This lesson is not available right now.</p>
+                    )}
+                  </div>
+                </div>
+              );
+            }
             return (
               <div
                 key={step.id}

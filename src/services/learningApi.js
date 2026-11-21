@@ -109,3 +109,17 @@ export async function saveVideoNoteRequest(courseId, lessonKey, body) {
 export async function fetchAllNotes() {
   return readJson(await studentFetch('/api/notes'), 'Could not load your notes.');
 }
+
+// The signed-in student's progress in a course's study roadmaps, kept on the account
+export async function fetchRoadmapProgress(courseId) {
+  const data = await readJson(await studentFetch(`/api/roadmaps/${courseId}/progress`), 'Could not load your roadmap progress.');
+  return data.plans || [];
+}
+
+export async function saveRoadmapProgress(courseId, { planKey, done, day }) {
+  const data = await readJson(
+    await studentFetch(`/api/roadmaps/${courseId}/progress`, { method: 'PUT', body: { planKey, done, day } }),
+    'Could not save your roadmap progress.'
+  );
+  return data.progress;
+}
