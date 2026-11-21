@@ -34,6 +34,8 @@ import History from './pages/History';
 import ProfilePage from './pages/ProfilePage';
 import AboutUsPage from './pages/AboutUs';
 import ContactUsPage from './pages/ContactUs';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
 import LabPracticalsPage from './pages/LabPracticalsPage';
 import SitePrivacyGate from './components/SitePrivacyGate';
 import AdminPage from './pages/AdminPage';
@@ -935,6 +937,19 @@ export default function App() {
           <Route path="/contact" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
           <Route path="/Contact" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
           <Route path="/contact-us" element={<ContactUsPage onOpenBooking={handleOpenBooking} />} />
+
+          {/* Standalone Privacy Policy Page Routes */}
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/PrivacyPolicy" element={<PrivacyPolicyPage />} />
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/Privacy" element={<PrivacyPolicyPage />} />
+
+          {/* Standalone Terms of Service Page Routes */}
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+          <Route path="/TermsOfService" element={<TermsOfServicePage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
+          <Route path="/Terms" element={<TermsOfServicePage />} />
+          <Route path="/terms-and-conditions" element={<TermsOfServicePage />} />
 
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminPage currentUser={currentUser} onLogout={handleLogout} onSessionExpired={handleAdminSessionExpired} onOpenSignIn={handleOpenSignIn} theme={theme} toggleTheme={toggleTheme} />} />

@@ -71,6 +71,7 @@ export default function ProfilePage({
     collegeName: profile?.collegeName || notProvided,
     hallTicketNumber: profile?.hallTicketNumber || notProvided,
     studyMonthYear: profile?.studyMonthYear || notProvided,
+    dob: profile?.dob || notProvided,
     fatherName: profile?.fatherName || notProvided,
     fatherMobile: formatPhone(profile?.fatherMobile) || notProvided,
     fatherMobileLink: telLink(profile?.fatherMobile),
@@ -347,12 +348,21 @@ export default function ProfilePage({
                   </button>
                 </div>
 
-                {/* Month & Year of Study */}
+                {/* Academic Year */}
                 <div className="p-4 rounded-2xl bg-white/85 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 backdrop-blur-md shadow-2xs">
-                  <span className="text-slate-500 dark:text-slate-400 font-medium block mb-1">Month & Year of Study</span>
+                  <span className="text-slate-500 dark:text-slate-400 font-medium block mb-1">Academic Year</span>
                   <strong className="text-slate-900 dark:text-white text-sm font-semibold flex items-center gap-1.5">
                     <Calendar size={14} className="text-blue-600 dark:text-cyan-400 shrink-0" />
                     <span>{studentData.studyMonthYear}</span>
+                  </strong>
+                </div>
+
+                {/* Date of Birth */}
+                <div className="p-4 rounded-2xl bg-white/85 dark:bg-slate-900/80 border border-slate-200/90 dark:border-slate-800 backdrop-blur-md shadow-2xs">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium block mb-1">Date of Birth</span>
+                  <strong className="text-slate-900 dark:text-white text-sm font-semibold flex items-center gap-1.5">
+                    <Calendar size={14} className="text-sky-500 shrink-0" />
+                    <span>{studentData.dob}</span>
                   </strong>
                 </div>
 

@@ -116,6 +116,29 @@ export const DEFAULT_ABOUT = {
         "Oversees curriculum rigor, test papers, and board exam alignment"
       ],
       "visible": true
+    },
+    {
+      "name": "N. Venkata Ram Raju",
+      "role": "Head of Media Production & Video Operations",
+      "icon": "award",
+      "image": "/leaders/Raju.jpeg",
+      "link": "",
+      "tagline": "An experienced media professional with over 20 years of expertise in television broadcasting, video editing, and production management. Brings strong technical leadership and creative excellence in delivering high-quality media production and digital storytelling.",
+      "bio": "N. Venkata Ram Raju is an experienced media and broadcasting professional with over two decades of expertise in television production, video editing, and technical operations. He has held key leadership positions across reputed media organizations, contributing to creative direction, production management, and media technology excellence.",
+      "tags": [
+        "Video Editing",
+        "Media Production",
+        "Television Broadcasting",
+        "Post-Production",
+        "Broadcast",
+        "Technology"
+      ],
+      "highlights": [
+        "Over 20 years of experience in television broadcasting and media production",
+        "Extensive expertise in video editing, post-production, and broadcast technology",
+        "Former production leadership roles across reputed media organizations"
+      ],
+      "visible": true
     }
   ],
   "inspirations": {

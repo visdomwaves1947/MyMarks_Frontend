@@ -8,7 +8,8 @@ const stamp = `${Date.now()}`.slice(-6);
 const student = (testInfo) => ({
   email: `gulf.${testInfo.project.name}.${stamp}@mymarks.test`,
   local: `50${stamp}${testInfo.project.name === 'phone' ? '1' : '2'}`,
-  password: `gulf-pass-${stamp}`,
+  // Sign-up asks for 8+ characters with an upper and lower case letter, a number and a symbol
+  password: `Gulf-Pass-${stamp}`,
 });
 
 const pickCountry = async (page, field, search, name) => {
