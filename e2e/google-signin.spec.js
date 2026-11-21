@@ -62,7 +62,7 @@ test('a new student signs up with Google, fills in the rest of the form, and is 
   await expect(page.getByPlaceholder('Create password')).toHaveCount(0);
 
   await page.getByPlaceholder('10-digit phone').fill('9876500011');
-  await page.locator('input[type="date"]').fill('2008-05-10');
+  await page.getByTestId('dob-input').fill('10-05-2008');
   await page.getByPlaceholder('Full name', { exact: true }).fill('Parent Name');
   await page.getByPlaceholder('10-digit mobile', { exact: true }).fill('9876500012');
   await page.getByRole('button', { name: 'Next Step' }).click();

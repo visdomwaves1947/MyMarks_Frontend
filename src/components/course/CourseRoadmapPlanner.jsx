@@ -44,6 +44,15 @@ export default function CourseRoadmapPlanner({
   const topics = useMemo(() => new Map(flattenChapters(chapters).map((topic) => [topic.nodeId, topic])), [chapters]);
   const [playingId, setPlayingId] = useState(null);
   const [watching, setWatching] = useState(null); // { title, clips, startAt, key }
+
+  useEffect(() => {
+    if (!watching) return undefined;
+    const onKey = (event) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) setWatching(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [watching]);
   const [prompt, setPrompt] = useState(null); // 'sign-in' | 'sign-in-to-buy' | 'enroll' | 'buy'
 
   // ── Progress: this browser, and the student's account when signed in ──
@@ -231,23 +240,31 @@ export default function CourseRoadmapPlanner({
 
       {watching &&
         createPortal(
-          <div className="fixed inset-0 z-[60] overflow-y-auto bg-slate-950/80 backdrop-blur-sm" data-testid="roadmap-player">
-            <div className="min-h-full max-w-6xl mx-auto px-3 sm:px-6 py-6 sm:py-10">
-              <div className="rounded-3xl bg-white dark:bg-[#0B0F19] p-4 sm:p-6 shadow-2xl">
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">{plan.title}</p>
-                    <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white truncate">{watching.title}</h2>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label="Close the player"
-                    onClick={() => setWatching(null)}
-                    className="shrink-0 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
-                  >
-                    <X size={20} />
-                  </button>
-                </div>
+          // The whole screen, like a lesson page: a slim bar with the roadmap, the day and Close, then the player
+          <div
+            className="fixed inset-0 z-[60] flex flex-col bg-white dark:bg-[#0B0F19]"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${plan.title}: ${watching.title}`}
+            data-testid="roadmap-player"
+          >
+            <header className="shrink-0 flex items-center justify-between gap-3 px-3 sm:px-6 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-[#0B0F19]/95 backdrop-blur">
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 truncate">{plan.title}</p>
+                <h2 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white truncate">{watching.title}</h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Close the player"
+                onClick={() => setWatching(null)}
+                className="shrink-0 inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-slate-100 dark:bg-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+              >
+                <X size={18} />
+                <span className="hidden sm:inline">Close</span>
+              </button>
+            </header>
+            <div className="flex-1 overflow-y-auto">
+              <div className="max-w-[1600px] mx-auto px-3 sm:px-6 py-4 sm:py-6">
                 <ReelWatch
                   key={watching.key}
                   clips={watching.clips}

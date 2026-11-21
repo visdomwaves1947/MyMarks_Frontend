@@ -6,6 +6,8 @@ import useDialog from '../hooks/useDialog';
 import LegalTermsModal from './LegalTermsModal';
 import GoogleSignInButton from './GoogleSignInButton';
 import PhoneField from './ui/PhoneField';
+import DateField from './ui/DateField';
+import { dobProblem, dobRange, longDateOf } from '../utils/dateOfBirth';
 import { formatPhone, parsePhone, phoneProblem, signInValue } from '../utils/phone';
 import {
   X,
@@ -367,13 +369,9 @@ export default function AuthModal({
         errors.email = 'Please enter a valid email address (example@gmail.com)';
       }
 
-      // Date of Birth: Valid date, only past and present (not future)
-      const todayStr = new Date().toISOString().split('T')[0];
-      if (!formData.dob) {
-        errors.dob = 'Date of Birth is required';
-      } else if (isNaN(new Date(formData.dob).getTime()) || formData.dob > todayStr) {
-        errors.dob = 'Must be a valid date.';
-      }
+      // Date of Birth: a real date, not in the future, and a student of 10 to 60 years
+      const dobError = dobProblem(formData.dob);
+      if (dobError) errors.dob = dobError;
 
       // Parent Details validation
       const cleanParentName = (formData.fatherName || '').trim();
@@ -1145,16 +1143,18 @@ export default function AuthModal({
                         <label className="block text-slate-700 dark:text-slate-200 font-bold mb-0.5 text-[11px]">
                           Date of Birth <span className="text-rose-500 dark:text-rose-400">*</span>
                         </label>
-                        <div className="relative">
-                          <Calendar size={14} className="absolute left-3 top-2.5 text-sky-600 dark:text-sky-400 pointer-events-none" />
-                          <input
-                            type="date"
-                            max={new Date().toISOString().split('T')[0]}
-                            value={formData.dob}
-                            onChange={(e) => handleInputChange('dob', e.target.value)}
-                            className="w-full pl-8 pr-3 py-1.5 bg-white text-slate-900 dark:bg-slate-900/80 dark:text-white dark:[color-scheme:dark] border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
-                          />
-                        </div>
+                        <DateField
+                          value={formData.dob}
+                          onChange={(value) => handleInputChange('dob', value)}
+                          min={dobRange().min}
+                          max={dobRange().max}
+                          startYear={new Date().getFullYear() - 16}
+                          ariaLabel="Date of Birth"
+                          invalid={Boolean(formErrors.dob)}
+                          showAge
+                          testId="dob"
+                          inputClassName="py-1.5 bg-white text-slate-900 placeholder:text-slate-400 dark:bg-slate-900/80 dark:text-white border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-sky-400 shadow-sm"
+                        />
                         {formErrors.dob && (
                           <p className="text-rose-600 dark:text-rose-400 text-[10px] font-semibold mt-0.5">{formErrors.dob}</p>
                         )}
@@ -1622,7 +1622,7 @@ export default function AuthModal({
                             {formData.hallTicketNumber || (formData.year === 'Second Year' ? 'Required' : 'Not Provided')}
                           </strong>
                         </div>
-                        <div className="col-span-2"><span className="text-slate-500 dark:text-slate-400">Date of Birth:</span> <strong className="text-slate-900 dark:text-white block">{formData.dob || 'Not Provided'}</strong></div>
+                        <div className="col-span-2"><span className="text-slate-500 dark:text-slate-400">Date of Birth:</span> <strong className="text-slate-900 dark:text-white block">{longDateOf(formData.dob) || 'Not Provided'}</strong></div>
                         <div className="col-span-2 pt-1 border-t border-slate-200 dark:border-white/10">
                           <span className="text-slate-500 dark:text-slate-400">Guardian ({formData.relationship}):</span>{' '}
                           <strong className="text-slate-900 dark:text-white">{formData.fatherName}</strong> ({formatPhone(formData.fatherMobile)})

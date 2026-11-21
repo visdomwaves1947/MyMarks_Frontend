@@ -7,7 +7,7 @@ import { parsePhone, phoneValue } from '../../utils/phone';
 const MAX_DIGITS = { india: 10, other: 13 };
 
 const Flag = ({ code, className = '' }) => (
-  <img src={flagSrc(code)} alt="" width="22" height="16" className={`w-[22px] h-[15px] object-cover rounded-[3px] shrink-0 ring-1 ring-black/10 ${className}`} />
+  <img src={flagSrc(code)} alt="" width="16" height="11" className={`w-4 h-[11px] object-cover rounded-[2px] shrink-0 ring-1 ring-black/10 ${className}`} />
 );
 
 // How well a country fits the search (lower is better), or -1: its code or another name exactly
@@ -93,11 +93,11 @@ export default function PhoneField({
   const measure = () => {
     const box = button.current?.getBoundingClientRect();
     if (!box) return;
-    const width = Math.min(320, window.innerWidth - 16);
+    const width = Math.min(208, window.innerWidth - 16);
     const left = Math.max(8, Math.min(box.left, window.innerWidth - width - 8));
     const below = window.innerHeight - box.bottom;
-    const height = Math.min(340, Math.max(below, box.top) - 16);
-    setPlace(below >= 260 || below >= box.top ? { left, width, top: box.bottom + 6, height } : { left, width, bottom: window.innerHeight - box.top + 6, height });
+    const height = Math.min(216, Math.max(below, box.top) - 16);
+    setPlace(below >= 170 || below >= box.top ? { left, width, top: box.bottom + 4, height } : { left, width, bottom: window.innerHeight - box.top + 4, height });
   };
 
   useLayoutEffect(() => {
@@ -169,13 +169,13 @@ export default function PhoneField({
         aria-label={`Country code: ${country.name} ${country.dial}`}
         title={`${country.name} ${country.dial}`}
         data-testid="phone-country"
-        className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 rounded-xl border bg-white text-slate-800 border-slate-300 hover:border-sky-400 dark:bg-slate-900/70 dark:text-slate-100 dark:border-slate-700 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer disabled:opacity-60 ${
+        className={`shrink-0 inline-flex items-center gap-1 px-1.5 rounded-xl border bg-white text-slate-800 border-slate-300 hover:border-sky-400 dark:bg-slate-900/70 dark:text-slate-100 dark:border-slate-700 text-[11px] font-bold focus:outline-none focus:ring-2 focus:ring-sky-400 cursor-pointer disabled:opacity-60 ${
           invalid ? 'border-rose-400 dark:border-rose-500' : ''
         } ${buttonClassName}`}
       >
         <Flag code={country.code} />
         <span data-testid="phone-dial">{country.dial}</span>
-        <ChevronDown size={13} className={`transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={11} className={`text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       <input
         type="tel"
@@ -197,12 +197,12 @@ export default function PhoneField({
             ref={panel}
             onKeyDown={onListKey}
             style={{ position: 'fixed', left: place.left, width: place.width, top: place.top, bottom: place.bottom, maxHeight: place.height }}
-            className="z-[1000] flex flex-col rounded-2xl border border-slate-200 bg-white shadow-2xl dark:border-slate-700 dark:bg-slate-900 overflow-hidden text-left"
+            className="z-[1000] flex flex-col rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-900 overflow-hidden text-left"
             data-testid="phone-country-list"
           >
-            <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="p-1 border-b border-slate-100 dark:border-slate-800">
               <div className="relative">
-                <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <Search size={11} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   ref={search}
                   value={query}
@@ -213,12 +213,12 @@ export default function PhoneField({
                   placeholder="Search country or code"
                   aria-label="Search country or code"
                   aria-controls={listId}
-                  className="w-full pl-8 pr-2 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-slate-950 dark:border-slate-700 dark:text-white"
+                  className="w-full pl-6 pr-2 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-900 text-[11px] focus:outline-none focus:ring-2 focus:ring-sky-400 dark:bg-slate-950 dark:border-slate-700 dark:text-white"
                 />
               </div>
             </div>
-            <ul id={listId} role="listbox" aria-label="Countries" className="overflow-y-auto py-1">
-              {options.length === 0 && <li className="px-3 py-3 text-sm text-slate-500 dark:text-slate-400">No country found</li>}
+            <ul id={listId} role="listbox" aria-label="Countries" className="overflow-y-auto py-0.5">
+              {options.length === 0 && <li className="px-2.5 py-2.5 text-xs text-slate-500 dark:text-slate-400">No country found</li>}
               {options.map((option, index) => {
                 const selected = option.code === country.code;
                 return (
@@ -230,14 +230,14 @@ export default function PhoneField({
                     data-testid="phone-country-option"
                     onMouseEnter={() => setActive(index)}
                     onClick={() => choose(option)}
-                    className={`flex items-center gap-2.5 px-3 py-2 text-sm cursor-pointer ${
+                    className={`flex items-center gap-1.5 px-2 py-1 text-[11px] cursor-pointer ${
                       index === active ? 'bg-sky-50 dark:bg-slate-800' : ''
-                    } ${!query.trim() && index === 0 ? 'border-b border-slate-100 dark:border-slate-800 mb-1' : ''}`}
+                    } ${!query.trim() && index === 0 ? 'border-b border-slate-100 dark:border-slate-800 mb-0.5' : ''}`}
                   >
                     <Flag code={option.code} />
                     <span className="flex-1 truncate text-slate-800 dark:text-slate-100">{option.name}</span>
                     <span className="text-slate-500 dark:text-slate-400 tabular-nums">{option.dial}</span>
-                    {selected && <Check size={14} className="text-sky-600 dark:text-sky-400" />}
+                    {selected && <Check size={11} className="text-sky-600 dark:text-sky-400" />}
                   </li>
                 );
               })}

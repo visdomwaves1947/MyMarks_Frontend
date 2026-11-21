@@ -18,8 +18,14 @@ export async function getAdminToken(request) {
   return adminToken;
 }
 
+// The contact form's thank-you email goes through EmailJS; tests answer it here, so no real email is sent
+export async function answerEmailService(page) {
+  await page.route('https://api.emailjs.com/**', (route) => route.fulfill({ status: 200, contentType: 'text/plain', body: 'OK' }));
+}
+
 // Opens the site past the private preview lock, as a visitor
 export async function openAsVisitor(page) {
+  await answerEmailService(page);
   await page.addInitScript(({ key, value }) => {
     localStorage.setItem(key, value);
   }, ACCESS);

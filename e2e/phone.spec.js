@@ -34,6 +34,10 @@ test('a phone number starts in India, and the list finds any country by name or 
   await expect(options.first()).toContainText('India');
   await expect(options.first()).toHaveAttribute('aria-selected', 'true');
   expect(await options.count()).toBeGreaterThan(200);
+  // A compact list beside the form, not over half of it
+  const listBox = await list.boundingBox();
+  expect(listBox.width).toBeLessThanOrEqual(210);
+  expect(listBox.height).toBeLessThanOrEqual(220);
 
   // By name, by another name, and by code
   await list.getByLabel('Search country or code').fill('emirates');
@@ -59,6 +63,53 @@ test('a phone number starts in India, and the list finds any country by name or 
   await expect(field.getByRole('textbox', { name: 'Mobile Number' })).toHaveValue('7700900123');
 });
 
+test('the date of birth is picked on a calendar or typed, and impossible dates are refused', async ({ page }) => {
+  await openAsVisitor(page);
+  await page.goto('/signup');
+  const dob = page.getByTestId('dob-input');
+  const calendar = page.getByTestId('dob-calendar');
+  const thisYear = new Date().getFullYear();
+
+  // Nothing chosen: the calendar starts on the years; a year, a month, then the day
+  await dob.click();
+  await expect(calendar).toBeVisible();
+  await expect(calendar.getByTestId('dob-summary')).toHaveText('Pick the year you were born');
+  const years = calendar.getByTestId('dob-years');
+  await expect(years.getByRole('button', { name: String(thisYear - 16), exact: true })).toBeVisible();
+  // A student is at least 10: later years are not offered
+  await expect(years.getByRole('button', { name: String(thisYear - 9), exact: true })).toHaveCount(0);
+  await years.getByRole('button', { name: '2008', exact: true }).click();
+  await calendar.getByRole('button', { name: 'May 2008' }).click();
+  await calendar.getByRole('button', { name: '14 May 2008' }).click();
+  await expect(calendar).toHaveCount(0);
+  await expect(dob).toHaveValue('14-05-2008');
+
+  // Opened again: the chosen month, the day marked, and the age
+  await dob.click();
+  await expect(calendar.getByRole('button', { name: '14 May 2008' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(calendar.getByTestId('dob-summary')).toHaveText(/^14 May 2008 · \d+ years old$/);
+  await calendar.getByRole('button', { name: 'Next month' }).click();
+  await expect(calendar.getByTestId('dob-days')).toHaveAccessibleName('June 2008');
+  await page.keyboard.press('Escape');
+  await expect(calendar).toHaveCount(0);
+
+  // Typed digits get their dashes; a day that does not exist, the future and a 5 year old are refused
+  const next = page.getByRole('button', { name: 'Next Step' });
+  for (const [typed, shown, message] of [
+    ['31022008', '31-02-2008', 'Enter a real date as dd-mm-yyyy'],
+    [`0101${thisYear + 1}`, `01-01-${thisYear + 1}`, 'Date of birth cannot be in the future.'],
+    [`0101${thisYear - 5}`, `01-01-${thisYear - 5}`, 'You must be at least 10 years old to sign up.'],
+  ]) {
+    await dob.fill(typed);
+    await expect(dob).toHaveValue(shown);
+    await next.click();
+    await expect(page.getByText(message)).toBeVisible();
+  }
+  await dob.fill('1-5-2008');
+  await next.click();
+  await expect(page.getByText(/Enter a real date|cannot be in the future|at least 10 years/)).toHaveCount(0);
+});
+
 test('a student from another country signs up with their number and signs in with it', async ({ page }, testInfo) => {
   const me = student(testInfo);
   await openAsVisitor(page);
@@ -69,7 +120,7 @@ test('a student from another country signs up with their number and signs in wit
   await pickCountry(page, mobile, 'emirates', 'United Arab Emirates');
   await mobile.getByRole('textbox', { name: 'Mobile Number' }).fill(me.local);
   await page.getByPlaceholder('student@example.com').fill(me.email);
-  await page.locator('input[type="date"]').first().fill('2008-05-14');
+  await page.getByTestId('dob-input').fill('14-05-2008');
   await page.getByPlaceholder('Full name', { exact: true }).fill('Gulf Parent');
   // The parent's number stays in India unless changed; a short one is refused
   await page.getByPlaceholder('10-digit mobile', { exact: true }).fill('98765');
@@ -84,7 +135,7 @@ test('a student from another country signs up with their number and signs in wit
   await page.getByRole('button', { name: 'Next Step' }).click();
   await page.getByText('First Year', { exact: true }).first().click();
   await page.getByPlaceholder('e.g. Sri Chaitanya Junior College, Vijayawada').fill('Gulf Indian School, Dubai');
-  await page.getByPlaceholder('June, 2025').fill('June, 2025');
+  await page.getByRole('combobox').filter({ hasText: 'Select Academic Year' }).selectOption('2025 to 2026');
   await page.getByRole('button', { name: 'Next Step' }).click();
 
   // The summary shows the number with its code
