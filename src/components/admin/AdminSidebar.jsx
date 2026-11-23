@@ -94,7 +94,7 @@ export default function AdminSidebar({
         className="hidden lg:flex flex-col justify-between w-60 xl:w-64 fixed left-0 top-[122px] h-[calc(100vh-122px)] z-40 select-none shadow-xs overflow-hidden bg-[#dbeafe] dark:bg-slate-900 border-r border-[#bfdbfe] dark:border-slate-800"
       >
         {/* Top: Navigation Header and Links */}
-        <div className="flex flex-col min-h-0">
+        <div className="flex flex-col min-h-0 flex-1">
           {/* Sidebar Header Title */}
           <div className="px-3.5 py-2.5 shrink-0 flex items-center justify-between border-b border-blue-200/80 dark:border-slate-800/80">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -107,7 +107,7 @@ export default function AdminSidebar({
           </div>
 
           {/* Navigation Items List */}
-          <div className="p-2.5 space-y-1">
+          <div className="p-2.5 space-y-1 flex-1 min-h-0 overflow-y-auto overscroll-contain" data-testid="admin-sidebar-list">
             {menuItems.map((item) => {
               const isActive = activeTab === item.id;
               const ItemIcon = item.icon;
